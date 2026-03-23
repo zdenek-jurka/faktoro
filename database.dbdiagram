@@ -1,0 +1,276 @@
+{
+  "version": "1.0.0",
+  "darkMode": true,
+  "gridEnabling": false,
+  "detailLevel": "All",
+  "tablePositions": [
+    {
+      "name": "app_settings",
+      "schemaName": "public",
+      "x": 12,
+      "y": 12
+    },
+    {
+      "name": "config_storage",
+      "schemaName": "public",
+      "x": 12,
+      "y": 2014
+    },
+    {
+      "name": "client",
+      "schemaName": "public",
+      "x": 370.0732421875,
+      "y": 12
+    },
+    {
+      "name": "vat_code",
+      "schemaName": "public",
+      "x": 12,
+      "y": 1708
+    },
+    {
+      "name": "vat_rate",
+      "schemaName": "public",
+      "x": 286.7392578125,
+      "y": 1708
+    },
+    {
+      "name": "client_address",
+      "schemaName": "public",
+      "x": 947.876953125,
+      "y": 12
+    },
+    {
+      "name": "time_entry",
+      "schemaName": "public",
+      "x": 947.876953125,
+      "y": 410
+    },
+    {
+      "name": "timesheet",
+      "schemaName": "public",
+      "x": 293.8994140625,
+      "y": 2014
+    },
+    {
+      "name": "invoice",
+      "schemaName": "public",
+      "x": 574.54833984375,
+      "y": 2014
+    },
+    {
+      "name": "invoice_item",
+      "schemaName": "public",
+      "x": 881.203125,
+      "y": 2014
+    },
+    {
+      "name": "price_list_item",
+      "schemaName": "public",
+      "x": 270.3080257910565,
+      "y": 831.0544586820083
+    },
+    {
+      "name": "client_price_override",
+      "schemaName": "public",
+      "x": 947.876953125,
+      "y": 936
+    },
+    {
+      "name": "sync_operation",
+      "schemaName": "public",
+      "x": 12,
+      "y": 1210
+    },
+    {
+      "name": "sync_conflict",
+      "schemaName": "public",
+      "x": 311.70458984375,
+      "y": 1210
+    }
+  ],
+  "tableGroupCollapseStates": [],
+  "stickyNoteLayouts": [],
+  "referencePaths": [
+    {
+      "firstFieldNames": [
+        "id"
+      ],
+      "firstTableName": "vat_code",
+      "firstSchemaName": "public",
+      "firstRelation": "1",
+      "secondFieldNames": [
+        "vat_code_id"
+      ],
+      "secondTableName": "vat_rate",
+      "secondSchemaName": "public",
+      "secondRelation": "*",
+      "checkPoints": []
+    },
+    {
+      "firstFieldNames": [
+        "id"
+      ],
+      "firstTableName": "client",
+      "firstSchemaName": "public",
+      "firstRelation": "1",
+      "secondFieldNames": [
+        "client_id"
+      ],
+      "secondTableName": "client_address",
+      "secondSchemaName": "public",
+      "secondRelation": "*",
+      "checkPoints": []
+    },
+    {
+      "firstFieldNames": [
+        "id"
+      ],
+      "firstTableName": "client",
+      "firstSchemaName": "public",
+      "firstRelation": "1",
+      "secondFieldNames": [
+        "client_id"
+      ],
+      "secondTableName": "time_entry",
+      "secondSchemaName": "public",
+      "secondRelation": "*",
+      "checkPoints": []
+    },
+    {
+      "firstFieldNames": [
+        "id"
+      ],
+      "firstTableName": "timesheet",
+      "firstSchemaName": "public",
+      "firstRelation": "1",
+      "secondFieldNames": [
+        "timesheet_id"
+      ],
+      "secondTableName": "time_entry",
+      "secondSchemaName": "public",
+      "secondRelation": "*",
+      "checkPoints": []
+    },
+    {
+      "firstFieldNames": [
+        "id"
+      ],
+      "firstTableName": "price_list_item",
+      "firstSchemaName": "public",
+      "firstRelation": "1",
+      "secondFieldNames": [
+        "price_list_item_id"
+      ],
+      "secondTableName": "time_entry",
+      "secondSchemaName": "public",
+      "secondRelation": "*",
+      "checkPoints": []
+    },
+    {
+      "firstFieldNames": [
+        "id"
+      ],
+      "firstTableName": "client",
+      "firstSchemaName": "public",
+      "firstRelation": "1",
+      "secondFieldNames": [
+        "client_id"
+      ],
+      "secondTableName": "timesheet",
+      "secondSchemaName": "public",
+      "secondRelation": "*",
+      "checkPoints": []
+    },
+    {
+      "firstFieldNames": [
+        "id"
+      ],
+      "firstTableName": "client",
+      "firstSchemaName": "public",
+      "firstRelation": "1",
+      "secondFieldNames": [
+        "client_id"
+      ],
+      "secondTableName": "invoice",
+      "secondSchemaName": "public",
+      "secondRelation": "*",
+      "checkPoints": []
+    },
+    {
+      "firstFieldNames": [
+        "id"
+      ],
+      "firstTableName": "invoice",
+      "firstSchemaName": "public",
+      "firstRelation": "1",
+      "secondFieldNames": [
+        "invoice_id"
+      ],
+      "secondTableName": "invoice_item",
+      "secondSchemaName": "public",
+      "secondRelation": "*",
+      "checkPoints": []
+    },
+    {
+      "firstFieldNames": [
+        "id"
+      ],
+      "firstTableName": "vat_code",
+      "firstSchemaName": "public",
+      "firstRelation": "1",
+      "secondFieldNames": [
+        "vat_code_id"
+      ],
+      "secondTableName": "invoice_item",
+      "secondSchemaName": "public",
+      "secondRelation": "*",
+      "checkPoints": []
+    },
+    {
+      "firstFieldNames": [
+        "id"
+      ],
+      "firstTableName": "vat_code",
+      "firstSchemaName": "public",
+      "firstRelation": "1",
+      "secondFieldNames": [
+        "vat_code_id"
+      ],
+      "secondTableName": "price_list_item",
+      "secondSchemaName": "public",
+      "secondRelation": "*",
+      "checkPoints": []
+    },
+    {
+      "firstFieldNames": [
+        "id"
+      ],
+      "firstTableName": "client",
+      "firstSchemaName": "public",
+      "firstRelation": "1",
+      "secondFieldNames": [
+        "client_id"
+      ],
+      "secondTableName": "client_price_override",
+      "secondSchemaName": "public",
+      "secondRelation": "*",
+      "checkPoints": []
+    },
+    {
+      "firstFieldNames": [
+        "id"
+      ],
+      "firstTableName": "price_list_item",
+      "firstSchemaName": "public",
+      "firstRelation": "1",
+      "secondFieldNames": [
+        "price_list_item_id"
+      ],
+      "secondTableName": "client_price_override",
+      "secondSchemaName": "public",
+      "secondRelation": "*",
+      "checkPoints": []
+    }
+  ]
+}

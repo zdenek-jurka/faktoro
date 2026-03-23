@@ -1,0 +1,9 @@
+node_modules
+.expo
+dist
+build
+coverage
+android
+ios
+i18n/*
+!i18n/*/

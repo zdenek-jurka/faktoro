@@ -1,0 +1,59 @@
+diff --git a/node_modules/@expo/ui/ios/ListView.swift b/node_modules/@expo/ui/ios/ListView.swift
+index a7ca51d..49169c6 100644
+--- a/node_modules/@expo/ui/ios/ListView.swift
++++ b/node_modules/@expo/ui/ios/ListView.swift
+@@ -19,8 +19,8 @@ struct ListView: ExpoSwiftUI.View {
+     .onAppear {
+       selection = Self.getHashableSetFromEither(props.selection)
+     }
+-    .onChange(of: props.selection) { newValue in
+-      selection = Self.getHashableSetFromEither(newValue)
++    .onChange(of: Self.selectionKey(props.selection)) { _ in
++      selection = Self.getHashableSetFromEither(props.selection)
+     }
+     .onChange(of: selection) { newSelection in
+       handleSelectionChange(selection: newSelection)
+@@ -42,6 +42,15 @@ struct ListView: ExpoSwiftUI.View {
+     props.onSelectionChange(["selection": selectionArray])
+   }
+ 
++  private static func selectionKey(_ array: [Either<String, Double>]?) -> String {
++    guard let array else { return "" }
++    return array.map { item -> String in
++      if let s: String = item.get() { return "s:\(s)" }
++      if let d: Double = item.get() { return "d:\(d)" }
++      return "?"
++    }.joined(separator: ",")
++  }
++
+   private static func getHashableSetFromEither(_ array: [Either<String, Double>]?) -> Set<AnyHashable> {
+     guard let array else { return Set() }
+     var result = Set<AnyHashable>()
+diff --git a/node_modules/@expo/ui/ios/Picker/PickerView.swift b/node_modules/@expo/ui/ios/Picker/PickerView.swift
+index 9223643..e225cb9 100644
+--- a/node_modules/@expo/ui/ios/Picker/PickerView.swift
++++ b/node_modules/@expo/ui/ios/Picker/PickerView.swift
+@@ -53,14 +53,21 @@ internal struct PickerView: ExpoSwiftUI.View {
+       }
+       props.onSelectionChange(payload)
+     }
+-    .onChange(of: props.selection) { newValue in
+-      selection = Self.getHashableFromEither(newValue)
++    .onChange(of: Self.selectionKey(props.selection)) { _ in
++      selection = Self.getHashableFromEither(props.selection)
+     }
+     .onAppear {
+       selection = Self.getHashableFromEither(props.selection)
+     }
+   }
+ 
++  private static func selectionKey(_ either: Either<String, Double>?) -> String {
++    guard let either else { return "" }
++    if let s: String = either.get() { return "s:\(s)" }
++    if let d: Double = either.get() { return "d:\(d)" }
++    return "?"
++  }
++
+   private static func getHashableFromEither(_ either: Either<String, Double>?) -> AnyHashable? {
+     guard let either else { return nil }
+     if let stringValue: String = either.get() {

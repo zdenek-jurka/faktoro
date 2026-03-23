@@ -1,0 +1,969 @@
+import { ThemedText } from '@/components/themed-text';
+import { ThemedView } from '@/components/themed-view';
+import { IconSymbol, type IconSymbolName } from '@/components/ui/icon-symbol';
+import { OptionSheetModal } from '@/components/ui/option-sheet-modal';
+import { Colors } from '@/constants/theme';
+import database from '@/db';
+import { useBottomSafeAreaStyle } from '@/hooks/use-bottom-safe-area-style';
+import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useI18nContext } from '@/i18n/i18n-react';
+import { normalizeIntlLocale, normalizeLocale } from '@/i18n/locale-options';
+import type { Locales } from '@/i18n/i18n-types';
+import { i18nObject } from '@/i18n/i18n-util';
+import { ClientModel, InvoiceItemModel, InvoiceModel } from '@/model';
+import { renderInvoicePdfHtml } from '@/repositories/invoice-template-repository';
+import {
+  deliverIntegrationResult,
+  getExportIntegrations,
+  transformExportXml,
+  type ExportIntegration,
+  validateBaseExportXml,
+} from '@/repositories/export-integration-repository';
+import { getConfigValue, setConfigValue } from '@/repositories/config-storage-repository';
+import { getSettings } from '@/repositories/settings-repository';
+import { getBetaSettings } from '@/repositories/beta-settings-repository';
+import {
+  type BuyerSnapshot,
+  buildBaseInvoiceXml,
+  buildInvoiceXml,
+  getInvoiceXmlFileSuffix,
+  type InvoiceXmlFormat,
+  type SellerSnapshot,
+} from '@/templates/invoice/xml';
+import { normalizeCurrencyCode } from '@/utils/currency-utils';
+import { buildPdfLogoHtml } from '@/utils/pdf-logo';
+import { formatPrice } from '@/utils/price-utils';
+import { Q } from '@nozbe/watermelondb';
+import { Stack, useLocalSearchParams } from 'expo-router';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Alert, FlatList, StyleSheet, Pressable, View } from 'react-native';
+
+const LAST_INVOICE_EXPORT_ACTION_KEY = 'invoice_export.last_action';
+
+type LastInvoiceExportAction =
+  | 'pdf'
+  | 'xml_base'
+  | `structured:${InvoiceXmlFormat}`
+  | `integration:${string}`;
+
+type PaymentQrType = 'none' | 'spayd' | 'epc' | 'swiss';
+type StructuredExportFormat = 'none' | InvoiceXmlFormat;
+type PaymentQrLabels = {
+  receiverFallback: string;
+  invoiceReference: string;
+};
+
+function getPaymentMethodLabel(
+  LL: ReturnType<typeof useI18nContext>['LL'],
+  value?: string,
+): string {
+  if (value === 'cash') return LL.invoices.paymentMethodCash();
+  if (value === 'card') return LL.invoices.paymentMethodCard();
+  if (value === 'card_nfc') return LL.invoices.paymentMethodCard();
+  return LL.invoices.paymentMethodBankTransfer();
+}
+
+function sanitizeText(value?: string): string {
+  return (value || '').replaceAll('*', '').replaceAll('\n', ' ').trim();
+}
+
+function normalizeIban(iban?: string): string {
+  return (iban || '').replace(/\s+/g, '').toUpperCase();
+}
+
+function mod97(value: string): number {
+  let remainder = 0;
+  for (const char of value) {
+    const digit = Number(char);
+    if (!Number.isFinite(digit)) continue;
+    remainder = (remainder * 10 + digit) % 97;
+  }
+  return remainder;
+}
+
+function toIbanNumeric(countryCode: string): string {
+  return countryCode
+    .toUpperCase()
+    .split('')
+    .map((char) => String(char.charCodeAt(0) - 55))
+    .join('');
+}
+
+function convertCzechBankAccountToIban(bankAccount?: string): string | null {
+  if (!bankAccount) return null;
+  const compact = bankAccount.replace(/\s+/g, '');
+  const [accountPartRaw, bankCodeRaw] = compact.split('/');
+  if (!accountPartRaw || !bankCodeRaw) return null;
+
+  const bankCode = bankCodeRaw.replace(/\D/g, '');
+  if (bankCode.length !== 4) return null;
+
+  const [prefixRaw, numberRawMaybe] = accountPartRaw.split('-');
+  const numberRaw = numberRawMaybe ?? prefixRaw;
+  const prefix = numberRawMaybe ? prefixRaw : '';
+
+  const prefixDigits = prefix.replace(/\D/g, '');
+  const numberDigits = numberRaw.replace(/\D/g, '');
+  if (!numberDigits || prefixDigits.length > 6 || numberDigits.length > 10) return null;
+
+  const bban = `${bankCode}${prefixDigits.padStart(6, '0')}${numberDigits.padStart(10, '0')}`;
+  const checkInput = `${bban}${toIbanNumeric('CZ')}00`;
+  const checkDigits = String(98 - mod97(checkInput)).padStart(2, '0');
+  return `CZ${checkDigits}${bban}`;
+}
+
+function resolveSpaydAccount(seller: SellerSnapshot): string | null {
+  const iban = normalizeIban(seller.iban);
+  if (/^[A-Z]{2}\d{13,32}$/.test(iban)) {
+    return iban;
+  }
+
+  const converted = convertCzechBankAccountToIban(seller.bankAccount);
+  if (converted) return converted;
+
+  const normalizedBankAccount = normalizeIban(seller.bankAccount);
+  if (/^[A-Z]{2}\d{13,32}$/.test(normalizedBankAccount)) {
+    return normalizedBankAccount;
+  }
+  return null;
+}
+
+function normalizeAmount(value: number): string {
+  return value.toFixed(2);
+}
+
+function buildSpaydPayload(
+  invoice: InvoiceModel,
+  seller: SellerSnapshot,
+  labels: PaymentQrLabels,
+): string | null {
+  const account = resolveSpaydAccount(seller);
+  if (!account) return null;
+  const amount = normalizeAmount(invoice.total);
+  const currency = normalizeCurrencyCode(invoice.currency).toUpperCase();
+  const variableSymbol = invoice.invoiceNumber.replace(/\D/g, '').slice(0, 10);
+  const parts = [
+    'SPD*1.0',
+    `ACC:${account}`,
+    `AM:${amount}`,
+    `CC:${currency}`,
+    `MSG:${sanitizeText(labels.invoiceReference)}`,
+  ];
+  if (variableSymbol) {
+    parts.push(`X-VS:${variableSymbol}`);
+  }
+  return parts.join('*');
+}
+
+function buildEpcPayload(
+  invoice: InvoiceModel,
+  seller: SellerSnapshot,
+  labels: PaymentQrLabels,
+): string | null {
+  const iban = normalizeIban(seller.iban);
+  if (!iban) return null;
+  if (normalizeCurrencyCode(invoice.currency).toUpperCase() !== 'EUR') return null;
+
+  const bic = (seller.swift || '').replace(/\s+/g, '').toUpperCase();
+  const name = sanitizeText(seller.companyName || labels.receiverFallback).slice(0, 70);
+  const amount = normalizeAmount(invoice.total);
+  const reference = sanitizeText(labels.invoiceReference).slice(0, 140);
+
+  return ['BCD', '002', '1', 'SCT', bic, name, iban, `EUR${amount}`, '', '', reference].join('\n');
+}
+
+function buildSwissPayload(
+  invoice: InvoiceModel,
+  seller: SellerSnapshot,
+  labels: PaymentQrLabels,
+): string | null {
+  const iban = normalizeIban(seller.iban);
+  if (!iban || (!iban.startsWith('CH') && !iban.startsWith('LI'))) return null;
+  const currency = normalizeCurrencyCode(invoice.currency).toUpperCase();
+  if (currency !== 'CHF' && currency !== 'EUR') return null;
+
+  const name = sanitizeText(seller.companyName);
+  const address = sanitizeText(seller.address);
+  const city = sanitizeText(seller.city);
+  const postal = sanitizeText(seller.postalCode);
+  const country = sanitizeText(seller.country || 'CH').toUpperCase();
+  if (!name || !address || !city || !postal || !country) return null;
+
+  const amount = normalizeAmount(invoice.total);
+  const message = sanitizeText(labels.invoiceReference).slice(0, 140);
+
+  return [
+    'SPC',
+    '0200',
+    '1',
+    iban,
+    'K',
+    name,
+    address,
+    `${postal} ${city}`.trim(),
+    '',
+    '',
+    country,
+    '',
+    '',
+    '',
+    '',
+    '',
+    '',
+    '',
+    amount,
+    currency,
+    '',
+    '',
+    '',
+    '',
+    '',
+    '',
+    '',
+    'NON',
+    '',
+    message,
+    'EPD',
+  ].join('\n');
+}
+
+function buildPaymentQrPayload(
+  qrType: PaymentQrType,
+  invoice: InvoiceModel,
+  seller: SellerSnapshot,
+  labels: PaymentQrLabels,
+): string | null {
+  if (qrType === 'spayd') return buildSpaydPayload(invoice, seller, labels);
+  if (qrType === 'epc') return buildEpcPayload(invoice, seller, labels);
+  if (qrType === 'swiss') return buildSwissPayload(invoice, seller, labels);
+  return null;
+}
+
+async function buildPaymentQrHtmlEmbedded(
+  qrType: PaymentQrType,
+  payload: string | null,
+  qrLabel: string,
+): Promise<string> {
+  if (qrType === 'none' || !payload) return '';
+  const qrLabelColor = Colors.light.text;
+
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const QRCode = require('qrcode');
+    // Prefer inline SVG for better compatibility in Expo Print; fallback to PNG data URL.
+    try {
+      const svg: string = await QRCode.toString(payload, {
+        type: 'svg',
+        errorCorrectionLevel: 'M',
+        margin: 1,
+        width: 220,
+      });
+      const sizedSvg = svg.replace('<svg', '<svg style="width:35mm;height:35mm;display:block;"');
+      return `<div><div style="font-size:11px;color:${qrLabelColor};margin-bottom:4px">${qrLabel} (${qrType.toUpperCase()})</div>${sizedSvg}</div>`;
+    } catch {
+      const dataUrl: string = await QRCode.toDataURL(payload, {
+        errorCorrectionLevel: 'M',
+        margin: 1,
+        width: 220,
+      });
+      return `<div><div style="font-size:11px;color:${qrLabelColor};margin-bottom:4px">${qrLabel} (${qrType.toUpperCase()})</div><img src="${dataUrl}" style="width:35mm;height:35mm;display:block;" /></div>`;
+    }
+  } catch {
+    return '';
+  }
+}
+
+export default function InvoiceDetailScreen() {
+  const { id } = useLocalSearchParams<{ id: string }>();
+  const colorScheme = useColorScheme();
+  const palette = Colors[colorScheme ?? 'light'];
+  const { LL, locale } = useI18nContext();
+  const listContentStyle = useBottomSafeAreaStyle(styles.listContent);
+  const intlLocale = normalizeIntlLocale(locale, 'en');
+
+  const [invoice, setInvoice] = useState<InvoiceModel | null>(null);
+  const [client, setClient] = useState<ClientModel | null>(null);
+  const [items, setItems] = useState<InvoiceItemModel[]>([]);
+  const [exportingTarget, setExportingTarget] = useState<'pdf' | 'xml' | null>(null);
+  const [structuredExportFormat, setStructuredExportFormat] =
+    useState<StructuredExportFormat>('none');
+  const [isExportFormatSheetVisible, setIsExportFormatSheetVisible] = useState(false);
+  const [exportIntegrationsEnabled, setExportIntegrationsEnabled] = useState(false);
+  const [invoiceExportIntegrations, setInvoiceExportIntegrations] = useState<ExportIntegration[]>(
+    [],
+  );
+  const [lastExportAction, setLastExportAction] = useState<LastInvoiceExportAction | null>(null);
+  const exportLocale = useMemo<Locales>(() => {
+    return normalizeLocale(client?.exportLanguage, locale);
+  }, [client?.exportLanguage, locale]);
+  const LLExport = useMemo(() => i18nObject(exportLocale), [exportLocale]);
+
+  useEffect(() => {
+    const loadBetaSettings = async () => {
+      const settings = await getBetaSettings();
+      setExportIntegrationsEnabled(settings.exportIntegrationsEnabled);
+    };
+    void loadBetaSettings();
+  }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadLastExportAction = async () => {
+      const stored = await getConfigValue(LAST_INVOICE_EXPORT_ACTION_KEY);
+      if (!isMounted) return;
+      setLastExportAction(stored ? (stored as LastInvoiceExportAction) : null);
+    };
+
+    void loadLastExportAction();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    const loadIntegrations = async () => {
+      if (!exportIntegrationsEnabled) {
+        setInvoiceExportIntegrations([]);
+        return;
+      }
+      const integrations = await getExportIntegrations('invoice');
+      setInvoiceExportIntegrations(integrations);
+    };
+    void loadIntegrations();
+  }, [exportIntegrationsEnabled]);
+
+  useEffect(() => {
+    if (!id) return;
+
+    const invoiceSubscription = database
+      .get<InvoiceModel>(InvoiceModel.table)
+      .findAndObserve(id)
+      .subscribe(setInvoice);
+
+    return () => invoiceSubscription.unsubscribe();
+  }, [id]);
+
+  useEffect(() => {
+    if (!id) return;
+
+    const itemsSubscription = database
+      .get<InvoiceItemModel>(InvoiceItemModel.table)
+      .query(Q.where('invoice_id', id), Q.sortBy('created_at', Q.asc))
+      .observe()
+      .subscribe(setItems);
+
+    return () => itemsSubscription.unsubscribe();
+  }, [id]);
+
+  useEffect(() => {
+    if (!invoice?.clientId) {
+      setClient(null);
+      return;
+    }
+
+    const clientSubscription = database
+      .get<ClientModel>(ClientModel.table)
+      .findAndObserve(invoice.clientId)
+      .subscribe(setClient);
+
+    return () => clientSubscription.unsubscribe();
+  }, [invoice?.clientId]);
+
+  useEffect(() => {
+    const loadExportFormat = async () => {
+      const settings = await getSettings();
+      const format = client?.invoiceDefaultExportFormat || settings.invoiceDefaultExportFormat;
+      if (
+        format === 'none' ||
+        format === 'isdoc' ||
+        format === 'peppol' ||
+        format === 'xrechnung'
+      ) {
+        setStructuredExportFormat(format);
+        return;
+      }
+      setStructuredExportFormat('none');
+    };
+    void loadExportFormat();
+  }, [client?.invoiceDefaultExportFormat]);
+
+  const seller = useMemo<SellerSnapshot>(() => {
+    if (!invoice?.sellerSnapshotJson) return {};
+    try {
+      return JSON.parse(invoice.sellerSnapshotJson) as SellerSnapshot;
+    } catch {
+      return {};
+    }
+  }, [invoice?.sellerSnapshotJson]);
+  const buyer = useMemo<BuyerSnapshot>(() => {
+    if (invoice?.buyerSnapshotJson) {
+      try {
+        return JSON.parse(invoice.buyerSnapshotJson) as BuyerSnapshot;
+      } catch {
+        // Fall back to current client data for legacy invoices without a valid snapshot.
+      }
+    }
+
+    return {
+      name: client?.name,
+      companyId: client?.companyId,
+      vatNumber: client?.vatNumber,
+      email: client?.email,
+      phone: client?.phone,
+    };
+  }, [
+    client?.companyId,
+    client?.email,
+    client?.name,
+    client?.phone,
+    client?.vatNumber,
+    invoice?.buyerSnapshotJson,
+  ]);
+
+  const rememberLastExportAction = async (action: LastInvoiceExportAction) => {
+    setLastExportAction(action);
+    await setConfigValue(LAST_INVOICE_EXPORT_ACTION_KEY, action);
+  };
+
+  const handleExportPdf = async () => {
+    if (!invoice) return;
+
+    try {
+      setExportingTarget('pdf');
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const Print = require('expo-print');
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const Sharing = require('expo-sharing');
+
+      const logoHtml = await buildPdfLogoHtml(seller.logoUri);
+      const sellerAddress = [
+        seller.address,
+        seller.street2,
+        seller.city,
+        seller.postalCode,
+        seller.country,
+      ]
+        .filter(Boolean)
+        .join(', ');
+      const buyerAddress = [
+        buyer.address,
+        buyer.street2,
+        buyer.city,
+        buyer.postalCode,
+        buyer.country,
+      ]
+        .filter(Boolean)
+        .join(', ');
+      const qrType = (seller.qrType || 'none') as PaymentQrType;
+      const paymentQrLabels: PaymentQrLabels = {
+        receiverFallback: LLExport.invoices.exportReceiverFallback(),
+        invoiceReference: LLExport.invoices.exportInvoiceNote({
+          invoiceNumber: invoice.invoiceNumber,
+        }),
+      };
+      const paymentQrPayload = buildPaymentQrPayload(qrType, invoice, seller, paymentQrLabels);
+      const paymentQrHtml = await buildPaymentQrHtmlEmbedded(
+        qrType,
+        paymentQrPayload,
+        LLExport.settings.invoiceQrType(),
+      );
+
+      const html = renderInvoicePdfHtml({
+        templateId: 'default',
+        locale: exportLocale,
+        currency: invoice.currency,
+        invoiceNumber: invoice.invoiceNumber,
+        issueAt: invoice.issuedAt,
+        taxableAt: invoice.taxableAt || invoice.issuedAt,
+        dueAt: invoice.dueAt,
+        subtotal: invoice.subtotal,
+        total: invoice.total,
+        footerNote: invoice.footerNote,
+        bankAccount: seller.bankAccount,
+        iban: seller.iban,
+        swift: seller.swift,
+        logoHtml,
+        paymentQrHtml,
+        labels: {
+          title: LLExport.invoices.title(),
+          invoiceNumber: LLExport.invoices.invoiceNumber(),
+          issueDate: LLExport.invoices.issueDate(),
+          taxableSupplyDate: LLExport.invoices.taxableSupplyDate(),
+          dueDate: LLExport.invoices.dueDate(),
+          client: LLExport.timeTracking.client(),
+          supplier: LLExport.invoices.exportSupplier(),
+          buyer: LLExport.invoices.exportBuyer(),
+          vat: LLExport.invoices.exportVat(),
+          vatPercent: LLExport.invoices.exportVatPercent(),
+          taxBase: LLExport.invoices.exportTaxBase(),
+          reference: LLExport.invoices.exportReference(),
+          account: LLExport.invoices.exportAccount(),
+          iban: LLExport.invoices.exportIban(),
+          swift: LLExport.invoices.exportSwift(),
+          itemDescription: LLExport.invoices.itemDescription(),
+          quantity: LLExport.invoices.quantity(),
+          unitPrice: LLExport.invoices.unitPrice(),
+          lineTotal: LLExport.invoices.lineTotal(),
+          total: LLExport.invoices.total(),
+        },
+        items: items.map((item) => ({
+          description: item.description,
+          quantity: item.quantity,
+          unitPrice: item.unitPrice,
+          totalPrice: item.totalPrice,
+          vatRate: item.vatRate,
+        })),
+        seller: {
+          name: seller.companyName,
+          addressLine: sellerAddress,
+          companyId: seller.companyId,
+          vatNumber: seller.vatNumber,
+          email: seller.email,
+        },
+        buyer: {
+          name: buyer.name,
+          addressLine: buyerAddress,
+          companyId: buyer.companyId,
+          vatNumber: buyer.vatNumber,
+          email: buyer.email,
+          phone: buyer.phone,
+        },
+      });
+
+      const pdfResult = await Print.printToFileAsync({ html });
+
+      const canShare = await Sharing.isAvailableAsync();
+      if (!canShare) {
+        Alert.alert(LLExport.common.error(), LLExport.invoices.shareUnavailable());
+        return;
+      }
+
+      await Sharing.shareAsync(pdfResult.uri, {
+        mimeType: 'application/pdf',
+        dialogTitle: LLExport.invoices.shareInvoice(),
+      });
+      await rememberLastExportAction('pdf');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : LLExport.invoices.exportError();
+      Alert.alert(LLExport.common.error(), message);
+    } finally {
+      setExportingTarget(null);
+    }
+  };
+
+  const handleExportXml = async (format: InvoiceXmlFormat) => {
+    if (!invoice) return;
+    try {
+      setExportingTarget('xml');
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const FileSystemLegacy = require('expo-file-system/legacy');
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const Sharing = require('expo-sharing');
+
+      const cacheDirectory: string | undefined = FileSystemLegacy.cacheDirectory;
+      if (!cacheDirectory) {
+        Alert.alert(LLExport.common.error(), LLExport.invoices.exportError());
+        return;
+      }
+
+      const xml = buildInvoiceXml(format, { invoice, items, client, seller, buyer });
+      const suffix = getInvoiceXmlFileSuffix(format);
+
+      const safeNumber = invoice.invoiceNumber.replace(/[^a-zA-Z0-9_-]+/g, '-');
+      const targetUri = `${cacheDirectory}invoice-${safeNumber}-${suffix}.xml`;
+      await FileSystemLegacy.writeAsStringAsync(targetUri, xml);
+
+      const canShare = await Sharing.isAvailableAsync();
+      if (!canShare) {
+        Alert.alert(LLExport.common.error(), LLExport.invoices.shareUnavailable());
+        return;
+      }
+
+      await Sharing.shareAsync(targetUri, {
+        mimeType: 'application/xml',
+        dialogTitle: LLExport.invoices.shareInvoice(),
+      });
+      await rememberLastExportAction(`structured:${format}`);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : LLExport.invoices.exportError();
+      Alert.alert(LLExport.common.error(), message);
+    } finally {
+      setExportingTarget(null);
+    }
+  };
+
+  const handleExportCustomXml = async (integrationId: string | null) => {
+    if (!invoice) return;
+
+    try {
+      setExportingTarget('xml');
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const FileSystemLegacy = require('expo-file-system/legacy');
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const Sharing = require('expo-sharing');
+
+      const cacheDirectory: string | undefined = FileSystemLegacy.cacheDirectory;
+      if (!cacheDirectory) {
+        Alert.alert(LLExport.common.error(), LLExport.invoices.exportError());
+        return;
+      }
+
+      const safeNumber = invoice.invoiceNumber.replace(/[^a-zA-Z0-9_-]+/g, '-');
+      const baseXml = buildBaseInvoiceXml({ invoice, items, client, seller, buyer });
+      validateBaseExportXml('invoice', baseXml);
+
+      if (integrationId) {
+        const integration = invoiceExportIntegrations.find((item) => item.id === integrationId);
+        if (!integration) {
+          throw new Error('Integration not found');
+        }
+        const transformedXml = await transformExportXml('invoice', baseXml, integration.xslt);
+        const result = await deliverIntegrationResult(
+          integration,
+          transformedXml,
+          `invoice-${safeNumber}-custom.xml`,
+        );
+        if (result.outcome === 'copied') {
+          Alert.alert(LLExport.common.success(), LLExport.invoices.exportClipboardSuccess());
+        } else if (result.outcome === 'sent') {
+          Alert.alert(
+            LLExport.common.success(),
+            LLExport.invoices.exportWebhookSuccess({ status: result.status }),
+          );
+        }
+        await rememberLastExportAction(`integration:${integration.id}`);
+        return;
+      }
+
+      const targetUri = `${cacheDirectory}invoice-${safeNumber}-invoice.xml`;
+      await FileSystemLegacy.writeAsStringAsync(targetUri, baseXml, {
+        encoding: FileSystemLegacy.EncodingType?.UTF8 ?? 'utf8',
+      });
+
+      const canShare = await Sharing.isAvailableAsync();
+      if (!canShare) {
+        Alert.alert(LLExport.common.error(), LLExport.invoices.shareUnavailable());
+        return;
+      }
+
+      await Sharing.shareAsync(targetUri, {
+        mimeType: 'application/xml',
+        dialogTitle: LLExport.invoices.shareInvoice(),
+      });
+      await rememberLastExportAction('xml_base');
+    } catch (error) {
+      const isHttpError = error instanceof Error && 'httpStatus' in error;
+      const isNetworkError = error instanceof Error && 'networkError' in error;
+      const message = isHttpError
+        ? LLExport.invoices.exportWebhookError({
+            status: (error as Error & { httpStatus: number }).httpStatus,
+          })
+        : isNetworkError
+          ? LLExport.invoices.exportWebhookNetworkError()
+          : error instanceof Error
+            ? error.message
+            : LLExport.invoices.exportError();
+      Alert.alert(LLExport.common.error(), message);
+    } finally {
+      setExportingTarget(null);
+    }
+  };
+
+  const getXmlExportFormatLabel = (format: StructuredExportFormat): string => {
+    if (format === 'none') return LL.settings.invoiceDefaultExportFormatNone();
+    if (format === 'isdoc') return LL.invoices.exportIsdoc();
+    if (format === 'peppol') return LL.invoices.exportPeppol();
+    return LL.invoices.exportXrechnung();
+  };
+
+  const getXmlExportFormatIcon = (format: InvoiceXmlFormat): IconSymbolName => {
+    if (format === 'isdoc') return 'doc.richtext.fill';
+    if (format === 'peppol') return 'network';
+    return 'building.columns.fill';
+  };
+
+  const openExportFormatMenu = () => {
+    setIsExportFormatSheetVisible(true);
+  };
+
+  const recommendedExport = (() => {
+    if (!lastExportAction) return null;
+
+    if (lastExportAction === 'pdf') {
+      return {
+        label: LL.invoices.exportPdf(),
+        icon: 'arrow.down.doc.fill' as IconSymbolName,
+        onPress: () => void handleExportPdf(),
+      };
+    }
+
+    if (lastExportAction === 'xml_base') {
+      return {
+        label: LLExport.invoices.exportBaseXmlOption(),
+        icon: 'doc.richtext' as IconSymbolName,
+        onPress: () => void handleExportCustomXml(null),
+      };
+    }
+
+    if (lastExportAction.startsWith('structured:')) {
+      const format = lastExportAction.slice('structured:'.length) as InvoiceXmlFormat;
+      if (!['isdoc', 'peppol', 'xrechnung'].includes(format)) return null;
+      return {
+        label: getXmlExportFormatLabel(format),
+        icon: getXmlExportFormatIcon(format),
+        onPress: () => void handleExportXml(format),
+      };
+    }
+
+    if (lastExportAction.startsWith('integration:')) {
+      const integrationId = lastExportAction.slice('integration:'.length);
+      const integration = invoiceExportIntegrations.find((item) => item.id === integrationId);
+      if (!integration) return null;
+      return {
+        label: integration.name,
+        icon: 'doc.richtext' as IconSymbolName,
+        onPress: () => void handleExportCustomXml(integration.id),
+      };
+    }
+
+    return null;
+  })();
+
+  const primaryExportAction = recommendedExport
+    ? recommendedExport
+    : {
+        label: LL.invoices.exportAction(),
+        icon: 'arrow.down.doc.fill' as IconSymbolName,
+        onPress: () => openExportFormatMenu(),
+      };
+
+  return (
+    <ThemedView style={styles.container}>
+      <Stack.Screen options={{ title: invoice?.invoiceNumber || LL.invoices.title() }} />
+
+      {invoice ? (
+        <>
+          <View
+            style={[
+              styles.summaryCard,
+              { backgroundColor: Colors[colorScheme ?? 'light'].cardBackground },
+            ]}
+          >
+            <ThemedText type="defaultSemiBold">{invoice.invoiceNumber}</ThemedText>
+            <ThemedText style={styles.metaText}>{client?.name || '-'}</ThemedText>
+            <ThemedText style={styles.metaText}>
+              {new Date(invoice.issuedAt).toLocaleDateString(intlLocale)} • {invoice.currency}
+            </ThemedText>
+            <ThemedText style={styles.metaText}>
+              {LL.invoices.paymentMethod()}: {getPaymentMethodLabel(LL, invoice.paymentMethod)}
+            </ThemedText>
+            {invoice.taxableAt ? (
+              <ThemedText style={styles.metaText}>
+                {LL.invoices.taxableSupplyDate()}:{' '}
+                {new Date(invoice.taxableAt).toLocaleDateString(intlLocale)}
+              </ThemedText>
+            ) : null}
+            <ThemedText style={styles.totalText}>
+              {formatPrice(invoice.total, normalizeCurrencyCode(invoice.currency), intlLocale)}
+            </ThemedText>
+          </View>
+
+          <View style={styles.exportRow}>
+            <View
+              style={[
+                styles.exportSplit,
+                {
+                  backgroundColor: palette.cardBackground,
+                  borderColor: palette.border,
+                  opacity: exportingTarget !== null ? 0.72 : 1,
+                },
+              ]}
+            >
+              <Pressable
+                style={({ pressed }) => [
+                  styles.exportSplitPrimary,
+                  { opacity: pressed ? 0.72 : 1 },
+                ]}
+                onPress={primaryExportAction.onPress}
+                disabled={exportingTarget !== null}
+                accessibilityRole="button"
+                accessibilityLabel={primaryExportAction.label}
+              >
+                <View style={styles.exportFormatContent}>
+                  <IconSymbol
+                    name={primaryExportAction.icon}
+                    size={15}
+                    color={palette.timeHighlight}
+                  />
+                  <ThemedText
+                    style={[styles.exportButtonSecondaryText, { color: palette.timeHighlight }]}
+                    numberOfLines={1}
+                  >
+                    {exportingTarget !== null ? LL.common.loading() : primaryExportAction.label}
+                  </ThemedText>
+                </View>
+              </Pressable>
+              <Pressable
+                style={({ pressed }) => [
+                  styles.exportSplitArrow,
+                  { borderLeftColor: palette.border, opacity: pressed ? 0.72 : 1 },
+                ]}
+                onPress={openExportFormatMenu}
+                disabled={exportingTarget !== null}
+                accessibilityRole="button"
+                accessibilityLabel={LL.invoices.exportFormatSelect()}
+              >
+                <IconSymbol name="chevron.down" size={11} color={palette.timeHighlight} />
+              </Pressable>
+            </View>
+          </View>
+          <FlatList
+            data={items}
+            keyExtractor={(item) => item.id}
+            contentContainerStyle={listContentStyle}
+            renderItem={({ item, index }) => {
+              const isLast = index === items.length - 1;
+              return (
+                <View
+                  style={[
+                    styles.row,
+                    { backgroundColor: Colors[colorScheme ?? 'light'].cardBackground },
+                    index === 0 && styles.rowFirst,
+                    isLast && styles.rowLast,
+                  ]}
+                >
+                  <View style={styles.rowMain}>
+                    <ThemedText type="defaultSemiBold">{item.description}</ThemedText>
+                    <ThemedText style={styles.metaText}>
+                      {item.quantity} × {item.unitPrice.toFixed(2)}
+                    </ThemedText>
+                  </View>
+                  <ThemedText style={[styles.lineTotal, { color: palette.timeHighlight }]}>
+                    {item.totalPrice.toFixed(2)}
+                  </ThemedText>
+                  {!isLast && (
+                    <View style={[styles.divider, { backgroundColor: palette.borderStrong }]} />
+                  )}
+                </View>
+              );
+            }}
+          />
+          <OptionSheetModal
+            visible={isExportFormatSheetVisible}
+            title={LL.invoices.exportFormatSelect()}
+            cancelLabel={LL.common.cancel()}
+            onClose={() => setIsExportFormatSheetVisible(false)}
+            options={(() => {
+              const allOptions: InvoiceXmlFormat[] = ['isdoc', 'peppol', 'xrechnung'];
+              const options =
+                structuredExportFormat === 'none'
+                  ? allOptions
+                  : allOptions.filter((option) => option !== structuredExportFormat);
+              const finalOptions = options.length > 0 ? options : allOptions;
+              const pdfOption = {
+                key: 'pdf',
+                label: LL.invoices.exportPdf(),
+                onPress: () => {
+                  void handleExportPdf();
+                },
+              };
+              const structuredOptions = finalOptions.map((option) => ({
+                key: option,
+                label: getXmlExportFormatLabel(option),
+                onPress: () => {
+                  setStructuredExportFormat(option);
+                  void handleExportXml(option);
+                },
+              }));
+              const customOptions =
+                exportIntegrationsEnabled && invoiceExportIntegrations.length > 0
+                  ? [
+                      {
+                        key: 'custom-base',
+                        label: LLExport.invoices.exportBaseXmlOption(),
+                        onPress: () => {
+                          void handleExportCustomXml(null);
+                        },
+                      },
+                      ...invoiceExportIntegrations.map((integration) => ({
+                        key: `custom-${integration.id}`,
+                        label: `${LLExport.invoices.exportCustomXml()}: ${integration.name}`,
+                        onPress: () => {
+                          void handleExportCustomXml(integration.id);
+                        },
+                      })),
+                    ]
+                  : [];
+              return [pdfOption, ...structuredOptions, ...customOptions];
+            })()}
+          />
+        </>
+      ) : (
+        <ThemedView style={styles.emptyState}>
+          <ThemedText style={styles.metaText}>{LL.common.loading()}</ThemedText>
+        </ThemedView>
+      )}
+    </ThemedView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1, paddingHorizontal: 16, paddingTop: 16 },
+  summaryCard: { borderRadius: 10, padding: 12, gap: 2, marginBottom: 10 },
+  metaText: { fontSize: 12, opacity: 0.7 },
+  totalText: { marginTop: 4, fontSize: 15, fontWeight: '700' },
+  exportButtonSecondaryText: { fontSize: 13, fontWeight: '600', flex: 1, minWidth: 0 },
+  exportSplit: {
+    borderRadius: 12,
+    flex: 1,
+    flexShrink: 0,
+    flexDirection: 'row',
+    alignItems: 'stretch',
+    overflow: 'hidden',
+    borderWidth: 1,
+  },
+  exportSplitPrimary: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    paddingVertical: 11,
+    paddingHorizontal: 14,
+    flexDirection: 'row',
+  },
+  exportFormatContent: {
+    flex: 1,
+    width: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  exportSplitArrow: {
+    width: 38,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderLeftWidth: StyleSheet.hairlineWidth,
+  },
+  exportRow: { flexDirection: 'row', gap: 8, marginBottom: 12, alignItems: 'stretch' },
+  listContent: { paddingBottom: 24 },
+  row: { paddingHorizontal: 14, paddingVertical: 12, position: 'relative' },
+  rowFirst: { borderTopLeftRadius: 10, borderTopRightRadius: 10 },
+  rowLast: { borderBottomLeftRadius: 10, borderBottomRightRadius: 10 },
+  rowMain: { paddingRight: 90, gap: 2 },
+  lineTotal: {
+    position: 'absolute',
+    right: 14,
+    top: 14,
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  divider: {
+    position: 'absolute',
+    left: 14,
+    right: 14,
+    bottom: 0,
+    height: StyleSheet.hairlineWidth,
+  },
+  emptyState: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+});

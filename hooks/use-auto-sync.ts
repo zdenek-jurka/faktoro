@@ -1,0 +1,284 @@
+import {
+  isAutoSyncEnabled,
+  isAutoSyncEventsEnabled,
+  isAutoSyncLocalDbTriggerEnabled,
+  isAutoSyncRunEnabled,
+  isSyncEnabled,
+} from '@/constants/features';
+import database from '@/db';
+import {
+  getDeviceSyncSettings,
+  observeDeviceSyncSettings,
+} from '@/repositories/device-sync-settings-repository';
+import { getSettings } from '@/repositories/settings-repository';
+import { runOnlineSyncSafely, subscribeToSyncEvents } from '@/repositories/sync-repository';
+import { getCurrentDeviceRunningTimeEntry } from '@/repositories/time-entry-repository';
+import { useEffect, useRef } from 'react';
+import { AppState } from 'react-native';
+
+const AUTO_SYNC_INTERVAL_MS = 30000;
+const WS_SAFETY_SYNC_INTERVAL_MS = 180000;
+const HEALTH_TIMEOUT_MS = 4500;
+const LOCAL_PUSH_DEBOUNCE_MS = 1200;
+const LOCAL_SYNC_TABLES = [
+  'client',
+  'client_address',
+  'price_list_item',
+  'client_price_override',
+  'time_entry',
+] as const;
+
+function normalizeServerUrl(value?: string | null): string {
+  return value?.trim().replace(/\/+$/, '') || '';
+}
+
+async function hasCurrentDeviceRunningTimer(): Promise<boolean> {
+  try {
+    const entry = await getCurrentDeviceRunningTimeEntry();
+    return !!entry?.isRunning;
+  } catch {
+    return false;
+  }
+}
+
+async function isServerReachable(serverUrl: string): Promise<boolean> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => {
+    controller.abort();
+  }, HEALTH_TIMEOUT_MS);
+
+  try {
+    const response = await fetch(`${serverUrl}/health`, {
+      method: 'GET',
+      signal: controller.signal,
+    });
+    return response.ok;
+  } catch {
+    return false;
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
+export function useAutoSync(): void {
+  const syncRunningRef = useRef(false);
+  const pendingSyncRef = useRef(false);
+  const suppressLocalChangeSchedulingRef = useRef(false);
+  const localChangesInitializedRef = useRef(false);
+  const lastReachableRef = useRef(false);
+  const lastSuccessfulSyncAtRef = useRef(0);
+  const pollingEnabledRef = useRef(false);
+  const transportModeRef = useRef<'ws' | 'polling'>('polling');
+  const eventsUnsubscribeRef = useRef<(() => void) | null>(null);
+  const eventsSubscriptionKeyRef = useRef('');
+
+  useEffect(() => {
+    if (!isSyncEnabled || !isAutoSyncEnabled) {
+      return;
+    }
+
+    let disposed = false;
+
+    const runSyncCycle = async (
+      reason: 'startup' | 'poll' | 'active' | 'settings' | 'event' | 'local',
+    ) => {
+      if (disposed) {
+        return;
+      }
+
+      if (syncRunningRef.current) {
+        pendingSyncRef.current = true;
+        return;
+      }
+
+      const appSettings = await getSettings();
+      const deviceSettings = await getDeviceSyncSettings(appSettings);
+      const serverUrl = normalizeServerUrl(deviceSettings.syncServerUrl);
+      const autoSyncEnabled = deviceSettings.syncAutoEnabled !== false;
+      const isConfigured =
+        autoSyncEnabled &&
+        !!deviceSettings.syncFeatureEnabled &&
+        !!deviceSettings.syncIsRegistered &&
+        !!serverUrl &&
+        !!deviceSettings.syncDeviceId.trim() &&
+        !!deviceSettings.syncAuthToken.trim();
+      pollingEnabledRef.current = isConfigured;
+
+      if (!isConfigured) {
+        if (eventsUnsubscribeRef.current) {
+          eventsUnsubscribeRef.current();
+          eventsUnsubscribeRef.current = null;
+          eventsSubscriptionKeyRef.current = '';
+        }
+        transportModeRef.current = 'polling';
+        lastReachableRef.current = false;
+        return;
+      }
+
+      // A running local timer is updated through local UI state and widget/live-activity
+      // surfaces. Syncing during that active interval has proven fragile on iOS and can
+      // make timer controls unresponsive. We still observe time_entry changes, but defer
+      // the actual sync until the timer is stopped so the final non-running record syncs.
+      if (reason !== 'settings' && (await hasCurrentDeviceRunningTimer())) {
+        return;
+      }
+
+      const nextSubscriptionKey = `${serverUrl}|${deviceSettings.syncDeviceId}|${deviceSettings.syncAuthToken}`;
+      if (isAutoSyncEventsEnabled) {
+        if (eventsSubscriptionKeyRef.current !== nextSubscriptionKey) {
+          if (eventsUnsubscribeRef.current) {
+            eventsUnsubscribeRef.current();
+            eventsUnsubscribeRef.current = null;
+          }
+
+          eventsUnsubscribeRef.current = subscribeToSyncEvents(
+            {
+              settings: appSettings,
+              syncServerUrl: deviceSettings.syncServerUrl,
+              syncDeviceId: deviceSettings.syncDeviceId,
+              syncAuthToken: deviceSettings.syncAuthToken,
+              syncIsRegistered: deviceSettings.syncIsRegistered,
+            },
+            {
+              onRemoteOnlinePush: () => {
+                void runSyncCycle('event');
+              },
+              onError: (error) => {
+                console.error('[auto-sync:events] failed', error);
+              },
+              onTransportModeChange: (mode) => {
+                transportModeRef.current = mode;
+              },
+            },
+            {
+              pollIntervalMs: 5000,
+              initialSinceMs: Date.now(),
+            },
+          );
+          eventsSubscriptionKeyRef.current = nextSubscriptionKey;
+        }
+      } else if (eventsUnsubscribeRef.current) {
+        eventsUnsubscribeRef.current();
+        eventsUnsubscribeRef.current = null;
+        eventsSubscriptionKeyRef.current = '';
+        transportModeRef.current = 'polling';
+      }
+
+      const reachable = await isServerReachable(serverUrl);
+      const wasReachable = lastReachableRef.current;
+      lastReachableRef.current = reachable;
+
+      if (!reachable) {
+        return;
+      }
+
+      const shouldSync =
+        reason === 'poll' ||
+        reason === 'startup' ||
+        reason === 'active' ||
+        reason === 'local' ||
+        !wasReachable;
+      if (!shouldSync && reason !== 'event') {
+        return;
+      }
+
+      if (!isAutoSyncRunEnabled) {
+        lastSuccessfulSyncAtRef.current = Date.now();
+        return;
+      }
+
+      syncRunningRef.current = true;
+      suppressLocalChangeSchedulingRef.current = true;
+      try {
+        await runOnlineSyncSafely(appSettings);
+        lastSuccessfulSyncAtRef.current = Date.now();
+      } catch (error) {
+        console.error(`[auto-sync:${reason}] failed`, error);
+      } finally {
+        syncRunningRef.current = false;
+        // Watermelon synchronize() mutates local rows and their sync metadata.
+        // Those changes are not user edits and must not immediately schedule
+        // another sync cycle, otherwise we can end up in a self-triggered loop.
+        setTimeout(() => {
+          suppressLocalChangeSchedulingRef.current = false;
+        }, 0);
+        if (pendingSyncRef.current) {
+          pendingSyncRef.current = false;
+          void runSyncCycle('event');
+        }
+      }
+    };
+
+    let localPushTimer: ReturnType<typeof setTimeout> | null = null;
+    const scheduleLocalPush = () => {
+      if (localPushTimer) {
+        clearTimeout(localPushTimer);
+      }
+      localPushTimer = setTimeout(() => {
+        void runSyncCycle('local');
+      }, LOCAL_PUSH_DEBOUNCE_MS);
+    };
+
+    void runSyncCycle('startup');
+    const intervalId = setInterval(() => {
+      if (!pollingEnabledRef.current) {
+        return;
+      }
+      if (transportModeRef.current === 'ws') {
+        if (Date.now() - lastSuccessfulSyncAtRef.current < WS_SAFETY_SYNC_INTERVAL_MS) {
+          return;
+        }
+      }
+      void runSyncCycle('poll');
+    }, AUTO_SYNC_INTERVAL_MS);
+
+    if (lastSuccessfulSyncAtRef.current === 0) {
+      lastSuccessfulSyncAtRef.current = Date.now();
+    }
+
+    const appStateSubscription = AppState.addEventListener('change', (state) => {
+      if (state === 'active') {
+        void runSyncCycle('active');
+        return;
+      }
+    });
+
+    const settingsSubscription = observeDeviceSyncSettings(() => {
+      void runSyncCycle('settings');
+    });
+
+    const localDataSubscription = isAutoSyncLocalDbTriggerEnabled
+      ? database.withChangesForTables(LOCAL_SYNC_TABLES as unknown as string[]).subscribe(() => {
+          if (!localChangesInitializedRef.current) {
+            localChangesInitializedRef.current = true;
+            return;
+          }
+
+          if (suppressLocalChangeSchedulingRef.current) {
+            return;
+          }
+
+          if (syncRunningRef.current) {
+            return;
+          }
+          scheduleLocalPush();
+        })
+      : null;
+
+    return () => {
+      disposed = true;
+      if (localPushTimer) {
+        clearTimeout(localPushTimer);
+        localPushTimer = null;
+      }
+      if (eventsUnsubscribeRef.current) {
+        eventsUnsubscribeRef.current();
+        eventsUnsubscribeRef.current = null;
+      }
+      clearInterval(intervalId);
+      appStateSubscription.remove();
+      settingsSubscription();
+      localDataSubscription?.unsubscribe();
+    };
+  }, []);
+}

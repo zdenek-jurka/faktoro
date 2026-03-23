@@ -1,0 +1,98 @@
+import groovy.json.JsonSlurper
+
+def faktoroCredentialsFile = rootProject.file("../credentials.json")
+def faktoroCredentials = [:]
+
+if (faktoroCredentialsFile.exists()) {
+    try {
+        def parsed = new JsonSlurper().parse(faktoroCredentialsFile)
+        faktoroCredentials = (parsed?.android?.keystore ?: [:]) as Map
+    } catch (Exception error) {
+        throw new GradleException(
+            "Failed to parse credentials.json for Android signing: ${error.message}",
+            error
+        )
+    }
+}
+
+def faktoroResolveSigningValue = { String gradlePropertyName, String credentialsKey ->
+    def gradleValue = project.findProperty(gradlePropertyName)?.toString()?.trim()
+    if (gradleValue) return gradleValue
+
+    def credentialsValue = faktoroCredentials[credentialsKey]?.toString()?.trim()
+    return credentialsValue ?: null
+}
+
+def faktoroResolveStoreFile = { String rawPath ->
+    if (!rawPath?.trim()) return null
+
+    def directFile = new File(rawPath)
+    if (directFile.isAbsolute()) return directFile
+
+    def projectRelative = file(rawPath)
+    if (projectRelative.exists()) return projectRelative
+
+    return rootProject.file("../${rawPath}")
+}
+
+def faktoroResolvedSigning = [
+    storeFilePath : faktoroResolveSigningValue("FAKTORO_UPLOAD_STORE_FILE", "keystorePath"),
+    storePassword : faktoroResolveSigningValue("FAKTORO_UPLOAD_STORE_PASSWORD", "keystorePassword"),
+    keyAlias      : faktoroResolveSigningValue("FAKTORO_UPLOAD_KEY_ALIAS", "keyAlias"),
+    keyPassword   : faktoroResolveSigningValue("FAKTORO_UPLOAD_KEY_PASSWORD", "keyPassword"),
+]
+
+def faktoroResolvedStoreFile = faktoroResolveStoreFile(faktoroResolvedSigning.storeFilePath)
+
+def faktoroIsReleaseBuildRequested = {
+    def taskNames = gradle.startParameter.taskNames ?: []
+    return taskNames.any { taskName ->
+        def normalized = taskName?.toLowerCase() ?: ""
+        normalized.contains("release")
+    }
+}
+
+def faktoroMissingSigningKeys = {
+    def missing = []
+    if (!faktoroResolvedSigning.storeFilePath) missing << "FAKTORO_UPLOAD_STORE_FILE / android.keystore.keystorePath"
+    if (!faktoroResolvedSigning.storePassword) missing << "FAKTORO_UPLOAD_STORE_PASSWORD / android.keystore.keystorePassword"
+    if (!faktoroResolvedSigning.keyAlias) missing << "FAKTORO_UPLOAD_KEY_ALIAS / android.keystore.keyAlias"
+    if (!faktoroResolvedSigning.keyPassword) missing << "FAKTORO_UPLOAD_KEY_PASSWORD / android.keystore.keyPassword"
+    return missing
+}
+
+if (faktoroIsReleaseBuildRequested()) {
+    def missingKeys = faktoroMissingSigningKeys()
+    if (!missingKeys.isEmpty()) {
+        throw new GradleException(
+            "Missing Android release signing configuration. " +
+            "Set Gradle properties or provide credentials.json with: ${missingKeys.join(', ')}"
+        )
+    }
+
+    if (faktoroResolvedStoreFile == null || !faktoroResolvedStoreFile.exists()) {
+        throw new GradleException(
+            "Android release keystore file was not found. " +
+            "Resolved path: ${faktoroResolvedSigning.storeFilePath}"
+        )
+    }
+}
+
+android {
+    signingConfigs {
+        release {
+            if (faktoroResolvedStoreFile != null && faktoroResolvedStoreFile.exists()) {
+                storeFile faktoroResolvedStoreFile
+                storePassword faktoroResolvedSigning.storePassword
+                keyAlias faktoroResolvedSigning.keyAlias
+                keyPassword faktoroResolvedSigning.keyPassword
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            signingConfig signingConfigs.release
+        }
+    }
+}

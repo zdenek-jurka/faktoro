@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           targetNamespace="https://faktoro.app/xml/timesheet/1.0"
+           xmlns:tns="https://faktoro.app/xml/timesheet/1.0"
+           elementFormDefault="qualified">
+
+  <xs:element name="Timesheet" type="tns:TimesheetType"/>
+
+  <xs:complexType name="TimesheetType">
+    <xs:sequence>
+      <xs:element name="Id"     type="xs:string"/>
+      <xs:element name="Number" type="xs:string" minOccurs="0"/>
+      <xs:element name="Label"  type="xs:string" minOccurs="0"/>
+      <xs:element name="Client" type="tns:ClientType"/>
+      <xs:element name="Period" type="tns:PeriodType"/>
+      <xs:element name="Summary" type="tns:SummaryType"/>
+      <xs:element name="Entries" type="tns:EntriesType"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="ClientType">
+    <xs:sequence>
+      <xs:element name="Id"   type="xs:string" minOccurs="0"/>
+      <xs:element name="Name" type="xs:string" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="PeriodType">
+    <xs:sequence>
+      <xs:element name="Type" type="xs:string"/>
+      <xs:element name="From" type="xs:date"/>
+      <xs:element name="To"   type="xs:date"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="SummaryType">
+    <xs:sequence>
+      <xs:element name="TotalEntries"         type="xs:nonNegativeInteger"/>
+      <xs:element name="TotalDurationSeconds" type="xs:nonNegativeInteger"/>
+      <xs:element name="TotalDurationHours"   type="xs:decimal"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="EntriesType">
+    <xs:sequence>
+      <xs:element name="Entry" type="tns:EntryType" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="EntryType">
+    <xs:sequence>
+      <xs:element name="Id"              type="xs:string"/>
+      <xs:element name="Description"     type="xs:string" minOccurs="0"/>
+      <xs:element name="StartTime"       type="xs:dateTime" minOccurs="0"/>
+      <xs:element name="EndTime"         type="xs:dateTime" minOccurs="0"/>
+      <xs:element name="DurationSeconds" type="xs:nonNegativeInteger"/>
+      <xs:element name="DurationHours"   type="xs:decimal"/>
+      <xs:element name="Rate"            type="xs:decimal" minOccurs="0"/>
+      <xs:element name="RateCurrency"    type="xs:string"  minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+
+</xs:schema>

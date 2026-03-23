@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           targetNamespace="https://faktoro.app/xml/invoice/1.0"
+           xmlns:tns="https://faktoro.app/xml/invoice/1.0"
+           elementFormDefault="qualified">
+
+  <xs:element name="Invoice" type="tns:InvoiceType"/>
+
+  <xs:complexType name="InvoiceType">
+    <xs:sequence>
+      <xs:element name="Id"                 type="xs:string"/>
+      <xs:element name="Number"             type="xs:string"/>
+      <xs:element name="ClientId"           type="xs:string"/>
+      <xs:element name="IssueDate"          type="xs:date"/>
+      <xs:element name="TaxableSupplyDate"  type="xs:date"   minOccurs="0"/>
+      <xs:element name="DueDate"            type="xs:date"   minOccurs="0"/>
+      <xs:element name="Currency"           type="xs:string"/>
+      <xs:element name="PaymentMethod"      type="xs:string" minOccurs="0"/>
+      <xs:element name="Status"             type="xs:string" minOccurs="0"/>
+      <xs:element name="HeaderNote"         type="xs:string" minOccurs="0"/>
+      <xs:element name="FooterNote"         type="xs:string" minOccurs="0"/>
+      <xs:element name="Seller"             type="tns:SellerType"/>
+      <xs:element name="Buyer"              type="tns:BuyerType"/>
+      <xs:element name="Summary"            type="tns:SummaryType"/>
+      <xs:element name="Items"              type="tns:ItemsType"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="SellerType">
+    <xs:sequence>
+      <xs:element name="Name"        type="xs:string" minOccurs="0"/>
+      <xs:element name="CompanyId"   type="xs:string" minOccurs="0"/>
+      <xs:element name="VatNumber"   type="xs:string" minOccurs="0"/>
+      <xs:element name="Address"     type="xs:string" minOccurs="0"/>
+      <xs:element name="Email"       type="xs:string" minOccurs="0"/>
+      <xs:element name="Phone"       type="xs:string" minOccurs="0"/>
+      <xs:element name="Website"     type="xs:string" minOccurs="0"/>
+      <xs:element name="BankAccount" type="xs:string" minOccurs="0"/>
+      <xs:element name="Iban"        type="xs:string" minOccurs="0"/>
+      <xs:element name="Swift"       type="xs:string" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="BuyerType">
+    <xs:sequence>
+      <xs:element name="Id"        type="xs:string" minOccurs="0"/>
+      <xs:element name="Name"      type="xs:string" minOccurs="0"/>
+      <xs:element name="CompanyId" type="xs:string" minOccurs="0"/>
+      <xs:element name="VatNumber" type="xs:string" minOccurs="0"/>
+      <xs:element name="Address"   type="xs:string" minOccurs="0"/>
+      <xs:element name="Email"     type="xs:string" minOccurs="0"/>
+      <xs:element name="Phone"     type="xs:string" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="SummaryType">
+    <xs:sequence>
+      <xs:element name="Subtotal" type="xs:decimal"/>
+      <xs:element name="Total"    type="xs:decimal"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="ItemsType">
+    <xs:sequence>
+      <xs:element name="Item" type="tns:ItemType" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="ItemType">
+    <xs:sequence>
+      <xs:element name="Id"          type="xs:string"/>
+      <xs:element name="SourceKind"  type="xs:string" minOccurs="0"/>
+      <xs:element name="SourceId"    type="xs:string" minOccurs="0"/>
+      <xs:element name="Description" type="xs:string"/>
+      <xs:element name="Quantity"    type="xs:decimal"/>
+      <xs:element name="Unit"        type="xs:string" minOccurs="0"/>
+      <xs:element name="UnitPrice"   type="xs:decimal"/>
+      <xs:element name="TotalPrice"  type="xs:decimal"/>
+      <xs:element name="VatCodeId"   type="xs:string" minOccurs="0"/>
+      <xs:element name="VatRate"     type="xs:decimal" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+
+</xs:schema>

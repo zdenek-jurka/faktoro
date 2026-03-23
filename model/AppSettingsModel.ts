@@ -1,0 +1,51 @@
+import { Model } from '@nozbe/watermelondb';
+import { date, field, readonly, text } from '@nozbe/watermelondb/decorators';
+
+export default class AppSettingsModel extends Model {
+  static table = 'app_settings';
+
+  @text('language') language: string;
+  @field('default_billing_interval') defaultBillingInterval?: number;
+  @field('timer_soft_limit_enabled') timerSoftLimitEnabled?: boolean;
+  @field('timer_soft_limit_minutes') timerSoftLimitMinutes?: number;
+  @field('timer_hard_limit_enabled') timerHardLimitEnabled?: boolean;
+  @field('timer_hard_limit_minutes') timerHardLimitMinutes?: number;
+  @text('default_company_registry') defaultCompanyRegistry?: string;
+  @field('is_vat_payer') isVatPayer: boolean;
+  @text('invoice_company_name') invoiceCompanyName?: string;
+  @text('invoice_address') invoiceAddress?: string;
+  @text('invoice_street2') invoiceStreet2?: string;
+  @text('invoice_city') invoiceCity?: string;
+  @text('invoice_postal_code') invoicePostalCode?: string;
+  @text('invoice_country') invoiceCountry?: string;
+  @text('invoice_company_id') invoiceCompanyId?: string;
+  @text('invoice_vat_number') invoiceVatNumber?: string;
+  @text('invoice_email') invoiceEmail?: string;
+  @text('invoice_phone') invoicePhone?: string;
+  @text('invoice_website') invoiceWebsite?: string;
+  @text('invoice_bank_account') invoiceBankAccount?: string;
+  @text('invoice_iban') invoiceIban?: string;
+  @text('invoice_swift') invoiceSwift?: string;
+  @text('invoice_logo_uri') invoiceLogoUri?: string;
+  @text('default_invoice_currency') defaultInvoiceCurrency?: string;
+  @text('default_invoice_payment_method') defaultInvoicePaymentMethod?: string;
+  @field('default_invoice_due_days') defaultInvoiceDueDays?: number;
+  @text('invoice_qr_type') invoiceQrType?: string;
+  @text('invoice_default_export_format') invoiceDefaultExportFormat?: string;
+  @text('invoice_series_prefix') invoiceSeriesPrefix?: string;
+  @text('invoice_series_pattern') invoiceSeriesPattern?: string;
+  @field('invoice_series_next_number') invoiceSeriesNextNumber?: number;
+  @field('invoice_series_padding') invoiceSeriesPadding?: number;
+  @field('invoice_series_per_device') invoiceSeriesPerDevice?: boolean;
+  @text('invoice_series_device_code') invoiceSeriesDeviceCode?: string;
+  @text('timesheet_series_prefix') timesheetSeriesPrefix?: string;
+  @text('timesheet_series_pattern') timesheetSeriesPattern?: string;
+  @field('timesheet_series_next_number') timesheetSeriesNextNumber?: number;
+  @field('timesheet_series_padding') timesheetSeriesPadding?: number;
+  @field('timesheet_series_per_device') timesheetSeriesPerDevice?: boolean;
+  @text('timesheet_series_device_code') timesheetSeriesDeviceCode?: string;
+  @field('app_lock_enabled') appLockEnabled?: boolean;
+  @field('app_lock_biometric_enabled') appLockBiometricEnabled?: boolean;
+  @readonly @date('created_at') createdAt: Date;
+  @readonly @date('updated_at') updatedAt: Date;
+}
