@@ -22,6 +22,7 @@ import { getSuggestedInvoiceNumber } from '@/repositories/invoice-repository';
 import { getSettings } from '@/repositories/settings-repository';
 import { TimesheetPreset } from '@/repositories/timesheet-repository';
 import { normalizeCurrencyCode } from '@/utils/currency-utils';
+import { getErrorMessage, isHttpError, isNetworkError } from '@/utils/error-utils';
 import {
   addDaysToIsoDate,
   resolveInvoiceDueDays,
@@ -520,17 +521,13 @@ export default function TimesheetDetailScreen() {
       });
       await rememberLastExportAction('xml_base');
     } catch (error) {
-      const isHttpError = error instanceof Error && 'httpStatus' in error;
-      const isNetworkError = error instanceof Error && 'networkError' in error;
-      const message = isHttpError
+      const message = isHttpError(error)
         ? LLExport.timesheets.exportWebhookError({
-            status: (error as Error & { httpStatus: number }).httpStatus,
+            status: error.httpStatus,
           })
-        : isNetworkError
+        : isNetworkError(error)
           ? LLExport.timesheets.exportWebhookNetworkError()
-          : error instanceof Error
-            ? error.message
-            : LLExport.timesheets.exportErrorXml();
+          : getErrorMessage(error, LLExport.timesheets.exportErrorXml());
       Alert.alert(LLExport.common.error(), message);
     } finally {
       setIsExportingXml(false);

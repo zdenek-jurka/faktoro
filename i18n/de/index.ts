@@ -796,8 +796,6 @@ const de = {
       'Dadurch werden alle synchronisierten Daten auf dem ursprünglichen Server gelöscht. Wähle Überspringen, wenn du keinen Zugriff mehr hast.',
     syncSaveUrlChangeForgetConfirm: 'Abmelden',
     syncSaveUrlChangeForgetSkip: 'Überspringen',
-    syncShowDetails: 'Details anzeigen',
-    syncHideDetails: 'Details ausblenden',
     syncServerUrlLabel: 'Server-URL',
     syncInstanceIdLabel: 'Instanz-ID',
     syncDeviceIdLabel: 'Geräte-ID',

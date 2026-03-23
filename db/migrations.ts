@@ -1008,5 +1008,14 @@ export default schemaMigrations({
         `),
       ],
     },
+    {
+      toVersion: 48,
+      steps: [
+        unsafeExecuteSql(`
+          create index if not exists "time_entry_is_running" on "time_entry" ("is_running");
+          create index if not exists "time_entry_is_paused" on "time_entry" ("is_paused");
+        `),
+      ],
+    },
   ],
 });

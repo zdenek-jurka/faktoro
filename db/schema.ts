@@ -7,7 +7,7 @@ export enum AddressType {
 }
 
 export default appSchema({
-  version: 47,
+  version: 48,
   tables: [
     tableSchema({
       name: 'app_settings',
@@ -128,8 +128,8 @@ export default appSchema({
         { name: 'start_time', type: 'number' },
         { name: 'end_time', type: 'number', isOptional: true },
         { name: 'duration', type: 'number', isOptional: true }, // in seconds
-        { name: 'is_running', type: 'boolean' },
-        { name: 'is_paused', type: 'boolean' },
+        { name: 'is_running', type: 'boolean', isIndexed: true },
+        { name: 'is_paused', type: 'boolean', isIndexed: true },
         { name: 'paused_at', type: 'number', isOptional: true },
         { name: 'total_paused_duration', type: 'number', isOptional: true }, // in seconds
         { name: 'running_device_id', type: 'string', isOptional: true, isIndexed: true },

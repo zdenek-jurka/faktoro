@@ -43,6 +43,8 @@ export type CreateInvoiceInput = {
   items: DraftInvoiceItemInput[];
 };
 
+export const INVOICE_TAXABLE_DATE_REQUIRED_ERROR = 'invoice.taxable_date_required';
+
 type SellerSnapshot = {
   companyName?: string;
   address?: string;
@@ -149,7 +151,7 @@ export async function createInvoice(input: CreateInvoiceInput): Promise<InvoiceM
     const client = await clientCollection.find(input.clientId);
     const buyerAddress = await getPreferredInvoiceAddress(input.clientId);
     if (settings?.isVatPayer && !input.taxableAt) {
-      throw new Error('Taxable supply date is required for VAT payer invoices.');
+      throw new Error(INVOICE_TAXABLE_DATE_REQUIRED_ERROR);
     }
 
     const effectiveQrType = client.invoiceQrType || settings?.invoiceQrType || 'none';

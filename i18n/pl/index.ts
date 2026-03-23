@@ -772,8 +772,6 @@ const pl = {
       'Spowoduje to usunięcie wszystkich zsynchronizowanych danych z oryginalnego serwera. Wybierz Pomiń, jeśli nie masz już dostępu.',
     syncSaveUrlChangeForgetConfirm: 'Wyrejestruj',
     syncSaveUrlChangeForgetSkip: 'Pomiń',
-    syncShowDetails: 'Pokaż szczegóły',
-    syncHideDetails: 'Ukryj szczegóły',
     syncServerUrlLabel: 'Adres URL serwera',
     syncInstanceIdLabel: 'Identyfikator instancji',
     syncDeviceIdLabel: 'Identyfikator urządzenia',

@@ -23,6 +23,7 @@ import { normalizeIntlLocale } from '@/i18n/locale-options';
 import { ClientModel } from '@/model';
 import {
   DraftInvoiceItemInput,
+  INVOICE_TAXABLE_DATE_REQUIRED_ERROR,
   createInvoice,
   getActivePriceListForInvoicing,
   getSuggestedInvoiceNumber,
@@ -30,6 +31,7 @@ import {
 } from '@/repositories/invoice-repository';
 import { getSettings } from '@/repositories/settings-repository';
 import { DEFAULT_CURRENCY_CODE, normalizeCurrencyCode } from '@/utils/currency-utils';
+import { getErrorMessage } from '@/utils/error-utils';
 import {
   DEFAULT_INVOICE_DUE_DAYS,
   DEFAULT_INVOICE_PAYMENT_METHOD,
@@ -491,7 +493,10 @@ export default function InvoiceDraftScreen() {
       router.dismissAll();
       router.push(`/invoices/${invoice.id}`);
     } catch (error) {
-      const message = error instanceof Error ? error.message : LL.invoices.errorCreate();
+      const message =
+        error instanceof Error && error.message === INVOICE_TAXABLE_DATE_REQUIRED_ERROR
+          ? LL.invoices.errorTaxableDateRequired()
+          : getErrorMessage(error, LL.invoices.errorCreate());
       Alert.alert(LL.common.error(), message);
     } finally {
       setIsSaving(false);

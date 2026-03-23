@@ -16,6 +16,7 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useI18nContext } from '@/i18n/i18n-react';
 import { normalizeIntlLocale } from '@/i18n/locale-options';
 import { CreateTimesheetInput, TimesheetPreset } from '@/repositories/timesheet-repository';
+import { getErrorMessage } from '@/utils/error-utils';
 import { isIos } from '@/utils/platform';
 import React, { useMemo, useState } from 'react';
 import {
@@ -262,8 +263,7 @@ export function CreateTimesheetModal({
       setLabel('');
       onClose();
     } catch (error) {
-      const message = error instanceof Error ? error.message : LL.timesheets.errorCreate();
-      Alert.alert(LL.common.error(), message || LL.timesheets.errorCreate());
+      Alert.alert(LL.common.error(), getErrorMessage(error, LL.timesheets.errorCreate()));
     } finally {
       setIsSubmitting(false);
     }

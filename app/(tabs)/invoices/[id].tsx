@@ -31,6 +31,7 @@ import {
   type SellerSnapshot,
 } from '@/templates/invoice/xml';
 import { normalizeCurrencyCode } from '@/utils/currency-utils';
+import { getErrorMessage, isHttpError, isNetworkError } from '@/utils/error-utils';
 import { buildPdfLogoHtml } from '@/utils/pdf-logo';
 import { formatPrice } from '@/utils/price-utils';
 import { Q } from '@nozbe/watermelondb';
@@ -654,17 +655,13 @@ export default function InvoiceDetailScreen() {
       });
       await rememberLastExportAction('xml_base');
     } catch (error) {
-      const isHttpError = error instanceof Error && 'httpStatus' in error;
-      const isNetworkError = error instanceof Error && 'networkError' in error;
-      const message = isHttpError
+      const message = isHttpError(error)
         ? LLExport.invoices.exportWebhookError({
-            status: (error as Error & { httpStatus: number }).httpStatus,
+            status: error.httpStatus,
           })
-        : isNetworkError
+        : isNetworkError(error)
           ? LLExport.invoices.exportWebhookNetworkError()
-          : error instanceof Error
-            ? error.message
-            : LLExport.invoices.exportError();
+          : getErrorMessage(error, LLExport.invoices.exportError());
       Alert.alert(LLExport.common.error(), message);
     } finally {
       setExportingTarget(null);

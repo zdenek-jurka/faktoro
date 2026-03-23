@@ -787,8 +787,6 @@ const pt = {
       'Isso excluirá todos os dados sincronizados do servidor original. Escolha Ignorar se você não tiver mais acesso.',
     syncSaveUrlChangeForgetConfirm: 'Cancelar registro',
     syncSaveUrlChangeForgetSkip: 'Ignorar',
-    syncShowDetails: 'Mostrar detalhes',
-    syncHideDetails: 'Ocultar detalhes',
     syncServerUrlLabel: 'URL do servidor',
     syncInstanceIdLabel: 'ID da instância',
     syncDeviceIdLabel: 'ID do dispositivo',

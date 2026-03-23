@@ -775,8 +775,6 @@ const cs = {
       'Tímto se smažou všechna synchronizovaná data na původním serveru. Zvol Přeskočit, pokud k němu nemáš přístup.',
     syncSaveUrlChangeForgetConfirm: 'Odregistrovat',
     syncSaveUrlChangeForgetSkip: 'Přeskočit',
-    syncShowDetails: 'Zobrazit detaily',
-    syncHideDetails: 'Skrýt detaily',
     syncServerUrlLabel: 'URL serveru',
     syncInstanceIdLabel: 'ID instance',
     syncDeviceIdLabel: 'ID zařízení',

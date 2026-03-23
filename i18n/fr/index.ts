@@ -795,8 +795,6 @@ const fr = {
       'Cela supprimera toutes les données synchronisées du serveur d’origine. Choisissez Passer si vous n’y avez plus accès.',
     syncSaveUrlChangeForgetConfirm: 'Se désinscrire',
     syncSaveUrlChangeForgetSkip: 'Passer',
-    syncShowDetails: 'Afficher les détails',
-    syncHideDetails: 'Masquer les détails',
     syncServerUrlLabel: 'URL du serveur',
     syncInstanceIdLabel: "ID d'instance",
     syncDeviceIdLabel: "ID de l'appareil",

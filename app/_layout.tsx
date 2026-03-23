@@ -38,6 +38,7 @@ import { getMoreSectionTitle, resolveAppLanguageSetting } from '@/i18n/locale-op
 import AppSettingsModel from '@/model/AppSettingsModel';
 import { hasPinHash, verifyPin } from '@/repositories/app-lock-repository';
 import { setupCurrencyFormatCacheSync } from '@/repositories/currency-settings-repository';
+import { getErrorMessage } from '@/utils/error-utils';
 import { getSettings } from '@/repositories/settings-repository';
 import { handleTimerActionUrl } from '@/repositories/timer-deeplink-repository';
 import { isAndroid, isIos } from '@/utils/platform';
@@ -267,7 +268,7 @@ function RootLayoutNav({ colorScheme }: { colorScheme: ReturnType<typeof useColo
       setUnlockError(LL.settings.unlockIncorrectPin());
     } catch (error) {
       console.error('Error verifying PIN:', error);
-      const message = error instanceof Error ? error.message : LL.settings.unlockGenericError();
+      const message = getErrorMessage(error, LL.settings.unlockGenericError());
       setUnlockError(message);
     }
   }, [LL.settings, pin]);

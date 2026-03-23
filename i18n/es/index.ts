@@ -790,8 +790,6 @@ const es = {
       'Esto eliminará todos los datos sincronizados del servidor original. Elige Omitir si ya no tienes acceso.',
     syncSaveUrlChangeForgetConfirm: 'Cancelar registro',
     syncSaveUrlChangeForgetSkip: 'Omitir',
-    syncShowDetails: 'Mostrar detalles',
-    syncHideDetails: 'Ocultar detalles',
     syncServerUrlLabel: 'URL del servidor',
     syncInstanceIdLabel: 'ID de instancia',
     syncDeviceIdLabel: 'ID del dispositivo',
