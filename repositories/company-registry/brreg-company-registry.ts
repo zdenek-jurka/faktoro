@@ -173,6 +173,7 @@ export class BrregCompanyRegistryService implements CompanyRegistryService {
     return {
       companyId: data.organisasjonsnummer,
       legalName: data.navn,
+      countryCode: 'NO',
       address: {
         formatted: street,
         city: address?.poststed,

@@ -1017,5 +1017,14 @@ export default schemaMigrations({
         `),
       ],
     },
+    {
+      toVersion: 49,
+      steps: [
+        addColumns({
+          table: 'vat_code',
+          columns: [{ name: 'country_code', type: 'string', isOptional: true }],
+        }),
+      ],
+    },
   ],
 });

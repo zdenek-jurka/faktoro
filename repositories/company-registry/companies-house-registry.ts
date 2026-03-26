@@ -148,6 +148,7 @@ export class CompaniesHouseRegistryService implements CompanyRegistryService {
     return {
       companyId: data.company_number,
       legalName: data.company_name,
+      countryCode: 'GB',
       address: {
         formatted: formattedAddress || undefined,
         city: officeAddress?.locality,

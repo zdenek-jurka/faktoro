@@ -5,6 +5,7 @@ export default class VatCodeModel extends Model {
   static table = 'vat_code';
 
   @field('name') name: string;
+  @field('country_code') countryCode: string | null;
   @readonly @date('created_at') createdAt: Date;
   @readonly @date('updated_at') updatedAt: Date;
 }

@@ -16,6 +16,7 @@ type ParsedBootstrapVatCodeToken = {
   kind: EuVatBootstrapRateKind;
   index: number;
   total: number;
+  countryCode?: string;
 };
 
 const KIND_SEGMENTS: Record<EuVatBootstrapRateKind, string> = {
@@ -37,10 +38,16 @@ export function createBootstrapVatCodeToken(
   kind: EuVatBootstrapRateKind,
   index: number,
   total: number,
+  countryCode?: string,
 ): string {
   const safeIndex = Math.max(1, index);
   const safeTotal = Math.max(safeIndex, total);
-  return `${BOOTSTRAP_TOKEN_PREFIX}${KIND_SEGMENTS[kind]}__${safeIndex}__${safeTotal}`;
+  const countrySegment = countryCode
+    ?.trim()
+    .toUpperCase()
+    .replace(/[^A-Z]/g, '');
+  const prefix = countrySegment ? `${countrySegment}__` : '';
+  return `${BOOTSTRAP_TOKEN_PREFIX}${prefix}${KIND_SEGMENTS[kind]}__${safeIndex}__${safeTotal}`;
 }
 
 export function parseBootstrapVatCodeToken(
@@ -48,19 +55,29 @@ export function parseBootstrapVatCodeToken(
 ): ParsedBootstrapVatCodeToken | null {
   if (!value) return null;
 
-  const match = value.match(/^__FAKTORO_VAT__([A-Z_]+)__(\d+)__(\d+)$/);
-  if (!match) return null;
+  // New format: __FAKTORO_VAT__CZ__STANDARD__1__1
+  const withCountry = value.match(/^__FAKTORO_VAT__([A-Z]{2})__([A-Z_]+)__(\d+)__(\d+)$/);
+  if (withCountry) {
+    const kind = SEGMENT_TO_KIND[withCountry[2]];
+    if (!kind) return null;
+    const index = Number.parseInt(withCountry[3], 10);
+    const total = Number.parseInt(withCountry[4], 10);
+    if (!Number.isFinite(index) || !Number.isFinite(total) || index < 1 || total < index) {
+      return null;
+    }
+    return { kind, index, total, countryCode: withCountry[1] };
+  }
 
-  const kind = SEGMENT_TO_KIND[match[1]];
+  // Legacy format: __FAKTORO_VAT__STANDARD__1__1
+  const legacy = value.match(/^__FAKTORO_VAT__([A-Z_]+)__(\d+)__(\d+)$/);
+  if (!legacy) return null;
+  const kind = SEGMENT_TO_KIND[legacy[1]];
   if (!kind) return null;
-
-  const index = Number.parseInt(match[2], 10);
-  const total = Number.parseInt(match[3], 10);
-
+  const index = Number.parseInt(legacy[2], 10);
+  const total = Number.parseInt(legacy[3], 10);
   if (!Number.isFinite(index) || !Number.isFinite(total) || index < 1 || total < index) {
     return null;
   }
-
   return { kind, index, total };
 }
 
@@ -97,9 +114,6 @@ export function getLocalizedVatCodeName(
   }
 
   const baseLabel = getBaseLabel(parsed.kind, LL);
-  if (parsed.total <= 1) {
-    return baseLabel;
-  }
-
-  return `${baseLabel} ${parsed.index}`;
+  const kindLabel = parsed.total <= 1 ? baseLabel : `${baseLabel} ${parsed.index}`;
+  return parsed.countryCode ? `${parsed.countryCode} – ${kindLabel}` : kindLabel;
 }

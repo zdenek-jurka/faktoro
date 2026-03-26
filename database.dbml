@@ -1,5 +1,5 @@
 // Database schema for Faktoro app
-// Generated from WatermelonDB schema version 47
+// Generated from WatermelonDB schema version 49
 // Syntax: DBML (Database Markup Language) - https://www.dbml.org/docs/
 
 Project faktoro {
@@ -132,7 +132,8 @@ Table client {
 // VAT code names (1 code has many VAT rates by validity ranges)
 Table vat_code {
   id string [pk, note: 'WatermelonDB auto-generated ID']
-  name string [not null, note: 'VAT code/rate name (e.g. Standard, Reduced)']
+  name string [not null, note: 'VAT code/rate name or bootstrap token (e.g. __FAKTORO_VAT__CZ__STANDARD__1__1)']
+  country_code string [null, note: 'ISO 3166-1 alpha-2 country code when imported via bootstrap (e.g. CZ, DE)']
   created_at number [not null, note: 'Unix timestamp in milliseconds']
   updated_at number [not null, note: 'Unix timestamp in milliseconds']
 
@@ -212,6 +213,8 @@ Table time_entry {
 
   Indexes {
     client_id [name: 'idx_time_entry_client_id']
+    is_running [name: 'idx_time_entry_is_running']
+    is_paused [name: 'idx_time_entry_is_paused']
     running_device_id [name: 'idx_time_entry_running_device_id']
     timesheet_id [name: 'idx_time_entry_timesheet_id']
     price_list_item_id [name: 'idx_time_entry_price_list_item_id']

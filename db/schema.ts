@@ -7,7 +7,7 @@ export enum AddressType {
 }
 
 export default appSchema({
-  version: 48,
+  version: 49,
   tables: [
     tableSchema({
       name: 'app_settings',
@@ -209,6 +209,7 @@ export default appSchema({
       name: 'vat_code',
       columns: [
         { name: 'name', type: 'string' },
+        { name: 'country_code', type: 'string', isOptional: true },
         { name: 'created_at', type: 'number' },
         { name: 'updated_at', type: 'number' },
       ],

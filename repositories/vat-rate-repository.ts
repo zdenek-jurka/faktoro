@@ -21,6 +21,7 @@ export type UpdateVatRateInput = {
 
 export type ReplaceAllVatRatesInput = {
   codeName: string;
+  countryCode?: string | null;
   matchNames?: string[];
   ratePercent: number;
   validFrom?: number | null;
@@ -224,10 +225,12 @@ export async function replaceAllVatRates(input: ReplaceAllVatRatesInput): Promis
         if (code) {
           await code.update((record: VatCodeModel) => {
             record.name = normalizedCodeName;
+            record.countryCode = item.countryCode ?? null;
           });
         } else {
           code = await codeCollection.create((record: VatCodeModel) => {
             record.name = normalizedCodeName;
+            record.countryCode = item.countryCode ?? null;
           });
         }
 
@@ -252,6 +255,76 @@ export async function replaceAllVatRates(input: ReplaceAllVatRatesInput): Promis
       if (referencingPriceItems > 0) continue;
 
       await code.markAsDeleted();
+    }
+  });
+}
+
+export async function addVatRates(input: ReplaceAllVatRatesInput): Promise<void> {
+  const codeCollection = database.get<VatCodeModel>(VatCodeModel.table);
+  const rateCollection = database.get<VatRateModel>(VatRateModel.table);
+
+  await database.write(async () => {
+    const existingCodes = await codeCollection.query().fetch();
+    const existingRates = await rateCollection.query().fetch();
+    const existingCodeByNormalizedName = new Map<string, VatCodeModel>();
+    existingCodes.forEach((code) => {
+      existingCodeByNormalizedName.set(normalizeName(code.name), code);
+    });
+    const existingRateKeys = new Set(
+      existingRates.map((rate) =>
+        [
+          rate.vatCodeId || '',
+          String(rate.ratePercent),
+          String(rate.validFrom ?? VAT_VALID_FROM_BEGINNING_TS),
+          String(rate.validTo ?? ''),
+        ].join('::'),
+      ),
+    );
+
+    const processedCodes = new Map<string, VatCodeModel>();
+
+    for (const item of input) {
+      const normalizedCodeName = item.codeName.trim();
+      if (!normalizedCodeName) continue;
+
+      let code: VatCodeModel | undefined = processedCodes.get(normalizedCodeName);
+      if (!code) {
+        const aliasNames = [normalizedCodeName, ...(item.matchNames ?? [])]
+          .map((name) => normalizeName(name))
+          .filter(Boolean);
+        code =
+          aliasNames.map((alias) => existingCodeByNormalizedName.get(alias)).find(Boolean) ??
+          undefined;
+
+        if (!code) {
+          code = await codeCollection.create((record: VatCodeModel) => {
+            record.name = normalizedCodeName;
+            record.countryCode = item.countryCode ?? null;
+          });
+        }
+
+        processedCodes.set(normalizedCodeName, code);
+      }
+
+      const validFrom = item.validFrom ?? VAT_VALID_FROM_BEGINNING_TS;
+      const validTo = item.validTo ?? undefined;
+      const rateKey = [
+        code.id,
+        String(item.ratePercent),
+        String(validFrom),
+        String(validTo ?? ''),
+      ].join('::');
+      if (existingRateKeys.has(rateKey)) {
+        continue;
+      }
+
+      await rateCollection.create((record: VatRateModel) => {
+        record.vatCodeId = code.id;
+        record.ratePercent = item.ratePercent;
+        record.validFrom = validFrom;
+        record.validTo = validTo;
+      });
+      existingRateKeys.add(rateKey);
     }
   });
 }

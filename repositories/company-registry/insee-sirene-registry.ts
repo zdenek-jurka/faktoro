@@ -285,6 +285,7 @@ export class InseeSireneRegistryService implements CompanyRegistryService {
     const result = {
       companyId: companyIdFromData,
       legalName,
+      countryCode: 'FR',
       address: {
         formatted: formatted || undefined,
         city:

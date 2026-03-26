@@ -36,8 +36,17 @@ import type { Locales } from '@/i18n/i18n-types';
 import { baseLocale } from '@/i18n/i18n-util';
 import { getMoreSectionTitle, resolveAppLanguageSetting } from '@/i18n/locale-options';
 import AppSettingsModel from '@/model/AppSettingsModel';
+import ClientModel from '@/model/ClientModel';
+import InvoiceModel from '@/model/InvoiceModel';
+import PriceListItemModel from '@/model/PriceListItemModel';
+import TimeEntryModel from '@/model/TimeEntryModel';
+import TimesheetModel from '@/model/TimesheetModel';
 import { hasPinHash, verifyPin } from '@/repositories/app-lock-repository';
 import { setupCurrencyFormatCacheSync } from '@/repositories/currency-settings-repository';
+import {
+  isOnboardingCompleted,
+  setOnboardingCompleted,
+} from '@/repositories/onboarding-repository';
 import { getErrorMessage } from '@/utils/error-utils';
 import { getSettings } from '@/repositories/settings-repository';
 import { handleTimerActionUrl } from '@/repositories/timer-deeplink-repository';
@@ -131,6 +140,7 @@ export default function RootLayout() {
 function RootLayoutNav({ colorScheme }: { colorScheme: ReturnType<typeof useColorScheme> }) {
   const palette = Colors[colorScheme ?? 'light'];
   const { LL, locale } = useI18nContext();
+  const router = useRouter();
   const insets = useSafeAreaInsets();
   const [isCheckingLock, setIsCheckingLock] = useState(true);
   const [needsUnlock, setNeedsUnlock] = useState(false);
@@ -140,6 +150,7 @@ function RootLayoutNav({ colorScheme }: { colorScheme: ReturnType<typeof useColo
   const [biometricEnabled, setBiometricEnabled] = useState(false);
   const [biometricAvailable, setBiometricAvailable] = useState(false);
   const pendingTimerActionUrl = useRef<string | null>(null);
+  const hasCheckedOnboarding = useRef(false);
   useTimerLimitGuard();
 
   const processTimerDeepLink = useCallback(async (url: string | null | undefined) => {
@@ -222,6 +233,36 @@ function RootLayoutNav({ colorScheme }: { colorScheme: ReturnType<typeof useColo
   }, [isSessionUnlocked, tryBiometricUnlock]);
 
   useEffect(() => {
+    if (!isSessionUnlocked || hasCheckedOnboarding.current) return;
+    hasCheckedOnboarding.current = true;
+    isOnboardingCompleted().then(async (completed) => {
+      if (!completed) {
+        const settings = await getSettings();
+        const [clientCount, invoiceCount, timeEntryCount, timesheetCount, priceListCount] =
+          await Promise.all([
+            database.get<ClientModel>(ClientModel.table).query().fetchCount(),
+            database.get<InvoiceModel>(InvoiceModel.table).query().fetchCount(),
+            database.get<TimeEntryModel>(TimeEntryModel.table).query().fetchCount(),
+            database.get<TimesheetModel>(TimesheetModel.table).query().fetchCount(),
+            database.get<PriceListItemModel>(PriceListItemModel.table).query().fetchCount(),
+          ]);
+        const hasExistingData =
+          !!settings.invoiceCompanyName?.trim() ||
+          clientCount > 0 ||
+          invoiceCount > 0 ||
+          timeEntryCount > 0 ||
+          timesheetCount > 0 ||
+          priceListCount > 0;
+        if (hasExistingData) {
+          await setOnboardingCompleted();
+          return;
+        }
+        router.replace('/onboarding');
+      }
+    });
+  }, [isSessionUnlocked, router]);
+
+  useEffect(() => {
     const handleIncomingUrl = (url: string | null | undefined) => {
       if (!url) return;
       if (!isSessionUnlocked) {
@@ -294,6 +335,14 @@ function RootLayoutNav({ colorScheme }: { colorScheme: ReturnType<typeof useColo
             name="(tabs)"
             options={{
               title: getMoreSectionTitle(locale),
+            }}
+          />
+          <Drawer.Screen
+            name="onboarding"
+            options={{
+              drawerItemStyle: { display: 'none' },
+              swipeEnabled: false,
+              headerShown: false,
             }}
           />
         </Drawer>

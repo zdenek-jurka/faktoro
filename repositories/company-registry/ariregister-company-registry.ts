@@ -406,6 +406,7 @@ export class AriregisterCompanyRegistryService implements CompanyRegistryService
     return {
       companyId: companyIdFromData,
       legalName: decodeHtmlEntities(legalName),
+      countryCode: 'EE',
       vatNumber: data.vatCode ? decodeHtmlEntities(data.vatCode) : undefined,
       address: {
         formatted: data.address?.fullAddress

@@ -15,6 +15,7 @@ import {
   getSettings,
   prepareAppSettingsForIncomingRemoteSync,
 } from '@/repositories/settings-repository';
+import { setOnboardingCompleted } from '@/repositories/onboarding-repository';
 import { generateInstanceKey, isSecureCryptoAvailable } from '@/repositories/sync-crypto';
 import {
   forgetServerRegistration,
@@ -63,6 +64,7 @@ function SyncPairingScreenContent() {
     addDeviceInstanceId?: string;
     addDeviceRecoveryEmail?: string;
     addDeviceDeviceName?: string;
+    completeOnSuccess?: string;
   }>();
 
   const [syncServerUrl, setSyncServerUrl] = useState('');
@@ -85,6 +87,7 @@ function SyncPairingScreenContent() {
   const addDeviceInstanceId = normalizeRouteParam(params.addDeviceInstanceId);
   const addDeviceRecoveryEmail = normalizeRouteParam(params.addDeviceRecoveryEmail);
   const addDeviceDeviceName = normalizeRouteParam(params.addDeviceDeviceName);
+  const completeOnSuccess = normalizeRouteParam(params.completeOnSuccess) === '1';
   const isAddDeviceFlow = !!addDeviceServerUrl;
 
   useEffect(() => {
@@ -364,6 +367,10 @@ function SyncPairingScreenContent() {
         await runOnlineSyncSafely(freshSettings);
       } catch {
         // non-critical
+      }
+
+      if (completeOnSuccess) {
+        await setOnboardingCompleted();
       }
 
       showAlert(LL.common.success(), LL.settings.syncPairingReady());

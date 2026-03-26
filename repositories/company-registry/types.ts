@@ -16,6 +16,8 @@ export interface CompanyRegistryImportAddress {
 export interface CompanyRegistryCompany {
   companyId: string;
   legalName: string;
+  /** ISO 3166-1 alpha-2 country code of the company (e.g. "CZ", "NO"). */
+  countryCode?: string;
   vatNumber?: string;
   address?: CompanyRegistryAddress;
   importAddress?: CompanyRegistryImportAddress;

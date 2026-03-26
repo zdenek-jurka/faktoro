@@ -3310,6 +3310,14 @@ type RootTranslation = {
 		 */
 		vatBootstrapImportAction: string
 		/**
+		 * A​d​d​ ​i​m​p​o​r​t​e​d​ ​r​a​t​e​s
+		 */
+		vatBootstrapAddImportAction: string
+		/**
+		 * R​e​p​l​a​c​e​ ​e​x​i​s​t​i​n​g​ ​r​a​t​e​s
+		 */
+		vatBootstrapReplaceSwitch: string
+		/**
 		 * V​A​T​ ​r​a​t​e​s​ ​w​e​r​e​ ​i​m​p​o​r​t​e​d​ ​s​u​c​c​e​s​s​f​u​l​l​y​.
 		 */
 		vatBootstrapImportSuccess: string
@@ -3446,6 +3454,278 @@ type RootTranslation = {
 		 * S​e​t​t​i​n​g​s​ ​s​a​v​e​d​ ​s​u​c​c​e​s​s​f​u​l​l​y
 		 */
 		saveSuccess: string
+	}
+	onboarding: {
+		/**
+		 * W​e​l​c​o​m​e​ ​t​o​ ​F​a​k​t​o​r​o
+		 */
+		welcomeTitle: string
+		/**
+		 * T​r​a​c​k​ ​t​i​m​e​,​ ​i​n​v​o​i​c​e​ ​c​l​i​e​n​t​s​ ​—​ ​a​l​l​ ​i​n​ ​o​n​e​ ​p​l​a​c​e​.
+		 */
+		welcomeSubtitle: string
+		/**
+		 * S​t​a​r​t​ ​s​e​t​u​p
+		 */
+		startSetup: string
+		/**
+		 * S​k​i​p​ ​g​u​i​d​e
+		 */
+		skipGuide: string
+		/**
+		 * H​o​w​ ​w​o​u​l​d​ ​y​o​u​ ​l​i​k​e​ ​t​o​ ​b​e​g​i​n​?
+		 */
+		startTitle: string
+		/**
+		 * S​t​a​r​t​ ​f​r​e​s​h
+		 */
+		startNewTitle: string
+		/**
+		 * N​e​w​ ​b​u​s​i​n​e​s​s​,​ ​n​o​ ​e​x​i​s​t​i​n​g​ ​d​a​t​a​.
+		 */
+		startNewDesc: string
+		/**
+		 * A​d​d​ ​t​h​i​s​ ​d​e​v​i​c​e
+		 */
+		startDeviceTitle: string
+		/**
+		 * C​o​n​n​e​c​t​ ​t​o​ ​a​n​ ​e​x​i​s​t​i​n​g​ ​F​a​k​t​o​r​o​ ​s​y​n​c​ ​s​e​r​v​e​r​.
+		 */
+		startDeviceDesc: string
+		/**
+		 * R​e​s​t​o​r​e​ ​f​r​o​m​ ​b​a​c​k​u​p
+		 */
+		startRestoreTitle: string
+		/**
+		 * I​ ​h​a​v​e​ ​a​ ​.​f​a​k​t​ ​b​a​c​k​u​p​ ​f​i​l​e​.
+		 */
+		startRestoreDesc: string
+		/**
+		 * A​p​p​ ​l​a​n​g​u​a​g​e
+		 */
+		languageTitle: string
+		/**
+		 * C​h​o​o​s​e​ ​t​h​e​ ​l​a​n​g​u​a​g​e​ ​f​o​r​ ​t​h​e​ ​i​n​t​e​r​f​a​c​e​.
+		 */
+		languageSubtitle: string
+		/**
+		 * Y​o​u​r​ ​b​u​s​i​n​e​s​s
+		 */
+		profileTitle: string
+		/**
+		 * T​h​e​s​e​ ​d​e​t​a​i​l​s​ ​a​p​p​e​a​r​ ​o​n​ ​i​n​v​o​i​c​e​s​ ​a​s​ ​t​h​e​ ​s​u​p​p​l​i​e​r​.
+		 */
+		profileSubtitle: string
+		/**
+		 * Y​o​u​ ​c​a​n​ ​f​i​l​l​ ​i​n​ ​t​h​e​ ​r​e​s​t​ ​a​n​y​ ​t​i​m​e​ ​i​n​ ​S​e​t​t​i​n​g​s​ ​→​ ​B​u​s​i​n​e​s​s​ ​p​r​o​f​i​l​e​.
+		 */
+		profileNote: string
+		/**
+		 * C​o​u​n​t​r​y
+		 */
+		profileCountryLabel: string
+		/**
+		 * R​e​g​i​s​t​r​y​ ​f​o​r​ ​c​o​m​p​a​n​y​ ​I​D​ ​l​o​o​k​u​p
+		 */
+		profileRegistryLabel: string
+		/**
+		 * V​A​T​ ​r​a​t​e​s
+		 */
+		vatTitle: string
+		/**
+		 * T​h​e​ ​a​p​p​ ​n​e​e​d​s​ ​c​u​r​r​e​n​t​ ​V​A​T​ ​r​a​t​e​s​ ​t​o​ ​c​a​l​c​u​l​a​t​e​ ​t​a​x​ ​c​o​r​r​e​c​t​l​y​ ​o​n​ ​i​n​v​o​i​c​e​s​.
+		 */
+		vatSubtitle: string
+		/**
+		 * E​U​ ​c​o​u​n​t​r​y​ ​f​o​r​ ​r​a​t​e​ ​l​o​o​k​u​p
+		 */
+		vatCountryLabel: string
+		/**
+		 * L​o​a​d​ ​c​u​r​r​e​n​t​ ​r​a​t​e​s​ ​f​r​o​m​ ​E​U​ ​d​a​t​a​b​a​s​e
+		 */
+		vatLoadButton: string
+		/**
+		 * E​n​t​e​r​ ​r​a​t​e​s​ ​m​a​n​u​a​l​l​y
+		 */
+		vatManualButton: string
+		/**
+		 * S​k​i​p​,​ ​s​e​t​ ​u​p​ ​l​a​t​e​r
+		 */
+		vatSkipButton: string
+		/**
+		 * R​a​t​e​s​ ​f​o​r​ ​{​c​o​u​n​t​r​y​}
+		 * @param {string} country
+		 */
+		vatLoadedFor: RequiredParams<'country'>
+		/**
+		 * L​o​a​d​e​d​ ​o​n​ ​{​d​a​t​e​}
+		 * @param {string} date
+		 */
+		vatLoadedOn: RequiredParams<'date'>
+		/**
+		 * U​s​e​ ​t​h​e​s​e​ ​r​a​t​e​s
+		 */
+		vatUseRates: string
+		/**
+		 * V​A​T​ ​r​a​t​e​s​ ​a​r​e​ ​c​o​n​f​i​g​u​r​e​d​.
+		 */
+		vatRatesConfigured: string
+		/**
+		 * Y​o​u​ ​c​a​n​ ​m​a​n​a​g​e​ ​t​h​e​m​ ​a​n​y​ ​t​i​m​e​ ​i​n​ ​S​e​t​t​i​n​g​s​ ​→​ ​V​A​T​.
+		 */
+		vatRatesConfiguredDesc: string
+		/**
+		 * V​A​T​ ​r​a​t​e​s​ ​i​m​p​o​r​t​e​d​.
+		 */
+		vatImportSuccess: string
+		/**
+		 * D​e​f​a​u​l​t​ ​c​u​r​r​e​n​c​y
+		 */
+		currencyTitle: string
+		/**
+		 * W​h​i​c​h​ ​c​u​r​r​e​n​c​y​ ​w​i​l​l​ ​y​o​u​ ​u​s​e​ ​f​o​r​ ​i​n​v​o​i​c​e​s​ ​m​o​s​t​ ​o​f​t​e​n​?
+		 */
+		currencySubtitle: string
+		/**
+		 * D​e​f​a​u​l​t​ ​d​u​e​ ​p​e​r​i​o​d​ ​(​d​a​y​s​)
+		 */
+		dueDaysLabel: string
+		/**
+		 * A​l​l​ ​s​e​t​!
+		 */
+		doneTitle: string
+		/**
+		 * F​a​k​t​o​r​o​ ​i​s​ ​c​o​n​f​i​g​u​r​e​d​ ​a​n​d​ ​r​e​a​d​y​ ​t​o​ ​u​s​e​.
+		 */
+		doneSubtitle: string
+		/**
+		 * V​A​T​ ​r​a​t​e​s​ ​a​r​e​ ​n​o​t​ ​c​o​n​f​i​g​u​r​e​d​.​ ​F​i​l​l​ ​t​h​e​m​ ​i​n​ ​b​e​f​o​r​e​ ​i​s​s​u​i​n​g​ ​y​o​u​r​ ​f​i​r​s​t​ ​V​A​T​ ​i​n​v​o​i​c​e​.
+		 */
+		doneVatWarning: string
+		/**
+		 * O​p​e​n​ ​V​A​T​ ​s​e​t​t​i​n​g​s
+		 */
+		doneVatSettingsLink: string
+		/**
+		 * A​d​d​ ​y​o​u​r​ ​f​i​r​s​t​ ​c​l​i​e​n​t
+		 */
+		doneAddClient: string
+		/**
+		 * C​l​i​e​n​t​s​ ​a​r​e​ ​t​h​e​ ​f​o​u​n​d​a​t​i​o​n​ ​—​ ​e​v​e​r​y​ ​t​i​m​e​s​h​e​e​t​ ​a​n​d​ ​i​n​v​o​i​c​e​ ​n​e​e​d​s​ ​a​t​ ​l​e​a​s​t​ ​o​n​e​.
+		 */
+		doneAddClientDesc: string
+		/**
+		 * S​e​t​ ​u​p​ ​p​r​i​c​e​ ​l​i​s​t
+		 */
+		donePriceList: string
+		/**
+		 * D​e​f​i​n​e​ ​s​e​r​v​i​c​e​s​ ​w​i​t​h​ ​r​a​t​e​s​ ​—​ ​s​e​l​e​c​t​i​n​g​ ​t​h​e​m​ ​w​h​e​n​ ​t​r​a​c​k​i​n​g​ ​t​i​m​e​ ​s​a​v​e​s​ ​w​o​r​k​ ​l​a​t​e​r​.
+		 */
+		donePriceListDesc: string
+		/**
+		 * G​o​ ​t​o​ ​a​p​p
+		 */
+		doneGoToApp: string
+		/**
+		 * A​d​d​ ​t​h​i​s​ ​d​e​v​i​c​e
+		 */
+		connectTitle: string
+		/**
+		 * O​n​ ​y​o​u​r​ ​e​x​i​s​t​i​n​g​ ​d​e​v​i​c​e​:​ ​S​e​t​t​i​n​g​s​ ​→​ ​S​y​n​c​ ​→​ ​A​d​d​ ​d​e​v​i​c​e​,​ ​t​h​e​n​ ​c​o​p​y​ ​o​r​ ​s​c​a​n​ ​t​h​e​ ​p​a​y​l​o​a​d​ ​h​e​r​e​.
+		 */
+		connectSubtitle: string
+		/**
+		 * A​d​d​-​d​e​v​i​c​e​ ​p​a​y​l​o​a​d
+		 */
+		connectPayloadLabel: string
+		/**
+		 * T​h​i​s​ ​d​e​v​i​c​e​ ​n​a​m​e​ ​(​o​p​t​i​o​n​a​l​)
+		 */
+		connectDeviceNameLabel: string
+		/**
+		 * R​e​c​o​v​e​r​y​ ​e​m​a​i​l
+		 */
+		connectEmailLabel: string
+		/**
+		 * S​c​a​n​ ​Q​R
+		 */
+		connectScanQr: string
+		/**
+		 * C​o​n​n​e​c​t
+		 */
+		connectButton: string
+		/**
+		 * D​e​v​i​c​e​ ​c​o​n​n​e​c​t​e​d​.​ ​D​a​t​a​ ​w​i​l​l​ ​s​y​n​c​ ​s​h​o​r​t​l​y​.
+		 */
+		connectSuccess: string
+		/**
+		 * E​n​t​e​r​ ​a​ ​v​a​l​i​d​ ​r​e​c​o​v​e​r​y​ ​e​m​a​i​l​.
+		 */
+		connectEmailRequired: string
+		/**
+		 * R​e​s​t​o​r​e​ ​f​r​o​m​ ​b​a​c​k​u​p
+		 */
+		restoreTitle: string
+		/**
+		 * S​e​l​e​c​t​ ​a​ ​.​f​a​k​t​ ​b​a​c​k​u​p​ ​f​i​l​e​ ​p​r​e​v​i​o​u​s​l​y​ ​e​x​p​o​r​t​e​d​ ​f​r​o​m​ ​F​a​k​t​o​r​o​.
+		 */
+		restoreSubtitle: string
+		/**
+		 * C​h​o​o​s​e​ ​b​a​c​k​u​p​ ​f​i​l​e
+		 */
+		restorePickFile: string
+		/**
+		 * S​e​l​e​c​t​e​d​ ​f​i​l​e
+		 */
+		restoreSelectedFile: string
+		/**
+		 * C​r​e​a​t​e​d
+		 */
+		restoreCreatedAt: string
+		/**
+		 * P​a​s​s​w​o​r​d​ ​p​r​o​t​e​c​t​e​d
+		 */
+		restoreEncryptedLabel: string
+		/**
+		 * N​o​ ​p​a​s​s​w​o​r​d
+		 */
+		restoreNotEncryptedLabel: string
+		/**
+		 * B​a​c​k​u​p​ ​p​a​s​s​w​o​r​d
+		 */
+		restorePasswordLabel: string
+		/**
+		 * R​e​s​t​o​r​e​ ​d​a​t​a
+		 */
+		restoreButton: string
+		/**
+		 * D​a​t​a​ ​r​e​s​t​o​r​e​d​ ​s​u​c​c​e​s​s​f​u​l​l​y​.
+		 */
+		restoreSuccess: string
+		/**
+		 * F​a​i​l​e​d​ ​t​o​ ​r​e​s​t​o​r​e​ ​b​a​c​k​u​p​.
+		 */
+		restoreError: string
+		/**
+		 * T​h​e​ ​s​e​l​e​c​t​e​d​ ​f​i​l​e​ ​i​s​ ​n​o​t​ ​a​ ​v​a​l​i​d​ ​F​a​k​t​o​r​o​ ​b​a​c​k​u​p​.
+		 */
+		restoreInvalidFile: string
+		/**
+		 * B​a​c​k
+		 */
+		back: string
+		/**
+		 * N​e​x​t
+		 */
+		next: string
+		/**
+		 * S​k​i​p
+		 */
+		skip: string
+		/**
+		 * F​i​n​i​s​h
+		 */
+		finish: string
 	}
 	reports: {
 		/**
@@ -6796,6 +7076,14 @@ export type TranslationFunctions = {
 		 */
 		vatBootstrapImportAction: () => LocalizedString
 		/**
+		 * Add imported rates
+		 */
+		vatBootstrapAddImportAction: () => LocalizedString
+		/**
+		 * Replace existing rates
+		 */
+		vatBootstrapReplaceSwitch: () => LocalizedString
+		/**
 		 * VAT rates were imported successfully.
 		 */
 		vatBootstrapImportSuccess: () => LocalizedString
@@ -6931,6 +7219,276 @@ export type TranslationFunctions = {
 		 * Settings saved successfully
 		 */
 		saveSuccess: () => LocalizedString
+	}
+	onboarding: {
+		/**
+		 * Welcome to Faktoro
+		 */
+		welcomeTitle: () => LocalizedString
+		/**
+		 * Track time, invoice clients — all in one place.
+		 */
+		welcomeSubtitle: () => LocalizedString
+		/**
+		 * Start setup
+		 */
+		startSetup: () => LocalizedString
+		/**
+		 * Skip guide
+		 */
+		skipGuide: () => LocalizedString
+		/**
+		 * How would you like to begin?
+		 */
+		startTitle: () => LocalizedString
+		/**
+		 * Start fresh
+		 */
+		startNewTitle: () => LocalizedString
+		/**
+		 * New business, no existing data.
+		 */
+		startNewDesc: () => LocalizedString
+		/**
+		 * Add this device
+		 */
+		startDeviceTitle: () => LocalizedString
+		/**
+		 * Connect to an existing Faktoro sync server.
+		 */
+		startDeviceDesc: () => LocalizedString
+		/**
+		 * Restore from backup
+		 */
+		startRestoreTitle: () => LocalizedString
+		/**
+		 * I have a .fakt backup file.
+		 */
+		startRestoreDesc: () => LocalizedString
+		/**
+		 * App language
+		 */
+		languageTitle: () => LocalizedString
+		/**
+		 * Choose the language for the interface.
+		 */
+		languageSubtitle: () => LocalizedString
+		/**
+		 * Your business
+		 */
+		profileTitle: () => LocalizedString
+		/**
+		 * These details appear on invoices as the supplier.
+		 */
+		profileSubtitle: () => LocalizedString
+		/**
+		 * You can fill in the rest any time in Settings → Business profile.
+		 */
+		profileNote: () => LocalizedString
+		/**
+		 * Country
+		 */
+		profileCountryLabel: () => LocalizedString
+		/**
+		 * Registry for company ID lookup
+		 */
+		profileRegistryLabel: () => LocalizedString
+		/**
+		 * VAT rates
+		 */
+		vatTitle: () => LocalizedString
+		/**
+		 * The app needs current VAT rates to calculate tax correctly on invoices.
+		 */
+		vatSubtitle: () => LocalizedString
+		/**
+		 * EU country for rate lookup
+		 */
+		vatCountryLabel: () => LocalizedString
+		/**
+		 * Load current rates from EU database
+		 */
+		vatLoadButton: () => LocalizedString
+		/**
+		 * Enter rates manually
+		 */
+		vatManualButton: () => LocalizedString
+		/**
+		 * Skip, set up later
+		 */
+		vatSkipButton: () => LocalizedString
+		/**
+		 * Rates for {country}
+		 */
+		vatLoadedFor: (arg: { country: string }) => LocalizedString
+		/**
+		 * Loaded on {date}
+		 */
+		vatLoadedOn: (arg: { date: string }) => LocalizedString
+		/**
+		 * Use these rates
+		 */
+		vatUseRates: () => LocalizedString
+		/**
+		 * VAT rates are configured.
+		 */
+		vatRatesConfigured: () => LocalizedString
+		/**
+		 * You can manage them any time in Settings → VAT.
+		 */
+		vatRatesConfiguredDesc: () => LocalizedString
+		/**
+		 * VAT rates imported.
+		 */
+		vatImportSuccess: () => LocalizedString
+		/**
+		 * Default currency
+		 */
+		currencyTitle: () => LocalizedString
+		/**
+		 * Which currency will you use for invoices most often?
+		 */
+		currencySubtitle: () => LocalizedString
+		/**
+		 * Default due period (days)
+		 */
+		dueDaysLabel: () => LocalizedString
+		/**
+		 * All set!
+		 */
+		doneTitle: () => LocalizedString
+		/**
+		 * Faktoro is configured and ready to use.
+		 */
+		doneSubtitle: () => LocalizedString
+		/**
+		 * VAT rates are not configured. Fill them in before issuing your first VAT invoice.
+		 */
+		doneVatWarning: () => LocalizedString
+		/**
+		 * Open VAT settings
+		 */
+		doneVatSettingsLink: () => LocalizedString
+		/**
+		 * Add your first client
+		 */
+		doneAddClient: () => LocalizedString
+		/**
+		 * Clients are the foundation — every timesheet and invoice needs at least one.
+		 */
+		doneAddClientDesc: () => LocalizedString
+		/**
+		 * Set up price list
+		 */
+		donePriceList: () => LocalizedString
+		/**
+		 * Define services with rates — selecting them when tracking time saves work later.
+		 */
+		donePriceListDesc: () => LocalizedString
+		/**
+		 * Go to app
+		 */
+		doneGoToApp: () => LocalizedString
+		/**
+		 * Add this device
+		 */
+		connectTitle: () => LocalizedString
+		/**
+		 * On your existing device: Settings → Sync → Add device, then copy or scan the payload here.
+		 */
+		connectSubtitle: () => LocalizedString
+		/**
+		 * Add-device payload
+		 */
+		connectPayloadLabel: () => LocalizedString
+		/**
+		 * This device name (optional)
+		 */
+		connectDeviceNameLabel: () => LocalizedString
+		/**
+		 * Recovery email
+		 */
+		connectEmailLabel: () => LocalizedString
+		/**
+		 * Scan QR
+		 */
+		connectScanQr: () => LocalizedString
+		/**
+		 * Connect
+		 */
+		connectButton: () => LocalizedString
+		/**
+		 * Device connected. Data will sync shortly.
+		 */
+		connectSuccess: () => LocalizedString
+		/**
+		 * Enter a valid recovery email.
+		 */
+		connectEmailRequired: () => LocalizedString
+		/**
+		 * Restore from backup
+		 */
+		restoreTitle: () => LocalizedString
+		/**
+		 * Select a .fakt backup file previously exported from Faktoro.
+		 */
+		restoreSubtitle: () => LocalizedString
+		/**
+		 * Choose backup file
+		 */
+		restorePickFile: () => LocalizedString
+		/**
+		 * Selected file
+		 */
+		restoreSelectedFile: () => LocalizedString
+		/**
+		 * Created
+		 */
+		restoreCreatedAt: () => LocalizedString
+		/**
+		 * Password protected
+		 */
+		restoreEncryptedLabel: () => LocalizedString
+		/**
+		 * No password
+		 */
+		restoreNotEncryptedLabel: () => LocalizedString
+		/**
+		 * Backup password
+		 */
+		restorePasswordLabel: () => LocalizedString
+		/**
+		 * Restore data
+		 */
+		restoreButton: () => LocalizedString
+		/**
+		 * Data restored successfully.
+		 */
+		restoreSuccess: () => LocalizedString
+		/**
+		 * Failed to restore backup.
+		 */
+		restoreError: () => LocalizedString
+		/**
+		 * The selected file is not a valid Faktoro backup.
+		 */
+		restoreInvalidFile: () => LocalizedString
+		/**
+		 * Back
+		 */
+		back: () => LocalizedString
+		/**
+		 * Next
+		 */
+		next: () => LocalizedString
+		/**
+		 * Skip
+		 */
+		skip: () => LocalizedString
+		/**
+		 * Finish
+		 */
+		finish: () => LocalizedString
 	}
 	reports: {
 		/**

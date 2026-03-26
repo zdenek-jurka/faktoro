@@ -214,6 +214,7 @@ export class AresCompanyRegistryService implements CompanyRegistryService {
     return {
       companyId: companyIdFromData,
       legalName,
+      countryCode: 'CZ',
       vatNumber,
       address: mappedAddress,
     };

@@ -10,7 +10,7 @@ import {
   getEuMemberStateOptions,
   normalizeEuMemberStateCode,
 } from '@/constants/eu-countries';
-import { Colors } from '@/constants/theme';
+import { Colors, getSwitchColors } from '@/constants/theme';
 import { useBottomSafeAreaStyle } from '@/hooks/use-bottom-safe-area-style';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useI18nContext } from '@/i18n/i18n-react';
@@ -23,6 +23,7 @@ import {
 } from '@/repositories/eu-vat-bootstrap-repository';
 import { getSettings } from '@/repositories/settings-repository';
 import {
+  addVatRates,
   createVatRate,
   deleteVatCode,
   deleteVatRate,
@@ -47,6 +48,7 @@ import {
   Modal,
   ScrollView,
   StyleSheet,
+  Switch,
   TextInput,
   Pressable,
   View,
@@ -55,6 +57,7 @@ import {
 export default function SettingsVatScreen() {
   const colorScheme = useColorScheme();
   const palette = Colors[colorScheme ?? 'light'];
+  const switchColors = getSwitchColors(palette);
   const { LL, locale } = useI18nContext();
   const intlLocale = normalizeIntlLocale(locale, 'en');
   const groupListStyle = useBottomSafeAreaStyle(styles.groupList);
@@ -78,6 +81,7 @@ export default function SettingsVatScreen() {
   const [bootstrapCountry, setBootstrapCountry] = useState('');
   const [bootstrapPreview, setBootstrapPreview] = useState<EuVatBootstrapPreview | null>(null);
   const [isBootstrapLoading, setIsBootstrapLoading] = useState(false);
+  const [bootstrapReplaceMode, setBootstrapReplaceMode] = useState(true);
 
   const vatCodeNameById = useMemo(() => {
     const map = new Map<string, string>();
@@ -156,7 +160,7 @@ export default function SettingsVatScreen() {
       seenByKind[rate.kind] += 1;
       const index = seenByKind[rate.kind];
       const total = totalByKind[rate.kind];
-      const codeName = createBootstrapVatCodeToken(rate.kind, index, total);
+      const codeName = createBootstrapVatCodeToken(rate.kind, index, total, bootstrapCountry);
 
       return {
         ...rate,
@@ -385,15 +389,20 @@ export default function SettingsVatScreen() {
   const applyBootstrapImport = async () => {
     if (!bootstrapPreviewRows.length) return;
 
+    const rateItems = bootstrapPreviewRows.map((rate) => ({
+      codeName: rate.codeName,
+      countryCode: bootstrapCountry || null,
+      matchNames: [rate.displayName],
+      ratePercent: rate.ratePercent,
+      validFrom: rate.validFrom,
+    }));
+
     try {
-      await replaceAllVatRates(
-        bootstrapPreviewRows.map((rate) => ({
-          codeName: rate.codeName,
-          matchNames: [rate.displayName],
-          ratePercent: rate.ratePercent,
-          validFrom: rate.validFrom,
-        })),
-      );
+      if (bootstrapReplaceMode) {
+        await replaceAllVatRates(rateItems);
+      } else {
+        await addVatRates(rateItems);
+      }
       Alert.alert(LL.common.success(), LL.settings.vatBootstrapImportSuccess());
     } catch (error) {
       console.error('Error importing VAT bootstrap rates:', error);
@@ -403,6 +412,11 @@ export default function SettingsVatScreen() {
 
   const handleApplyBootstrapImport = () => {
     if (!bootstrapPreviewRows.length) return;
+
+    if (!bootstrapReplaceMode) {
+      void applyBootstrapImport();
+      return;
+    }
 
     const hasExistingRates = vatRates.length > 0 || vatCodes.length > 0;
     if (!hasExistingRates) {
@@ -694,6 +708,18 @@ export default function SettingsVatScreen() {
               </ThemedText>
             </Pressable>
 
+            <View style={styles.switchRow}>
+              <ThemedText style={styles.switchLabel}>
+                {LL.settings.vatBootstrapReplaceSwitch()}
+              </ThemedText>
+              <Switch
+                value={bootstrapReplaceMode}
+                onValueChange={setBootstrapReplaceMode}
+                trackColor={switchColors.trackColor}
+                ios_backgroundColor={switchColors.ios_backgroundColor}
+              />
+            </View>
+
             <ThemedText style={[styles.bootstrapHint, { color: palette.textMuted }]}>
               {LL.settings.vatBootstrapSourceHint()}
             </ThemedText>
@@ -761,7 +787,9 @@ export default function SettingsVatScreen() {
                   accessibilityLabel={LL.settings.vatBootstrapImportAction()}
                 >
                   <ThemedText style={[styles.bootstrapButtonText, { color: palette.onHighlight }]}>
-                    {LL.settings.vatBootstrapImportAction()}
+                    {bootstrapReplaceMode
+                      ? LL.settings.vatBootstrapImportAction()
+                      : LL.settings.vatBootstrapAddImportAction()}
                   </ThemedText>
                 </Pressable>
               </View>
@@ -1088,6 +1116,15 @@ const styles = StyleSheet.create({
   bootstrapHint: {
     fontSize: 12,
     lineHeight: 18,
+  },
+  switchRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  switchLabel: {
+    fontSize: 15,
+    flex: 1,
   },
   bootstrapPreviewCard: {
     borderRadius: 12,
