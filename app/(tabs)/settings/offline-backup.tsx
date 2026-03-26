@@ -10,6 +10,7 @@ import {
   inspectOfflineBackupContent,
   restoreOfflineBackupContent,
 } from '@/repositories/offline-backup-repository';
+import { getOfflineBackupErrorMessage } from '@/utils/error-utils';
 import { showConfirm } from '@/utils/platform-alert';
 import { isIos } from '@/utils/platform';
 import { useHeaderHeight } from '@react-navigation/elements';
@@ -32,20 +33,8 @@ type SelectedBackupFile = {
   content: string;
   createdAt: number;
   encrypted: boolean;
+  compressed: boolean;
 };
-
-function formatErrorMessage(error: unknown): string {
-  if (error instanceof Error) {
-    const message = error.message?.trim();
-    if (message) return message;
-  }
-
-  if (typeof error === 'string' && error.trim()) {
-    return error.trim();
-  }
-
-  return 'Unknown error';
-}
 
 export default function SettingsOfflineBackupScreen() {
   const colorScheme = useColorScheme();
@@ -117,7 +106,11 @@ export default function SettingsOfflineBackupScreen() {
       console.error('Error creating offline backup:', error);
       Alert.alert(
         LL.common.error(),
-        `${LL.settings.offlineBackupCreateError()}\n\n${formatErrorMessage(error)}`,
+        `${LL.settings.offlineBackupCreateError()}\n\n${getOfflineBackupErrorMessage(
+          error,
+          LL,
+          LL.settings.offlineBackupCreateError(),
+        )}`,
       );
     } finally {
       setIsCreateLoading(false);
@@ -139,18 +132,21 @@ export default function SettingsOfflineBackupScreen() {
         content,
         createdAt: inspection.createdAt,
         encrypted: inspection.encrypted,
+        compressed: inspection.compressed,
       });
       setRestorePassword('');
     } catch (error) {
-      if (formatErrorMessage(error).toLowerCase().includes('cancel')) {
+      const message = getOfflineBackupErrorMessage(
+        error,
+        LL,
+        LL.settings.offlineBackupInvalidFile(),
+      );
+      if (message.toLowerCase().includes('cancel')) {
         return;
       }
 
       console.error('Error picking restore backup file:', error);
-      Alert.alert(
-        LL.common.error(),
-        `${LL.settings.offlineBackupInvalidFile()}\n\n${formatErrorMessage(error)}`,
-      );
+      Alert.alert(LL.common.error(), `${LL.settings.offlineBackupInvalidFile()}\n\n${message}`);
     }
   };
 
@@ -186,7 +182,11 @@ export default function SettingsOfflineBackupScreen() {
       console.error('Error restoring offline backup:', error);
       Alert.alert(
         LL.common.error(),
-        `${LL.settings.offlineBackupRestoreError()}\n\n${formatErrorMessage(error)}`,
+        `${LL.settings.offlineBackupRestoreError()}\n\n${getOfflineBackupErrorMessage(
+          error,
+          LL,
+          LL.settings.offlineBackupRestoreError(),
+        )}`,
       );
     } finally {
       setIsRestoreLoading(false);
@@ -350,6 +350,16 @@ export default function SettingsOfflineBackupScreen() {
                     {selectedRestoreFile.encrypted
                       ? LL.settings.offlineBackupEncryptionProtected()
                       : LL.settings.offlineBackupEncryptionUnprotected()}
+                  </ThemedText>
+                </View>
+                <View style={styles.fileSummaryRow}>
+                  <ThemedText type="defaultSemiBold">
+                    {LL.settings.offlineBackupCompressionLabel()}
+                  </ThemedText>
+                  <ThemedText style={styles.fileSummaryValue}>
+                    {selectedRestoreFile.compressed
+                      ? LL.settings.offlineBackupCompressionYes()
+                      : LL.settings.offlineBackupCompressionNo()}
                   </ThemedText>
                 </View>
               </View>

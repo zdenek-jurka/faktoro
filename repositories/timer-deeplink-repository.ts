@@ -9,6 +9,7 @@ import {
   stopTimeEntry,
   TIME_ENTRY_LOCAL_RUNNING_EXISTS,
 } from '@/repositories/time-entry-repository';
+import { getStoredTranslationFunctions } from '@/utils/runtime-i18n';
 import { Q } from '@nozbe/watermelondb';
 
 export type TimerDeepLinkAction = 'start' | 'pause' | 'resume' | 'stop' | 'force-stop';
@@ -93,10 +94,11 @@ export async function handleTimerActionUrl(url: string): Promise<boolean> {
     if (!client) return true;
 
     try {
+      const LL = await getStoredTranslationFunctions();
       await createTimeEntry({
         clientId: client.id,
         startTime: Date.now(),
-        description: 'Started from quick action',
+        description: LL.timeTracking.startedFromQuickAction(),
       });
     } catch (error) {
       if (!(error instanceof Error) || error.message !== TIME_ENTRY_LOCAL_RUNNING_EXISTS) {

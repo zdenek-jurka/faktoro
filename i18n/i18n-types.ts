@@ -53,6 +53,10 @@ type RootTranslation = {
 		 */
 		error: string
 		/**
+		 * U​n​k​n​o​w​n​ ​e​r​r​o​r​.
+		 */
+		errorUnknown: string
+		/**
 		 * P​l​e​a​s​e​ ​e​n​t​e​r​ ​a​ ​v​a​l​i​d​ ​e​m​a​i​l​ ​a​d​d​r​e​s​s​.
 		 */
 		errorInvalidEmail: string
@@ -565,6 +569,10 @@ type RootTranslation = {
 			 */
 			day: string
 			/**
+			 * M​a​n​-​d​a​y​ ​(​8​h​)
+			 */
+			manday: string
+			/**
 			 * C​u​s​t​o​m
 			 */
 			custom: string
@@ -821,6 +829,10 @@ type RootTranslation = {
 		 * @param {unknown} hours
 		 */
 		timerHardLimitReachedMessage: RequiredParams<'hours'>
+		/**
+		 * S​t​a​r​t​e​d​ ​f​r​o​m​ ​q​u​i​c​k​ ​a​c​t​i​o​n
+		 */
+		startedFromQuickAction: string
 	}
 	timesheets: {
 		/**
@@ -1647,6 +1659,22 @@ type RootTranslation = {
 		 */
 		offlineBackupEncryptionUnprotected: string
 		/**
+		 * C​o​m​p​r​e​s​s​i​o​n
+		 */
+		offlineBackupCompressionLabel: string
+		/**
+		 * C​o​m​p​r​e​s​s​e​d
+		 */
+		offlineBackupCompressionYes: string
+		/**
+		 * N​o​t​ ​c​o​m​p​r​e​s​s​e​d
+		 */
+		offlineBackupCompressionNo: string
+		/**
+		 * T​h​i​s​ ​b​a​c​k​u​p​ ​u​s​e​s​ ​c​o​m​p​r​e​s​s​i​o​n​ ​t​h​a​t​ ​i​s​ ​n​o​t​ ​s​u​p​p​o​r​t​e​d​ ​o​n​ ​t​h​i​s​ ​d​e​v​i​c​e​.
+		 */
+		offlineBackupCompressionUnsupported: string
+		/**
 		 * B​a​c​k​u​p​ ​p​a​s​s​w​o​r​d
 		 */
 		offlineBackupRestorePasswordLabel: string
@@ -1686,6 +1714,14 @@ type RootTranslation = {
 		 * F​a​i​l​e​d​ ​t​o​ ​r​e​s​t​o​r​e​ ​b​a​c​k​u​p​.
 		 */
 		offlineBackupRestoreError: string
+		/**
+		 * U​n​a​b​l​e​ ​t​o​ ​d​e​c​r​y​p​t​ ​b​a​c​k​u​p​.​ ​C​h​e​c​k​ ​t​h​e​ ​p​a​s​s​w​o​r​d​ ​a​n​d​ ​t​r​y​ ​a​g​a​i​n​.
+		 */
+		offlineBackupDecryptError: string
+		/**
+		 * B​a​c​k​u​p​ ​s​t​o​r​a​g​e​ ​i​s​ ​u​n​a​v​a​i​l​a​b​l​e​ ​o​n​ ​t​h​i​s​ ​d​e​v​i​c​e​.
+		 */
+		offlineBackupStorageUnavailable: string
 		/**
 		 * V​A​T
 		 */
@@ -1891,6 +1927,10 @@ type RootTranslation = {
 		 */
 		exportIntegrationWebhookUrlLabel: string
 		/**
+		 * h​t​t​p​s​:​/​/​e​x​a​m​p​l​e​.​c​o​m​/​a​p​i​/​i​m​p​o​r​t
+		 */
+		exportIntegrationWebhookUrlPlaceholder: string
+		/**
 		 * M​e​t​h​o​d
 		 */
 		exportIntegrationWebhookMethodLabel: string
@@ -1898,6 +1938,10 @@ type RootTranslation = {
 		 * C​o​n​t​e​n​t​-​T​y​p​e
 		 */
 		exportIntegrationWebhookContentTypeLabel: string
+		/**
+		 * a​p​p​l​i​c​a​t​i​o​n​/​x​m​l
+		 */
+		exportIntegrationContentTypePlaceholder: string
 		/**
 		 * A​u​t​h​o​r​i​z​a​t​i​o​n
 		 */
@@ -2043,9 +2087,41 @@ type RootTranslation = {
 		 */
 		exportIntegrationXsltInvalid: string
 		/**
+		 * D​r​a​f​t​ ​e​x​p​o​r​t​ ​i​n​t​e​g​r​a​t​i​o​n
+		 */
+		exportIntegrationDraftName: string
+		/**
 		 * F​a​i​l​e​d​ ​t​o​ ​s​a​v​e​ ​i​n​t​e​g​r​a​t​i​o​n​.
 		 */
 		exportIntegrationSaveError: string
+		/**
+		 * T​h​i​s​ ​e​x​p​o​r​t​ ​f​e​a​t​u​r​e​ ​i​s​ ​u​n​a​v​a​i​l​a​b​l​e​ ​i​n​ ​t​h​e​ ​c​u​r​r​e​n​t​ ​a​p​p​ ​b​u​i​l​d​.
+		 */
+		exportIntegrationPlatformUnavailable: string
+		/**
+		 * S​h​a​r​i​n​g​ ​i​s​ ​n​o​t​ ​a​v​a​i​l​a​b​l​e​ ​o​n​ ​t​h​i​s​ ​d​e​v​i​c​e​.
+		 */
+		exportIntegrationShareUnavailable: string
+		/**
+		 * T​h​e​ ​s​e​l​e​c​t​e​d​ ​e​x​p​o​r​t​ ​i​n​t​e​g​r​a​t​i​o​n​ ​w​a​s​ ​n​o​t​ ​f​o​u​n​d​.
+		 */
+		exportIntegrationNotFound: string
+		/**
+		 * T​h​e​ ​r​e​q​u​e​s​t​ ​t​i​m​e​d​ ​o​u​t​.
+		 */
+		exportIntegrationRequestTimedOut: string
+		/**
+		 * T​h​e​ ​n​e​t​w​o​r​k​ ​r​e​q​u​e​s​t​ ​f​a​i​l​e​d​.
+		 */
+		exportIntegrationNetworkError: string
+		/**
+		 * P​l​e​a​s​e​ ​e​n​t​e​r​ ​a​ ​v​a​l​i​d​ ​U​R​L​.
+		 */
+		exportIntegrationInvalidUrl: string
+		/**
+		 * U​s​e​ ​H​T​T​P​S​ ​f​o​r​ ​t​h​i​s​ ​e​n​d​p​o​i​n​t​.​ ​P​l​a​i​n​ ​H​T​T​P​ ​i​s​ ​o​n​l​y​ ​a​l​l​o​w​e​d​ ​f​o​r​ ​l​o​c​a​l​h​o​s​t​ ​d​u​r​i​n​g​ ​t​e​s​t​i​n​g​.
+		 */
+		exportIntegrationHttpsRequired: string
 		/**
 		 * D​e​l​e​t​e​ ​i​n​t​e​g​r​a​t​i​o​n​?
 		 */
@@ -2835,13 +2911,29 @@ type RootTranslation = {
 		 */
 		syncInstanceIdLabel: string
 		/**
+		 * S​y​n​c​ ​i​n​s​t​a​n​c​e​ ​I​D​ ​i​s​ ​m​i​s​s​i​n​g​.
+		 */
+		syncInstanceIdRequired: string
+		/**
 		 * D​e​v​i​c​e​ ​I​D
 		 */
 		syncDeviceIdLabel: string
 		/**
+		 * S​y​n​c​ ​d​e​v​i​c​e​ ​I​D​ ​i​s​ ​m​i​s​s​i​n​g​.
+		 */
+		syncDeviceIdRequired: string
+		/**
 		 * D​e​v​i​c​e​ ​n​a​m​e
 		 */
 		syncDeviceNameLabel: string
+		/**
+		 * F​a​k​t​o​r​o​ ​D​e​v​i​c​e
+		 */
+		syncDefaultDeviceName: string
+		/**
+		 * A​u​t​h​ ​t​o​k​e​n
+		 */
+		syncAuthTokenLabel: string
 		/**
 		 * R​e​c​o​v​e​r​y​ ​e​m​a​i​l
 		 */
@@ -3094,6 +3186,10 @@ type RootTranslation = {
 		 * S​y​n​c​h​r​o​n​i​z​a​t​i​o​n​ ​f​a​i​l​e​d​.
 		 */
 		syncGenericError: string
+		/**
+		 * S​e​c​u​r​e​ ​c​r​y​p​t​o​ ​i​s​ ​u​n​a​v​a​i​l​a​b​l​e​ ​o​n​ ​t​h​i​s​ ​d​e​v​i​c​e​.​ ​E​n​a​b​l​e​ ​p​l​a​i​n​t​e​x​t​ ​s​y​n​c​ ​f​a​l​l​b​a​c​k​ ​t​o​ ​c​o​n​t​i​n​u​e​.
+		 */
+		syncCryptoUnavailable: string
 		/**
 		 * R​e​g​i​s​t​r​a​t​i​o​n​ ​c​o​m​p​l​e​t​e​d​,​ ​b​u​t​ ​s​e​r​v​e​r​ ​d​i​d​ ​n​o​t​ ​r​e​t​u​r​n​ ​a​u​t​h​ ​t​o​k​e​n​.
 		 */
@@ -3395,6 +3491,22 @@ type RootTranslation = {
 		 */
 		securityBiometricUnavailable: string
 		/**
+		 * N​o​t​ ​a​v​a​i​l​a​b​l​e
+		 */
+		securityBiometricNotAvailableLabel: string
+		/**
+		 * F​a​c​e​ ​I​D
+		 */
+		securityBiometricFaceId: string
+		/**
+		 * T​o​u​c​h​ ​I​D
+		 */
+		securityBiometricTouchId: string
+		/**
+		 * B​i​o​m​e​t​r​i​c​s
+		 */
+		securityBiometricGenericLabel: string
+		/**
 		 * U​n​l​o​c​k​ ​F​a​k​t​o​r​o
 		 */
 		unlockTitle: string
@@ -3639,6 +3751,10 @@ type RootTranslation = {
 		 */
 		connectPayloadLabel: string
 		/**
+		 * -​-​-​-​-​B​E​G​I​N​ ​F​A​K​T​O​R​O​ ​A​D​D​ ​D​E​V​I​C​E​ ​P​A​Y​L​O​A​D​-​-​-​-​-
+		 */
+		connectPayloadPlaceholder: string
+		/**
 		 * T​h​i​s​ ​d​e​v​i​c​e​ ​n​a​m​e​ ​(​o​p​t​i​o​n​a​l​)
 		 */
 		connectDeviceNameLabel: string
@@ -3646,6 +3762,10 @@ type RootTranslation = {
 		 * R​e​c​o​v​e​r​y​ ​e​m​a​i​l
 		 */
 		connectEmailLabel: string
+		/**
+		 * e​m​a​i​l​@​e​x​a​m​p​l​e​.​c​o​m
+		 */
+		connectEmailPlaceholder: string
 		/**
 		 * S​c​a​n​ ​Q​R
 		 */
@@ -3855,6 +3975,10 @@ export type TranslationFunctions = {
 		 * Error
 		 */
 		error: () => LocalizedString
+		/**
+		 * Unknown error.
+		 */
+		errorUnknown: () => LocalizedString
 		/**
 		 * Please enter a valid email address.
 		 */
@@ -4363,6 +4487,10 @@ export type TranslationFunctions = {
 			 */
 			day: () => LocalizedString
 			/**
+			 * Man-day (8h)
+			 */
+			manday: () => LocalizedString
+			/**
 			 * Custom
 			 */
 			custom: () => LocalizedString
@@ -4613,6 +4741,10 @@ export type TranslationFunctions = {
 		 * The timer reached the hard limit of {hours} h and was stopped automatically.
 		 */
 		timerHardLimitReachedMessage: (arg: { hours: unknown }) => LocalizedString
+		/**
+		 * Started from quick action
+		 */
+		startedFromQuickAction: () => LocalizedString
 	}
 	timesheets: {
 		/**
@@ -5424,6 +5556,22 @@ export type TranslationFunctions = {
 		 */
 		offlineBackupEncryptionUnprotected: () => LocalizedString
 		/**
+		 * Compression
+		 */
+		offlineBackupCompressionLabel: () => LocalizedString
+		/**
+		 * Compressed
+		 */
+		offlineBackupCompressionYes: () => LocalizedString
+		/**
+		 * Not compressed
+		 */
+		offlineBackupCompressionNo: () => LocalizedString
+		/**
+		 * This backup uses compression that is not supported on this device.
+		 */
+		offlineBackupCompressionUnsupported: () => LocalizedString
+		/**
 		 * Backup password
 		 */
 		offlineBackupRestorePasswordLabel: () => LocalizedString
@@ -5463,6 +5611,14 @@ export type TranslationFunctions = {
 		 * Failed to restore backup.
 		 */
 		offlineBackupRestoreError: () => LocalizedString
+		/**
+		 * Unable to decrypt backup. Check the password and try again.
+		 */
+		offlineBackupDecryptError: () => LocalizedString
+		/**
+		 * Backup storage is unavailable on this device.
+		 */
+		offlineBackupStorageUnavailable: () => LocalizedString
 		/**
 		 * VAT
 		 */
@@ -5668,6 +5824,10 @@ export type TranslationFunctions = {
 		 */
 		exportIntegrationWebhookUrlLabel: () => LocalizedString
 		/**
+		 * https://example.com/api/import
+		 */
+		exportIntegrationWebhookUrlPlaceholder: () => LocalizedString
+		/**
 		 * Method
 		 */
 		exportIntegrationWebhookMethodLabel: () => LocalizedString
@@ -5675,6 +5835,10 @@ export type TranslationFunctions = {
 		 * Content-Type
 		 */
 		exportIntegrationWebhookContentTypeLabel: () => LocalizedString
+		/**
+		 * application/xml
+		 */
+		exportIntegrationContentTypePlaceholder: () => LocalizedString
 		/**
 		 * Authorization
 		 */
@@ -5820,9 +5984,41 @@ export type TranslationFunctions = {
 		 */
 		exportIntegrationXsltInvalid: () => LocalizedString
 		/**
+		 * Draft export integration
+		 */
+		exportIntegrationDraftName: () => LocalizedString
+		/**
 		 * Failed to save integration.
 		 */
 		exportIntegrationSaveError: () => LocalizedString
+		/**
+		 * This export feature is unavailable in the current app build.
+		 */
+		exportIntegrationPlatformUnavailable: () => LocalizedString
+		/**
+		 * Sharing is not available on this device.
+		 */
+		exportIntegrationShareUnavailable: () => LocalizedString
+		/**
+		 * The selected export integration was not found.
+		 */
+		exportIntegrationNotFound: () => LocalizedString
+		/**
+		 * The request timed out.
+		 */
+		exportIntegrationRequestTimedOut: () => LocalizedString
+		/**
+		 * The network request failed.
+		 */
+		exportIntegrationNetworkError: () => LocalizedString
+		/**
+		 * Please enter a valid URL.
+		 */
+		exportIntegrationInvalidUrl: () => LocalizedString
+		/**
+		 * Use HTTPS for this endpoint. Plain HTTP is only allowed for localhost during testing.
+		 */
+		exportIntegrationHttpsRequired: () => LocalizedString
 		/**
 		 * Delete integration?
 		 */
@@ -6604,13 +6800,29 @@ export type TranslationFunctions = {
 		 */
 		syncInstanceIdLabel: () => LocalizedString
 		/**
+		 * Sync instance ID is missing.
+		 */
+		syncInstanceIdRequired: () => LocalizedString
+		/**
 		 * Device ID
 		 */
 		syncDeviceIdLabel: () => LocalizedString
 		/**
+		 * Sync device ID is missing.
+		 */
+		syncDeviceIdRequired: () => LocalizedString
+		/**
 		 * Device name
 		 */
 		syncDeviceNameLabel: () => LocalizedString
+		/**
+		 * Faktoro Device
+		 */
+		syncDefaultDeviceName: () => LocalizedString
+		/**
+		 * Auth token
+		 */
+		syncAuthTokenLabel: () => LocalizedString
 		/**
 		 * Recovery email
 		 */
@@ -6863,6 +7075,10 @@ export type TranslationFunctions = {
 		 * Synchronization failed.
 		 */
 		syncGenericError: () => LocalizedString
+		/**
+		 * Secure crypto is unavailable on this device. Enable plaintext sync fallback to continue.
+		 */
+		syncCryptoUnavailable: () => LocalizedString
 		/**
 		 * Registration completed, but server did not return auth token.
 		 */
@@ -7160,6 +7376,22 @@ export type TranslationFunctions = {
 		 */
 		securityBiometricUnavailable: () => LocalizedString
 		/**
+		 * Not available
+		 */
+		securityBiometricNotAvailableLabel: () => LocalizedString
+		/**
+		 * Face ID
+		 */
+		securityBiometricFaceId: () => LocalizedString
+		/**
+		 * Touch ID
+		 */
+		securityBiometricTouchId: () => LocalizedString
+		/**
+		 * Biometrics
+		 */
+		securityBiometricGenericLabel: () => LocalizedString
+		/**
 		 * Unlock Faktoro
 		 */
 		unlockTitle: () => LocalizedString
@@ -7402,6 +7634,10 @@ export type TranslationFunctions = {
 		 */
 		connectPayloadLabel: () => LocalizedString
 		/**
+		 * -----BEGIN FAKTORO ADD DEVICE PAYLOAD-----
+		 */
+		connectPayloadPlaceholder: () => LocalizedString
+		/**
 		 * This device name (optional)
 		 */
 		connectDeviceNameLabel: () => LocalizedString
@@ -7409,6 +7645,10 @@ export type TranslationFunctions = {
 		 * Recovery email
 		 */
 		connectEmailLabel: () => LocalizedString
+		/**
+		 * email@example.com
+		 */
+		connectEmailPlaceholder: () => LocalizedString
 		/**
 		 * Scan QR
 		 */

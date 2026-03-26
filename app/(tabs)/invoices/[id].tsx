@@ -31,7 +31,12 @@ import {
   type SellerSnapshot,
 } from '@/templates/invoice/xml';
 import { normalizeCurrencyCode } from '@/utils/currency-utils';
-import { getErrorMessage, isHttpError, isNetworkError } from '@/utils/error-utils';
+import {
+  getErrorMessage,
+  getExportIntegrationErrorMessage,
+  isHttpError,
+  isNetworkError,
+} from '@/utils/error-utils';
 import { buildPdfLogoHtml } from '@/utils/pdf-logo';
 import { formatPrice } from '@/utils/price-utils';
 import { Q } from '@nozbe/watermelondb';
@@ -661,7 +666,11 @@ export default function InvoiceDetailScreen() {
           })
         : isNetworkError(error)
           ? LLExport.invoices.exportWebhookNetworkError()
-          : getErrorMessage(error, LLExport.invoices.exportError());
+          : getExportIntegrationErrorMessage(
+              error,
+              LLExport,
+              getErrorMessage(error, LLExport.invoices.exportError()),
+            );
       Alert.alert(LLExport.common.error(), message);
     } finally {
       setExportingTarget(null);

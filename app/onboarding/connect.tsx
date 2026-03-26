@@ -193,7 +193,7 @@ function OnboardingConnectScreenContent() {
                 ]}
                 value={payloadInput}
                 onChangeText={setPayloadInput}
-                placeholder="-----BEGIN FAKTORO ADD DEVICE PAYLOAD-----"
+                placeholder={LL.onboarding.connectPayloadPlaceholder()}
                 placeholderTextColor={palette.placeholder}
                 multiline
                 autoCapitalize="none"
@@ -238,7 +238,7 @@ function OnboardingConnectScreenContent() {
                 ]}
                 value={recoveryEmail}
                 onChangeText={setRecoveryEmail}
-                placeholder="email@example.com"
+                placeholder={LL.onboarding.connectEmailPlaceholder()}
                 placeholderTextColor={palette.placeholder}
                 keyboardType="email-address"
                 autoCapitalize="none"

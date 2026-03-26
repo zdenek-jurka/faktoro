@@ -871,8 +871,8 @@ export default function InvoiceNewItemScreen() {
                                     <SelectItem value="day" label={LL.priceList.units.day()}>
                                       {LL.priceList.units.day()}
                                     </SelectItem>
-                                    <SelectItem value="manday" label="Man-day (8h)">
-                                      Man-day (8h)
+                                    <SelectItem value="manday" label={LL.priceList.units.manday()}>
+                                      {LL.priceList.units.manday()}
                                     </SelectItem>
                                   </SelectGroup>
                                 </SelectContent>

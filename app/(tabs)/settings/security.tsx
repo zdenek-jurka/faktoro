@@ -33,7 +33,14 @@ type BiometricState = {
   label: string;
 };
 
-function formatErrorMessage(error: unknown): string {
+type BiometricLabels = {
+  notAvailable: string;
+  faceId: string;
+  touchId: string;
+  biometrics: string;
+};
+
+function formatErrorMessage(error: unknown, fallbackMessage: string): string {
   if (error instanceof Error) {
     const message = error.message?.trim();
     if (message) return message;
@@ -45,28 +52,28 @@ function formatErrorMessage(error: unknown): string {
   } catch {
     // ignore serialization failures
   }
-  return 'Unknown error';
+  return fallbackMessage;
 }
 
-async function getBiometricState(): Promise<BiometricState> {
+async function getBiometricState(labels: BiometricLabels): Promise<BiometricState> {
   try {
     // Optional dependency fallback.
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const localAuth = require('expo-local-authentication');
-    if (!localAuth) return { isAvailable: false, label: 'Not available' };
+    if (!localAuth) return { isAvailable: false, label: labels.notAvailable };
 
     const hasHardware = await localAuth.hasHardwareAsync();
     const isEnrolled = await localAuth.isEnrolledAsync();
-    if (!hasHardware || !isEnrolled) return { isAvailable: false, label: 'Not available' };
+    if (!hasHardware || !isEnrolled) return { isAvailable: false, label: labels.notAvailable };
 
     const types = await localAuth.supportedAuthenticationTypesAsync();
     const isFaceId = types.includes(localAuth.AuthenticationType.FACIAL_RECOGNITION);
     const isFingerprint = types.includes(localAuth.AuthenticationType.FINGERPRINT);
-    if (isFaceId) return { isAvailable: true, label: 'Face ID' };
-    if (isFingerprint) return { isAvailable: true, label: 'Touch ID' };
-    return { isAvailable: true, label: 'Biometrics' };
+    if (isFaceId) return { isAvailable: true, label: labels.faceId };
+    if (isFingerprint) return { isAvailable: true, label: labels.touchId };
+    return { isAvailable: true, label: labels.biometrics };
   } catch {
-    return { isAvailable: false, label: 'Not available' };
+    return { isAvailable: false, label: labels.notAvailable };
   }
 }
 
@@ -81,10 +88,10 @@ export default function SettingsSecurityScreen() {
   const [appLockPin, setAppLockPin] = useState('');
   const [confirmPin, setConfirmPin] = useState('');
   const [biometricEnabled, setBiometricEnabled] = useState(false);
-  const [biometricState, setBiometricState] = useState<BiometricState>({
+  const [biometricState, setBiometricState] = useState<BiometricState>(() => ({
     isAvailable: false,
-    label: 'Not available',
-  });
+    label: LL.settings.securityBiometricNotAvailableLabel(),
+  }));
   const [isAccessCheckLoading, setIsAccessCheckLoading] = useState(true);
   const [isAccessVerified, setIsAccessVerified] = useState(false);
   const [canUseBiometricForAccess, setCanUseBiometricForAccess] = useState(false);
@@ -121,7 +128,12 @@ export default function SettingsSecurityScreen() {
         const lockEnabled = !!settings.appLockEnabled;
         const biometricSettingEnabled = !!settings.appLockBiometricEnabled;
         const pinExists = await hasPinHash();
-        const state = await getBiometricState();
+        const state = await getBiometricState({
+          notAvailable: LL.settings.securityBiometricNotAvailableLabel(),
+          faceId: LL.settings.securityBiometricFaceId(),
+          touchId: LL.settings.securityBiometricTouchId(),
+          biometrics: LL.settings.securityBiometricGenericLabel(),
+        });
 
         if (!isMounted) return;
 
@@ -164,7 +176,7 @@ export default function SettingsSecurityScreen() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [LL.settings, authenticateWithBiometric]);
 
   const handleVerifyAccessByPin = async () => {
     setAccessError('');
@@ -246,7 +258,10 @@ export default function SettingsSecurityScreen() {
       Alert.alert(LL.common.success(), LL.settings.saveSuccess());
     } catch (error) {
       console.error('Error saving security settings:', error);
-      Alert.alert(LL.common.error(), `${LL.settings.saveError()}\n\n${formatErrorMessage(error)}`);
+      Alert.alert(
+        LL.common.error(),
+        `${LL.settings.saveError()}\n\n${formatErrorMessage(error, LL.common.errorUnknown())}`,
+      );
     }
   };
 

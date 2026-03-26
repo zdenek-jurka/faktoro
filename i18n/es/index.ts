@@ -10,6 +10,7 @@ const es = {
     nothingHereYetTitle: 'Todavía no hay nada aquí',
     loading: 'Cargando...',
     error: 'Error',
+    errorUnknown: 'Unknown error.',
     errorInvalidEmail: 'Introduce una dirección de correo válida.',
     errorBillingIntervalMinimum: 'El intervalo de redondeo debe ser de al menos 1 minuto.',
     errorInvoiceDueDaysInvalid: 'El plazo de vencimiento debe ser de 0 o más días.',
@@ -155,6 +156,7 @@ const es = {
       piece: 'Pedazo',
       project: 'Proyecto',
       day: 'Día',
+      manday: 'Man-day (8h)',
       custom: 'Costumbre',
     },
     errorRequiredFields: 'Por favor complete todos los campos requeridos',
@@ -224,6 +226,7 @@ const es = {
     timerHardLimitReachedTitle: 'El temporizador se detuvo automáticamente',
     timerHardLimitReachedMessage:
       'El temporizador alcanzó el límite duro de {hours} h y se detuvo automáticamente.',
+    startedFromQuickAction: 'Started from quick action',
   },
   timesheets: {
     title: 'Hojas de tiempo',
@@ -449,6 +452,11 @@ const es = {
     offlineBackupEncryptionLabel: 'Protection',
     offlineBackupEncryptionProtected: 'Password protected',
     offlineBackupEncryptionUnprotected: 'Without password',
+    offlineBackupCompressionLabel: 'Compresión',
+    offlineBackupCompressionYes: 'Comprimido',
+    offlineBackupCompressionNo: 'Sin comprimir',
+    offlineBackupCompressionUnsupported:
+      'This backup uses compression that is not supported on this device.',
     offlineBackupRestorePasswordLabel: 'Backup password',
     offlineBackupRestorePasswordRequired: 'Enter the password for this backup file.',
     offlineBackupNoFileSelected: 'Choose a backup file first.',
@@ -460,6 +468,8 @@ const es = {
     offlineBackupRestoreAction: 'Restore backup',
     offlineBackupRestoreSuccess: 'Backup was restored successfully.',
     offlineBackupRestoreError: 'Failed to restore backup.',
+    offlineBackupDecryptError: 'Unable to decrypt backup. Check the password and try again.',
+    offlineBackupStorageUnavailable: 'Backup storage is unavailable on this device.',
     vatTitle: 'TINA',
     vatSubtitle: 'Tarifas y validez',
     modalTitle: 'Modal',
@@ -520,8 +530,10 @@ const es = {
     exportIntegrationDeliveryClipboard: 'Portapapeles',
     exportIntegrationDeliveryWebhook: 'Webhook',
     exportIntegrationWebhookUrlLabel: 'URL del endpoint',
+    exportIntegrationWebhookUrlPlaceholder: 'https://example.com/api/import',
     exportIntegrationWebhookMethodLabel: 'Método',
     exportIntegrationWebhookContentTypeLabel: 'Content-Type',
+    exportIntegrationContentTypePlaceholder: 'application/xml',
     exportIntegrationWebhookAuthLabel: 'Autorización',
     exportIntegrationWebhookAuthNone: 'Ninguna',
     exportIntegrationWebhookAuthBearer: 'Token bearer',
@@ -553,6 +565,16 @@ const es = {
     exportIntegrationNameRequired: 'El nombre de la integración es obligatorio.',
     exportIntegrationXsltRequired: 'La plantilla XSLT es obligatoria.',
     exportIntegrationXsltInvalid: 'La plantilla XSLT no es válida o no se puede aplicar.',
+    exportIntegrationDraftName: 'Draft export integration',
+    exportIntegrationPlatformUnavailable:
+      'This export feature is unavailable in the current app build.',
+    exportIntegrationShareUnavailable: 'Sharing is not available on this device.',
+    exportIntegrationNotFound: 'The selected export integration was not found.',
+    exportIntegrationRequestTimedOut: 'The request timed out.',
+    exportIntegrationNetworkError: 'The network request failed.',
+    exportIntegrationInvalidUrl: 'Please enter a valid URL.',
+    exportIntegrationHttpsRequired:
+      'Use HTTPS for this endpoint. Plain HTTP is only allowed for localhost during testing.',
     exportIntegrationWebhookUrlRequired: 'La URL del endpoint es obligatoria.',
     exportIntegrationWebhookHttpsRequired:
       'Usa HTTPS para la URL del endpoint. HTTP sin cifrar solo se permite para localhost durante pruebas.',
@@ -792,8 +814,12 @@ const es = {
     syncSaveUrlChangeForgetSkip: 'Omitir',
     syncServerUrlLabel: 'URL del servidor',
     syncInstanceIdLabel: 'ID de instancia',
+    syncInstanceIdRequired: 'Sync instance ID is missing.',
     syncDeviceIdLabel: 'ID del dispositivo',
+    syncDeviceIdRequired: 'Sync device ID is missing.',
     syncDeviceNameLabel: 'Nombre del dispositivo',
+    syncDefaultDeviceName: 'Faktoro Device',
+    syncAuthTokenLabel: 'Auth token',
     syncRecoveryEmailLabel: 'Correo electrónico de recuperación',
     syncDeviceStatusLabel: 'Estado del dispositivo',
     syncServerStatusLabel: 'Estado del servidor',
@@ -885,6 +911,8 @@ const es = {
     syncCryptoUpgradeSuccess:
       'Modo cifrado activado. Exporta y comparte la misma copia de seguridad de clave en todos los dispositivos.',
     syncGenericError: 'Error de sincronización.',
+    syncCryptoUnavailable:
+      'Secure crypto is unavailable on this device. Enable plaintext sync fallback to continue.',
     syncNoAuthToken:
       'El registro se completó, pero el servidor no devolvió el token de autenticación.',
     syncServerUnavailable:
@@ -969,6 +997,10 @@ const es = {
     securityBiometricAvailable: '{type} está disponible en este dispositivo.',
     securityBiometricUnavailable:
       'La autenticación biométrica no está disponible. Instale y configure la autenticación expo-local.',
+    securityBiometricNotAvailableLabel: 'No disponible',
+    securityBiometricFaceId: 'Face ID',
+    securityBiometricTouchId: 'Touch ID',
+    securityBiometricGenericLabel: 'Biometría',
     unlockTitle: 'Desbloquear factor',
     unlockDescription: 'Ingrese su PIN para continuar.',
     unlockPinPlaceholder: 'PIN',
@@ -1037,8 +1069,10 @@ const es = {
     connectSubtitle:
       'En tu dispositivo actual: Ajustes → Sincronización → Añadir dispositivo, y luego pega o escanea aquí el payload.',
     connectPayloadLabel: 'Payload para añadir dispositivo',
+    connectPayloadPlaceholder: '-----BEGIN FAKTORO ADD DEVICE PAYLOAD-----',
     connectDeviceNameLabel: 'Nombre de este dispositivo (opcional)',
     connectEmailLabel: 'Correo de recuperación',
+    connectEmailPlaceholder: 'email@example.com',
     connectScanQr: 'Escanear QR',
     connectButton: 'Conectar',
     connectSuccess: 'Dispositivo conectado. Los datos se sincronizarán en breve.',

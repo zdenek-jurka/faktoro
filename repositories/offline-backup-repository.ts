@@ -18,6 +18,8 @@ const BACKUP_AES_ALGORITHM = 'aes-256-gcm';
 const BACKUP_AAD = 'faktoro|offline-backup|v1';
 const BACKUP_PBKDF2_ROUNDS = 210_000;
 const BACKUP_FALLBACK_KDF_ROUNDS = 4_096;
+const BACKUP_COMPRESSION_UNSUPPORTED_ERROR =
+  'This backup uses compression that is not supported on this device.';
 const DEVICE_SYNC_CONFIG_PREFIX = 'device_sync.';
 const INVOICE_LOGO_ASSET_KIND = 'invoice_logo_v1';
 
@@ -73,25 +75,37 @@ type OfflineBackupFile =
       version: typeof BACKUP_VERSION;
       createdAt: number;
       encrypted: false;
+      compressed: false;
       payload: OfflineBackupPlainPayload;
     }
   | {
       kind: typeof BACKUP_KIND;
       version: typeof BACKUP_VERSION;
       createdAt: number;
+      encrypted: false;
+      compressed: true;
+      payload: string; // base64(deflate-raw(JSON.stringify(OfflineBackupPlainPayload)))
+    }
+  | {
+      kind: typeof BACKUP_KIND;
+      version: typeof BACKUP_VERSION;
+      createdAt: number;
       encrypted: true;
+      compressed: boolean;
       payload: OfflineBackupEncryptedPayload;
     };
 
 export type OfflineBackupInspection = {
   createdAt: number;
   encrypted: boolean;
+  compressed: boolean;
 };
 
 export type CreatedOfflineBackup = {
   uri: string;
   fileName: string;
   encrypted: boolean;
+  compressed: boolean;
 };
 
 export async function createOfflineBackupFile(options?: {
@@ -105,21 +119,36 @@ export async function createOfflineBackupFile(options?: {
     assets: await collectOfflineBackupAssets(snapshot),
   };
 
+  const useCompression = isCompressionSupported();
+  const plainBytes = new TextEncoder().encode(JSON.stringify(payload));
+  const payloadBytes = useCompression ? await deflateBytes(plainBytes) : plainBytes;
+
   const backupFile: OfflineBackupFile = password
     ? {
         kind: BACKUP_KIND,
         version: BACKUP_VERSION,
         createdAt,
         encrypted: true,
-        payload: await encryptBackupPayload(payload, password),
+        compressed: useCompression,
+        payload: await encryptRawBytes(payloadBytes, password),
       }
-    : {
-        kind: BACKUP_KIND,
-        version: BACKUP_VERSION,
-        createdAt,
-        encrypted: false,
-        payload,
-      };
+    : useCompression
+      ? {
+          kind: BACKUP_KIND,
+          version: BACKUP_VERSION,
+          createdAt,
+          encrypted: false,
+          compressed: true,
+          payload: base64Encode(payloadBytes),
+        }
+      : {
+          kind: BACKUP_KIND,
+          version: BACKUP_VERSION,
+          createdAt,
+          encrypted: false,
+          compressed: false,
+          payload,
+        };
 
   const fileName = buildBackupFileName(createdAt, !!password);
   const uri = await writeBackupFile(fileName, JSON.stringify(backupFile));
@@ -127,6 +156,7 @@ export async function createOfflineBackupFile(options?: {
     uri,
     fileName,
     encrypted: !!password,
+    compressed: useCompression,
   };
 }
 
@@ -135,6 +165,7 @@ export function inspectOfflineBackupContent(content: string): OfflineBackupInspe
   return {
     createdAt: parsed.createdAt,
     encrypted: parsed.encrypted,
+    compressed: parsed.compressed,
   };
 }
 
@@ -144,9 +175,17 @@ export async function restoreOfflineBackupContent(
 ): Promise<void> {
   const parsed = parseOfflineBackupFile(content);
   const password = options?.password?.trim() || '';
-  const payload = parsed.encrypted
-    ? await decryptBackupPayload(parsed.payload, password)
-    : parsed.payload;
+
+  let payload: OfflineBackupPlainPayload;
+  if (parsed.encrypted) {
+    payload = await decryptAndInflateBackupPayload(parsed.payload, parsed.compressed, password);
+  } else if (parsed.compressed) {
+    ensureCompressionSupportedForRestore();
+    const decompressed = await inflateBytes(base64Decode(parsed.payload));
+    payload = JSON.parse(new TextDecoder().decode(decompressed)) as OfflineBackupPlainPayload;
+  } else {
+    payload = parsed.payload;
+  }
 
   const preservedDeviceSettings = await getDeviceSyncSettings();
   let snapshot = normalizeOfflineBackupSnapshot(payload.snapshot);
@@ -169,36 +208,59 @@ function parseOfflineBackupFile(content: string): OfflineBackupFile {
     throw new Error('Invalid backup file format.');
   }
 
-  const candidate = parsed as Partial<OfflineBackupFile> & Record<string, unknown>;
-  if (candidate.kind !== BACKUP_KIND || candidate.version !== BACKUP_VERSION) {
+  const c = parsed as Record<string, unknown>;
+  if (c.kind !== BACKUP_KIND || c.version !== BACKUP_VERSION) {
     throw new Error('Unsupported backup file version.');
   }
-  if (typeof candidate.createdAt !== 'number' || !Number.isFinite(candidate.createdAt)) {
+  if (typeof c.createdAt !== 'number' || !Number.isFinite(c.createdAt)) {
     throw new Error('Backup file is missing creation metadata.');
   }
-  if (typeof candidate.encrypted !== 'boolean') {
+  if (typeof c.encrypted !== 'boolean') {
     throw new Error('Backup file is missing encryption metadata.');
   }
-  if (!candidate.payload || typeof candidate.payload !== 'object') {
+
+  const compressed = c.compressed === true;
+  const base = { kind: BACKUP_KIND, version: BACKUP_VERSION, createdAt: c.createdAt } as const;
+
+  if (!c.encrypted) {
+    if (compressed) {
+      if (typeof c.payload !== 'string' || !c.payload) {
+        throw new Error('Compressed backup payload is invalid.');
+      }
+      return { ...base, encrypted: false, compressed: true, payload: c.payload };
+    }
+    if (!c.payload || typeof c.payload !== 'object') {
+      throw new Error('Backup file payload is missing.');
+    }
+    return {
+      ...base,
+      encrypted: false,
+      compressed: false,
+      payload: c.payload as OfflineBackupPlainPayload,
+    };
+  }
+
+  if (!c.payload || typeof c.payload !== 'object') {
     throw new Error('Backup file payload is missing.');
   }
-
-  if (candidate.encrypted) {
-    const payload = candidate.payload as Partial<OfflineBackupEncryptedPayload>;
-    if (
-      payload.v !== BACKUP_AES_VERSION ||
-      payload.alg !== BACKUP_AES_ALGORITHM ||
-      (payload.kdf !== 'pbkdf2-sha256' && payload.kdf !== 'iter-sha256') ||
-      typeof payload.rounds !== 'number' ||
-      typeof payload.saltB64 !== 'string' ||
-      typeof payload.ivB64 !== 'string' ||
-      typeof payload.ctB64 !== 'string'
-    ) {
-      throw new Error('Backup file encryption payload is invalid.');
-    }
+  const encPayload = c.payload as Partial<OfflineBackupEncryptedPayload>;
+  if (
+    encPayload.v !== BACKUP_AES_VERSION ||
+    encPayload.alg !== BACKUP_AES_ALGORITHM ||
+    (encPayload.kdf !== 'pbkdf2-sha256' && encPayload.kdf !== 'iter-sha256') ||
+    typeof encPayload.rounds !== 'number' ||
+    typeof encPayload.saltB64 !== 'string' ||
+    typeof encPayload.ivB64 !== 'string' ||
+    typeof encPayload.ctB64 !== 'string'
+  ) {
+    throw new Error('Backup file encryption payload is invalid.');
   }
-
-  return candidate as OfflineBackupFile;
+  return {
+    ...base,
+    encrypted: true,
+    compressed,
+    payload: encPayload as OfflineBackupEncryptedPayload,
+  };
 }
 
 async function createOfflineBackupSnapshot(): Promise<OfflineBackupSnapshot> {
@@ -354,22 +416,21 @@ async function applyOfflineBackupSnapshot(snapshot: OfflineBackupSnapshot): Prom
   });
 }
 
-async function encryptBackupPayload(
-  payload: OfflineBackupPlainPayload,
+async function encryptRawBytes(
+  plainBytes: Uint8Array,
   password: string,
 ): Promise<OfflineBackupEncryptedPayload> {
   if (!password.trim()) {
     throw new Error('Backup password is required.');
   }
 
-  const plaintext = new TextEncoder().encode(JSON.stringify(payload));
   const salt = await getRandomBytes(16);
   const iv = await getRandomBytes(12);
   const kdf =
     typeof globalThis.crypto?.subtle?.deriveBits === 'function' ? 'pbkdf2-sha256' : 'iter-sha256';
   const rounds = kdf === 'pbkdf2-sha256' ? BACKUP_PBKDF2_ROUNDS : BACKUP_FALLBACK_KDF_ROUNDS;
   const key = await derivePasswordKey(password, salt, kdf, rounds);
-  const ciphertext = await encryptAesGcm(plaintext, key, iv);
+  const ciphertext = await encryptAesGcm(plainBytes, key, iv);
 
   return {
     v: BACKUP_AES_VERSION,
@@ -382,12 +443,16 @@ async function encryptBackupPayload(
   };
 }
 
-async function decryptBackupPayload(
+async function decryptAndInflateBackupPayload(
   payload: OfflineBackupEncryptedPayload,
+  compressed: boolean,
   password: string,
 ): Promise<OfflineBackupPlainPayload> {
   if (!password.trim()) {
     throw new Error('Backup password is required.');
+  }
+  if (compressed) {
+    ensureCompressionSupportedForRestore();
   }
 
   try {
@@ -395,8 +460,11 @@ async function decryptBackupPayload(
     const iv = base64Decode(payload.ivB64);
     const ciphertext = base64Decode(payload.ctB64);
     const key = await derivePasswordKey(password, salt, payload.kdf, payload.rounds);
-    const plaintext = await decryptAesGcm(ciphertext, key, iv);
-    const decoded = new TextDecoder().decode(plaintext);
+    let plainBytes = await decryptAesGcm(ciphertext, key, iv);
+    if (compressed) {
+      plainBytes = await inflateBytes(plainBytes);
+    }
+    const decoded = new TextDecoder().decode(plainBytes);
     const parsed = JSON.parse(decoded) as OfflineBackupPlainPayload;
 
     if (
@@ -590,6 +658,50 @@ function hexToBytes(hex: string): Uint8Array {
     result[index] = Number.parseInt(normalized.slice(index * 2, index * 2 + 2), 16);
   }
   return result;
+}
+
+function isCompressionSupported(): boolean {
+  return typeof CompressionStream !== 'undefined' && typeof DecompressionStream !== 'undefined';
+}
+
+function ensureCompressionSupportedForRestore(): void {
+  if (!isCompressionSupported()) {
+    throw new Error(BACKUP_COMPRESSION_UNSUPPORTED_ERROR);
+  }
+}
+
+async function collectStreamBytes(readable: ReadableStream<Uint8Array>): Promise<Uint8Array> {
+  const reader = readable.getReader();
+  const chunks: Uint8Array[] = [];
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    chunks.push(value);
+  }
+  const totalLength = chunks.reduce((sum, chunk) => sum + chunk.length, 0);
+  const result = new Uint8Array(totalLength);
+  let offset = 0;
+  for (const chunk of chunks) {
+    result.set(chunk, offset);
+    offset += chunk.length;
+  }
+  return result;
+}
+
+async function deflateBytes(data: Uint8Array): Promise<Uint8Array> {
+  const cs = new CompressionStream('deflate-raw');
+  const writer = cs.writable.getWriter();
+  await writer.write(data as unknown as ArrayBuffer);
+  await writer.close();
+  return collectStreamBytes(cs.readable);
+}
+
+async function inflateBytes(data: Uint8Array): Promise<Uint8Array> {
+  const ds = new DecompressionStream('deflate-raw');
+  const writer = ds.writable.getWriter();
+  await writer.write(data as unknown as ArrayBuffer);
+  await writer.close();
+  return collectStreamBytes(ds.readable);
 }
 
 function inferFileExtension(filePathOrName: string): string | null {

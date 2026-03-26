@@ -22,6 +22,7 @@ import {
   isSecureCryptoAvailable,
   parseInstanceKeyBackupPayload,
 } from '@/repositories/sync-crypto';
+import { getSyncErrorMessage } from '@/utils/error-utils';
 import {
   resolveConflictWithMergedPayload,
   resolveConflictWithStrategy,
@@ -320,12 +321,7 @@ function SyncMaintenanceScreenContent() {
       showAlert(LL.common.success(), LL.settings.syncRecoverySuccess());
     } catch (err) {
       syncDebugLog('Recovery failed', { error: err instanceof Error ? err.message : String(err) });
-      const msg =
-        err instanceof TypeError || (err instanceof Error && err.name === 'AbortError')
-          ? LL.settings.syncServerUnavailable()
-          : err instanceof Error
-            ? err.message
-            : LL.settings.syncGenericError();
+      const msg = getSyncErrorMessage(err, LL, LL.settings.syncGenericError());
       showAlert(LL.common.error(), msg);
     } finally {
       setSyncingNow(false);
@@ -357,10 +353,7 @@ function SyncMaintenanceScreenContent() {
       setKeyBackupPayload(payload);
       showAlert(LL.common.success(), LL.settings.syncKeyBackupGenerated());
     } catch (err) {
-      showAlert(
-        LL.common.error(),
-        err instanceof Error ? err.message : LL.settings.syncGenericError(),
-      );
+      showAlert(LL.common.error(), getSyncErrorMessage(err, LL, LL.settings.syncGenericError()));
     }
   };
 
@@ -384,10 +377,7 @@ function SyncMaintenanceScreenContent() {
       setKeyRestorePayload('');
       showAlert(LL.common.success(), LL.settings.syncKeyRestoreSuccess());
     } catch (err) {
-      showAlert(
-        LL.common.error(),
-        err instanceof Error ? err.message : LL.settings.syncGenericError(),
-      );
+      showAlert(LL.common.error(), getSyncErrorMessage(err, LL, LL.settings.syncGenericError()));
     }
   };
 

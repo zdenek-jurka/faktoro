@@ -17,6 +17,7 @@ import {
   updateExportIntegration,
   validateExportIntegrationXslt,
 } from '@/repositories/export-integration-repository';
+import { getExportIntegrationErrorMessage } from '@/utils/error-utils';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
@@ -254,7 +255,7 @@ export default function ExportIntegrationFormScreen() {
 
     return {
       id: integrationId || 'draft-export-integration',
-      name: name.trim() || 'Draft export integration',
+      name: name.trim() || LL.settings.exportIntegrationDraftName(),
       description: description.trim(),
       documentType,
       delivery,
@@ -279,8 +280,11 @@ export default function ExportIntegrationFormScreen() {
       Alert.alert(LL.common.success(), LL.settings.exportIntegrationTestTransformSuccess());
     } catch (error) {
       console.error('Error testing export transform:', error);
-      const message =
-        error instanceof Error ? error.message : LL.settings.exportIntegrationXsltInvalid();
+      const message = getExportIntegrationErrorMessage(
+        error,
+        LL,
+        LL.settings.exportIntegrationXsltInvalid(),
+      );
       Alert.alert(LL.common.error(), message);
     } finally {
       setTestingAction(null);
@@ -322,9 +326,11 @@ export default function ExportIntegrationFormScreen() {
           })
         : isNetworkError
           ? LL.settings.exportIntegrationTestDeliveryNetworkError()
-          : error instanceof Error
-            ? error.message
-            : LL.settings.exportIntegrationTestDeliveryError();
+          : getExportIntegrationErrorMessage(
+              error,
+              LL,
+              LL.settings.exportIntegrationTestDeliveryError(),
+            );
       Alert.alert(LL.common.error(), message);
     } finally {
       setTestingAction(null);
@@ -580,7 +586,7 @@ export default function ExportIntegrationFormScreen() {
                   style={inputStyle}
                   value={webhookUrl}
                   onChangeText={setWebhookUrl}
-                  placeholder="https://example.com/api/import"
+                  placeholder={LL.settings.exportIntegrationWebhookUrlPlaceholder()}
                   placeholderTextColor={palette.placeholder}
                   autoCapitalize="none"
                   autoCorrect={false}
@@ -639,7 +645,7 @@ export default function ExportIntegrationFormScreen() {
                   style={inputStyle}
                   value={webhookContentType}
                   onChangeText={setWebhookContentType}
-                  placeholder="application/xml"
+                  placeholder={LL.settings.exportIntegrationContentTypePlaceholder()}
                   placeholderTextColor={palette.placeholder}
                   autoCapitalize="none"
                   autoCorrect={false}

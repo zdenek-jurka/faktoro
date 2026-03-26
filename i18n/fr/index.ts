@@ -10,6 +10,7 @@ const fr = {
     nothingHereYetTitle: "Il n'y a encore rien ici",
     loading: 'Chargement...',
     error: 'Erreur',
+    errorUnknown: 'Unknown error.',
     errorInvalidEmail: 'Veuillez saisir une adresse e-mail valide.',
     errorBillingIntervalMinimum: "L'intervalle d'arrondi doit être d'au moins 1 minute.",
     errorInvoiceDueDaysInvalid: "Le délai d'échéance doit être de 0 jour ou plus.",
@@ -155,6 +156,7 @@ const fr = {
       piece: 'Morceau',
       project: 'Projet',
       day: 'Jour',
+      manday: 'Man-day (8h)',
       custom: 'Coutume',
     },
     errorRequiredFields: 'Veuillez remplir tous les champs obligatoires',
@@ -224,6 +226,7 @@ const fr = {
     timerHardLimitReachedTitle: 'Le minuteur a été arrêté automatiquement',
     timerHardLimitReachedMessage:
       'Le minuteur a atteint la limite dure de {hours} h et a été arrêté automatiquement.',
+    startedFromQuickAction: 'Started from quick action',
   },
   timesheets: {
     title: 'Feuilles de temps',
@@ -451,6 +454,11 @@ const fr = {
     offlineBackupEncryptionLabel: 'Protection',
     offlineBackupEncryptionProtected: 'Password protected',
     offlineBackupEncryptionUnprotected: 'Without password',
+    offlineBackupCompressionLabel: 'Compression',
+    offlineBackupCompressionYes: 'Compressé',
+    offlineBackupCompressionNo: 'Non compressé',
+    offlineBackupCompressionUnsupported:
+      'This backup uses compression that is not supported on this device.',
     offlineBackupRestorePasswordLabel: 'Backup password',
     offlineBackupRestorePasswordRequired: 'Enter the password for this backup file.',
     offlineBackupNoFileSelected: 'Choose a backup file first.',
@@ -462,6 +470,8 @@ const fr = {
     offlineBackupRestoreAction: 'Restore backup',
     offlineBackupRestoreSuccess: 'Backup was restored successfully.',
     offlineBackupRestoreError: 'Failed to restore backup.',
+    offlineBackupDecryptError: 'Unable to decrypt backup. Check the password and try again.',
+    offlineBackupStorageUnavailable: 'Backup storage is unavailable on this device.',
     vatTitle: 'T.V.A.',
     vatSubtitle: 'Tarifs et validité',
     modalTitle: 'Modale',
@@ -520,8 +530,10 @@ const fr = {
     exportIntegrationDeliveryClipboard: 'Presse-papiers',
     exportIntegrationDeliveryWebhook: 'Webhook',
     exportIntegrationWebhookUrlLabel: 'URL du point de terminaison',
+    exportIntegrationWebhookUrlPlaceholder: 'https://example.com/api/import',
     exportIntegrationWebhookMethodLabel: 'Méthode',
     exportIntegrationWebhookContentTypeLabel: 'Content-Type',
+    exportIntegrationContentTypePlaceholder: 'application/xml',
     exportIntegrationWebhookAuthLabel: 'Autorisation',
     exportIntegrationWebhookAuthNone: 'Aucune',
     exportIntegrationWebhookAuthBearer: 'Jeton Bearer',
@@ -554,6 +566,16 @@ const fr = {
     exportIntegrationXsltRequired: 'La feuille de style XSLT est obligatoire.',
     exportIntegrationXsltInvalid:
       'La feuille de style XSLT est invalide ou ne peut pas être appliquée.',
+    exportIntegrationDraftName: 'Draft export integration',
+    exportIntegrationPlatformUnavailable:
+      'This export feature is unavailable in the current app build.',
+    exportIntegrationShareUnavailable: 'Sharing is not available on this device.',
+    exportIntegrationNotFound: 'The selected export integration was not found.',
+    exportIntegrationRequestTimedOut: 'The request timed out.',
+    exportIntegrationNetworkError: 'The network request failed.',
+    exportIntegrationInvalidUrl: 'Please enter a valid URL.',
+    exportIntegrationHttpsRequired:
+      'Use HTTPS for this endpoint. Plain HTTP is only allowed for localhost during testing.',
     exportIntegrationWebhookUrlRequired: 'L’URL du point de terminaison est obligatoire.',
     exportIntegrationWebhookHttpsRequired:
       'Utilisez HTTPS pour l’URL du point de terminaison. HTTP non chiffré n’est autorisé que pour localhost pendant les tests.',
@@ -797,9 +819,13 @@ const fr = {
     syncSaveUrlChangeForgetSkip: 'Passer',
     syncServerUrlLabel: 'URL du serveur',
     syncInstanceIdLabel: "ID d'instance",
+    syncInstanceIdRequired: "L'ID d'instance de synchronisation est manquant.",
     syncDeviceIdLabel: "ID de l'appareil",
+    syncDeviceIdRequired: "L'ID de l'appareil de synchronisation est manquant.",
     syncDeviceNameLabel: "Nom de l'appareil",
+    syncDefaultDeviceName: 'Appareil Faktoro',
     syncRecoveryEmailLabel: 'E-mail de récupération',
+    syncAuthTokenLabel: "Jeton d'authentification",
     syncDeviceStatusLabel: "État de l'appareil",
     syncServerStatusLabel: 'Statut du serveur',
     syncStatusActive: 'Synchronisation active',
@@ -891,6 +917,8 @@ const fr = {
     syncCryptoUpgradeSuccess:
       'Mode chiffré activé. Exportez puis partagez la même sauvegarde de clé sur tous les appareils.',
     syncGenericError: 'La synchronisation a échoué.',
+    syncCryptoUnavailable:
+      'Secure crypto is unavailable on this device. Enable plaintext sync fallback to continue.',
     syncNoAuthToken:
       'L’enregistrement est terminé, mais le serveur n’a pas renvoyé de jeton d’authentification.',
     syncServerUnavailable:
@@ -974,6 +1002,10 @@ const fr = {
     securityBiometricAvailable: '{type} est disponible sur cet appareil.',
     securityBiometricUnavailable:
       "L'authentification biométrique n'est pas disponible. Installez et configurez l'authentification expo-locale.",
+    securityBiometricNotAvailableLabel: 'Non disponible',
+    securityBiometricFaceId: 'Face ID',
+    securityBiometricTouchId: 'Touch ID',
+    securityBiometricGenericLabel: 'Biométrie',
     unlockTitle: 'Débloquer Faktoro',
     unlockDescription: 'Entrez votre code PIN pour continuer.',
     unlockPinPlaceholder: 'PIN',
@@ -1043,8 +1075,10 @@ const fr = {
     connectSubtitle:
       'Sur votre appareil existant : Réglages → Sync → Ajouter un appareil, puis collez ou scannez ici le payload.',
     connectPayloadLabel: "Payload d'ajout d'appareil",
+    connectPayloadPlaceholder: '-----BEGIN FAKTORO ADD DEVICE PAYLOAD-----',
     connectDeviceNameLabel: 'Nom de cet appareil (optionnel)',
     connectEmailLabel: 'E-mail de récupération',
+    connectEmailPlaceholder: 'email@example.com',
     connectScanQr: 'Scanner le QR',
     connectButton: 'Connecter',
     connectSuccess: 'Appareil connecté. Les données seront synchronisées sous peu.',

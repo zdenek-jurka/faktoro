@@ -33,10 +33,10 @@ type SelectedFile = {
   encrypted: boolean;
 };
 
-function formatError(err: unknown): string {
+function formatError(err: unknown, fallbackMessage: string): string {
   if (err instanceof Error && err.message?.trim()) return err.message.trim();
   if (typeof err === 'string' && err.trim()) return err.trim();
-  return 'Unknown error';
+  return fallbackMessage;
 }
 
 export default function OnboardingRestoreScreen() {
@@ -78,7 +78,7 @@ export default function OnboardingRestoreScreen() {
       });
       setRestorePassword('');
     } catch (err) {
-      const msg = formatError(err);
+      const msg = formatError(err, LL.common.errorUnknown());
       if (msg.toLowerCase().includes('cancel')) return;
       Alert.alert(LL.common.error(), `${LL.onboarding.restoreInvalidFile()}\n\n${msg}`);
     } finally {
@@ -116,7 +116,10 @@ export default function OnboardingRestoreScreen() {
         },
       ]);
     } catch (err) {
-      Alert.alert(LL.common.error(), `${LL.onboarding.restoreError()}\n\n${formatError(err)}`);
+      Alert.alert(
+        LL.common.error(),
+        `${LL.onboarding.restoreError()}\n\n${formatError(err, LL.common.errorUnknown())}`,
+      );
     } finally {
       setIsRestoreLoading(false);
     }

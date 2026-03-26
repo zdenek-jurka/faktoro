@@ -23,6 +23,7 @@ import {
   runOnlineSyncSafely,
   touchAllSyncData,
 } from '@/repositories/sync-repository';
+import { getSyncErrorMessage } from '@/utils/error-utils';
 import { fetchWithTimeout, syncDebugLog } from '@/utils/sync-pairing-utils';
 import { showAlert, showConfirm } from '@/utils/platform-alert';
 import { isPlausibleEmail } from '@/utils/email-utils';
@@ -246,7 +247,7 @@ function SyncPairingScreenContent() {
       .trim()
       .toLowerCase();
     const effectiveDeviceName =
-      (overrides?.deviceName ?? syncDeviceName).trim() || 'Faktoro Device';
+      (overrides?.deviceName ?? syncDeviceName).trim() || LL.settings.syncDefaultDeviceName();
     const effectiveInstanceId = (overrides?.instanceId ?? syncInstanceId).trim();
 
     if (!effectiveServerUrl) {
@@ -378,12 +379,7 @@ function SyncPairingScreenContent() {
       syncDebugLog('Pairing failed', {
         error: err instanceof Error ? err.message : String(err),
       });
-      const msg =
-        err instanceof TypeError || (err instanceof Error && err.name === 'AbortError')
-          ? LL.settings.syncServerUnavailable()
-          : err instanceof Error
-            ? err.message
-            : LL.settings.syncGenericError();
+      const msg = getSyncErrorMessage(err, LL, LL.settings.syncGenericError());
       setPairingError(msg);
       showAlert(LL.common.error(), msg);
     } finally {
@@ -417,7 +413,10 @@ function SyncPairingScreenContent() {
                   [LL.settings.syncInstanceIdLabel(), syncInstanceId],
                   [LL.settings.syncDeviceIdLabel(), syncDeviceId],
                   [LL.settings.syncDeviceNameLabel(), syncDeviceName],
-                  ['Auth token', syncAuthToken ? `${syncAuthToken.slice(0, 8)}…` : '-'],
+                  [
+                    LL.settings.syncAuthTokenLabel(),
+                    syncAuthToken ? `${syncAuthToken.slice(0, 8)}…` : '-',
+                  ],
                 ].map(([label, value], idx) => (
                   <React.Fragment key={label}>
                     {idx > 0 && (

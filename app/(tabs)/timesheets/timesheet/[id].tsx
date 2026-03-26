@@ -22,7 +22,12 @@ import { getSuggestedInvoiceNumber } from '@/repositories/invoice-repository';
 import { getSettings } from '@/repositories/settings-repository';
 import { TimesheetPreset } from '@/repositories/timesheet-repository';
 import { normalizeCurrencyCode } from '@/utils/currency-utils';
-import { getErrorMessage, isHttpError, isNetworkError } from '@/utils/error-utils';
+import {
+  getErrorMessage,
+  getExportIntegrationErrorMessage,
+  isHttpError,
+  isNetworkError,
+} from '@/utils/error-utils';
 import {
   addDaysToIsoDate,
   resolveInvoiceDueDays,
@@ -527,7 +532,11 @@ export default function TimesheetDetailScreen() {
           })
         : isNetworkError(error)
           ? LLExport.timesheets.exportWebhookNetworkError()
-          : getErrorMessage(error, LLExport.timesheets.exportErrorXml());
+          : getExportIntegrationErrorMessage(
+              error,
+              LLExport,
+              getErrorMessage(error, LLExport.timesheets.exportErrorXml()),
+            );
       Alert.alert(LLExport.common.error(), message);
     } finally {
       setIsExportingXml(false);
