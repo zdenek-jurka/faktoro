@@ -1,7 +1,11 @@
+import { isAndroid, isIos } from '@/utils/platform';
+
 // Sync is available in this build.
 const SYNC_AVAILABLE = true;
 const DANGEROUS_APP_DATA_RESET_AVAILABLE = false;
 const INVOICE_HTML_EXPORT_AVAILABLE = false;
+const PDF_SAVE_AVAILABLE_ON = (process.env.EXPO_PUBLIC_PDF_SAVE_AVAILABLE_ON || 'android').trim();
+const PDF_OPEN_AVAILABLE_ON = (process.env.EXPO_PUBLIC_PDF_OPEN_AVAILABLE_ON || 'android').trim();
 
 // Temporary investigation flags so we can isolate sync-related regressions
 // without losing access to sync settings and manual sync flows.
@@ -15,6 +19,14 @@ const FORCE_DISABLE_SYNC_PULL = false;
 const FORCE_DISABLE_SYNC_SYNCHRONIZE = false;
 const FORCE_DISABLE_DANGEROUS_SYNC_RESET = false;
 const FORCE_DISABLE_DANGEROUS_APP_DATA_RESET = false;
+
+function isPlatformFeatureEnabled(availability: string): boolean {
+  const normalized = availability.toLowerCase();
+  if (normalized === 'ios') return isIos;
+  if (normalized === 'android') return isAndroid;
+  if (normalized === 'both') return isIos || isAndroid;
+  return false;
+}
 
 export const isSyncEnabled = SYNC_AVAILABLE && !FORCE_DISABLE_SYNC;
 
@@ -30,3 +42,5 @@ export const isDangerousSyncResetEnabled = isSyncEnabled && !FORCE_DISABLE_DANGE
 export const isDangerousAppDataResetEnabled =
   DANGEROUS_APP_DATA_RESET_AVAILABLE && !FORCE_DISABLE_DANGEROUS_APP_DATA_RESET;
 export const isInvoiceHtmlExportEnabled = INVOICE_HTML_EXPORT_AVAILABLE;
+export const isPdfSaveEnabled = isPlatformFeatureEnabled(PDF_SAVE_AVAILABLE_ON);
+export const isPdfOpenEnabled = isPlatformFeatureEnabled(PDF_OPEN_AVAILABLE_ON);

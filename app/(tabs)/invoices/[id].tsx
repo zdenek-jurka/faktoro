@@ -3,7 +3,11 @@ import { ThemedView } from '@/components/themed-view';
 import { getPriceListUnitLabel } from '@/components/price-list/unit-options';
 import { IconSymbol, type IconSymbolName } from '@/components/ui/icon-symbol';
 import { OptionSheetModal } from '@/components/ui/option-sheet-modal';
-import { isInvoiceHtmlExportEnabled } from '@/constants/features';
+import {
+  isInvoiceHtmlExportEnabled,
+  isPdfOpenEnabled,
+  isPdfSaveEnabled,
+} from '@/constants/features';
 import { Colors } from '@/constants/theme';
 import database from '@/db';
 import { useBottomSafeAreaStyle } from '@/hooks/use-bottom-safe-area-style';
@@ -40,6 +44,8 @@ import {
   isHttpError,
   isNetworkError,
 } from '@/utils/error-utils';
+import { openLocalFile } from '@/utils/open-local-file';
+import { buildCopyFileName } from '@/utils/file-name-utils';
 import { buildPdfLogoHtml } from '@/utils/pdf-logo';
 import { formatPrice } from '@/utils/price-utils';
 import { isIos } from '@/utils/platform';
@@ -52,6 +58,7 @@ const LAST_INVOICE_EXPORT_ACTION_KEY = 'invoice_export.last_action';
 
 type LastInvoiceExportAction =
   | 'pdf'
+  | 'open_pdf'
   | 'html'
   | 'save_pdf'
   | 'xml_base'
@@ -60,7 +67,15 @@ type LastInvoiceExportAction =
 
 type PaymentQrType = 'none' | 'spayd' | 'epc' | 'swiss';
 type StructuredExportFormat = 'none' | InvoiceXmlFormat;
-type PendingExportSheetAction = 'save_pdf' | null;
+type PendingExportSheetAction =
+  | 'pdf'
+  | 'open_pdf'
+  | 'html'
+  | 'save_pdf'
+  | 'xml_base'
+  | `structured:${InvoiceXmlFormat}`
+  | `integration:${string}`
+  | null;
 type PaymentQrLabels = {
   receiverFallback: string;
   invoiceReference: string;
@@ -90,30 +105,6 @@ type FooterDraft = {
   headerNote: string;
   footerNote: string;
 };
-
-function splitFileName(fileName: string) {
-  const dotIndex = fileName.lastIndexOf('.');
-  if (dotIndex <= 0) {
-    return { baseName: fileName, extension: '' };
-  }
-  return {
-    baseName: fileName.slice(0, dotIndex),
-    extension: fileName.slice(dotIndex),
-  };
-}
-
-function buildCopyFileName(fileName: string, existingNames: Set<string>): string {
-  const { baseName, extension } = splitFileName(fileName);
-  let copyIndex = 2;
-  let nextName = `${baseName} (${copyIndex})${extension}`;
-
-  while (existingNames.has(nextName)) {
-    copyIndex += 1;
-    nextName = `${baseName} (${copyIndex})${extension}`;
-  }
-
-  return nextName;
-}
 
 function toLocalISODate(value: number): string {
   const date = new Date(value);
@@ -356,7 +347,7 @@ export default function InvoiceDetailScreen() {
   const [client, setClient] = useState<ClientModel | null>(null);
   const [items, setItems] = useState<InvoiceItemModel[]>([]);
   const [exportingTarget, setExportingTarget] = useState<
-    'pdf' | 'save_pdf' | 'html' | 'xml' | null
+    'pdf' | 'open_pdf' | 'save_pdf' | 'html' | 'xml' | null
   >(null);
   const [structuredExportFormat, setStructuredExportFormat] =
     useState<StructuredExportFormat>('none');
@@ -465,12 +456,52 @@ export default function InvoiceDetailScreen() {
   }, [client?.invoiceDefaultExportFormat]);
 
   const runPendingExportSheetAction = useEffectEvent(() => {
-    setPendingExportSheetAction(null);
-    void handleSavePdf();
+    if (pendingExportSheetAction === 'pdf') {
+      setPendingExportSheetAction(null);
+      void handleExportPdf();
+      return;
+    }
+    if (pendingExportSheetAction === 'open_pdf') {
+      setPendingExportSheetAction(null);
+      if (isPdfOpenEnabled) {
+        void handleOpenPdf();
+      }
+      return;
+    }
+    if (pendingExportSheetAction === 'html') {
+      setPendingExportSheetAction(null);
+      if (isInvoiceHtmlExportEnabled) {
+        void handleExportHtml();
+      }
+      return;
+    }
+    if (pendingExportSheetAction === 'save_pdf') {
+      setPendingExportSheetAction(null);
+      if (isPdfSaveEnabled) {
+        void handleSavePdf();
+      }
+      return;
+    }
+    if (pendingExportSheetAction === 'xml_base') {
+      setPendingExportSheetAction(null);
+      void handleExportCustomXml(null);
+      return;
+    }
+    if (pendingExportSheetAction.startsWith('structured:')) {
+      const format = pendingExportSheetAction.slice('structured:'.length) as InvoiceXmlFormat;
+      setPendingExportSheetAction(null);
+      void handleExportXml(format);
+      return;
+    }
+    if (pendingExportSheetAction.startsWith('integration:')) {
+      const integrationId = pendingExportSheetAction.slice('integration:'.length);
+      setPendingExportSheetAction(null);
+      void handleExportCustomXml(integrationId);
+    }
   });
 
   useEffect(() => {
-    if (isExportFormatSheetVisible || pendingExportSheetAction !== 'save_pdf') {
+    if (isExportFormatSheetVisible || pendingExportSheetAction === null) {
       return;
     }
 
@@ -738,14 +769,14 @@ export default function InvoiceDetailScreen() {
     return { fileName, uri: targetUri };
   };
 
-  const handleExportPdf = async () => {
+  const exportInvoicePdf = async (prebuiltPdfFile?: InvoicePdfExportResult) => {
     if (!invoice) return;
 
     try {
       setExportingTarget('pdf');
       // eslint-disable-next-line @typescript-eslint/no-require-imports
       const Sharing = require('expo-sharing');
-      const pdfFile = await buildInvoicePdfFile();
+      const pdfFile = prebuiltPdfFile ?? (await buildInvoicePdfFile());
       const canShare = await Sharing.isAvailableAsync();
       if (!canShare) {
         Alert.alert(LLExport.common.error(), LLExport.invoices.shareUnavailable());
@@ -761,6 +792,60 @@ export default function InvoiceDetailScreen() {
     } catch (error) {
       const message = error instanceof Error ? error.message : LLExport.invoices.exportError();
       Alert.alert(LLExport.common.error(), message);
+    } finally {
+      setExportingTarget(null);
+    }
+  };
+
+  const handleExportPdf = async () => {
+    await exportInvoicePdf();
+  };
+
+  const showOpenPdfFallback = (pdfFile: InvoicePdfExportResult) => {
+    const fallbackOptions = [
+      { text: LL.common.cancel(), style: 'cancel' as const },
+      ...(isPdfSaveEnabled
+        ? [
+            {
+              text: LL.invoices.savePdf(),
+              onPress: () => {
+                void saveInvoicePdf(pdfFile);
+              },
+            },
+          ]
+        : []),
+      {
+        text: LL.invoices.exportPdf(),
+        onPress: () => {
+          void exportInvoicePdf(pdfFile);
+        },
+      },
+    ];
+
+    Alert.alert(
+      LLExport.invoices.openPdfUnavailableTitle(),
+      LLExport.invoices.openPdfUnavailableMessage(),
+      fallbackOptions,
+    );
+  };
+
+  const handleOpenPdf = async () => {
+    if (!invoice) return;
+
+    let pdfFile: InvoicePdfExportResult | null = null;
+    try {
+      setExportingTarget('open_pdf');
+      pdfFile = await buildInvoicePdfFile();
+      await openLocalFile(pdfFile.uri);
+      await rememberLastExportAction('open_pdf');
+      await markInvoiceExported(invoice.id);
+    } catch (error) {
+      if (pdfFile) {
+        showOpenPdfFallback(pdfFile);
+      } else {
+        const message = error instanceof Error ? error.message : LLExport.invoices.openPdfError();
+        Alert.alert(LLExport.common.error(), message);
+      }
     } finally {
       setExportingTarget(null);
     }
@@ -794,19 +879,19 @@ export default function InvoiceDetailScreen() {
     }
   };
 
-  const handleSavePdf = async () => {
+  const saveInvoicePdf = async (prebuiltPdfFile?: InvoicePdfExportResult) => {
     if (!invoice) return;
 
     try {
       setExportingTarget('save_pdf');
       // eslint-disable-next-line @typescript-eslint/no-require-imports
       const FileSystem = require('expo-file-system') as typeof import('expo-file-system');
-      const prebuiltPdfFile = isIos ? await buildInvoicePdfFile() : null;
+      const initialPdfFile = prebuiltPdfFile ?? (isIos ? await buildInvoicePdfFile() : null);
       const pickedDirectory = await FileSystem.Directory.pickDirectoryAsync();
       if (isIos) {
         await new Promise((resolve) => setTimeout(resolve, 250));
       }
-      const pdfFile = prebuiltPdfFile ?? (await buildInvoicePdfFile());
+      const pdfFile = initialPdfFile ?? (await buildInvoicePdfFile());
       const sourceFile = new FileSystem.File(pdfFile.uri);
       const existingEntries = pickedDirectory.list();
       const existingEntry = existingEntries.find(
@@ -879,6 +964,10 @@ export default function InvoiceDetailScreen() {
     } finally {
       setExportingTarget(null);
     }
+  };
+
+  const handleSavePdf = async () => {
+    await saveInvoicePdf();
   };
 
   const handleExportXml = async (format: InvoiceXmlFormat) => {
@@ -1019,8 +1108,8 @@ export default function InvoiceDetailScreen() {
     setIsExportFormatSheetVisible(true);
   };
 
-  const queueSavePdfFromExportSheet = () => {
-    setPendingExportSheetAction('save_pdf');
+  const queueExportSheetAction = (action: Exclude<PendingExportSheetAction, null>) => {
+    setPendingExportSheetAction(action);
     setIsExportFormatSheetVisible(false);
   };
 
@@ -1035,6 +1124,14 @@ export default function InvoiceDetailScreen() {
       };
     }
 
+    if (lastExportAction === 'open_pdf' && isPdfOpenEnabled) {
+      return {
+        label: LL.invoices.openPdf(),
+        icon: 'doc.text.fill' as IconSymbolName,
+        onPress: () => void handleOpenPdf(),
+      };
+    }
+
     if (lastExportAction === 'html' && isInvoiceHtmlExportEnabled) {
       return {
         label: LL.invoices.exportHtml(),
@@ -1043,7 +1140,7 @@ export default function InvoiceDetailScreen() {
       };
     }
 
-    if (lastExportAction === 'save_pdf') {
+    if (lastExportAction === 'save_pdf' && isPdfSaveEnabled) {
       return {
         label: LL.invoices.savePdf(),
         icon: 'folder' as IconSymbolName,
@@ -1124,7 +1221,7 @@ export default function InvoiceDetailScreen() {
             ]}
           >
             <ThemedText type="defaultSemiBold">{invoice.invoiceNumber}</ThemedText>
-            <ThemedText style={styles.metaText}>{client?.name || '-'}</ThemedText>
+            <ThemedText type="defaultSemiBold">{client?.name || '-'}</ThemedText>
             <ThemedText style={styles.metaText}>
               {LL.invoices.issueDate()}: {new Date(invoice.issuedAt).toLocaleDateString(intlLocale)}
             </ThemedText>
@@ -1243,7 +1340,7 @@ export default function InvoiceDetailScreen() {
                 key: 'pdf',
                 label: LL.invoices.exportPdf(),
                 onPress: () => {
-                  void handleExportPdf();
+                  queueExportSheetAction('pdf');
                 },
               };
               const htmlOption = isInvoiceHtmlExportEnabled
@@ -1252,24 +1349,39 @@ export default function InvoiceDetailScreen() {
                       key: 'html',
                       label: LL.invoices.exportHtml(),
                       onPress: () => {
-                        void handleExportHtml();
+                        queueExportSheetAction('html');
                       },
                     },
                   ]
                 : [];
-              const savePdfOption = {
-                key: 'save-pdf',
-                label: LL.invoices.savePdf(),
-                onPress: () => {
-                  queueSavePdfFromExportSheet();
-                },
-              };
+              const openPdfOption = isPdfOpenEnabled
+                ? [
+                    {
+                      key: 'open-pdf',
+                      label: LL.invoices.openPdf(),
+                      onPress: () => {
+                        queueExportSheetAction('open_pdf');
+                      },
+                    },
+                  ]
+                : [];
+              const savePdfOption = isPdfSaveEnabled
+                ? [
+                    {
+                      key: 'save-pdf',
+                      label: LL.invoices.savePdf(),
+                      onPress: () => {
+                        queueExportSheetAction('save_pdf');
+                      },
+                    },
+                  ]
+                : [];
               const structuredOptions = finalOptions.map((option) => ({
                 key: option,
                 label: getXmlExportFormatLabel(option),
                 onPress: () => {
                   setStructuredExportFormat(option);
-                  void handleExportXml(option);
+                  queueExportSheetAction(`structured:${option}`);
                 },
               }));
               const customOptions =
@@ -1279,14 +1391,14 @@ export default function InvoiceDetailScreen() {
                         key: 'custom-base',
                         label: LLExport.invoices.exportBaseXmlOption(),
                         onPress: () => {
-                          void handleExportCustomXml(null);
+                          queueExportSheetAction('xml_base');
                         },
                       },
                       ...invoiceExportIntegrations.map((integration) => ({
                         key: `custom-${integration.id}`,
                         label: `${LLExport.invoices.exportCustomXml()}: ${integration.name}`,
                         onPress: () => {
-                          void handleExportCustomXml(integration.id);
+                          queueExportSheetAction(`integration:${integration.id}`);
                         },
                       })),
                     ]
@@ -1294,7 +1406,8 @@ export default function InvoiceDetailScreen() {
               return [
                 pdfOption,
                 ...htmlOption,
-                savePdfOption,
+                ...openPdfOption,
+                ...savePdfOption,
                 ...structuredOptions,
                 ...customOptions,
               ];

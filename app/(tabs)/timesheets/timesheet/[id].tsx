@@ -3,6 +3,7 @@ import { ThemedView } from '@/components/themed-view';
 import { ActionEmptyState } from '@/components/ui/action-empty-state';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { OptionSheetModal } from '@/components/ui/option-sheet-modal';
+import { isPdfOpenEnabled, isPdfSaveEnabled } from '@/constants/features';
 import { Colors } from '@/constants/theme';
 import database from '@/db';
 import { useBottomSafeAreaStyle } from '@/hooks/use-bottom-safe-area-style';
@@ -33,7 +34,10 @@ import {
   resolveInvoiceDueDays,
   resolveInvoicePaymentMethod,
 } from '@/utils/invoice-defaults';
+import { buildCopyFileName } from '@/utils/file-name-utils';
+import { openLocalFile } from '@/utils/open-local-file';
 import { buildPdfLogoHtml } from '@/utils/pdf-logo';
+import { isIos } from '@/utils/platform';
 import {
   type ExportIntegration,
   deliverIntegrationResult,
@@ -46,12 +50,32 @@ import { buildTimesheetXml } from '@/templates/timesheet/xml';
 import { getBetaSettings } from '@/repositories/beta-settings-repository';
 import { Q } from '@nozbe/watermelondb';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useEffectEvent, useMemo, useState } from 'react';
 import { Alert, FlatList, StyleSheet, Pressable, View } from 'react-native';
 
 const LAST_TIMESHEET_EXPORT_ACTION_KEY = 'timesheet_export.last_action';
 
-type LastTimesheetExportAction = 'pdf' | 'xlsx' | 'xml_base' | `integration:${string}`;
+type LastTimesheetExportAction =
+  | 'pdf'
+  | 'open_pdf'
+  | 'save_pdf'
+  | 'xlsx'
+  | 'xml_base'
+  | `integration:${string}`;
+
+type PendingTimesheetExportSheetAction =
+  | 'pdf'
+  | 'open_pdf'
+  | 'save_pdf'
+  | 'xlsx'
+  | 'xml_base'
+  | `integration:${string}`
+  | null;
+
+type TimesheetPdfExportResult = {
+  fileName: string;
+  uri: string;
+};
 
 function formatDuration(seconds: number): string {
   const hours = Math.floor(seconds / 3600);
@@ -73,10 +97,14 @@ export default function TimesheetDetailScreen() {
   const [client, setClient] = useState<ClientModel | null>(null);
   const [entries, setEntries] = useState<TimeEntryModel[]>([]);
   const [isExportingPdf, setIsExportingPdf] = useState(false);
+  const [isOpeningPdf, setIsOpeningPdf] = useState(false);
+  const [isSavingPdf, setIsSavingPdf] = useState(false);
   const [isExportingXlsx, setIsExportingXlsx] = useState(false);
   const [isExportingXml, setIsExportingXml] = useState(false);
   const [isExportSheetVisible, setIsExportSheetVisible] = useState(false);
   const [isXmlExportSheetVisible, setIsXmlExportSheetVisible] = useState(false);
+  const [pendingExportSheetAction, setPendingExportSheetAction] =
+    useState<PendingTimesheetExportSheetAction>(null);
   const [exportIntegrationsEnabled, setExportIntegrationsEnabled] = useState(false);
   const [timesheetExportIntegrations, setTimesheetExportIntegrations] = useState<
     ExportIntegration[]
@@ -196,6 +224,60 @@ export default function TimesheetDetailScreen() {
 
     return () => subscription.unsubscribe();
   }, [linkedInvoiceId]);
+
+  const runPendingExportSheetAction = useEffectEvent(() => {
+    if (pendingExportSheetAction === 'pdf') {
+      setPendingExportSheetAction(null);
+      void handleExportPdf();
+      return;
+    }
+    if (pendingExportSheetAction === 'open_pdf') {
+      setPendingExportSheetAction(null);
+      if (isPdfOpenEnabled) {
+        void handleOpenPdf();
+      }
+      return;
+    }
+    if (pendingExportSheetAction === 'save_pdf') {
+      setPendingExportSheetAction(null);
+      if (isPdfSaveEnabled) {
+        void handleSavePdf();
+      }
+      return;
+    }
+    if (pendingExportSheetAction === 'xlsx') {
+      setPendingExportSheetAction(null);
+      void handleExportXlsx();
+      return;
+    }
+    if (pendingExportSheetAction === 'xml_base') {
+      setPendingExportSheetAction(null);
+      void doExportXml(null);
+      return;
+    }
+    if (pendingExportSheetAction.startsWith('integration:')) {
+      const integrationId = pendingExportSheetAction.slice('integration:'.length);
+      setPendingExportSheetAction(null);
+      void doExportXml(integrationId);
+    }
+  });
+
+  useEffect(() => {
+    if (isExportSheetVisible || isXmlExportSheetVisible || pendingExportSheetAction === null) {
+      return;
+    }
+
+    const timeoutId = setTimeout(() => {
+      runPendingExportSheetAction();
+    }, 350);
+
+    return () => clearTimeout(timeoutId);
+  }, [
+    isExportSheetVisible,
+    isXmlExportSheetVisible,
+    pendingExportSheetAction,
+    runPendingExportSheetAction,
+  ]);
 
   const formatDate = (timestamp: number) => {
     return new Date(timestamp).toLocaleDateString(intlLocale);
@@ -320,78 +402,14 @@ export default function TimesheetDetailScreen() {
     await setConfigValue(LAST_TIMESHEET_EXPORT_ACTION_KEY, action);
   };
 
-  const handleExportPdf = async () => {
+  const exportTimesheetPdf = async (prebuiltPdfFile?: TimesheetPdfExportResult) => {
     if (!timesheet) return;
 
     try {
       setIsExportingPdf(true);
       // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const Print = require('expo-print');
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
       const Sharing = require('expo-sharing');
-
-      const rows = buildExportRows();
-      const htmlRows = rows
-        .map(
-          (row) =>
-            `<tr><td>${escapeHtml(row.activity)}</td><td>${escapeHtml(row.start)}</td><td style="text-align:right">${escapeHtml(row.duration)}</td></tr>`,
-        )
-        .join('');
-      const exportBodyColor = Colors.light.text;
-      const exportMetaColor = Colors.light.textSecondary;
-      const exportBorderColor = Colors.light.border;
-      const exportHeaderBackground = Colors.light.backgroundSubtle;
-      const exportTitle = getTimesheetTitle(timesheet, LLExport);
-      const exportSubtitle = getTimesheetSubtitle(timesheet, LLExport);
-      const settings = await getSettings();
-      const logoHtml = await buildPdfLogoHtml(settings.invoiceLogoUri);
-
-      const html = `
-        <html>
-          <head>
-            <meta charset="utf-8" />
-            <style>
-              body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; padding: 24px; color: ${exportBodyColor}; }
-              .header { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; margin-bottom: 16px; }
-              .header-main { flex: 1; min-width: 0; }
-              .logo-box { text-align:right; min-width: 180px; }
-              h1 { margin: 0 0 8px; font-size: 20px; }
-              .meta { margin: 2px 0; color: ${exportMetaColor}; font-size: 12px; }
-              table { width: 100%; border-collapse: collapse; margin-top: 16px; }
-              th, td { border-bottom: 1px solid ${exportBorderColor}; padding: 8px 6px; font-size: 12px; }
-              th { text-align: left; background: ${exportHeaderBackground}; }
-            </style>
-          </head>
-          <body>
-            <div class="header">
-              <div class="header-main">
-                <h1>${escapeHtml(exportTitle)}</h1>
-                ${exportSubtitle ? `<div class="meta">${escapeHtml(exportSubtitle)}</div>` : ''}
-                <div class="meta">${escapeHtml(LLExport.timesheets.clientLabel())}: ${escapeHtml(client?.name || '-')}</div>
-                <div class="meta">${escapeHtml(LLExport.timesheets.periodLabel())}: ${escapeHtml(`${formatExportDate(timesheet.periodFrom)} - ${formatExportDate(timesheet.periodTo)}`)}</div>
-                <div class="meta">${escapeHtml(
-                  `${LLExport.timesheets.entriesCount({ count: entries.length })} • ${LLExport.timesheets.totalDurationLabel()}: ${formatDuration(totalDuration)}`,
-                )}</div>
-              </div>
-              ${logoHtml ? `<div class="logo-box">${logoHtml}</div>` : ''}
-            </div>
-            <table>
-              <thead>
-                <tr>
-                  <th>${escapeHtml(LLExport.timeTracking.activity())}</th>
-                  <th>${escapeHtml(LLExport.timesheets.startLabel())}</th>
-                  <th style="text-align:right">${escapeHtml(LLExport.timesheets.durationLabel())}</th>
-                </tr>
-              </thead>
-              <tbody>${htmlRows}</tbody>
-            </table>
-          </body>
-        </html>
-      `;
-
-      const pdfResult = await Print.printToFileAsync({
-        html,
-      });
+      const pdfFile = prebuiltPdfFile ?? (await buildTimesheetPdfFile());
 
       const canShare = await Sharing.isAvailableAsync();
       if (!canShare) {
@@ -399,7 +417,7 @@ export default function TimesheetDetailScreen() {
         return;
       }
 
-      await Sharing.shareAsync(pdfResult.uri, {
+      await Sharing.shareAsync(pdfFile.uri, {
         mimeType: 'application/pdf',
         dialogTitle: LLExport.timesheets.exportShareTitle(),
       });
@@ -410,6 +428,237 @@ export default function TimesheetDetailScreen() {
     } finally {
       setIsExportingPdf(false);
     }
+  };
+
+  const handleExportPdf = async () => {
+    await exportTimesheetPdf();
+  };
+
+  const showOpenPdfFallback = (pdfFile: TimesheetPdfExportResult) => {
+    const fallbackOptions = [
+      { text: LL.common.cancel(), style: 'cancel' as const },
+      ...(isPdfSaveEnabled
+        ? [
+            {
+              text: LL.timesheets.savePdf(),
+              onPress: () => {
+                void saveTimesheetPdf(pdfFile);
+              },
+            },
+          ]
+        : []),
+      {
+        text: LL.timesheets.exportPdf(),
+        onPress: () => {
+          void exportTimesheetPdf(pdfFile);
+        },
+      },
+    ];
+
+    Alert.alert(
+      LLExport.timesheets.openPdfUnavailableTitle(),
+      LLExport.timesheets.openPdfUnavailableMessage(),
+      fallbackOptions,
+    );
+  };
+
+  const handleOpenPdf = async () => {
+    if (!timesheet) return;
+
+    let pdfFile: TimesheetPdfExportResult | null = null;
+    try {
+      setIsOpeningPdf(true);
+      pdfFile = await buildTimesheetPdfFile();
+      await openLocalFile(pdfFile.uri);
+      await rememberLastExportAction('open_pdf');
+    } catch (error) {
+      if (pdfFile) {
+        showOpenPdfFallback(pdfFile);
+      } else {
+        Alert.alert(
+          LLExport.common.error(),
+          error instanceof Error ? error.message : LLExport.timesheets.openPdfError(),
+        );
+      }
+    } finally {
+      setIsOpeningPdf(false);
+    }
+  };
+
+  const buildTimesheetPdfFile = async (): Promise<TimesheetPdfExportResult> => {
+    if (!timesheet) {
+      throw new Error(LLExport.timesheets.savePdfError());
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const Print = require('expo-print');
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const FileSystemLegacy = require('expo-file-system/legacy');
+
+    const rows = buildExportRows();
+    const htmlRows = rows
+      .map(
+        (row) =>
+          `<tr><td>${escapeHtml(row.activity)}</td><td>${escapeHtml(row.start)}</td><td style="text-align:right">${escapeHtml(row.duration)}</td></tr>`,
+      )
+      .join('');
+    const exportBodyColor = Colors.light.text;
+    const exportMetaColor = Colors.light.textSecondary;
+    const exportBorderColor = Colors.light.border;
+    const exportHeaderBackground = Colors.light.backgroundSubtle;
+    const exportTitle = getTimesheetTitle(timesheet, LLExport);
+    const exportSubtitle = getTimesheetSubtitle(timesheet, LLExport);
+    const settings = await getSettings();
+    const logoHtml = await buildPdfLogoHtml(settings.invoiceLogoUri);
+
+    const html = `
+      <html>
+        <head>
+          <meta charset="utf-8" />
+          <style>
+            body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; padding: 24px; color: ${exportBodyColor}; }
+            .header { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; margin-bottom: 16px; }
+            .header-main { flex: 1; min-width: 0; }
+            .logo-box { text-align:right; min-width: 180px; }
+            h1 { margin: 0 0 8px; font-size: 20px; }
+            .meta { margin: 2px 0; color: ${exportMetaColor}; font-size: 12px; }
+            table { width: 100%; border-collapse: collapse; margin-top: 16px; }
+            th, td { border-bottom: 1px solid ${exportBorderColor}; padding: 8px 6px; font-size: 12px; }
+            th { text-align: left; background: ${exportHeaderBackground}; }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <div class="header-main">
+              <h1>${escapeHtml(exportTitle)}</h1>
+              ${exportSubtitle ? `<div class="meta">${escapeHtml(exportSubtitle)}</div>` : ''}
+              <div class="meta">${escapeHtml(LLExport.timesheets.clientLabel())}: ${escapeHtml(client?.name || '-')}</div>
+              <div class="meta">${escapeHtml(LLExport.timesheets.periodLabel())}: ${escapeHtml(`${formatExportDate(timesheet.periodFrom)} - ${formatExportDate(timesheet.periodTo)}`)}</div>
+              <div class="meta">${escapeHtml(
+                `${LLExport.timesheets.entriesCount({ count: entries.length })} • ${LLExport.timesheets.totalDurationLabel()}: ${formatDuration(totalDuration)}`,
+              )}</div>
+            </div>
+            ${logoHtml ? `<div class="logo-box">${logoHtml}</div>` : ''}
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>${escapeHtml(LLExport.timeTracking.activity())}</th>
+                <th>${escapeHtml(LLExport.timesheets.startLabel())}</th>
+                <th style="text-align:right">${escapeHtml(LLExport.timesheets.durationLabel())}</th>
+              </tr>
+            </thead>
+            <tbody>${htmlRows}</tbody>
+          </table>
+        </body>
+      </html>
+    `;
+
+    const pdfResult = await Print.printToFileAsync({ html });
+    const cacheDirectory: string | undefined = FileSystemLegacy.cacheDirectory;
+    if (!cacheDirectory) {
+      throw new Error(LLExport.timesheets.savePdfError());
+    }
+
+    const fileName = `${getExportFilenameBase()}.pdf`;
+    const targetUri = `${cacheDirectory}${fileName}`;
+    await FileSystemLegacy.deleteAsync(targetUri, { idempotent: true });
+    await FileSystemLegacy.copyAsync({
+      from: pdfResult.uri,
+      to: targetUri,
+    });
+
+    return { fileName, uri: targetUri };
+  };
+
+  const saveTimesheetPdf = async (prebuiltPdfFile?: TimesheetPdfExportResult) => {
+    if (!timesheet) return;
+
+    try {
+      setIsSavingPdf(true);
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const FileSystem = require('expo-file-system') as typeof import('expo-file-system');
+      const initialPdfFile = prebuiltPdfFile ?? (isIos ? await buildTimesheetPdfFile() : null);
+      const pickedDirectory = await FileSystem.Directory.pickDirectoryAsync();
+      if (isIos) {
+        await new Promise((resolve) => setTimeout(resolve, 250));
+      }
+      const pdfFile = initialPdfFile ?? (await buildTimesheetPdfFile());
+      const sourceFile = new FileSystem.File(pdfFile.uri);
+      const existingEntries = pickedDirectory.list();
+      const existingEntry = existingEntries.find(
+        (entry: InstanceType<typeof FileSystem.File> | InstanceType<typeof FileSystem.Directory>) =>
+          entry.name === pdfFile.fileName,
+      );
+
+      let targetFileName = pdfFile.fileName;
+      if (existingEntry) {
+        if (existingEntry instanceof FileSystem.Directory) {
+          throw new Error(LLExport.timesheets.savePdfNameConflictFolder());
+        }
+
+        const existingNames = new Set(existingEntries.map((entry) => entry.name));
+        const copyFileName = buildCopyFileName(pdfFile.fileName, existingNames);
+        targetFileName = await new Promise<string | null>((resolve) => {
+          Alert.alert(
+            LLExport.timesheets.savePdfExistsTitle(),
+            LLExport.timesheets.savePdfExistsMessage({ fileName: pdfFile.fileName }),
+            [
+              {
+                text: LL.common.cancel(),
+                style: 'cancel',
+                onPress: () => resolve(null),
+              },
+              {
+                text: LLExport.timesheets.savePdfSaveCopy(),
+                onPress: () => resolve(copyFileName),
+              },
+              {
+                text: LLExport.timesheets.savePdfReplace(),
+                style: 'destructive',
+                onPress: () => resolve(pdfFile.fileName),
+              },
+            ],
+            {
+              cancelable: true,
+              onDismiss: () => resolve(null),
+            },
+          );
+        });
+
+        if (!targetFileName) {
+          return;
+        }
+
+        if (targetFileName === pdfFile.fileName) {
+          existingEntry.delete();
+        }
+      }
+
+      const targetFile = pickedDirectory.createFile(targetFileName, 'application/pdf');
+      targetFile.write(await sourceFile.bytes());
+
+      Alert.alert(
+        LLExport.common.success(),
+        LLExport.timesheets.savePdfSuccess({ fileName: targetFileName }),
+      );
+      await rememberLastExportAction('save_pdf');
+    } catch (error) {
+      const message = getErrorMessage(error, '');
+      if (message && /cancel(?:ed|led)/i.test(message)) {
+        return;
+      }
+      Alert.alert(
+        LLExport.common.error(),
+        error instanceof Error ? error.message : LLExport.timesheets.savePdfError(),
+      );
+    } finally {
+      setIsSavingPdf(false);
+    }
+  };
+
+  const handleSavePdf = async () => {
+    await saveTimesheetPdf();
   };
 
   const handleExportXlsx = async () => {
@@ -585,7 +834,8 @@ export default function TimesheetDetailScreen() {
     }
   };
 
-  const isAnyExporting = isExportingPdf || isExportingXlsx || isExportingXml;
+  const isAnyExporting =
+    isExportingPdf || isOpeningPdf || isSavingPdf || isExportingXlsx || isExportingXml;
 
   const recommendedExport = (() => {
     if (!lastExportAction) return null;
@@ -594,6 +844,20 @@ export default function TimesheetDetailScreen() {
       return {
         label: LL.timesheets.exportPdf(),
         onPress: () => void handleExportPdf(),
+      };
+    }
+
+    if (lastExportAction === 'open_pdf' && isPdfOpenEnabled) {
+      return {
+        label: LL.timesheets.openPdf(),
+        onPress: () => void handleOpenPdf(),
+      };
+    }
+
+    if (lastExportAction === 'save_pdf' && isPdfSaveEnabled) {
+      return {
+        label: LL.timesheets.savePdf(),
+        onPress: () => void handleSavePdf(),
       };
     }
 
@@ -632,6 +896,12 @@ export default function TimesheetDetailScreen() {
           : LL.timesheets.exportAction(),
         onPress: () => setIsExportSheetVisible(true),
       };
+
+  const queueExportSheetAction = (action: Exclude<PendingTimesheetExportSheetAction, null>) => {
+    setPendingExportSheetAction(action);
+    setIsExportSheetVisible(false);
+    setIsXmlExportSheetVisible(false);
+  };
 
   return (
     <ThemedView style={styles.container}>
@@ -807,13 +1077,33 @@ export default function TimesheetDetailScreen() {
               {
                 key: 'pdf',
                 label: LL.timesheets.exportPdf(),
-                onPress: () => void handleExportPdf(),
+                onPress: () => queueExportSheetAction('pdf'),
                 disabled: isAnyExporting,
               },
+              ...(isPdfSaveEnabled
+                ? [
+                    {
+                      key: 'save-pdf',
+                      label: LL.timesheets.savePdf(),
+                      onPress: () => queueExportSheetAction('save_pdf'),
+                      disabled: isAnyExporting,
+                    },
+                  ]
+                : []),
+              ...(isPdfOpenEnabled
+                ? [
+                    {
+                      key: 'open-pdf',
+                      label: LL.timesheets.openPdf(),
+                      onPress: () => queueExportSheetAction('open_pdf'),
+                      disabled: isAnyExporting,
+                    },
+                  ]
+                : []),
               {
                 key: 'xlsx',
                 label: LL.timesheets.exportXlsx(),
-                onPress: () => void handleExportXlsx(),
+                onPress: () => queueExportSheetAction('xlsx'),
                 disabled: isAnyExporting,
               },
               ...(exportIntegrationsEnabled
@@ -838,13 +1128,13 @@ export default function TimesheetDetailScreen() {
               {
                 key: 'base-xml',
                 label: LLExport.timesheets.exportBaseXmlOption(),
-                onPress: () => void doExportXml(null),
+                onPress: () => queueExportSheetAction('xml_base'),
                 disabled: isAnyExporting,
               },
               ...timesheetExportIntegrations.map((integration) => ({
                 key: integration.id,
                 label: integration.name,
-                onPress: () => void doExportXml(integration.id),
+                onPress: () => queueExportSheetAction(`integration:${integration.id}`),
                 disabled: isAnyExporting,
               })),
             ]}

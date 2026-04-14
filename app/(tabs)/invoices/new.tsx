@@ -132,6 +132,24 @@ function roundCurrency(value: number): number {
   return Math.round(value * 100) / 100;
 }
 
+function isIssuedDateBeyondTaxableWindow(
+  issuedDateValue?: string,
+  taxableDateValue?: string,
+): boolean {
+  const issuedAt = parseISODate(issuedDateValue);
+  const taxableAt = parseISODate(taxableDateValue);
+  if (issuedAt == null || taxableAt == null) return false;
+  const maxIssuedAt = taxableAt + 15 * 24 * 60 * 60 * 1000;
+  return issuedAt > maxIssuedAt;
+}
+
+function isDueDateInPast(dueDateValue?: string): boolean {
+  const dueAt = parseISODate(dueDateValue);
+  const todayAt = parseISODate(todayISODate());
+  if (dueAt == null || todayAt == null) return false;
+  return dueAt < todayAt;
+}
+
 function calculateTotals(items: DraftInvoiceItemInput[], includeVat: boolean) {
   const subtotal = roundCurrency(items.reduce((sum, item) => sum + item.totalPrice, 0));
   const vatTotal = includeVat
@@ -380,6 +398,16 @@ export default function InvoiceDraftScreen() {
         isVatPayer,
       ),
     [isVatPayer, items],
+  );
+  const showIssuedDateTaxableWarning = useMemo(
+    () =>
+      isVatPayer &&
+      isIssuedDateBeyondTaxableWindow(headerDraft.issuedDate, headerDraft.taxableDate),
+    [headerDraft.issuedDate, headerDraft.taxableDate, isVatPayer],
+  );
+  const showDueDatePastWarning = useMemo(
+    () => isDueDateInPast(headerDraft.dueDate),
+    [headerDraft.dueDate],
   );
 
   const canCreate = hasClients && !!clientId.trim() && !!invoiceNumber.trim() && items.length > 0;
@@ -912,6 +940,21 @@ export default function InvoiceDraftScreen() {
                 >
                   <ThemedText>{formatDisplayDate(dueDate)}</ThemedText>
                 </Pressable>
+                {showDueDatePastWarning ? (
+                  <View
+                    style={[
+                      styles.warningCard,
+                      {
+                        borderColor: palette.destructive,
+                        backgroundColor: palette.cardBackground,
+                      },
+                    ]}
+                  >
+                    <ThemedText style={[styles.warningText, { color: palette.textSecondary }]}>
+                      {LL.invoices.dueDatePastWarning()}
+                    </ThemedText>
+                  </View>
+                ) : null}
               </View>
             </View>
 
@@ -924,6 +967,21 @@ export default function InvoiceDraftScreen() {
                 >
                   <ThemedText>{formatDisplayDate(taxableDate)}</ThemedText>
                 </Pressable>
+                {showIssuedDateTaxableWarning ? (
+                  <View
+                    style={[
+                      styles.warningCard,
+                      {
+                        borderColor: palette.destructive,
+                        backgroundColor: palette.cardBackground,
+                      },
+                    ]}
+                  >
+                    <ThemedText style={[styles.warningText, { color: palette.textSecondary }]}>
+                      {LL.invoices.issuedDateVatWindowWarning()}
+                    </ThemedText>
+                  </View>
+                ) : null}
               </>
             )}
 
@@ -1209,6 +1267,16 @@ const styles = StyleSheet.create({
   },
   inlineLoadingText: {
     fontSize: 13,
+  },
+  warningCard: {
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+  warningText: {
+    fontSize: 13,
+    lineHeight: 18,
   },
   input: {
     borderWidth: 1,

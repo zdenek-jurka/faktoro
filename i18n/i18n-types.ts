@@ -925,27 +925,35 @@ type RootTranslation = {
 		 */
 		entriesSectionTitle: string
 		/**
-		 * E​x​p​o​r​t​ ​P​D​F
+		 * S​h​a​r​e​ ​P​D​F
 		 */
 		exportPdf: string
 		/**
-		 * E​x​p​o​r​t​ ​X​L​S​X
+		 * O​p​e​n​ ​P​D​F
+		 */
+		openPdf: string
+		/**
+		 * S​a​v​e​ ​P​D​F
+		 */
+		savePdf: string
+		/**
+		 * S​h​a​r​e​ ​X​L​S​X
 		 */
 		exportXlsx: string
 		/**
-		 * E​x​p​o​r​t​ ​X​M​L
+		 * S​h​a​r​e​ ​X​M​L
 		 */
 		exportXml: string
 		/**
-		 * E​x​p​o​r​t
+		 * S​h​a​r​e
 		 */
 		exportAction: string
 		/**
-		 * E​x​p​o​r​t
+		 * S​h​a​r​e
 		 */
 		exportActionWithXml: string
 		/**
-		 * C​h​o​o​s​e​ ​h​o​w​ ​y​o​u​ ​w​a​n​t​ ​t​o​ ​e​x​p​o​r​t​ ​t​h​i​s​ ​t​i​m​e​s​h​e​e​t​.
+		 * C​h​o​o​s​e​ ​h​o​w​ ​y​o​u​ ​w​a​n​t​ ​t​o​ ​s​h​a​r​e​ ​t​h​i​s​ ​t​i​m​e​s​h​e​e​t​.
 		 */
 		exportActionDescription: string
 		/**
@@ -998,6 +1006,48 @@ type RootTranslation = {
 		 * F​a​i​l​e​d​ ​t​o​ ​e​x​p​o​r​t​ ​P​D​F​.
 		 */
 		exportErrorPdf: string
+		/**
+		 * Y​o​u​r​ ​t​i​m​e​s​h​e​e​t​ ​w​a​s​ ​s​a​v​e​d​ ​a​s​ ​{​f​i​l​e​N​a​m​e​}​.
+		 * @param {unknown} fileName
+		 */
+		savePdfSuccess: RequiredParams<'fileName'>
+		/**
+		 * F​a​i​l​e​d​ ​t​o​ ​s​a​v​e​ ​t​i​m​e​s​h​e​e​t​ ​P​D​F​.
+		 */
+		savePdfError: string
+		/**
+		 * F​a​i​l​e​d​ ​t​o​ ​o​p​e​n​ ​t​i​m​e​s​h​e​e​t​ ​P​D​F​.
+		 */
+		openPdfError: string
+		/**
+		 * U​n​a​b​l​e​ ​t​o​ ​o​p​e​n​ ​P​D​F
+		 */
+		openPdfUnavailableTitle: string
+		/**
+		 * T​h​i​s​ ​d​e​v​i​c​e​ ​c​o​u​l​d​ ​n​o​t​ ​o​p​e​n​ ​t​h​e​ ​P​D​F​ ​d​i​r​e​c​t​l​y​.​ ​Y​o​u​ ​c​a​n​ ​s​a​v​e​ ​i​t​ ​o​r​ ​e​x​p​o​r​t​ ​i​t​ ​i​n​s​t​e​a​d​.
+		 */
+		openPdfUnavailableMessage: string
+		/**
+		 * F​i​l​e​ ​a​l​r​e​a​d​y​ ​e​x​i​s​t​s
+		 */
+		savePdfExistsTitle: string
+		/**
+		 * A​ ​f​i​l​e​ ​n​a​m​e​d​ ​{​f​i​l​e​N​a​m​e​}​ ​a​l​r​e​a​d​y​ ​e​x​i​s​t​s​ ​i​n​ ​t​h​e​ ​s​e​l​e​c​t​e​d​ ​f​o​l​d​e​r​.​ ​D​o​ ​y​o​u​ ​w​a​n​t​ ​t​o​ ​r​e​p​l​a​c​e​ ​i​t​ ​o​r​ ​s​a​v​e​ ​a​ ​c​o​p​y​?
+		 * @param {unknown} fileName
+		 */
+		savePdfExistsMessage: RequiredParams<'fileName'>
+		/**
+		 * R​e​p​l​a​c​e
+		 */
+		savePdfReplace: string
+		/**
+		 * S​a​v​e​ ​c​o​p​y
+		 */
+		savePdfSaveCopy: string
+		/**
+		 * A​ ​f​o​l​d​e​r​ ​w​i​t​h​ ​t​h​e​ ​s​a​m​e​ ​n​a​m​e​ ​a​l​r​e​a​d​y​ ​e​x​i​s​t​s​ ​i​n​ ​t​h​e​ ​s​e​l​e​c​t​e​d​ ​l​o​c​a​t​i​o​n​.​ ​C​h​o​o​s​e​ ​a​ ​d​i​f​f​e​r​e​n​t​ ​f​o​l​d​e​r​ ​o​r​ ​s​a​v​e​ ​t​h​e​ ​f​i​l​e​ ​a​s​ ​a​ ​c​o​p​y​.
+		 */
+		savePdfNameConflictFolder: string
 		/**
 		 * F​a​i​l​e​d​ ​t​o​ ​e​x​p​o​r​t​ ​X​L​S​X​.
 		 */
@@ -1273,6 +1323,14 @@ type RootTranslation = {
 		 */
 		dueDate: string
 		/**
+		 * I​s​s​u​e​ ​d​a​t​e​ ​i​s​ ​m​o​r​e​ ​t​h​a​n​ ​1​5​ ​d​a​y​s​ ​a​f​t​e​r​ ​t​h​e​ ​t​a​x​a​b​l​e​ ​s​u​p​p​l​y​ ​d​a​t​e​.​ ​C​h​e​c​k​ ​w​h​e​t​h​e​r​ ​t​h​e​ ​i​n​v​o​i​c​e​ ​m​a​t​c​h​e​s​ ​t​h​e​ ​u​s​u​a​l​ ​t​a​x​ ​d​o​c​u​m​e​n​t​ ​t​i​m​i​n​g​ ​r​u​l​e​.
+		 */
+		issuedDateVatWindowWarning: string
+		/**
+		 * D​u​e​ ​d​a​t​e​ ​i​s​ ​a​l​r​e​a​d​y​ ​i​n​ ​t​h​e​ ​p​a​s​t​.​ ​C​h​e​c​k​ ​w​h​e​t​h​e​r​ ​t​h​e​ ​i​n​v​o​i​c​e​ ​s​h​o​u​l​d​ ​s​t​i​l​l​ ​b​e​ ​i​s​s​u​e​d​ ​w​i​t​h​ ​t​h​i​s​ ​m​a​t​u​r​i​t​y​ ​d​a​t​e​.
+		 */
+		dueDatePastWarning: string
+		/**
 		 * C​u​r​r​e​n​c​y
 		 */
 		currency: string
@@ -1528,9 +1586,13 @@ type RootTranslation = {
 		 */
 		exportInvoiceNote: RequiredParams<'invoiceNumber'>
 		/**
-		 * E​x​p​o​r​t​ ​P​D​F
+		 * S​h​a​r​e​ ​P​D​F
 		 */
 		exportPdf: string
+		/**
+		 * O​p​e​n​ ​P​D​F
+		 */
+		openPdf: string
 		/**
 		 * S​h​a​r​e​ ​H​T​M​L
 		 */
@@ -1548,6 +1610,18 @@ type RootTranslation = {
 		 * F​a​i​l​e​d​ ​t​o​ ​s​a​v​e​ ​i​n​v​o​i​c​e​ ​P​D​F​.
 		 */
 		savePdfError: string
+		/**
+		 * F​a​i​l​e​d​ ​t​o​ ​o​p​e​n​ ​i​n​v​o​i​c​e​ ​P​D​F​.
+		 */
+		openPdfError: string
+		/**
+		 * U​n​a​b​l​e​ ​t​o​ ​o​p​e​n​ ​P​D​F
+		 */
+		openPdfUnavailableTitle: string
+		/**
+		 * T​h​i​s​ ​d​e​v​i​c​e​ ​c​o​u​l​d​ ​n​o​t​ ​o​p​e​n​ ​t​h​e​ ​P​D​F​ ​d​i​r​e​c​t​l​y​.​ ​Y​o​u​ ​c​a​n​ ​s​a​v​e​ ​i​t​ ​o​r​ ​e​x​p​o​r​t​ ​i​t​ ​i​n​s​t​e​a​d​.
+		 */
+		openPdfUnavailableMessage: string
 		/**
 		 * F​i​l​e​ ​a​l​r​e​a​d​y​ ​e​x​i​s​t​s
 		 */
@@ -1841,6 +1915,40 @@ type RootTranslation = {
 		 * F​a​i​l​e​d​ ​t​o​ ​c​r​e​a​t​e​ ​o​f​f​l​i​n​e​ ​b​a​c​k​u​p​.
 		 */
 		offlineBackupCreateError: string
+		/**
+		 * C​r​e​a​t​e​ ​a​n​d​ ​s​a​v​e​ ​b​a​c​k​u​p
+		 */
+		offlineBackupSaveAction: string
+		/**
+		 * Y​o​u​r​ ​b​a​c​k​u​p​ ​w​a​s​ ​s​a​v​e​d​ ​a​s​ ​{​f​i​l​e​N​a​m​e​}​.
+		 * @param {unknown} fileName
+		 */
+		offlineBackupSaveSuccess: RequiredParams<'fileName'>
+		/**
+		 * F​a​i​l​e​d​ ​t​o​ ​s​a​v​e​ ​t​h​e​ ​b​a​c​k​u​p​ ​f​i​l​e​.
+		 */
+		offlineBackupSaveError: string
+		/**
+		 * F​i​l​e​ ​a​l​r​e​a​d​y​ ​e​x​i​s​t​s
+		 */
+		offlineBackupSaveExistsTitle: string
+		/**
+		 * A​ ​f​i​l​e​ ​n​a​m​e​d​ ​{​f​i​l​e​N​a​m​e​}​ ​a​l​r​e​a​d​y​ ​e​x​i​s​t​s​ ​i​n​ ​t​h​e​ ​s​e​l​e​c​t​e​d​ ​f​o​l​d​e​r​.​ ​W​h​a​t​ ​w​o​u​l​d​ ​y​o​u​ ​l​i​k​e​ ​t​o​ ​d​o​?
+		 * @param {unknown} fileName
+		 */
+		offlineBackupSaveExistsMessage: RequiredParams<'fileName'>
+		/**
+		 * R​e​p​l​a​c​e
+		 */
+		offlineBackupSaveReplace: string
+		/**
+		 * S​a​v​e​ ​c​o​p​y
+		 */
+		offlineBackupSaveCopy: string
+		/**
+		 * A​ ​f​o​l​d​e​r​ ​w​i​t​h​ ​t​h​e​ ​s​a​m​e​ ​n​a​m​e​ ​a​s​ ​t​h​e​ ​b​a​c​k​u​p​ ​f​i​l​e​ ​a​l​r​e​a​d​y​ ​e​x​i​s​t​s​ ​i​n​ ​t​h​e​ ​s​e​l​e​c​t​e​d​ ​l​o​c​a​t​i​o​n​.
+		 */
+		offlineBackupSaveNameConflictFolder: string
 		/**
 		 * R​e​s​t​o​r​e​ ​b​a​c​k​u​p
 		 */
@@ -5083,27 +5191,35 @@ export type TranslationFunctions = {
 		 */
 		entriesSectionTitle: () => LocalizedString
 		/**
-		 * Export PDF
+		 * Share PDF
 		 */
 		exportPdf: () => LocalizedString
 		/**
-		 * Export XLSX
+		 * Open PDF
+		 */
+		openPdf: () => LocalizedString
+		/**
+		 * Save PDF
+		 */
+		savePdf: () => LocalizedString
+		/**
+		 * Share XLSX
 		 */
 		exportXlsx: () => LocalizedString
 		/**
-		 * Export XML
+		 * Share XML
 		 */
 		exportXml: () => LocalizedString
 		/**
-		 * Export
+		 * Share
 		 */
 		exportAction: () => LocalizedString
 		/**
-		 * Export
+		 * Share
 		 */
 		exportActionWithXml: () => LocalizedString
 		/**
-		 * Choose how you want to export this timesheet.
+		 * Choose how you want to share this timesheet.
 		 */
 		exportActionDescription: () => LocalizedString
 		/**
@@ -5154,6 +5270,46 @@ export type TranslationFunctions = {
 		 * Failed to export PDF.
 		 */
 		exportErrorPdf: () => LocalizedString
+		/**
+		 * Your timesheet was saved as {fileName}.
+		 */
+		savePdfSuccess: (arg: { fileName: unknown }) => LocalizedString
+		/**
+		 * Failed to save timesheet PDF.
+		 */
+		savePdfError: () => LocalizedString
+		/**
+		 * Failed to open timesheet PDF.
+		 */
+		openPdfError: () => LocalizedString
+		/**
+		 * Unable to open PDF
+		 */
+		openPdfUnavailableTitle: () => LocalizedString
+		/**
+		 * This device could not open the PDF directly. You can save it or export it instead.
+		 */
+		openPdfUnavailableMessage: () => LocalizedString
+		/**
+		 * File already exists
+		 */
+		savePdfExistsTitle: () => LocalizedString
+		/**
+		 * A file named {fileName} already exists in the selected folder. Do you want to replace it or save a copy?
+		 */
+		savePdfExistsMessage: (arg: { fileName: unknown }) => LocalizedString
+		/**
+		 * Replace
+		 */
+		savePdfReplace: () => LocalizedString
+		/**
+		 * Save copy
+		 */
+		savePdfSaveCopy: () => LocalizedString
+		/**
+		 * A folder with the same name already exists in the selected location. Choose a different folder or save the file as a copy.
+		 */
+		savePdfNameConflictFolder: () => LocalizedString
 		/**
 		 * Failed to export XLSX.
 		 */
@@ -5413,6 +5569,14 @@ export type TranslationFunctions = {
 		 */
 		dueDate: () => LocalizedString
 		/**
+		 * Issue date is more than 15 days after the taxable supply date. Check whether the invoice matches the usual tax document timing rule.
+		 */
+		issuedDateVatWindowWarning: () => LocalizedString
+		/**
+		 * Due date is already in the past. Check whether the invoice should still be issued with this maturity date.
+		 */
+		dueDatePastWarning: () => LocalizedString
+		/**
 		 * Currency
 		 */
 		currency: () => LocalizedString
@@ -5661,9 +5825,13 @@ export type TranslationFunctions = {
 		 */
 		exportInvoiceNote: (arg: { invoiceNumber: unknown }) => LocalizedString
 		/**
-		 * Export PDF
+		 * Share PDF
 		 */
 		exportPdf: () => LocalizedString
+		/**
+		 * Open PDF
+		 */
+		openPdf: () => LocalizedString
 		/**
 		 * Share HTML
 		 */
@@ -5680,6 +5848,18 @@ export type TranslationFunctions = {
 		 * Failed to save invoice PDF.
 		 */
 		savePdfError: () => LocalizedString
+		/**
+		 * Failed to open invoice PDF.
+		 */
+		openPdfError: () => LocalizedString
+		/**
+		 * Unable to open PDF
+		 */
+		openPdfUnavailableTitle: () => LocalizedString
+		/**
+		 * This device could not open the PDF directly. You can save it or export it instead.
+		 */
+		openPdfUnavailableMessage: () => LocalizedString
 		/**
 		 * File already exists
 		 */
@@ -5970,6 +6150,38 @@ export type TranslationFunctions = {
 		 * Failed to create offline backup.
 		 */
 		offlineBackupCreateError: () => LocalizedString
+		/**
+		 * Create and save backup
+		 */
+		offlineBackupSaveAction: () => LocalizedString
+		/**
+		 * Your backup was saved as {fileName}.
+		 */
+		offlineBackupSaveSuccess: (arg: { fileName: unknown }) => LocalizedString
+		/**
+		 * Failed to save the backup file.
+		 */
+		offlineBackupSaveError: () => LocalizedString
+		/**
+		 * File already exists
+		 */
+		offlineBackupSaveExistsTitle: () => LocalizedString
+		/**
+		 * A file named {fileName} already exists in the selected folder. What would you like to do?
+		 */
+		offlineBackupSaveExistsMessage: (arg: { fileName: unknown }) => LocalizedString
+		/**
+		 * Replace
+		 */
+		offlineBackupSaveReplace: () => LocalizedString
+		/**
+		 * Save copy
+		 */
+		offlineBackupSaveCopy: () => LocalizedString
+		/**
+		 * A folder with the same name as the backup file already exists in the selected location.
+		 */
+		offlineBackupSaveNameConflictFolder: () => LocalizedString
 		/**
 		 * Restore backup
 		 */

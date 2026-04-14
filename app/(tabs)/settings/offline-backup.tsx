@@ -10,7 +10,8 @@ import {
   inspectOfflineBackupContent,
   restoreOfflineBackupContent,
 } from '@/repositories/offline-backup-repository';
-import { getOfflineBackupErrorMessage } from '@/utils/error-utils';
+import { getErrorMessage, getOfflineBackupErrorMessage } from '@/utils/error-utils';
+import { buildCopyFileName } from '@/utils/file-name-utils';
 import { showConfirm } from '@/utils/platform-alert';
 import { isIos } from '@/utils/platform';
 import { useHeaderHeight } from '@react-navigation/elements';
@@ -51,7 +52,9 @@ export default function SettingsOfflineBackupScreen() {
   const [selectedRestoreFile, setSelectedRestoreFile] = useState<SelectedBackupFile | null>(null);
   const [restorePassword, setRestorePassword] = useState('');
   const [isCreateLoading, setIsCreateLoading] = useState(false);
+  const [isSaveLoading, setIsSaveLoading] = useState(false);
   const [isRestoreLoading, setIsRestoreLoading] = useState(false);
+  const isCreateSectionBusy = isCreateLoading || isSaveLoading;
 
   const formattedRestoreDate = useMemo(() => {
     if (!selectedRestoreFile) return '';
@@ -69,25 +72,32 @@ export default function SettingsOfflineBackupScreen() {
     }
   };
 
-  const handleCreateBackup = async () => {
+  const validateCreateBackupPassword = (): string | null | undefined => {
     const normalizedPassword = backupPassword.trim();
     const normalizedConfirm = backupPasswordConfirm.trim();
 
     if (isPasswordEnabled && !normalizedPassword) {
       Alert.alert(LL.common.error(), LL.settings.offlineBackupPasswordRequired());
-      return;
+      return undefined;
     }
 
     if (isPasswordEnabled && normalizedPassword !== normalizedConfirm) {
       Alert.alert(LL.common.error(), LL.settings.offlineBackupPasswordMismatch());
+      return undefined;
+    }
+
+    return isPasswordEnabled ? normalizedPassword : null;
+  };
+
+  const handleCreateBackup = async () => {
+    const password = validateCreateBackupPassword();
+    if (password === undefined) {
       return;
     }
 
     setIsCreateLoading(true);
     try {
-      const backup = await createOfflineBackupFile({
-        password: isPasswordEnabled ? normalizedPassword : null,
-      });
+      const backup = await createOfflineBackupFile({ password });
 
       // eslint-disable-next-line @typescript-eslint/no-require-imports
       const Sharing = require('expo-sharing');
@@ -114,6 +124,100 @@ export default function SettingsOfflineBackupScreen() {
       );
     } finally {
       setIsCreateLoading(false);
+    }
+  };
+
+  const handleSaveBackup = async () => {
+    const password = validateCreateBackupPassword();
+    if (password === undefined) {
+      return;
+    }
+
+    setIsSaveLoading(true);
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const FileSystem = require('expo-file-system') as typeof import('expo-file-system');
+      const backupFile = await createOfflineBackupFile({ password });
+      const pickedDirectory = await FileSystem.Directory.pickDirectoryAsync();
+      if (isIos) {
+        await new Promise((resolve) => setTimeout(resolve, 250));
+      }
+
+      const sourceFile = new FileSystem.File(backupFile.uri);
+      const existingEntries = pickedDirectory.list();
+      const existingEntry = existingEntries.find(
+        (entry: InstanceType<typeof FileSystem.File> | InstanceType<typeof FileSystem.Directory>) =>
+          entry.name === backupFile.fileName,
+      );
+
+      let targetFileName = backupFile.fileName;
+      if (existingEntry) {
+        if (existingEntry instanceof FileSystem.Directory) {
+          throw new Error(LL.settings.offlineBackupSaveNameConflictFolder());
+        }
+
+        const existingNames = new Set(existingEntries.map((entry) => entry.name));
+        const copyFileName = buildCopyFileName(backupFile.fileName, existingNames);
+        targetFileName = await new Promise<string | null>((resolve) => {
+          Alert.alert(
+            LL.settings.offlineBackupSaveExistsTitle(),
+            LL.settings.offlineBackupSaveExistsMessage({ fileName: backupFile.fileName }),
+            [
+              {
+                text: LL.common.cancel(),
+                style: 'cancel',
+                onPress: () => resolve(null),
+              },
+              {
+                text: LL.settings.offlineBackupSaveCopy(),
+                onPress: () => resolve(copyFileName),
+              },
+              {
+                text: LL.settings.offlineBackupSaveReplace(),
+                style: 'destructive',
+                onPress: () => resolve(backupFile.fileName),
+              },
+            ],
+            {
+              cancelable: true,
+              onDismiss: () => resolve(null),
+            },
+          );
+        });
+
+        if (!targetFileName) {
+          return;
+        }
+
+        if (targetFileName === backupFile.fileName) {
+          existingEntry.delete();
+        }
+      }
+
+      const targetFile = pickedDirectory.createFile(targetFileName, 'application/json');
+      targetFile.write(await sourceFile.bytes());
+
+      Alert.alert(
+        LL.common.success(),
+        LL.settings.offlineBackupSaveSuccess({ fileName: targetFileName }),
+      );
+    } catch (error) {
+      const message = getErrorMessage(error, '');
+      if (message && /cancel(?:ed|led)/i.test(message)) {
+        return;
+      }
+
+      console.error('Error saving offline backup:', error);
+      Alert.alert(
+        LL.common.error(),
+        `${LL.settings.offlineBackupSaveError()}\n\n${getOfflineBackupErrorMessage(
+          error,
+          LL,
+          LL.settings.offlineBackupSaveError(),
+        )}`,
+      );
+    } finally {
+      setIsSaveLoading(false);
     }
   };
 
@@ -279,16 +383,40 @@ export default function SettingsOfflineBackupScreen() {
             <Pressable
               style={({ pressed }) => [
                 styles.primaryButton,
-                { backgroundColor: palette.tint, opacity: pressed || isCreateLoading ? 0.78 : 1 },
+                {
+                  backgroundColor: palette.tint,
+                  opacity: pressed || isCreateSectionBusy ? 0.78 : 1,
+                },
               ]}
               onPress={() => void handleCreateBackup()}
-              disabled={isCreateLoading}
+              disabled={isCreateSectionBusy}
             >
               {isCreateLoading ? (
                 <ActivityIndicator color={palette.onTint} />
               ) : (
                 <ThemedText style={[styles.primaryButtonText, { color: palette.onTint }]}>
                   {LL.settings.offlineBackupCreateAction()}
+                </ThemedText>
+              )}
+            </Pressable>
+
+            <Pressable
+              style={({ pressed }) => [
+                styles.secondaryButton,
+                {
+                  borderColor: palette.border,
+                  backgroundColor: palette.inputBackground,
+                  opacity: pressed || isCreateSectionBusy ? 0.78 : 1,
+                },
+              ]}
+              onPress={() => void handleSaveBackup()}
+              disabled={isCreateSectionBusy}
+            >
+              {isSaveLoading ? (
+                <ActivityIndicator color={palette.tint} />
+              ) : (
+                <ThemedText style={[styles.secondaryButtonText, { color: palette.tint }]}>
+                  {LL.settings.offlineBackupSaveAction()}
                 </ThemedText>
               )}
             </Pressable>
