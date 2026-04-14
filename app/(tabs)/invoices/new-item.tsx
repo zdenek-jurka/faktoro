@@ -96,6 +96,13 @@ function resolveVatRateForDate(rates: VatRateModel[], taxableAt: number): number
   return matching[0].ratePercent;
 }
 
+function formatVatRatePercent(ratePercent: number): string {
+  return new Intl.NumberFormat(undefined, {
+    minimumFractionDigits: Number.isInteger(ratePercent) ? 0 : 1,
+    maximumFractionDigits: 2,
+  }).format(ratePercent);
+}
+
 function formatDuration(seconds: number): string {
   const hours = Math.floor(seconds / 3600);
   const minutes = Math.floor((seconds % 3600) / 60);
@@ -225,6 +232,8 @@ export default function InvoiceNewItemScreen() {
   const selectedTimesheet = timesheets.find((entry) => entry.id === timesheetId);
   const selectedPriceItem = compatiblePriceListItems.find((entry) => entry.id === priceItemId);
   const selectedManualVatCode = vatCodes.find((entry) => entry.id === manualVatCodeId);
+  const effectiveTaxableAt =
+    parseISODate(headerDraft?.taxableDate) || parseISODate(headerDraft?.issuedDate) || Date.now();
   const displayVatCodes = useMemo(
     () =>
       [...vatCodes].sort((a, b) =>
@@ -232,6 +241,37 @@ export default function InvoiceNewItemScreen() {
       ),
     [LL, vatCodes],
   );
+  const resolvedVatRateByCodeId = useMemo(() => {
+    const ratesByCodeId = new Map<string, VatRateModel[]>();
+
+    for (const rate of vatRates) {
+      if (!rate.vatCodeId) continue;
+      const current = ratesByCodeId.get(rate.vatCodeId) || [];
+      current.push(rate);
+      ratesByCodeId.set(rate.vatCodeId, current);
+    }
+
+    const resolved = new Map<string, number | null>();
+    for (const vatCode of displayVatCodes) {
+      const ratesForCode = ratesByCodeId.get(vatCode.id) || [];
+      resolved.set(vatCode.id, resolveVatRateForDate(ratesForCode, effectiveTaxableAt));
+    }
+
+    return resolved;
+  }, [displayVatCodes, effectiveTaxableAt, vatRates]);
+  const vatCodeDisplayLabelById = useMemo(() => {
+    const labels = new Map<string, string>();
+
+    for (const vatCode of displayVatCodes) {
+      const baseLabel = getLocalizedVatCodeName(vatCode.name, LL);
+      const resolvedRate = resolvedVatRateByCodeId.get(vatCode.id);
+      const label =
+        resolvedRate == null ? baseLabel : `${formatVatRatePercent(resolvedRate)} % - ${baseLabel}`;
+      labels.set(vatCode.id, label);
+    }
+
+    return labels;
+  }, [LL, displayVatCodes, resolvedVatRateByCodeId]);
   const selectedTimesheetNeedsPricing = missingTimesheetEntries.length > 0;
 
   useEffect(() => {
@@ -692,10 +732,8 @@ export default function InvoiceNewItemScreen() {
         Alert.alert(LL.common.error(), LL.invoices.errorVatCodeRequired());
         return;
       }
-      const taxableAt =
-        parseISODate(headerDraft.taxableDate) || parseISODate(headerDraft.issuedDate) || Date.now();
       const ratesForCode = vatRates.filter((rate) => rate.vatCodeId === manualVatCodeId);
-      const resolvedVatRate = resolveVatRateForDate(ratesForCode, taxableAt);
+      const resolvedVatRate = resolveVatRateForDate(ratesForCode, effectiveTaxableAt);
       if (resolvedVatRate == null) {
         Alert.alert(LL.common.error(), LL.invoices.errorVatRateNotFoundForDate());
         return;
@@ -905,7 +943,13 @@ export default function InvoiceNewItemScreen() {
                                     }
                                   >
                                     <SelectTrigger>
-                                      <SelectValue placeholder={LL.invoices.selectVatCode()} />
+                                      <SelectValue
+                                        placeholder={
+                                          vatCodeDisplayLabelById.get(
+                                            missingEntryVatCodeById[entry.id] || '',
+                                          ) || LL.invoices.selectVatCode()
+                                        }
+                                      />
                                     </SelectTrigger>
                                     <SelectContent>
                                       <SelectGroup>
@@ -914,9 +958,13 @@ export default function InvoiceNewItemScreen() {
                                           <SelectItem
                                             key={vatCode.id}
                                             value={vatCode.id}
-                                            label={getLocalizedVatCodeName(vatCode.name, LL)}
+                                            label={
+                                              vatCodeDisplayLabelById.get(vatCode.id) ||
+                                              getLocalizedVatCodeName(vatCode.name, LL)
+                                            }
                                           >
-                                            {getLocalizedVatCodeName(vatCode.name, LL)}
+                                            {vatCodeDisplayLabelById.get(vatCode.id) ||
+                                              getLocalizedVatCodeName(vatCode.name, LL)}
                                           </SelectItem>
                                         ))}
                                       </SelectGroup>
@@ -1027,7 +1075,8 @@ export default function InvoiceNewItemScreen() {
                       <SelectValue
                         placeholder={
                           selectedManualVatCode
-                            ? getLocalizedVatCodeName(selectedManualVatCode.name, LL)
+                            ? vatCodeDisplayLabelById.get(selectedManualVatCode.id) ||
+                              getLocalizedVatCodeName(selectedManualVatCode.name, LL)
                             : LL.invoices.selectVatCode()
                         }
                       />
@@ -1039,9 +1088,13 @@ export default function InvoiceNewItemScreen() {
                           <SelectItem
                             key={vatCode.id}
                             value={vatCode.id}
-                            label={getLocalizedVatCodeName(vatCode.name, LL)}
+                            label={
+                              vatCodeDisplayLabelById.get(vatCode.id) ||
+                              getLocalizedVatCodeName(vatCode.name, LL)
+                            }
                           >
-                            {getLocalizedVatCodeName(vatCode.name, LL)}
+                            {vatCodeDisplayLabelById.get(vatCode.id) ||
+                              getLocalizedVatCodeName(vatCode.name, LL)}
                           </SelectItem>
                         ))}
                       </SelectGroup>
