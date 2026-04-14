@@ -13,7 +13,7 @@ import {
   observeDeviceSyncSettings,
 } from '@/repositories/device-sync-settings-repository';
 import { escapeLike } from '@/utils/escape-like';
-import { useRouter } from 'expo-router';
+import { usePathname, useRouter } from 'expo-router';
 
 type ClientListContainerProps = {
   database: Database;
@@ -49,6 +49,7 @@ function buildClientsQuery(database: Database, searchQuery: string) {
 
 export function ClientListContainer(props: ClientListContainerProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const { LL } = useI18nContext();
   const [clients, setClients] = useState<ClientModel[]>([]);
   const [runningEntries, setRunningEntries] = useState<TimeEntryModel[]>([]);
@@ -127,7 +128,13 @@ export function ClientListContainer(props: ClientListContainerProps) {
           }
           actionLabel={props.searchQuery.trim().length === 0 ? LL.clients.addNew() : undefined}
           onActionPress={
-            props.searchQuery.trim().length === 0 ? () => router.push('/clients/add') : undefined
+            props.searchQuery.trim().length === 0
+              ? () =>
+                  router.push({
+                    pathname: '/clients/add',
+                    params: { returnTo: pathname },
+                  })
+              : undefined
           }
         />
       }

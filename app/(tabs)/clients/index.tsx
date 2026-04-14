@@ -31,7 +31,12 @@ export default function ClientsScreen() {
               <IconButton
                 iconName="person.badge.plus"
                 key="add"
-                onPress={() => router.push('/clients/add')}
+                onPress={() =>
+                  router.push({
+                    pathname: '/clients/add',
+                    params: { returnTo: '/clients' },
+                  })
+                }
                 accessibilityLabel={LL.clients.addNew()}
               />
 

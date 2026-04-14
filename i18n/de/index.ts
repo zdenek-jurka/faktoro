@@ -94,6 +94,14 @@ const de = {
     errorCreateClient: 'Client konnte nicht erstellt werden',
     errorUpdateClient: 'Client konnte nicht aktualisiert werden',
     errorLoadClient: 'Der Client konnte nicht geladen werden',
+    duplicateCheckTitle: 'Möglicher doppelter Client',
+    duplicateCheckMessage:
+      'Ein ähnlicher Client existiert bereits. Prüfen Sie die übereinstimmenden Felder unten, bevor Sie einen weiteren Datensatz speichern.',
+    duplicateCheckContinue: 'Trotzdem speichern',
+    duplicateCheckReasonName: 'gleicher Name',
+    duplicateCheckReasonCompanyId: 'gleiche Unternehmens-ID',
+    duplicateCheckReasonVatNumber: 'gleiche USt-IdNr.',
+    duplicateCheckReasonEmail: 'gleiche E-Mail',
     errorClientIdMissing: 'Client-ID nicht gefunden',
     errorCompanyIdRequiredForLookup:
       'Geben Sie die Firmenkennung ein, die aus der Registrierung geladen werden soll',
@@ -306,6 +314,26 @@ const de = {
     changeClientClearsItemsMessage:
       'Beim Ändern des Kunden werden die aktuellen Rechnungspositionen entfernt, damit sie nicht mit dem vorherigen Kunden verknüpft bleiben.',
     changeClientClearsItemsConfirm: 'Kunden ändern',
+    changeClientReviewTitle: 'Kunden zu {client} ändern?',
+    changeClientReviewManualItems:
+      '{count} manuell hinzugefügte Position(en) bleiben unverändert erhalten.',
+    changeClientReviewPriceListUpdated:
+      '{count} Position(en) aus der Preisliste werden für den neuen Kunden neu berechnet.',
+    changeClientReviewPriceListUnchanged:
+      '{count} Position(en) aus der Preisliste behalten denselben Preis.',
+    changeClientReviewPriceListNeedsReview:
+      '{count} Position(en) aus der Preisliste konnten nicht sicher neu berechnet werden und sollten geprüft werden.',
+    changeClientReviewTimesheetItems:
+      '{count} Timesheet-Position(en) sind noch mit dem vorherigen Kunden verknüpft. Wähle, ob sie behalten oder entfernt werden sollen.',
+    changeClientReviewPriceChangeLine: '{item}: {from} -> {to}',
+    changeClientReviewMoreChanges: '+ {count} weitere neu berechnete Position(en)',
+    changeClientReviewApply: 'Änderungen anwenden',
+    changeClientReviewKeepTimesheet: 'Timesheet-Positionen behalten',
+    changeClientReviewRemoveTimesheet: 'Timesheet-Positionen entfernen',
+    changeCurrencyManualItemsTitle: 'Rechnungswährung ändern?',
+    changeCurrencyManualItemsMessage:
+      'Der Entwurf enthält {count} manuell eingegebene Position(en). Die Rechnungswährung wird von {from} auf {to} geändert, die eingegebenen Preise bleiben jedoch unverändert und passen möglicherweise nicht mehr zur neuen Währung.',
+    changeCurrencyManualItemsContinue: 'Preise behalten und Währung ändern',
     empty: 'Noch keine Rechnungen.',
     emptyTitle: 'Noch keine Rechnungen',
     emptyDescription:

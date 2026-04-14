@@ -20,7 +20,8 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useCurrencySettings } from '@/hooks/use-currency-settings';
 import { useI18nContext } from '@/i18n/i18n-react';
 import { normalizeIntlLocale } from '@/i18n/locale-options';
-import { ClientModel } from '@/model';
+import { ClientModel, PriceListItemModel } from '@/model';
+import { getEffectivePriceDetails } from '@/repositories/client-price-override-repository';
 import {
   DraftInvoiceItemInput,
   INVOICE_TAXABLE_DATE_REQUIRED_ERROR,
@@ -30,7 +31,11 @@ import {
   getTimesheetCandidates,
 } from '@/repositories/invoice-repository';
 import { getSettings } from '@/repositories/settings-repository';
-import { DEFAULT_CURRENCY_CODE, normalizeCurrencyCode } from '@/utils/currency-utils';
+import {
+  DEFAULT_CURRENCY_CODE,
+  hasMatchingCurrency,
+  normalizeCurrencyCode,
+} from '@/utils/currency-utils';
 import { getErrorMessage } from '@/utils/error-utils';
 import {
   DEFAULT_INVOICE_DUE_DAYS,
@@ -48,6 +53,7 @@ import { useHeaderHeight } from '@react-navigation/elements';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
+  ActivityIndicator,
   Alert,
   KeyboardAvoidingView,
   Pressable,
@@ -74,6 +80,17 @@ type FooterDraft = {
 
 type DraftListItem = DraftInvoiceItemInput & {
   localId: string;
+};
+
+type ClientChangeReview = {
+  manualCount: number;
+  priceListCount: number;
+  priceChangedCount: number;
+  priceListNeedsReviewCount: number;
+  timesheetCount: number;
+  priceChangeLines: string[];
+  nextItemsKeepingTimesheets: DraftListItem[];
+  nextItemsRemovingTimesheets: DraftListItem[];
 };
 
 type Palette = (typeof Colors)['light'];
@@ -200,6 +217,7 @@ export default function InvoiceDraftScreen() {
   const [isVatPayer, setIsVatPayer] = useState(false);
   const [canUseTimesheets, setCanUseTimesheets] = useState(false);
   const [canUsePriceList, setCanUsePriceList] = useState(false);
+  const [isReviewingClientChange, setIsReviewingClientChange] = useState(false);
   const [activeDateField, setActiveDateField] = useState<'issued' | 'taxable' | 'due' | null>(null);
   const [pickerDate, setPickerDate] = useState<Date>(new Date());
   const [items, setItems] = useState<DraftListItem[]>([]);
@@ -207,6 +225,7 @@ export default function InvoiceDraftScreen() {
 
   const localIdRef = useRef(1);
   const didAutoOpenImport = useRef(false);
+  const clientChangeReviewRequestRef = useRef(0);
   const dueDateTouchedRef = useRef(!!restoredHeaderDraft?.dueDate);
   const paymentMethodTouchedRef = useRef(!!restoredHeaderDraft?.paymentMethod);
 
@@ -353,6 +372,180 @@ export default function InvoiceDraftScreen() {
   );
 
   const canCreate = hasClients && !!clientId.trim() && !!invoiceNumber.trim() && items.length > 0;
+  const normalizedInvoiceCurrency = normalizeCurrencyCode(headerDraft.currency);
+
+  const buildClientChangeReview = useCallback(
+    async (nextClientId: string): Promise<ClientChangeReview> => {
+      const review: ClientChangeReview = {
+        manualCount: 0,
+        priceListCount: 0,
+        priceChangedCount: 0,
+        priceListNeedsReviewCount: 0,
+        timesheetCount: 0,
+        priceChangeLines: [],
+        nextItemsKeepingTimesheets: [],
+        nextItemsRemovingTimesheets: [],
+      };
+
+      const priceListSourceIds = Array.from(
+        new Set(
+          items
+            .filter((item) => item.sourceKind === 'price_list')
+            .map((item) => item.sourceId)
+            .filter((value): value is string => !!value),
+        ),
+      );
+
+      const priceListItems = priceListSourceIds.length
+        ? await database
+            .get<PriceListItemModel>(PriceListItemModel.table)
+            .query(Q.where('id', Q.oneOf(priceListSourceIds)))
+            .fetch()
+        : [];
+      const priceListItemsById = new Map(priceListItems.map((item) => [item.id, item]));
+
+      for (const item of items) {
+        if (item.sourceKind === 'manual') {
+          review.manualCount += 1;
+          review.nextItemsKeepingTimesheets.push(item);
+          review.nextItemsRemovingTimesheets.push(item);
+          continue;
+        }
+
+        if (item.sourceKind === 'timesheet') {
+          review.timesheetCount += 1;
+          review.nextItemsKeepingTimesheets.push(item);
+          continue;
+        }
+
+        review.priceListCount += 1;
+
+        if (!item.sourceId) {
+          review.priceListNeedsReviewCount += 1;
+          review.nextItemsKeepingTimesheets.push(item);
+          review.nextItemsRemovingTimesheets.push(item);
+          continue;
+        }
+
+        const priceListItem = priceListItemsById.get(item.sourceId);
+        if (!priceListItem) {
+          review.priceListNeedsReviewCount += 1;
+          review.nextItemsKeepingTimesheets.push(item);
+          review.nextItemsRemovingTimesheets.push(item);
+          continue;
+        }
+
+        try {
+          const effectivePrice = await getEffectivePriceDetails(nextClientId, priceListItem.id);
+          const effectiveCurrency = normalizeCurrencyCode(
+            effectivePrice.currency,
+            normalizedInvoiceCurrency,
+          );
+
+          if (!hasMatchingCurrency(effectiveCurrency, normalizedInvoiceCurrency)) {
+            review.priceListNeedsReviewCount += 1;
+            review.nextItemsKeepingTimesheets.push(item);
+            review.nextItemsRemovingTimesheets.push(item);
+            continue;
+          }
+
+          const nextUnitPrice = roundCurrency(effectivePrice.price);
+          const nextTotalPrice = roundCurrency(item.quantity * nextUnitPrice);
+          const nextItem: DraftListItem = {
+            ...item,
+            unit: priceListItem.unit || item.unit,
+            unitPrice: nextUnitPrice,
+            totalPrice: nextTotalPrice,
+            vatCodeId: priceListItem.vatCodeId || item.vatCodeId,
+          };
+
+          if (nextUnitPrice !== item.unitPrice || nextTotalPrice !== item.totalPrice) {
+            review.priceChangedCount += 1;
+            review.priceChangeLines.push(
+              LL.invoices.changeClientReviewPriceChangeLine({
+                item: item.description,
+                from: formatPrice(item.unitPrice, normalizedInvoiceCurrency, locale),
+                to: formatPrice(nextUnitPrice, normalizedInvoiceCurrency, locale),
+              }),
+            );
+          }
+
+          review.nextItemsKeepingTimesheets.push(nextItem);
+          review.nextItemsRemovingTimesheets.push(nextItem);
+        } catch {
+          review.priceListNeedsReviewCount += 1;
+          review.nextItemsKeepingTimesheets.push(item);
+          review.nextItemsRemovingTimesheets.push(item);
+        }
+      }
+
+      return review;
+    },
+    [LL.invoices, items, locale, normalizedInvoiceCurrency],
+  );
+
+  const applyClientChange = useCallback((nextClientId: string, nextItems: DraftListItem[]) => {
+    dueDateTouchedRef.current = false;
+    paymentMethodTouchedRef.current = false;
+    setItems(nextItems);
+    setClientId(nextClientId);
+  }, []);
+
+  const finishClientChangeReview = useCallback((requestId: number) => {
+    if (clientChangeReviewRequestRef.current !== requestId) return;
+    setIsReviewingClientChange(false);
+  }, []);
+
+  const buildClientChangeReviewMessage = useCallback(
+    (review: ClientChangeReview) => {
+      const lines: string[] = [];
+
+      if (review.manualCount > 0) {
+        lines.push(LL.invoices.changeClientReviewManualItems({ count: review.manualCount }));
+      }
+
+      if (review.priceChangedCount > 0) {
+        lines.push(
+          LL.invoices.changeClientReviewPriceListUpdated({ count: review.priceChangedCount }),
+        );
+      }
+
+      const unchangedPriceListCount =
+        review.priceListCount - review.priceChangedCount - review.priceListNeedsReviewCount;
+      if (unchangedPriceListCount > 0) {
+        lines.push(
+          LL.invoices.changeClientReviewPriceListUnchanged({ count: unchangedPriceListCount }),
+        );
+      }
+
+      if (review.priceListNeedsReviewCount > 0) {
+        lines.push(
+          LL.invoices.changeClientReviewPriceListNeedsReview({
+            count: review.priceListNeedsReviewCount,
+          }),
+        );
+      }
+
+      if (review.timesheetCount > 0) {
+        lines.push(LL.invoices.changeClientReviewTimesheetItems({ count: review.timesheetCount }));
+      }
+
+      const previewLines = review.priceChangeLines.slice(0, 3);
+      if (previewLines.length > 0) {
+        lines.push('', ...previewLines);
+        if (review.priceChangeLines.length > previewLines.length) {
+          lines.push(
+            LL.invoices.changeClientReviewMoreChanges({
+              count: review.priceChangeLines.length - previewLines.length,
+            }),
+          );
+        }
+      }
+
+      return lines.join('\n');
+    },
+    [LL.invoices],
+  );
 
   const openDatePicker = (field: 'issued' | 'taxable' | 'due') => {
     const currentValue =
@@ -394,27 +587,111 @@ export default function InvoiceDraftScreen() {
 
   const handleClientChange = (nextClientId: string) => {
     if (nextClientId === clientId) return;
+    if (isReviewingClientChange) return;
     if (items.length === 0) {
-      dueDateTouchedRef.current = false;
-      paymentMethodTouchedRef.current = false;
-      setClientId(nextClientId);
+      applyClientChange(nextClientId, []);
+      return;
+    }
+
+    const nextClient = clients.find((client) => client.id === nextClientId) ?? null;
+    const requestId = clientChangeReviewRequestRef.current + 1;
+    clientChangeReviewRequestRef.current = requestId;
+    setIsReviewingClientChange(true);
+
+    void buildClientChangeReview(nextClientId)
+      .then((review) => {
+        if (clientChangeReviewRequestRef.current !== requestId) return;
+
+        const message = buildClientChangeReviewMessage(review);
+        const title = nextClient?.name
+          ? LL.invoices.changeClientReviewTitle({ client: nextClient.name })
+          : LL.invoices.changeClientClearsItemsTitle();
+
+        if (review.timesheetCount > 0) {
+          Alert.alert(
+            title,
+            message,
+            [
+              {
+                text: LL.common.cancel(),
+                style: 'cancel',
+                onPress: () => finishClientChangeReview(requestId),
+              },
+              {
+                text: LL.invoices.changeClientReviewRemoveTimesheet(),
+                style: 'destructive',
+                onPress: () => {
+                  applyClientChange(nextClientId, review.nextItemsRemovingTimesheets);
+                  finishClientChangeReview(requestId);
+                },
+              },
+              {
+                text: LL.invoices.changeClientReviewKeepTimesheet(),
+                onPress: () => {
+                  applyClientChange(nextClientId, review.nextItemsKeepingTimesheets);
+                  finishClientChangeReview(requestId);
+                },
+              },
+            ],
+            {
+              cancelable: true,
+              onDismiss: () => finishClientChangeReview(requestId),
+            },
+          );
+          return;
+        }
+
+        Alert.alert(
+          title,
+          message,
+          [
+            {
+              text: LL.common.cancel(),
+              style: 'cancel',
+              onPress: () => finishClientChangeReview(requestId),
+            },
+            {
+              text: LL.invoices.changeClientReviewApply(),
+              onPress: () => {
+                applyClientChange(nextClientId, review.nextItemsKeepingTimesheets);
+                finishClientChangeReview(requestId);
+              },
+            },
+          ],
+          {
+            cancelable: true,
+            onDismiss: () => finishClientChangeReview(requestId),
+          },
+        );
+      })
+      .catch((error) => {
+        if (clientChangeReviewRequestRef.current !== requestId) return;
+        finishClientChangeReview(requestId);
+        Alert.alert(LL.common.error(), getErrorMessage(error, LL.common.errorUnknown()));
+      });
+  };
+
+  const handleCurrencyChange = (nextCurrency: string) => {
+    if (nextCurrency === currency) return;
+
+    const manualItemCount = items.filter((item) => item.sourceKind === 'manual').length;
+    if (manualItemCount === 0) {
+      setCurrency(nextCurrency);
       return;
     }
 
     Alert.alert(
-      LL.invoices.changeClientClearsItemsTitle(),
-      LL.invoices.changeClientClearsItemsMessage(),
+      LL.invoices.changeCurrencyManualItemsTitle(),
+      LL.invoices.changeCurrencyManualItemsMessage({
+        count: manualItemCount,
+        from: normalizeCurrencyCode(currency),
+        to: normalizeCurrencyCode(nextCurrency),
+      }),
       [
         { text: LL.common.cancel(), style: 'cancel' },
         {
-          text: LL.invoices.changeClientClearsItemsConfirm(),
-          style: 'destructive',
-          onPress: () => {
-            setItems([]);
-            dueDateTouchedRef.current = false;
-            paymentMethodTouchedRef.current = false;
-            setClientId(nextClientId);
-          },
+          text: LL.invoices.changeCurrencyManualItemsContinue(),
+          onPress: () => setCurrency(nextCurrency),
         },
       ],
     );
@@ -539,11 +816,20 @@ export default function InvoiceDraftScreen() {
               searchPlaceholder={LL.clients.searchPlaceholder()}
               emptyText={LL.clients.noClients()}
               emptySearchText={LL.clients.noClientsSearch()}
+              disabled={isReviewingClientChange}
               options={clients.map((client) => ({
                 value: client.id,
                 label: client.name,
               }))}
             />
+            {isReviewingClientChange ? (
+              <View style={styles.inlineLoadingRow}>
+                <ActivityIndicator size="small" color={palette.tint} />
+                <ThemedText style={[styles.inlineLoadingText, { color: palette.textSecondary }]}>
+                  {LL.common.loading()}
+                </ThemedText>
+              </View>
+            ) : null}
 
             <ThemedText style={styles.label}>{LL.invoices.invoiceNumber()}</ThemedText>
             <TextInput
@@ -590,7 +876,7 @@ export default function InvoiceDraftScreen() {
             <View style={styles.fieldRow}>
               <View style={styles.fieldColumn}>
                 <ThemedText style={styles.label}>{LL.invoices.currency()}</ThemedText>
-                <Select value={currency} onValueChange={setCurrency}>
+                <Select value={currency} onValueChange={handleCurrencyChange}>
                   <SelectTrigger>
                     <SelectValue placeholder={currency} />
                   </SelectTrigger>
@@ -827,6 +1113,16 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 13,
     opacity: 0.7,
+  },
+  inlineLoadingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: -4,
+    marginBottom: 4,
+  },
+  inlineLoadingText: {
+    fontSize: 13,
   },
   input: {
     borderWidth: 1,

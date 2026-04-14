@@ -93,6 +93,14 @@ const fr = {
     errorCreateClient: 'Échec de la création du client',
     errorUpdateClient: 'Échec de la mise à jour du client',
     errorLoadClient: 'Échec du chargement du client',
+    duplicateCheckTitle: 'Client potentiellement en doublon',
+    duplicateCheckMessage:
+      'Un client similaire existe déjà. Vérifiez les champs correspondants ci-dessous avant d’enregistrer un autre enregistrement.',
+    duplicateCheckContinue: 'Enregistrer quand même',
+    duplicateCheckReasonName: 'même nom',
+    duplicateCheckReasonCompanyId: 'même identifiant d’entreprise',
+    duplicateCheckReasonVatNumber: 'même numéro de TVA',
+    duplicateCheckReasonEmail: 'même e-mail',
     errorClientIdMissing: 'ID client introuvable',
     errorCompanyIdRequiredForLookup:
       "Entrez l'identifiant de l'entreprise à charger à partir du registre",
@@ -303,6 +311,25 @@ const fr = {
     changeClientClearsItemsMessage:
       'Changer de client supprimera les lignes actuelles de la facture pour éviter qu’elles restent liées au client précédent.',
     changeClientClearsItemsConfirm: 'Changer de client',
+    changeClientReviewTitle: 'Passer le client à {client} ?',
+    changeClientReviewManualItems:
+      '{count} élément(s) ajoutés manuellement seront conservés tels quels.',
+    changeClientReviewPriceListUpdated:
+      '{count} élément(s) du tarif seront recalculés pour le nouveau client.',
+    changeClientReviewPriceListUnchanged: '{count} élément(s) du tarif gardent le même prix.',
+    changeClientReviewPriceListNeedsReview:
+      '{count} élément(s) du tarif n’ont pas pu être recalculés de manière sûre et doivent être vérifiés.',
+    changeClientReviewTimesheetItems:
+      '{count} élément(s) de timesheet restent liés au client précédent. Choisissez si vous voulez les conserver ou les supprimer.',
+    changeClientReviewPriceChangeLine: '{item}: {from} -> {to}',
+    changeClientReviewMoreChanges: '+ {count} autre(s) élément(s) recalculé(s)',
+    changeClientReviewApply: 'Appliquer les changements',
+    changeClientReviewKeepTimesheet: 'Conserver les éléments du timesheet',
+    changeClientReviewRemoveTimesheet: 'Supprimer les éléments du timesheet',
+    changeCurrencyManualItemsTitle: 'Changer la devise de la facture ?',
+    changeCurrencyManualItemsMessage:
+      'Le brouillon contient {count} élément(s) saisis manuellement. La devise de la facture passera de {from} à {to}, mais les prix saisis resteront inchangés et peuvent ne plus correspondre à la nouvelle devise.',
+    changeCurrencyManualItemsContinue: 'Conserver les prix et changer la devise',
     empty: 'Pas encore de factures.',
     emptyTitle: 'Pas encore de factures',
     emptyDescription:

@@ -32,6 +32,7 @@ interface ClientFormProps {
   onLookupByCompanyId?: (companyId: string) => void;
   onLookupRegistryPicker?: (companyId: string) => void;
   isLookupLoading?: boolean;
+  isSubmitting?: boolean;
   isEditMode?: boolean;
   isScreen?: boolean;
 }
@@ -45,6 +46,7 @@ export function ClientForm({
   onLookupByCompanyId,
   onLookupRegistryPicker,
   isLookupLoading = false,
+  isSubmitting = false,
   isEditMode = false,
   isScreen = false,
 }: ClientFormProps) {
@@ -153,7 +155,7 @@ export function ClientForm({
               <Pressable
                 style={styles.lookupPrimaryButton}
                 onPress={() => onLookupByCompanyId(formData.companyId)}
-                disabled={isLookupLoading}
+                disabled={isLookupLoading || isSubmitting}
               >
                 {isLookupLoading ? (
                   <ActivityIndicator size="small" color={palette.tint} />
@@ -172,7 +174,7 @@ export function ClientForm({
                     },
                   ]}
                   onPress={() => onLookupRegistryPicker(formData.companyId)}
-                  disabled={isLookupLoading}
+                  disabled={isLookupLoading || isSubmitting}
                   accessibilityRole="button"
                   accessibilityLabel={LL.clients.lookupCompanyById()}
                 >
@@ -500,9 +502,10 @@ export function ClientForm({
           style={[
             styles.button,
             styles.cancelButton,
-            { backgroundColor: palette.buttonNeutralBackground },
+            { backgroundColor: palette.buttonNeutralBackground, opacity: isSubmitting ? 0.7 : 1 },
           ]}
           onPress={onCancel}
+          disabled={isSubmitting}
           accessibilityRole="button"
           accessibilityLabel={LL.common.cancel()}
         >
@@ -511,20 +514,29 @@ export function ClientForm({
           </ThemedText>
         </Pressable>
         <Pressable
-          style={[styles.button, { backgroundColor: palette.tint }]}
+          style={[
+            styles.button,
+            { backgroundColor: palette.tint, opacity: isSubmitting ? 0.75 : 1 },
+          ]}
           onPress={onSubmit}
+          disabled={isSubmitting}
           accessibilityRole="button"
           accessibilityLabel={LL.common.save()}
         >
-          <ThemedText style={[styles.buttonText, { color: palette.onTint }]}>
-            {isEditMode ? LL.common.save() : LL.common.save()}
-          </ThemedText>
+          {isSubmitting ? (
+            <ActivityIndicator size="small" color={palette.onTint} />
+          ) : (
+            <ThemedText style={[styles.buttonText, { color: palette.onTint }]}>
+              {LL.common.save()}
+            </ThemedText>
+          )}
         </Pressable>
       </View>
       {isEditMode && onDelete && (
         <Pressable
           style={[styles.button, styles.deleteButton, { backgroundColor: palette.destructive }]}
           onPress={onDelete}
+          disabled={isSubmitting}
           accessibilityRole="button"
           accessibilityLabel={LL.common.delete()}
         >
@@ -533,6 +545,21 @@ export function ClientForm({
           </ThemedText>
         </Pressable>
       )}
+
+      {isSubmitting ? (
+        <View
+          style={[
+            styles.loadingOverlay,
+            {
+              backgroundColor: `${palette.background}E8`,
+            },
+          ]}
+          pointerEvents="auto"
+        >
+          <ActivityIndicator size="large" color={palette.tint} />
+          <ThemedText style={styles.loadingOverlayText}>{LL.common.loading()}</ThemedText>
+        </View>
+      ) : null}
     </ThemedView>
   );
 }
@@ -544,9 +571,11 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     borderRadius: 12,
     borderWidth: 1,
+    position: 'relative',
   },
   formContainerScreen: {
     width: '100%',
+    position: 'relative',
   },
   formTitle: {
     marginBottom: 16,
@@ -663,5 +692,16 @@ const styles = StyleSheet.create({
   },
   deleteButtonText: {
     fontWeight: '700',
+  },
+  loadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
+    borderRadius: 12,
+  },
+  loadingOverlayText: {
+    fontSize: 15,
+    fontWeight: '600',
   },
 });

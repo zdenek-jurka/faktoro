@@ -33,6 +33,20 @@ export type CreateClientInput = {
   timerHardLimitMinutes?: number | null;
 };
 
+export type PotentialDuplicateClient = {
+  id: string;
+  name: string;
+  reasons: ('name' | 'companyId' | 'vatNumber' | 'email')[];
+};
+
+function normalizeDuplicateText(value?: string | null): string {
+  return (value || '').trim().toLocaleLowerCase();
+}
+
+function normalizeDuplicateIdentifier(value?: string | null): string {
+  return (value || '').replace(/\s+/g, '').toLocaleUpperCase();
+}
+
 export async function createClient(input: CreateClientInput): Promise<string> {
   const clients = database.get<ClientModel>(ClientModel.table);
   let createdClientId = '';
@@ -69,6 +83,45 @@ export async function createClient(input: CreateClientInput): Promise<string> {
   });
 
   return createdClientId;
+}
+
+export async function findPotentialDuplicateClients(
+  input: Pick<CreateClientInput, 'name' | 'companyId' | 'vatNumber' | 'email'>,
+  options?: { excludeClientId?: string },
+): Promise<PotentialDuplicateClient[]> {
+  const clients = database.get<ClientModel>(ClientModel.table);
+  const allClients = await clients.query(Q.where('is_archived', false)).fetch();
+
+  const targetName = normalizeDuplicateText(input.name);
+  const targetCompanyId = normalizeDuplicateIdentifier(input.companyId);
+  const targetVatNumber = normalizeDuplicateIdentifier(input.vatNumber);
+  const targetEmail = normalizeDuplicateText(input.email);
+
+  return allClients
+    .filter((client) => client.id !== options?.excludeClientId)
+    .map((client) => {
+      const reasons: PotentialDuplicateClient['reasons'] = [];
+
+      if (targetName && normalizeDuplicateText(client.name) === targetName) {
+        reasons.push('name');
+      }
+      if (targetCompanyId && normalizeDuplicateIdentifier(client.companyId) === targetCompanyId) {
+        reasons.push('companyId');
+      }
+      if (targetVatNumber && normalizeDuplicateIdentifier(client.vatNumber) === targetVatNumber) {
+        reasons.push('vatNumber');
+      }
+      if (targetEmail && normalizeDuplicateText(client.email) === targetEmail) {
+        reasons.push('email');
+      }
+
+      return {
+        id: client.id,
+        name: client.name,
+        reasons,
+      };
+    })
+    .filter((client) => client.reasons.length > 0);
 }
 
 export type UpdateClientInput = {

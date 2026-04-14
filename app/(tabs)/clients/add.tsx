@@ -20,14 +20,15 @@ import {
   normalizeCompanyRegistryKey,
 } from '@/repositories/company-registry';
 import { createAddress } from '@/repositories/address-repository';
-import { createClient } from '@/repositories/client-repository';
+import { createClient, findPotentialDuplicateClients } from '@/repositories/client-repository';
 import { getSettings } from '@/repositories/settings-repository';
 import { parseInvoiceDueDaysInput } from '@/utils/invoice-defaults';
 import { isPlausibleEmail } from '@/utils/email-utils';
 import { parseTimerLimitHoursInput, validateTimerLimitOrder } from '@/utils/timer-limit-utils';
 import { parseBillingIntervalMinutesInput } from '@/utils/time-utils';
+import { showConfirm } from '@/utils/platform-alert';
 import { AddressType } from '@/db/schema';
-import { Stack, useRouter } from 'expo-router';
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { Alert, StyleSheet } from 'react-native';
 
@@ -85,6 +86,7 @@ function toImportedAddressDrafts(
 
 export default function AddClientScreen() {
   const router = useRouter();
+  const params = useLocalSearchParams<{ returnTo?: string | string[] }>();
   const colorScheme = useColorScheme();
   const { LL } = useI18nContext();
   const [formData, setFormData] = useState<ClientFormData>(initialFormData);
@@ -96,6 +98,7 @@ export default function AddClientScreen() {
   const [lookupWizardCompany, setLookupWizardCompany] = useState<CompanyRegistryCompany | null>(
     null,
   );
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     const loadSettings = async () => {
@@ -104,6 +107,21 @@ export default function AddClientScreen() {
     };
     void loadSettings();
   }, []);
+
+  const returnTo =
+    typeof params.returnTo === 'string'
+      ? params.returnTo
+      : Array.isArray(params.returnTo)
+        ? params.returnTo[0]
+        : undefined;
+
+  const navigateAfterClose = () => {
+    router.dismissTo('/clients');
+
+    if (returnTo && returnTo !== '/clients') {
+      router.replace(returnTo);
+    }
+  };
 
   const applyLookupCompany = (
     company: CompanyRegistryCompany,
@@ -230,6 +248,7 @@ export default function AddClientScreen() {
   };
 
   const handleSubmit = async () => {
+    if (isSubmitting) return;
     if (!formData.name.trim()) {
       Alert.alert(LL.common.error(), LL.clients.errorClientNameRequired());
       return;
@@ -301,6 +320,47 @@ export default function AddClientScreen() {
     }
 
     try {
+      setIsSubmitting(true);
+
+      const duplicateClients = await findPotentialDuplicateClients({
+        name: formData.name.trim(),
+        companyId: formData.isCompany ? formData.companyId.trim() || undefined : undefined,
+        vatNumber:
+          formData.isCompany || formData.isVatPayer
+            ? formData.vatNumber.trim() || undefined
+            : undefined,
+        email: formData.email.trim() || undefined,
+      });
+
+      if (duplicateClients.length > 0) {
+        const formatReasons = (reasons: ('name' | 'companyId' | 'vatNumber' | 'email')[]): string =>
+          reasons
+            .map((reason) => {
+              if (reason === 'name') return LL.clients.duplicateCheckReasonName();
+              if (reason === 'companyId') return LL.clients.duplicateCheckReasonCompanyId();
+              if (reason === 'vatNumber') return LL.clients.duplicateCheckReasonVatNumber();
+              return LL.clients.duplicateCheckReasonEmail();
+            })
+            .join(', ');
+
+        const duplicateList = duplicateClients
+          .slice(0, 5)
+          .map((client) => `• ${client.name} (${formatReasons(client.reasons)})`)
+          .join('\n');
+
+        const confirmed = await showConfirm({
+          title: LL.clients.duplicateCheckTitle(),
+          message: `${LL.clients.duplicateCheckMessage()}\n\n${duplicateList}`,
+          cancelText: LL.common.cancel(),
+          confirmText: LL.clients.duplicateCheckContinue(),
+        });
+
+        if (!confirmed) {
+          setIsSubmitting(false);
+          return;
+        }
+      }
+
       const createdClientId = await createClient({
         name: formData.name.trim(),
         exportLanguage: formData.exportLanguage.trim() || undefined,
@@ -347,15 +407,17 @@ export default function AddClientScreen() {
         }
       }
 
-      router.back();
+      navigateAfterClose();
     } catch (error) {
       Alert.alert(LL.common.error(), LL.clients.errorCreateClient());
       console.error('Error creating client:', error);
+      setIsSubmitting(false);
     }
   };
 
   const handleCancel = () => {
-    router.back();
+    if (isSubmitting) return;
+    navigateAfterClose();
   };
 
   return (
@@ -379,6 +441,7 @@ export default function AddClientScreen() {
           onLookupByCompanyId={handleLookupByDefaultRegistry}
           onLookupRegistryPicker={handleLookupWithRegistryPicker}
           isLookupLoading={isLookupLoading}
+          isSubmitting={isSubmitting}
           isEditMode={false}
           isScreen={true}
         />
@@ -426,7 +489,7 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: 16,
-    paddingBottom: 120,
+    paddingBottom: 32,
     flexGrow: 1,
   },
 });

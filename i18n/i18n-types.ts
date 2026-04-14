@@ -369,6 +369,34 @@ type RootTranslation = {
 		 */
 		errorLoadClient: string
 		/**
+		 * P​o​s​s​i​b​l​e​ ​d​u​p​l​i​c​a​t​e​ ​c​l​i​e​n​t
+		 */
+		duplicateCheckTitle: string
+		/**
+		 * A​ ​s​i​m​i​l​a​r​ ​c​l​i​e​n​t​ ​a​l​r​e​a​d​y​ ​e​x​i​s​t​s​.​ ​R​e​v​i​e​w​ ​t​h​e​ ​m​a​t​c​h​i​n​g​ ​f​i​e​l​d​s​ ​b​e​l​o​w​ ​b​e​f​o​r​e​ ​s​a​v​i​n​g​ ​a​n​o​t​h​e​r​ ​r​e​c​o​r​d​.
+		 */
+		duplicateCheckMessage: string
+		/**
+		 * S​a​v​e​ ​a​n​y​w​a​y
+		 */
+		duplicateCheckContinue: string
+		/**
+		 * s​a​m​e​ ​n​a​m​e
+		 */
+		duplicateCheckReasonName: string
+		/**
+		 * s​a​m​e​ ​c​o​m​p​a​n​y​ ​I​D
+		 */
+		duplicateCheckReasonCompanyId: string
+		/**
+		 * s​a​m​e​ ​V​A​T​ ​n​u​m​b​e​r
+		 */
+		duplicateCheckReasonVatNumber: string
+		/**
+		 * s​a​m​e​ ​e​m​a​i​l
+		 */
+		duplicateCheckReasonEmail: string
+		/**
 		 * C​l​i​e​n​t​ ​I​D​ ​n​o​t​ ​f​o​u​n​d
 		 */
 		errorClientIdMissing: string
@@ -1119,6 +1147,75 @@ type RootTranslation = {
 		 * C​h​a​n​g​e​ ​c​l​i​e​n​t
 		 */
 		changeClientClearsItemsConfirm: string
+		/**
+		 * C​h​a​n​g​e​ ​c​l​i​e​n​t​ ​t​o​ ​{​c​l​i​e​n​t​}​?
+		 * @param {unknown} client
+		 */
+		changeClientReviewTitle: RequiredParams<'client'>
+		/**
+		 * {​c​o​u​n​t​}​ ​m​a​n​u​a​l​l​y​ ​a​d​d​e​d​ ​i​t​e​m​(​s​)​ ​w​i​l​l​ ​b​e​ ​k​e​p​t​ ​a​s​ ​e​n​t​e​r​e​d​.
+		 * @param {unknown} count
+		 */
+		changeClientReviewManualItems: RequiredParams<'count'>
+		/**
+		 * {​c​o​u​n​t​}​ ​p​r​i​c​e​ ​l​i​s​t​ ​i​t​e​m​(​s​)​ ​w​i​l​l​ ​b​e​ ​r​e​p​r​i​c​e​d​ ​f​o​r​ ​t​h​e​ ​n​e​w​ ​c​l​i​e​n​t​.
+		 * @param {unknown} count
+		 */
+		changeClientReviewPriceListUpdated: RequiredParams<'count'>
+		/**
+		 * {​c​o​u​n​t​}​ ​p​r​i​c​e​ ​l​i​s​t​ ​i​t​e​m​(​s​)​ ​k​e​e​p​ ​t​h​e​ ​s​a​m​e​ ​p​r​i​c​e​.
+		 * @param {unknown} count
+		 */
+		changeClientReviewPriceListUnchanged: RequiredParams<'count'>
+		/**
+		 * {​c​o​u​n​t​}​ ​p​r​i​c​e​ ​l​i​s​t​ ​i​t​e​m​(​s​)​ ​c​o​u​l​d​ ​n​o​t​ ​b​e​ ​s​a​f​e​l​y​ ​r​e​p​r​i​c​e​d​ ​a​n​d​ ​s​h​o​u​l​d​ ​b​e​ ​r​e​v​i​e​w​e​d​.
+		 * @param {unknown} count
+		 */
+		changeClientReviewPriceListNeedsReview: RequiredParams<'count'>
+		/**
+		 * {​c​o​u​n​t​}​ ​t​i​m​e​s​h​e​e​t​ ​i​t​e​m​(​s​)​ ​a​r​e​ ​t​i​e​d​ ​t​o​ ​t​h​e​ ​p​r​e​v​i​o​u​s​ ​c​l​i​e​n​t​.​ ​C​h​o​o​s​e​ ​w​h​e​t​h​e​r​ ​t​o​ ​k​e​e​p​ ​t​h​e​m​ ​o​r​ ​r​e​m​o​v​e​ ​t​h​e​m​.
+		 * @param {unknown} count
+		 */
+		changeClientReviewTimesheetItems: RequiredParams<'count'>
+		/**
+		 * {​i​t​e​m​}​:​ ​{​f​r​o​m​}​ ​-​>​ ​{​t​o​}
+		 * @param {unknown} from
+		 * @param {unknown} item
+		 * @param {unknown} to
+		 */
+		changeClientReviewPriceChangeLine: RequiredParams<'from' | 'item' | 'to'>
+		/**
+		 * +​ ​{​c​o​u​n​t​}​ ​m​o​r​e​ ​r​e​p​r​i​c​e​d​ ​i​t​e​m​(​s​)
+		 * @param {unknown} count
+		 */
+		changeClientReviewMoreChanges: RequiredParams<'count'>
+		/**
+		 * A​p​p​l​y​ ​c​h​a​n​g​e​s
+		 */
+		changeClientReviewApply: string
+		/**
+		 * K​e​e​p​ ​t​i​m​e​s​h​e​e​t​ ​i​t​e​m​s
+		 */
+		changeClientReviewKeepTimesheet: string
+		/**
+		 * R​e​m​o​v​e​ ​t​i​m​e​s​h​e​e​t​ ​i​t​e​m​s
+		 */
+		changeClientReviewRemoveTimesheet: string
+		/**
+		 * C​h​a​n​g​e​ ​i​n​v​o​i​c​e​ ​c​u​r​r​e​n​c​y​?
+		 */
+		changeCurrencyManualItemsTitle: string
+		/**
+		 * T​h​e​ ​d​r​a​f​t​ ​c​o​n​t​a​i​n​s​ ​{​c​o​u​n​t​}​ ​m​a​n​u​a​l​l​y​ ​e​n​t​e​r​e​d​ ​i​t​e​m​(​s​)​.​ ​T​h​e​ ​i​n​v​o​i​c​e​ ​c​u​r​r​e​n​c​y​ ​w​i​l​l​ ​c​h​a​n​g​e​ ​f​r​o​m​ ​{​f​r​o​m​}​ ​t​o​ ​{​t​o​}​,​ ​b​u​t​ ​t​h​e​ ​e​n​t​e​r​e​d​ ​p​r​i​c​e​s​ ​w​i​l​l​ ​s​t​a​y​ ​u​n​c​h​a​n​g​e​d​ ​a​n​d​ ​m​a​y​ ​n​o​ ​l​o​n​g​e​r​ ​m​a​t​c​h​ ​t​h​e​ ​n​e​w​ ​c​u​r​r​e​n​c​y​.
+		 * @param {unknown} count
+		 * @param {unknown} from
+		 * @param {unknown} to
+		 */
+		changeCurrencyManualItemsMessage: RequiredParams<'count' | 'from' | 'to'>
+		/**
+		 * K​e​e​p​ ​p​r​i​c​e​s​ ​a​n​d​ ​c​h​a​n​g​e​ ​c​u​r​r​e​n​c​y
+		 */
+		changeCurrencyManualItemsContinue: string
 		/**
 		 * N​o​ ​i​n​v​o​i​c​e​s​ ​y​e​t​.
 		 */
@@ -4328,6 +4425,34 @@ export type TranslationFunctions = {
 		 */
 		errorLoadClient: () => LocalizedString
 		/**
+		 * Possible duplicate client
+		 */
+		duplicateCheckTitle: () => LocalizedString
+		/**
+		 * A similar client already exists. Review the matching fields below before saving another record.
+		 */
+		duplicateCheckMessage: () => LocalizedString
+		/**
+		 * Save anyway
+		 */
+		duplicateCheckContinue: () => LocalizedString
+		/**
+		 * same name
+		 */
+		duplicateCheckReasonName: () => LocalizedString
+		/**
+		 * same company ID
+		 */
+		duplicateCheckReasonCompanyId: () => LocalizedString
+		/**
+		 * same VAT number
+		 */
+		duplicateCheckReasonVatNumber: () => LocalizedString
+		/**
+		 * same email
+		 */
+		duplicateCheckReasonEmail: () => LocalizedString
+		/**
 		 * Client ID not found
 		 */
 		errorClientIdMissing: () => LocalizedString
@@ -5061,6 +5186,62 @@ export type TranslationFunctions = {
 		 * Change client
 		 */
 		changeClientClearsItemsConfirm: () => LocalizedString
+		/**
+		 * Change client to {client}?
+		 */
+		changeClientReviewTitle: (arg: { client: unknown }) => LocalizedString
+		/**
+		 * {count} manually added item(s) will be kept as entered.
+		 */
+		changeClientReviewManualItems: (arg: { count: unknown }) => LocalizedString
+		/**
+		 * {count} price list item(s) will be repriced for the new client.
+		 */
+		changeClientReviewPriceListUpdated: (arg: { count: unknown }) => LocalizedString
+		/**
+		 * {count} price list item(s) keep the same price.
+		 */
+		changeClientReviewPriceListUnchanged: (arg: { count: unknown }) => LocalizedString
+		/**
+		 * {count} price list item(s) could not be safely repriced and should be reviewed.
+		 */
+		changeClientReviewPriceListNeedsReview: (arg: { count: unknown }) => LocalizedString
+		/**
+		 * {count} timesheet item(s) are tied to the previous client. Choose whether to keep them or remove them.
+		 */
+		changeClientReviewTimesheetItems: (arg: { count: unknown }) => LocalizedString
+		/**
+		 * {item}: {from} -> {to}
+		 */
+		changeClientReviewPriceChangeLine: (arg: { from: unknown, item: unknown, to: unknown }) => LocalizedString
+		/**
+		 * + {count} more repriced item(s)
+		 */
+		changeClientReviewMoreChanges: (arg: { count: unknown }) => LocalizedString
+		/**
+		 * Apply changes
+		 */
+		changeClientReviewApply: () => LocalizedString
+		/**
+		 * Keep timesheet items
+		 */
+		changeClientReviewKeepTimesheet: () => LocalizedString
+		/**
+		 * Remove timesheet items
+		 */
+		changeClientReviewRemoveTimesheet: () => LocalizedString
+		/**
+		 * Change invoice currency?
+		 */
+		changeCurrencyManualItemsTitle: () => LocalizedString
+		/**
+		 * The draft contains {count} manually entered item(s). The invoice currency will change from {from} to {to}, but the entered prices will stay unchanged and may no longer match the new currency.
+		 */
+		changeCurrencyManualItemsMessage: (arg: { count: unknown, from: unknown, to: unknown }) => LocalizedString
+		/**
+		 * Keep prices and change currency
+		 */
+		changeCurrencyManualItemsContinue: () => LocalizedString
 		/**
 		 * No invoices yet.
 		 */

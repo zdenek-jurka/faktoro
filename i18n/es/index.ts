@@ -93,6 +93,14 @@ const es = {
     errorCreateClient: 'No se pudo crear el cliente',
     errorUpdateClient: 'No se pudo actualizar el cliente',
     errorLoadClient: 'No se pudo cargar el cliente',
+    duplicateCheckTitle: 'Posible cliente duplicado',
+    duplicateCheckMessage:
+      'Ya existe un cliente similar. Revisa los campos coincidentes a continuación antes de guardar otro registro.',
+    duplicateCheckContinue: 'Guardar de todos modos',
+    duplicateCheckReasonName: 'mismo nombre',
+    duplicateCheckReasonCompanyId: 'mismo identificador de empresa',
+    duplicateCheckReasonVatNumber: 'mismo número de IVA',
+    duplicateCheckReasonEmail: 'mismo correo electrónico',
     errorClientIdMissing: 'ID de cliente no encontrado',
     errorCompanyIdRequiredForLookup:
       'Ingrese el identificador de la empresa para cargar desde el registro',
@@ -303,6 +311,26 @@ const es = {
     changeClientClearsItemsMessage:
       'Cambiar el cliente eliminará las líneas actuales de la factura para que no sigan vinculadas al cliente anterior.',
     changeClientClearsItemsConfirm: 'Cambiar cliente',
+    changeClientReviewTitle: '¿Cambiar el cliente a {client}?',
+    changeClientReviewManualItems:
+      '{count} elemento(s) añadidos manualmente se conservarán tal como están.',
+    changeClientReviewPriceListUpdated:
+      '{count} elemento(s) de la lista de precios se volverán a calcular para el nuevo cliente.',
+    changeClientReviewPriceListUnchanged:
+      '{count} elemento(s) de la lista de precios mantienen el mismo precio.',
+    changeClientReviewPriceListNeedsReview:
+      '{count} elemento(s) de la lista de precios no pudieron recalcularse con seguridad y deben revisarse.',
+    changeClientReviewTimesheetItems:
+      '{count} elemento(s) de timesheet siguen vinculados al cliente anterior. Elige si quieres mantenerlos o eliminarlos.',
+    changeClientReviewPriceChangeLine: '{item}: {from} -> {to}',
+    changeClientReviewMoreChanges: '+ {count} elemento(s) reajustado(s) más',
+    changeClientReviewApply: 'Aplicar cambios',
+    changeClientReviewKeepTimesheet: 'Mantener elementos del timesheet',
+    changeClientReviewRemoveTimesheet: 'Eliminar elementos del timesheet',
+    changeCurrencyManualItemsTitle: '¿Cambiar la moneda de la factura?',
+    changeCurrencyManualItemsMessage:
+      'El borrador contiene {count} elemento(s) introducidos manualmente. La moneda de la factura cambiará de {from} a {to}, pero los precios introducidos permanecerán sin cambios y pueden no corresponder a la nueva moneda.',
+    changeCurrencyManualItemsContinue: 'Mantener precios y cambiar moneda',
     empty: 'Aún no hay facturas.',
     emptyTitle: 'Aún no hay facturas',
     emptyDescription: 'Crea tu primera factura y la verás aquí organizada en un solo lugar.',

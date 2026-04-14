@@ -93,6 +93,14 @@ const en = {
     errorCreateClient: 'Failed to create client',
     errorUpdateClient: 'Failed to update client',
     errorLoadClient: 'Failed to load client',
+    duplicateCheckTitle: 'Possible duplicate client',
+    duplicateCheckMessage:
+      'A similar client already exists. Review the matching fields below before saving another record.',
+    duplicateCheckContinue: 'Save anyway',
+    duplicateCheckReasonName: 'same name',
+    duplicateCheckReasonCompanyId: 'same company ID',
+    duplicateCheckReasonVatNumber: 'same VAT number',
+    duplicateCheckReasonEmail: 'same email',
     errorClientIdMissing: 'Client ID not found',
     errorCompanyIdRequiredForLookup: 'Enter company identifier to load from registry',
     errorInvalidCompanyIdForLookup: 'Company identifier has invalid format for selected registry',
@@ -294,6 +302,24 @@ const en = {
     changeClientClearsItemsMessage:
       'Changing the client will remove the current invoice items so they do not stay linked to the previous client.',
     changeClientClearsItemsConfirm: 'Change client',
+    changeClientReviewTitle: 'Change client to {client}?',
+    changeClientReviewManualItems: '{count} manually added item(s) will be kept as entered.',
+    changeClientReviewPriceListUpdated:
+      '{count} price list item(s) will be repriced for the new client.',
+    changeClientReviewPriceListUnchanged: '{count} price list item(s) keep the same price.',
+    changeClientReviewPriceListNeedsReview:
+      '{count} price list item(s) could not be safely repriced and should be reviewed.',
+    changeClientReviewTimesheetItems:
+      '{count} timesheet item(s) are tied to the previous client. Choose whether to keep them or remove them.',
+    changeClientReviewPriceChangeLine: '{item}: {from} -> {to}',
+    changeClientReviewMoreChanges: '+ {count} more repriced item(s)',
+    changeClientReviewApply: 'Apply changes',
+    changeClientReviewKeepTimesheet: 'Keep timesheet items',
+    changeClientReviewRemoveTimesheet: 'Remove timesheet items',
+    changeCurrencyManualItemsTitle: 'Change invoice currency?',
+    changeCurrencyManualItemsMessage:
+      'The draft contains {count} manually entered item(s). The invoice currency will change from {from} to {to}, but the entered prices will stay unchanged and may no longer match the new currency.',
+    changeCurrencyManualItemsContinue: 'Keep prices and change currency',
     empty: 'No invoices yet.',
     emptyTitle: 'No invoices yet',
     emptyDescription: 'Create your first invoice and you’ll see it here in one place.',

@@ -93,6 +93,14 @@ const cs = {
     errorCreateClient: 'Nepodařilo se vytvořit klienta',
     errorUpdateClient: 'Nepodařilo se aktualizovat klienta',
     errorLoadClient: 'Nepodařilo se načíst klienta',
+    duplicateCheckTitle: 'Možná duplicitní klient',
+    duplicateCheckMessage:
+      'Podobný klient už v aplikaci existuje. Před uložením dalšího záznamu zkontrolujte shodná pole níže.',
+    duplicateCheckContinue: 'Přesto uložit',
+    duplicateCheckReasonName: 'shodné jméno',
+    duplicateCheckReasonCompanyId: 'shodné IČ',
+    duplicateCheckReasonVatNumber: 'shodné DIČ',
+    duplicateCheckReasonEmail: 'shodný e-mail',
     errorClientIdMissing: 'ID klienta nebylo nalezeno',
     errorCompanyIdRequiredForLookup: 'Pro načtení z registru zadejte identifikátor firmy',
     errorInvalidCompanyIdForLookup: 'Identifikátor firmy má neplatný formát pro vybraný registr',
@@ -296,6 +304,23 @@ const cs = {
     changeClientClearsItemsMessage:
       'Změna klienta odstraní aktuální položky faktury, aby nezůstaly navázané na původního klienta.',
     changeClientClearsItemsConfirm: 'Změnit klienta',
+    changeClientReviewTitle: 'Změnit klienta na {client}?',
+    changeClientReviewManualItems: '{count} ručně přidaných položek zůstane beze změny.',
+    changeClientReviewPriceListUpdated: '{count} položek z ceníku se přecení pro nového klienta.',
+    changeClientReviewPriceListUnchanged: '{count} položek z ceníku zůstává se stejnou cenou.',
+    changeClientReviewPriceListNeedsReview:
+      '{count} položek z ceníku nešlo bezpečně přecenit a je potřeba je zkontrolovat.',
+    changeClientReviewTimesheetItems:
+      '{count} položek z timesheetu je navázaných na původního klienta. Zvolte, zda je chcete ponechat, nebo odebrat.',
+    changeClientReviewPriceChangeLine: '{item}: {from} -> {to}',
+    changeClientReviewMoreChanges: '+ dalších {count} přeceněných položek',
+    changeClientReviewApply: 'Použít změny',
+    changeClientReviewKeepTimesheet: 'Ponechat položky z timesheetu',
+    changeClientReviewRemoveTimesheet: 'Odebrat položky z timesheetu',
+    changeCurrencyManualItemsTitle: 'Změnit měnu faktury?',
+    changeCurrencyManualItemsMessage:
+      'Draft obsahuje {count} ručně zadaných položek. Měna faktury se změní z {from} na {to}, ale zadané ceny zůstanou beze změny a nemusí nové měně odpovídat.',
+    changeCurrencyManualItemsContinue: 'Ponechat ceny a změnit měnu',
     empty: 'Zatím žádné faktury.',
     emptyTitle: 'Zatím žádné faktury',
     emptyDescription: 'Vystavte první fakturu a uvidíte ji tady přehledně na jednom místě.',

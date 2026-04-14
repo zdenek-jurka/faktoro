@@ -93,6 +93,14 @@ const pl = {
     errorCreateClient: 'Nie udało się utworzyć klienta',
     errorUpdateClient: 'Nie udało się zaktualizować klienta',
     errorLoadClient: 'Nie udało się załadować klienta',
+    duplicateCheckTitle: 'Możliwy duplikat klienta',
+    duplicateCheckMessage:
+      'Podobny klient już istnieje. Przed zapisaniem kolejnego rekordu sprawdź poniżej zgodne pola.',
+    duplicateCheckContinue: 'Zapisz mimo to',
+    duplicateCheckReasonName: 'ta sama nazwa',
+    duplicateCheckReasonCompanyId: 'ten sam identyfikator firmy',
+    duplicateCheckReasonVatNumber: 'ten sam numer VAT',
+    duplicateCheckReasonEmail: 'ten sam e-mail',
     errorClientIdMissing: 'Nie znaleziono identyfikatora klienta',
     errorCompanyIdRequiredForLookup: 'Wprowadź identyfikator firmy do załadowania z rejestru',
     errorInvalidCompanyIdForLookup:
@@ -297,6 +305,24 @@ const pl = {
     changeClientClearsItemsMessage:
       'Zmiana klienta usunie bieżące pozycje faktury, aby nie pozostały powiązane z poprzednim klientem.',
     changeClientClearsItemsConfirm: 'Zmień klienta',
+    changeClientReviewTitle: 'Zmienić klienta na {client}?',
+    changeClientReviewManualItems: '{count} ręcznie dodanych pozycji pozostanie bez zmian.',
+    changeClientReviewPriceListUpdated:
+      '{count} pozycji z cennika zostanie przeliczonych dla nowego klienta.',
+    changeClientReviewPriceListUnchanged: '{count} pozycji z cennika zachowuje tę samą cenę.',
+    changeClientReviewPriceListNeedsReview:
+      '{count} pozycji z cennika nie udało się bezpiecznie przeliczyć i wymaga sprawdzenia.',
+    changeClientReviewTimesheetItems:
+      '{count} pozycji z timesheetu jest nadal powiązanych z poprzednim klientem. Wybierz, czy chcesz je zachować, czy usunąć.',
+    changeClientReviewPriceChangeLine: '{item}: {from} -> {to}',
+    changeClientReviewMoreChanges: '+ jeszcze {count} przeliczonych pozycji',
+    changeClientReviewApply: 'Zastosuj zmiany',
+    changeClientReviewKeepTimesheet: 'Zachowaj pozycje z timesheetu',
+    changeClientReviewRemoveTimesheet: 'Usuń pozycje z timesheetu',
+    changeCurrencyManualItemsTitle: 'Zmienić walutę faktury?',
+    changeCurrencyManualItemsMessage:
+      'Wersja robocza zawiera {count} ręcznie wprowadzonych pozycji. Waluta faktury zmieni się z {from} na {to}, ale wprowadzone ceny pozostaną bez zmian i mogą nie odpowiadać nowej walucie.',
+    changeCurrencyManualItemsContinue: 'Zachowaj ceny i zmień walutę',
     empty: 'Nie ma jeszcze faktur.',
     emptyTitle: 'Nie ma jeszcze faktur',
     emptyDescription:
