@@ -1,5 +1,6 @@
 export type InvoicePdfTemplateLabels = {
   title: string;
+  taxDocumentTitle: string;
   invoiceNumber: string;
   issueDate: string;
   taxableSupplyDate: string;
@@ -7,6 +8,8 @@ export type InvoicePdfTemplateLabels = {
   client: string;
   supplier: string;
   buyer: string;
+  companyId: string;
+  vatNumber: string;
   vat: string;
   vatPercent: string;
   taxBase: string;
@@ -16,7 +19,12 @@ export type InvoicePdfTemplateLabels = {
   swift: string;
   itemDescription: string;
   quantity: string;
+  unit: string;
   unitPrice: string;
+  subtotal: string;
+  withoutVat: string;
+  vatAmount: string;
+  withVat: string;
   lineTotal: string;
   total: string;
 };
@@ -24,6 +32,7 @@ export type InvoicePdfTemplateLabels = {
 export type InvoicePdfTemplateItem = {
   description: string;
   quantity: number;
+  unit?: string;
   unitPrice: number;
   totalPrice: number;
   vatRate?: number;
@@ -31,9 +40,14 @@ export type InvoicePdfTemplateItem = {
 
 export type InvoicePdfTemplateParty = {
   name?: string;
-  addressLine?: string;
+  address?: string;
+  street2?: string;
+  city?: string;
+  postalCode?: string;
+  country?: string;
   companyId?: string;
   vatNumber?: string;
+  registrationNote?: string;
   email?: string;
   phone?: string;
 };
@@ -41,6 +55,7 @@ export type InvoicePdfTemplateParty = {
 export type BuildDefaultInvoicePdfHtmlInput = {
   locale: string;
   currency: string;
+  includeVat: boolean;
   invoiceNumber: string;
   issueAt?: number;
   taxableAt?: number;

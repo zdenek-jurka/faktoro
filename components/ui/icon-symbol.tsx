@@ -18,6 +18,7 @@ const MAPPING = {
   'house.fill': 'home',
   'line.3.horizontal': 'menu',
   'paperplane.fill': 'send',
+  'arrow.down.doc.fill': 'file-download',
   'chevron.left.forwardslash.chevron.right': 'code',
   'chevron.left': 'chevron-left',
   'chevron.right': 'chevron-right',

@@ -1261,6 +1261,10 @@ type RootTranslation = {
 		 */
 		taxableSupplyDate: string
 		/**
+		 * T​a​x​a​b​l​e​ ​d​a​t​e
+		 */
+		taxableSupplyDateShort: string
+		/**
 		 * D​u​e​ ​d​a​t​e
 		 */
 		dueDate: string
@@ -1435,6 +1439,18 @@ type RootTranslation = {
 		 */
 		exportBuyer: string
 		/**
+		 * I​n​v​o​i​c​e
+		 */
+		exportInvoiceTitle: string
+		/**
+		 * I​n​v​o​i​c​e​ ​-​ ​T​a​x​ ​d​o​c​u​m​e​n​t
+		 */
+		exportTaxDocumentTitle: string
+		/**
+		 * I​n​v​o​i​c​e​ ​n​u​m​b​e​r
+		 */
+		exportInvoiceNumberLabel: string
+		/**
 		 * V​A​T
 		 */
 		exportVat: string
@@ -1446,6 +1462,22 @@ type RootTranslation = {
 		 * T​a​x​ ​b​a​s​e
 		 */
 		exportTaxBase: string
+		/**
+		 * U​n​i​t
+		 */
+		exportUnit: string
+		/**
+		 * W​i​t​h​o​u​t​ ​V​A​T
+		 */
+		exportWithoutVat: string
+		/**
+		 * V​A​T​ ​a​m​o​u​n​t
+		 */
+		exportVatAmount: string
+		/**
+		 * W​i​t​h​ ​V​A​T
+		 */
+		exportWithVat: string
 		/**
 		 * R​e​f​e​r​e​n​c​e
 		 */
@@ -1475,6 +1507,44 @@ type RootTranslation = {
 		 * E​x​p​o​r​t​ ​P​D​F
 		 */
 		exportPdf: string
+		/**
+		 * S​h​a​r​e​ ​H​T​M​L
+		 */
+		exportHtml: string
+		/**
+		 * S​a​v​e​ ​P​D​F
+		 */
+		savePdf: string
+		/**
+		 * Y​o​u​r​ ​i​n​v​o​i​c​e​ ​w​a​s​ ​s​a​v​e​d​ ​a​s​ ​{​f​i​l​e​N​a​m​e​}​.
+		 * @param {unknown} fileName
+		 */
+		savePdfSuccess: RequiredParams<'fileName'>
+		/**
+		 * F​a​i​l​e​d​ ​t​o​ ​s​a​v​e​ ​i​n​v​o​i​c​e​ ​P​D​F​.
+		 */
+		savePdfError: string
+		/**
+		 * F​i​l​e​ ​a​l​r​e​a​d​y​ ​e​x​i​s​t​s
+		 */
+		savePdfExistsTitle: string
+		/**
+		 * A​ ​f​i​l​e​ ​n​a​m​e​d​ ​{​f​i​l​e​N​a​m​e​}​ ​a​l​r​e​a​d​y​ ​e​x​i​s​t​s​ ​i​n​ ​t​h​e​ ​s​e​l​e​c​t​e​d​ ​f​o​l​d​e​r​.​ ​D​o​ ​y​o​u​ ​w​a​n​t​ ​t​o​ ​r​e​p​l​a​c​e​ ​i​t​ ​o​r​ ​s​a​v​e​ ​a​ ​c​o​p​y​?
+		 * @param {unknown} fileName
+		 */
+		savePdfExistsMessage: RequiredParams<'fileName'>
+		/**
+		 * R​e​p​l​a​c​e
+		 */
+		savePdfReplace: string
+		/**
+		 * S​a​v​e​ ​c​o​p​y
+		 */
+		savePdfSaveCopy: string
+		/**
+		 * A​ ​f​o​l​d​e​r​ ​w​i​t​h​ ​t​h​e​ ​s​a​m​e​ ​n​a​m​e​ ​a​l​r​e​a​d​y​ ​e​x​i​s​t​s​ ​i​n​ ​t​h​e​ ​s​e​l​e​c​t​e​d​ ​l​o​c​a​t​i​o​n​.​ ​C​h​o​o​s​e​ ​a​ ​d​i​f​f​e​r​e​n​t​ ​f​o​l​d​e​r​ ​o​r​ ​s​a​v​e​ ​t​h​e​ ​f​i​l​e​ ​a​s​ ​a​ ​c​o​p​y​.
+		 */
+		savePdfNameConflictFolder: string
 		/**
 		 * I​S​D​O​C​ ​(​X​M​L​)
 		 */
@@ -2398,6 +2468,14 @@ type RootTranslation = {
 		 * V​A​T​ ​N​u​m​b​e​r
 		 */
 		vatNumber: string
+		/**
+		 * R​e​g​i​s​t​r​a​t​i​o​n​ ​n​o​t​e
+		 */
+		invoiceRegistrationNote: string
+		/**
+		 * F​o​r​ ​e​x​a​m​p​l​e​,​ ​a​ ​t​r​a​d​e​ ​r​e​g​i​s​t​e​r​ ​n​o​t​e​ ​o​r​ ​a​ ​c​o​m​m​e​r​c​i​a​l​ ​r​e​g​i​s​t​e​r​ ​e​n​t​r​y​ ​i​n​c​l​u​d​i​n​g​ ​s​e​c​t​i​o​n​ ​a​n​d​ ​f​i​l​e​ ​n​u​m​b​e​r​.
+		 */
+		invoiceRegistrationNoteHelp: string
 		/**
 		 * E​m​a​i​l
 		 */
@@ -5299,6 +5377,10 @@ export type TranslationFunctions = {
 		 */
 		taxableSupplyDate: () => LocalizedString
 		/**
+		 * Taxable date
+		 */
+		taxableSupplyDateShort: () => LocalizedString
+		/**
 		 * Due date
 		 */
 		dueDate: () => LocalizedString
@@ -5467,6 +5549,18 @@ export type TranslationFunctions = {
 		 */
 		exportBuyer: () => LocalizedString
 		/**
+		 * Invoice
+		 */
+		exportInvoiceTitle: () => LocalizedString
+		/**
+		 * Invoice - Tax document
+		 */
+		exportTaxDocumentTitle: () => LocalizedString
+		/**
+		 * Invoice number
+		 */
+		exportInvoiceNumberLabel: () => LocalizedString
+		/**
 		 * VAT
 		 */
 		exportVat: () => LocalizedString
@@ -5478,6 +5572,22 @@ export type TranslationFunctions = {
 		 * Tax base
 		 */
 		exportTaxBase: () => LocalizedString
+		/**
+		 * Unit
+		 */
+		exportUnit: () => LocalizedString
+		/**
+		 * Without VAT
+		 */
+		exportWithoutVat: () => LocalizedString
+		/**
+		 * VAT amount
+		 */
+		exportVatAmount: () => LocalizedString
+		/**
+		 * With VAT
+		 */
+		exportWithVat: () => LocalizedString
 		/**
 		 * Reference
 		 */
@@ -5506,6 +5616,42 @@ export type TranslationFunctions = {
 		 * Export PDF
 		 */
 		exportPdf: () => LocalizedString
+		/**
+		 * Share HTML
+		 */
+		exportHtml: () => LocalizedString
+		/**
+		 * Save PDF
+		 */
+		savePdf: () => LocalizedString
+		/**
+		 * Your invoice was saved as {fileName}.
+		 */
+		savePdfSuccess: (arg: { fileName: unknown }) => LocalizedString
+		/**
+		 * Failed to save invoice PDF.
+		 */
+		savePdfError: () => LocalizedString
+		/**
+		 * File already exists
+		 */
+		savePdfExistsTitle: () => LocalizedString
+		/**
+		 * A file named {fileName} already exists in the selected folder. Do you want to replace it or save a copy?
+		 */
+		savePdfExistsMessage: (arg: { fileName: unknown }) => LocalizedString
+		/**
+		 * Replace
+		 */
+		savePdfReplace: () => LocalizedString
+		/**
+		 * Save copy
+		 */
+		savePdfSaveCopy: () => LocalizedString
+		/**
+		 * A folder with the same name already exists in the selected location. Choose a different folder or save the file as a copy.
+		 */
+		savePdfNameConflictFolder: () => LocalizedString
 		/**
 		 * ISDOC (XML)
 		 */
@@ -6424,6 +6570,14 @@ export type TranslationFunctions = {
 		 * VAT Number
 		 */
 		vatNumber: () => LocalizedString
+		/**
+		 * Registration note
+		 */
+		invoiceRegistrationNote: () => LocalizedString
+		/**
+		 * For example, a trade register note or a commercial register entry including section and file number.
+		 */
+		invoiceRegistrationNoteHelp: () => LocalizedString
 		/**
 		 * Email
 		 */

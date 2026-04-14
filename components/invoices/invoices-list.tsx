@@ -7,6 +7,7 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useI18nContext } from '@/i18n/i18n-react';
 import { normalizeIntlLocale } from '@/i18n/locale-options';
 import { InvoiceModel } from '@/model';
+import { formatPriceValue } from '@/utils/price-utils';
 import React from 'react';
 import type { ReactNode } from 'react';
 import { FlatList, Pressable, StyleSheet, View } from 'react-native';
@@ -60,15 +61,20 @@ export function InvoicesList({
                 <ThemedText style={styles.metaText}>
                   {clientNameById.get(item.clientId) || '-'}
                 </ThemedText>
-                <ThemedText style={styles.metaText}>
+              </View>
+              <View style={styles.rowAside}>
+                <ThemedText
+                  style={[
+                    styles.totalText,
+                    { color: Colors[colorScheme ?? 'light'].timeHighlight },
+                  ]}
+                >
+                  {formatPriceValue(item.total, intlLocale)}
+                </ThemedText>
+                <ThemedText style={styles.metaAsideText}>
                   {new Date(item.issuedAt).toLocaleDateString(intlLocale)} • {item.currency}
                 </ThemedText>
               </View>
-              <ThemedText
-                style={[styles.totalText, { color: Colors[colorScheme ?? 'light'].timeHighlight }]}
-              >
-                {item.total.toFixed(2)}
-              </ThemedText>
               {!isLast && (
                 <View
                   style={[
@@ -100,13 +106,20 @@ const styles = StyleSheet.create({
   rowFirst: { borderTopLeftRadius: 10, borderTopRightRadius: 10 },
   rowLast: { borderBottomLeftRadius: 10, borderBottomRightRadius: 10 },
   rowMain: { paddingRight: 110, gap: 2 },
-  metaText: { fontSize: 12, opacity: 0.65 },
-  totalText: {
+  rowAside: {
     position: 'absolute',
     right: 14,
-    top: 14,
+    top: 12,
+    alignItems: 'flex-end',
+    maxWidth: 120,
+    gap: 2,
+  },
+  metaText: { fontSize: 12, opacity: 0.65 },
+  metaAsideText: { fontSize: 12, opacity: 0.65, textAlign: 'right' },
+  totalText: {
     fontSize: 14,
     fontWeight: '700',
+    textAlign: 'right',
   },
   divider: {
     position: 'absolute',

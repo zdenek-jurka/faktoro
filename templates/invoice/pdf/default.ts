@@ -4,17 +4,60 @@ import { formatPrice } from '@/utils/price-utils';
 
 export function buildDefaultInvoicePdfHtml(input: BuildDefaultInvoicePdfHtmlInput): string {
   const formatMoney = (value: number) => formatPrice(value, input.currency, input.locale);
+  const documentTitle = input.includeVat ? input.labels.taxDocumentTitle : input.labels.title;
+  const buildMultilinePartyHtml = (value?: string) => {
+    const trimmed = (value || '').trim();
+    if (!trimmed) return '';
+    return `<div class="party-line">${escapeHtml(trimmed).replace(/\n/g, '<br />')}</div>`;
+  };
+  const buildLabeledPartyValueHtml = (label: string, value?: string) => {
+    const trimmed = (value || '').trim();
+    if (!trimmed) return '';
+    return `<div class="party-line"><strong>${escapeHtml(label)}:</strong> ${escapeHtml(trimmed)}</div>`;
+  };
+  const buildPartyAddressHtml = (party: BuildDefaultInvoicePdfHtmlInput['seller']) => {
+    const cityLine = [party.postalCode, party.city].filter(Boolean).join(', ');
+    return [party.address, party.street2, cityLine, party.country]
+      .filter(Boolean)
+      .map((line) => `<div class="party-line">${escapeHtml(line || '')}</div>`)
+      .join('');
+  };
 
   const rowHtml = input.items
     .map((item) => {
       const vatRate = item.vatRate ?? 0;
+      const lineVat = item.totalPrice * (vatRate / 100);
+      const lineGross = item.totalPrice + lineVat;
+      const quantityWithUnit = item.unit
+        ? `${escapeHtml(item.quantity)} ${escapeHtml(item.unit)}`
+        : escapeHtml(item.quantity);
+      const unitPriceLine = item.unit
+        ? `${escapeHtml(input.labels.unitPrice)}: ${formatMoney(item.unitPrice)} / ${escapeHtml(item.unit)}`
+        : `${escapeHtml(input.labels.unitPrice)}: ${formatMoney(item.unitPrice)}`;
+      if (!input.includeVat) {
+        return `
+          <tr>
+            <td>
+              <div class="item-description">${escapeHtml(item.description)}</div>
+              <div class="item-secondary">${unitPriceLine}</div>
+            </td>
+            <td style="text-align:right">${quantityWithUnit}</td>
+            <td style="text-align:right">${formatMoney(item.totalPrice)}</td>
+          </tr>
+        `;
+      }
+
       return `
         <tr>
-          <td>${escapeHtml(item.description)}</td>
-          <td style="text-align:right">${escapeHtml(item.quantity)}</td>
+          <td>
+            <div class="item-description">${escapeHtml(item.description)}</div>
+            <div class="item-secondary">${unitPriceLine}</div>
+          </td>
+          <td style="text-align:right">${quantityWithUnit}</td>
           <td style="text-align:right">${escapeHtml(vatRate)}%</td>
-          <td style="text-align:right">${formatMoney(item.unitPrice)}</td>
           <td style="text-align:right">${formatMoney(item.totalPrice)}</td>
+          <td style="text-align:right">${formatMoney(lineVat)}</td>
+          <td style="text-align:right">${formatMoney(lineGross)}</td>
         </tr>
       `;
     })
@@ -49,6 +92,76 @@ export function buildDefaultInvoicePdfHtml(input: BuildDefaultInvoicePdfHtmlInpu
   const variableSymbol =
     input.variableSymbol || input.invoiceNumber.replace(/\D/g, '').slice(0, 10) || '-';
 
+  const invoiceMetaHtml = input.includeVat
+    ? `
+          <div class="meta-card">
+            <div class="meta-label">${escapeHtml(input.labels.taxableSupplyDate)}</div>
+            <div class="meta-value">${formatDate(input.taxableAt || input.issueAt, input.locale)}</div>
+          </div>
+      `
+    : '';
+
+  const itemsTableHeadHtml = input.includeVat
+    ? `
+            <tr>
+              <th>${escapeHtml(input.labels.itemDescription)}</th>
+              <th style="text-align:right">${escapeHtml(input.labels.quantity)} / ${escapeHtml(input.labels.unit)}</th>
+              <th style="text-align:right">${escapeHtml(input.labels.vat)}</th>
+              <th style="text-align:right">${escapeHtml(input.labels.withoutVat)}</th>
+              <th style="text-align:right">${escapeHtml(input.labels.vatAmount)}</th>
+              <th style="text-align:right">${escapeHtml(input.labels.withVat)}</th>
+            </tr>
+      `
+    : `
+            <tr>
+              <th>${escapeHtml(input.labels.itemDescription)}</th>
+              <th style="text-align:right">${escapeHtml(input.labels.quantity)} / ${escapeHtml(input.labels.unit)}</th>
+              <th style="text-align:right">${escapeHtml(input.labels.total)}</th>
+            </tr>
+      `;
+
+  const totalsHtml = input.includeVat
+    ? `
+          <div class="totals-table">
+            <table>
+              <thead>
+                <tr>
+                  <th style="text-align:right">${escapeHtml(input.labels.vatPercent)}</th>
+                  <th style="text-align:right">${escapeHtml(input.labels.taxBase)}</th>
+                  <th style="text-align:right">${escapeHtml(input.labels.vat)}</th>
+                  <th style="text-align:right">${escapeHtml(input.labels.total)}</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${
+                  vatSummaryHtml ||
+                  `<tr><td style="text-align:right">0%</td><td style="text-align:right">${formatMoney(input.subtotal)}</td><td style="text-align:right">${formatMoney(0)}</td><td style="text-align:right">${formatMoney(input.total)}</td></tr>`
+                }
+                <tr>
+                  <td colspan="3" style="text-align:right">${escapeHtml(input.labels.total)}</td>
+                  <td style="text-align:right">${formatMoney(input.total)}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+      `
+    : `
+          <div class="totals-table">
+            <table>
+              <tbody>
+                <tr>
+                  <td style="text-align:right">${escapeHtml(input.labels.subtotal)}</td>
+                  <td style="text-align:right">${formatMoney(input.subtotal)}</td>
+                </tr>
+                <tr>
+                  <td style="text-align:right">${escapeHtml(input.labels.total)}</td>
+                  <td style="text-align:right">${formatMoney(input.total)}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+      `;
+
   return `
     <html>
       <head>
@@ -74,6 +187,8 @@ export function buildDefaultInvoicePdfHtml(input: BuildDefaultInvoicePdfHtmlInpu
           table { width:100%; border-collapse: collapse; margin-top: 8px; }
           th, td { border-bottom:1px solid #4b5563; padding: 8px 6px; font-size: 12px; color:#111111; }
           th { text-align:left; color:#111111; background:#d1d5db; }
+          .item-description { font-weight: 600; }
+          .item-secondary { font-size: 10px; color:#374151; margin-top: 4px; }
           .totals-wrap { display:flex; justify-content:space-between; align-items:flex-end; gap: 16px; margin-top: 10px; }
           .qr-slot { min-width: 120px; }
           .totals-table { width: 340px; border:1px solid #111111; border-radius: 10px; overflow:hidden; margin-left:auto; }
@@ -94,7 +209,8 @@ export function buildDefaultInvoicePdfHtml(input: BuildDefaultInvoicePdfHtmlInpu
         <div class="header">
           <div class="logo-box">${input.logoHtml}</div>
           <div class="title-wrap">
-            <h1 class="title">${escapeHtml(input.labels.invoiceNumber)}: ${escapeHtml(input.invoiceNumber)}</h1>
+            <h1 class="title">${escapeHtml(documentTitle)}</h1>
+            <div class="title-sub">${escapeHtml(input.labels.invoiceNumber)}: ${escapeHtml(input.invoiceNumber)}</div>
           </div>
         </div>
 
@@ -103,10 +219,7 @@ export function buildDefaultInvoicePdfHtml(input: BuildDefaultInvoicePdfHtmlInpu
             <div class="meta-label">${escapeHtml(input.labels.issueDate)}</div>
             <div class="meta-value">${formatDate(input.issueAt, input.locale)}</div>
           </div>
-          <div class="meta-card">
-            <div class="meta-label">${escapeHtml(input.labels.taxableSupplyDate)}</div>
-            <div class="meta-value">${formatDate(input.taxableAt || input.issueAt, input.locale)}</div>
-          </div>
+          ${invoiceMetaHtml}
           <div class="meta-card">
             <div class="meta-label">${escapeHtml(input.labels.dueDate)}</div>
             <div class="meta-value">${formatDate(input.dueAt, input.locale)}</div>
@@ -117,19 +230,20 @@ export function buildDefaultInvoicePdfHtml(input: BuildDefaultInvoicePdfHtmlInpu
           <div class="party">
             <div class="party-title">${escapeHtml(input.labels.supplier)}</div>
             <div class="party-name">${escapeHtml(input.seller.name || '-')}</div>
-            <div class="party-line">${escapeHtml(input.seller.addressLine || '-')}</div>
-            <div class="party-line">${escapeHtml(input.seller.companyId || '')}</div>
-            <div class="party-line">${escapeHtml(input.seller.vatNumber || '')}</div>
-            <div class="party-line">${escapeHtml(input.seller.email || '')}</div>
+            ${buildPartyAddressHtml(input.seller) || '<div class="party-line">-</div>'}
+            ${buildLabeledPartyValueHtml(input.labels.companyId, input.seller.companyId)}
+            ${buildLabeledPartyValueHtml(input.labels.vatNumber, input.seller.vatNumber)}
+            ${buildMultilinePartyHtml(input.seller.registrationNote)}
+            ${input.seller.email ? `<div class="party-line">${escapeHtml(input.seller.email)}</div>` : ''}
           </div>
           <div class="party">
             <div class="party-title">${escapeHtml(input.labels.buyer)}</div>
             <div class="party-name">${escapeHtml(input.buyer.name || '-')}</div>
-            <div class="party-line">${escapeHtml(input.buyer.addressLine || '-')}</div>
-            <div class="party-line">${escapeHtml(input.buyer.companyId || '')}</div>
-            <div class="party-line">${escapeHtml(input.buyer.vatNumber || '')}</div>
-            <div class="party-line">${escapeHtml(input.buyer.email || '')}</div>
-            <div class="party-line">${escapeHtml(input.buyer.phone || '')}</div>
+            ${buildPartyAddressHtml(input.buyer) || '<div class="party-line">-</div>'}
+            ${buildLabeledPartyValueHtml(input.labels.companyId, input.buyer.companyId)}
+            ${buildLabeledPartyValueHtml(input.labels.vatNumber, input.buyer.vatNumber)}
+            ${input.buyer.email ? `<div class="party-line">${escapeHtml(input.buyer.email)}</div>` : ''}
+            ${input.buyer.phone ? `<div class="party-line">${escapeHtml(input.buyer.phone)}</div>` : ''}
           </div>
         </div>
 
@@ -148,41 +262,14 @@ export function buildDefaultInvoicePdfHtml(input: BuildDefaultInvoicePdfHtmlInpu
 
         <table>
           <thead>
-            <tr>
-              <th>${escapeHtml(input.labels.itemDescription)}</th>
-              <th style="text-align:right">${escapeHtml(input.labels.quantity)}</th>
-              <th style="text-align:right">${escapeHtml(input.labels.vat)}</th>
-              <th style="text-align:right">${escapeHtml(input.labels.unitPrice)}</th>
-              <th style="text-align:right">${escapeHtml(input.labels.lineTotal)}</th>
-            </tr>
+            ${itemsTableHeadHtml}
           </thead>
           <tbody>${rowHtml}</tbody>
         </table>
 
         <div class="totals-wrap">
           ${input.paymentQrHtml ? `<div class="qr-slot">${input.paymentQrHtml}</div>` : ''}
-          <div class="totals-table">
-            <table>
-              <thead>
-                <tr>
-                  <th style="text-align:right">${escapeHtml(input.labels.vatPercent)}</th>
-                  <th style="text-align:right">${escapeHtml(input.labels.taxBase)}</th>
-                  <th style="text-align:right">${escapeHtml(input.labels.vat)}</th>
-                  <th style="text-align:right">${escapeHtml(input.labels.total)}</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${
-                  vatSummaryHtml ||
-                  `<tr><td style="text-align:right">0%</td><td style="text-align:right">${formatMoney(input.subtotal)}</td><td style="text-align:right">${formatMoney(0)}</td><td style="text-align:right">${formatMoney(input.total)}</td></tr>`
-                }
-                <tr>
-                  <td colspan="3" style="text-align:right">${escapeHtml(input.labels.total)}</td>
-                  <td style="text-align:right">${formatMoney(input.total)}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+          ${totalsHtml}
         </div>
 
         <div class="footer-note">${escapeHtml(input.footerNote || '')}</div>

@@ -10,6 +10,8 @@ import { normalizeIntlLocale } from '@/i18n/locale-options';
 import {
   CompanyRegistryLookupError,
   getCompanyRegistryService,
+  type CompanyRegistryCompany,
+  type CompanyRegistryImportAddress,
   type CompanyRegistryKey,
 } from '@/repositories/company-registry';
 import { getSettings, updateSettings } from '@/repositories/settings-repository';
@@ -40,6 +42,11 @@ export default function OnboardingProfileScreen() {
   const [companyName, setCompanyName] = useState('');
   const [companyId, setCompanyId] = useState('');
   const [country, setCountry] = useState('');
+  const [vatNumber, setVatNumber] = useState('');
+  const [invoiceAddress, setInvoiceAddress] = useState('');
+  const [invoiceStreet2, setInvoiceStreet2] = useState('');
+  const [invoiceCity, setInvoiceCity] = useState('');
+  const [invoicePostalCode, setInvoicePostalCode] = useState('');
 
   const countryName = useMemo(() => {
     const code = country.trim().toUpperCase();
@@ -59,9 +66,64 @@ export default function OnboardingProfileScreen() {
       setCompanyName(s.invoiceCompanyName || '');
       setCompanyId(s.invoiceCompanyId || '');
       setCountry(s.invoiceCountry || '');
+      setVatNumber(s.invoiceVatNumber || '');
+      setInvoiceAddress(s.invoiceAddress || '');
+      setInvoiceStreet2(s.invoiceStreet2 || '');
+      setInvoiceCity(s.invoiceCity || '');
+      setInvoicePostalCode(s.invoicePostalCode || '');
       setIsVatPayer(s.isVatPayer || false);
     });
   }, []);
+
+  const pickBillingAddressFromImport = (
+    company: CompanyRegistryCompany,
+  ): CompanyRegistryImportAddress | null => {
+    const candidates =
+      company.importAddresses || (company.importAddress ? [company.importAddress] : []);
+    if (!candidates.length) return null;
+
+    const billing = candidates.find((address) => address.type === 'billing');
+    const selected = billing || candidates[0];
+    if (
+      !selected?.street?.trim() ||
+      !selected.city?.trim() ||
+      !selected.postalCode?.trim() ||
+      !selected.country?.trim()
+    ) {
+      return null;
+    }
+
+    return selected;
+  };
+
+  const applyLookupCompany = (company: CompanyRegistryCompany, fallbackCountry: string) => {
+    setCompanyName(company.legalName);
+    setCompanyId(company.companyId);
+
+    const resolvedCountry =
+      company.countryCode?.trim() ||
+      pickBillingAddressFromImport(company)?.country?.trim() ||
+      fallbackCountry;
+    if (resolvedCountry) {
+      setCountry(resolvedCountry);
+    }
+
+    if (company.vatNumber?.trim()) {
+      setVatNumber(company.vatNumber.trim());
+      setIsVatPayer(true);
+    }
+
+    const billingAddress = pickBillingAddressFromImport(company);
+    if (!billingAddress) {
+      return;
+    }
+
+    setInvoiceAddress(billingAddress.street.trim());
+    setInvoiceStreet2('');
+    setInvoiceCity(billingAddress.city.trim());
+    setInvoicePostalCode(billingAddress.postalCode.trim());
+    setCountry(billingAddress.country.trim());
+  };
 
   function handleLookup() {
     if (!companyId.trim()) return;
@@ -76,10 +138,7 @@ export default function OnboardingProfileScreen() {
       const service = getCompanyRegistryService(registryKey, registrySettings);
       if (!service) return;
       const company = await service.lookupCompanyById(trimmedId);
-      if (company.legalName) setCompanyName(company.legalName);
-      const resolvedCountry = company.countryCode || service.countryCode;
-      if (resolvedCountry) setCountry(resolvedCountry);
-      if (company.vatNumber?.trim()) setIsVatPayer(true);
+      applyLookupCompany(company, service.countryCode);
     } catch (err) {
       if (err instanceof CompanyRegistryLookupError && err.code === 'company_not_found') {
         Alert.alert(LL.common.error(), LL.clients.errorCompanyNotFoundInRegistry());
@@ -98,12 +157,20 @@ export default function OnboardingProfileScreen() {
     await updateSettings({
       invoiceCompanyName: companyName.trim() || null,
       invoiceCompanyId: companyId.trim() || null,
+      invoiceAddress: invoiceAddress.trim() || null,
+      invoiceStreet2: invoiceStreet2.trim() || null,
+      invoiceCity: invoiceCity.trim() || null,
+      invoicePostalCode: invoicePostalCode.trim() || null,
       invoiceCountry: country.trim() || null,
+      invoiceVatNumber: vatNumber.trim() || null,
       isVatPayer,
     });
 
     if (isVatPayer) {
-      router.push('/onboarding/vat');
+      router.push({
+        pathname: '/onboarding/vat',
+        params: country.trim() ? { bootstrapCountry: country.trim() } : undefined,
+      });
     } else {
       router.push('/onboarding/currency');
     }

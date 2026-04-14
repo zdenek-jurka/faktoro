@@ -1035,5 +1035,14 @@ export default schemaMigrations({
         }),
       ],
     },
+    {
+      toVersion: 51,
+      steps: [
+        addColumns({
+          table: 'app_settings',
+          columns: [{ name: 'invoice_registration_note', type: 'string', isOptional: true }],
+        }),
+      ],
+    },
   ],
 });

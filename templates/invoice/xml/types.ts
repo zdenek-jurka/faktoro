@@ -11,6 +11,7 @@ export type SellerSnapshot = {
   country?: string;
   companyId?: string;
   vatNumber?: string;
+  registrationNote?: string;
   email?: string;
   phone?: string;
   website?: string;

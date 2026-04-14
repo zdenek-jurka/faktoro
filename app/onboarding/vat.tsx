@@ -18,7 +18,7 @@ import {
 import { getSettings } from '@/repositories/settings-repository';
 import { addVatRates, replaceAllVatRates } from '@/repositories/vat-rate-repository';
 import { createBootstrapVatCodeToken, getLocalizedVatCodeName } from '@/utils/vat-code-utils';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -38,6 +38,7 @@ export default function OnboardingVatScreen() {
   const { LL, locale } = useI18nContext();
   const intlLocale = normalizeIntlLocale(locale, 'en');
   const router = useRouter();
+  const params = useLocalSearchParams<{ bootstrapCountry?: string }>();
 
   const [bootstrapCountry, setBootstrapCountry] = useState('');
   const [bootstrapPreview, setBootstrapPreview] = useState<EuVatBootstrapPreview | null>(null);
@@ -51,11 +52,21 @@ export default function OnboardingVatScreen() {
   const euCountryOptions = useMemo(() => getEuMemberStateOptions(locale), [locale]);
 
   useEffect(() => {
+    const routeCountry =
+      typeof params.bootstrapCountry === 'string'
+        ? normalizeEuMemberStateCode(params.bootstrapCountry)
+        : undefined;
+
+    if (routeCountry) {
+      setBootstrapCountry(routeCountry);
+      return;
+    }
+
     getSettings().then((settings) => {
       const normalized = normalizeEuMemberStateCode(settings.invoiceCountry);
       if (normalized) setBootstrapCountry(normalized);
     });
-  }, []);
+  }, [params.bootstrapCountry]);
 
   useEffect(() => {
     if (bootstrapPreview && bootstrapPreview.memberState !== bootstrapCountry) {

@@ -55,6 +55,7 @@ export default function SettingsBusinessProfileScreen() {
   const [invoiceCountry, setInvoiceCountry] = useState('');
   const [invoiceCompanyId, setInvoiceCompanyId] = useState('');
   const [invoiceVatNumber, setInvoiceVatNumber] = useState('');
+  const [invoiceRegistrationNote, setInvoiceRegistrationNote] = useState('');
   const [invoiceEmail, setInvoiceEmail] = useState('');
   const [invoicePhone, setInvoicePhone] = useState('');
   const [invoiceWebsite, setInvoiceWebsite] = useState('');
@@ -81,6 +82,7 @@ export default function SettingsBusinessProfileScreen() {
       setInvoiceCountry(settings.invoiceCountry || '');
       setInvoiceCompanyId(settings.invoiceCompanyId || '');
       setInvoiceVatNumber(settings.invoiceVatNumber || '');
+      setInvoiceRegistrationNote(settings.invoiceRegistrationNote || '');
       setInvoiceEmail(settings.invoiceEmail || '');
       setInvoicePhone(settings.invoicePhone || '');
       setInvoiceWebsite(settings.invoiceWebsite || '');
@@ -240,6 +242,7 @@ export default function SettingsBusinessProfileScreen() {
         invoiceCountry: invoiceCountry.trim() || null,
         invoiceCompanyId: invoiceCompanyId.trim() || null,
         invoiceVatNumber: invoiceVatNumber.trim() || null,
+        invoiceRegistrationNote: invoiceRegistrationNote.trim() || null,
         invoiceEmail: invoiceEmail.trim() || null,
         invoicePhone: invoicePhone.trim() || null,
         invoiceWebsite: invoiceWebsite.trim() || null,
@@ -365,6 +368,18 @@ export default function SettingsBusinessProfileScreen() {
               value={invoiceVatNumber}
               onChangeText={setInvoiceVatNumber}
             />
+            <TextInput
+              style={[styles.input, stylesField(colorScheme), styles.multilineInput]}
+              placeholder={LL.settings.invoiceRegistrationNote()}
+              placeholderTextColor={placeholder(colorScheme)}
+              value={invoiceRegistrationNote}
+              onChangeText={setInvoiceRegistrationNote}
+              multiline
+              textAlignVertical="top"
+            />
+            <ThemedText style={styles.helperText}>
+              {LL.settings.invoiceRegistrationNoteHelp()}
+            </ThemedText>
             <TextInput
               style={[styles.input, stylesField(colorScheme)]}
               placeholder={LL.settings.email()}
@@ -538,5 +553,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   saveButtonText: { fontSize: 16, fontWeight: '600' },
+  multilineInput: {
+    minHeight: 88,
+  },
+  helperText: {
+    fontSize: 13,
+    opacity: 0.68,
+    marginTop: -4,
+    marginBottom: 12,
+    lineHeight: 18,
+  },
   pressed: { opacity: 0.82 },
 });

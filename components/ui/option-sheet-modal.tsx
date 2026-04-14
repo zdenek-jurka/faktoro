@@ -1,5 +1,5 @@
 import React from 'react';
-import { Modal, Pressable, StyleSheet, View } from 'react-native';
+import { InteractionManager, Modal, Pressable, StyleSheet, View } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Colors } from '@/constants/theme';
@@ -74,7 +74,9 @@ export function OptionSheetModal({
                 onPress={() => {
                   if (option.disabled) return;
                   onClose();
-                  option.onPress();
+                  InteractionManager.runAfterInteractions(() => {
+                    option.onPress();
+                  });
                 }}
                 android_ripple={{ color: palette.border }}
                 accessibilityRole="button"

@@ -1,6 +1,7 @@
 // Sync is available in this build.
 const SYNC_AVAILABLE = true;
-const DANGEROUS_APP_DATA_RESET_AVAILABLE = false;
+const DANGEROUS_APP_DATA_RESET_AVAILABLE = true;
+const INVOICE_HTML_EXPORT_AVAILABLE = true;
 
 // Temporary investigation flags so we can isolate sync-related regressions
 // without losing access to sync settings and manual sync flows.
@@ -28,3 +29,4 @@ export const isSyncSynchronizeEnabled = isSyncEnabled && !FORCE_DISABLE_SYNC_SYN
 export const isDangerousSyncResetEnabled = isSyncEnabled && !FORCE_DISABLE_DANGEROUS_SYNC_RESET;
 export const isDangerousAppDataResetEnabled =
   DANGEROUS_APP_DATA_RESET_AVAILABLE && !FORCE_DISABLE_DANGEROUS_APP_DATA_RESET;
+export const isInvoiceHtmlExportEnabled = INVOICE_HTML_EXPORT_AVAILABLE;

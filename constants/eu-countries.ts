@@ -32,6 +32,12 @@ export const EU_MEMBER_STATE_CODES = [
 
 export type EuMemberStateCode = (typeof EU_MEMBER_STATE_CODES)[number];
 
+const EXTRA_ALIASES: Partial<Record<EuMemberStateCode, string[]>> = {
+  CZ: ['Czech Republic', 'Ceska republika', 'Česká republika'],
+  EL: ['GR', 'Greek Republic', 'Hellenic Republic', 'Řecká republika'],
+  SK: ['Slovak Republic'],
+};
+
 const FALLBACK_LABELS: Record<EuMemberStateCode, string> = {
   AT: 'Austria',
   BE: 'Belgium',
@@ -244,15 +250,47 @@ export function isEuMemberStateCode(value: unknown): value is EuMemberStateCode 
   return typeof value === 'string' && EU_MEMBER_STATE_CODES.includes(value as EuMemberStateCode);
 }
 
+function normalizeCountryLookupValue(value: string): string {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[()'".,/-]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toUpperCase();
+}
+
+function getEuMemberStateAliases(code: EuMemberStateCode): string[] {
+  return [
+    code,
+    ...(code === 'EL' ? ['GR'] : []),
+    FALLBACK_LABELS[code],
+    ...Object.values(LOCALIZED_LABELS).map((labels) => labels[code]),
+    ...(EXTRA_ALIASES[code] ?? []),
+  ];
+}
+
+const EU_MEMBER_STATE_LOOKUP = (() => {
+  const lookup = new Map<string, EuMemberStateCode>();
+
+  for (const code of EU_MEMBER_STATE_CODES) {
+    for (const alias of getEuMemberStateAliases(code)) {
+      const normalized = normalizeCountryLookupValue(alias);
+      if (!normalized) continue;
+      lookup.set(normalized, code);
+    }
+  }
+
+  return lookup;
+})();
+
 export function normalizeEuMemberStateCode(value: unknown): EuMemberStateCode | null {
   if (typeof value !== 'string') return null;
 
-  const normalized = value.trim().toUpperCase();
-  if (normalized === 'GR') {
-    return 'EL';
-  }
+  const normalized = normalizeCountryLookupValue(value);
+  if (!normalized) return null;
 
-  return isEuMemberStateCode(normalized) ? normalized : null;
+  return EU_MEMBER_STATE_LOOKUP.get(normalized) ?? null;
 }
 
 export function getEuMemberStateLabel(code: EuMemberStateCode, locale: Locales): string {
@@ -264,7 +302,7 @@ export function getEuMemberStateOptions(locale: Locales) {
     .map((code) => ({
       value: code,
       label: getEuMemberStateLabel(code, locale),
-      searchText: `${code} ${code === 'EL' ? 'GR ' : ''}${FALLBACK_LABELS[code]} ${getEuMemberStateLabel(code, locale)}`,
+      searchText: getEuMemberStateAliases(code).join(' '),
     }))
     .sort((a, b) => a.label.localeCompare(b.label, locale));
 }

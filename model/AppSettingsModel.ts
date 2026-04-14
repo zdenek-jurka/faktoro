@@ -20,6 +20,7 @@ export default class AppSettingsModel extends Model {
   @text('invoice_country') invoiceCountry?: string;
   @text('invoice_company_id') invoiceCompanyId?: string;
   @text('invoice_vat_number') invoiceVatNumber?: string;
+  @text('invoice_registration_note') invoiceRegistrationNote?: string;
   @text('invoice_email') invoiceEmail?: string;
   @text('invoice_phone') invoicePhone?: string;
   @text('invoice_website') invoiceWebsite?: string;

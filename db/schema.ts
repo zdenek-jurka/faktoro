@@ -7,7 +7,7 @@ export enum AddressType {
 }
 
 export default appSchema({
-  version: 50,
+  version: 51,
   tables: [
     tableSchema({
       name: 'app_settings',
@@ -28,6 +28,7 @@ export default appSchema({
         { name: 'invoice_country', type: 'string', isOptional: true },
         { name: 'invoice_company_id', type: 'string', isOptional: true },
         { name: 'invoice_vat_number', type: 'string', isOptional: true },
+        { name: 'invoice_registration_note', type: 'string', isOptional: true },
         { name: 'invoice_email', type: 'string', isOptional: true },
         { name: 'invoice_phone', type: 'string', isOptional: true },
         { name: 'invoice_website', type: 'string', isOptional: true },

@@ -54,6 +54,7 @@ type SellerSnapshot = {
   country?: string;
   companyId?: string;
   vatNumber?: string;
+  registrationNote?: string;
   email?: string;
   phone?: string;
   website?: string;
@@ -81,17 +82,22 @@ function roundCurrency(value: number): number {
   return Math.round(value * 100) / 100;
 }
 
-function calculateInvoiceTotals(items: DraftInvoiceItemInput[]): {
+function calculateInvoiceTotals(
+  items: DraftInvoiceItemInput[],
+  includeVat: boolean,
+): {
   subtotal: number;
   total: number;
 } {
   const subtotal = roundCurrency(items.reduce((sum, item) => sum + item.totalPrice, 0));
-  const vatTotal = roundCurrency(
-    items.reduce((sum, item) => {
-      const rate = item.vatRate ?? 0;
-      return sum + item.totalPrice * (rate / 100);
-    }, 0),
-  );
+  const vatTotal = includeVat
+    ? roundCurrency(
+        items.reduce((sum, item) => {
+          const rate = item.vatRate ?? 0;
+          return sum + item.totalPrice * (rate / 100);
+        }, 0),
+      )
+    : 0;
   return { subtotal, total: roundCurrency(subtotal + vatTotal) };
 }
 
@@ -155,6 +161,7 @@ export async function createInvoice(input: CreateInvoiceInput): Promise<InvoiceM
     }
 
     const effectiveQrType = client.invoiceQrType || settings?.invoiceQrType || 'none';
+    const isVatPayer = !!settings?.isVatPayer;
     const sellerSnapshot: SellerSnapshot = {
       companyName: settings?.invoiceCompanyName,
       address: settings?.invoiceAddress,
@@ -163,7 +170,8 @@ export async function createInvoice(input: CreateInvoiceInput): Promise<InvoiceM
       postalCode: settings?.invoicePostalCode,
       country: settings?.invoiceCountry,
       companyId: settings?.invoiceCompanyId,
-      vatNumber: settings?.invoiceVatNumber,
+      vatNumber: isVatPayer ? settings?.invoiceVatNumber : undefined,
+      registrationNote: settings?.invoiceRegistrationNote,
       email: settings?.invoiceEmail,
       phone: settings?.invoicePhone,
       website: settings?.invoiceWebsite,
@@ -264,7 +272,15 @@ export async function createInvoice(input: CreateInvoiceInput): Promise<InvoiceM
       };
     });
 
-    const totals = calculateInvoiceTotals(resolvedItems);
+    const normalizedItems = isVatPayer
+      ? resolvedItems
+      : resolvedItems.map((item) => ({
+          ...item,
+          vatCodeId: undefined,
+          vatRate: undefined,
+        }));
+
+    const totals = calculateInvoiceTotals(normalizedItems, isVatPayer);
 
     const invoice = await invoiceCollection.create((item: InvoiceModel) => {
       item.clientId = input.clientId;
@@ -287,7 +303,7 @@ export async function createInvoice(input: CreateInvoiceInput): Promise<InvoiceM
       item.total = totals.total;
     });
 
-    for (const sourceItem of resolvedItems) {
+    for (const sourceItem of normalizedItems) {
       await invoiceItemCollection.create((item: InvoiceItemModel) => {
         item.invoiceId = invoice.id;
         item.sourceKind = sourceItem.sourceKind;

@@ -28,6 +28,7 @@ export type UpdateSettingsInput = {
   invoiceCountry?: string | null;
   invoiceCompanyId?: string | null;
   invoiceVatNumber?: string | null;
+  invoiceRegistrationNote?: string | null;
   invoiceEmail?: string | null;
   invoicePhone?: string | null;
   invoiceWebsite?: string | null;
@@ -177,6 +178,9 @@ export async function updateSettings(input: UpdateSettingsInput): Promise<void> 
       }
       if (input.invoiceVatNumber !== undefined) {
         s.invoiceVatNumber = input.invoiceVatNumber || undefined;
+      }
+      if (input.invoiceRegistrationNote !== undefined) {
+        s.invoiceRegistrationNote = input.invoiceRegistrationNote || undefined;
       }
       if (input.invoiceEmail !== undefined) {
         s.invoiceEmail = input.invoiceEmail || undefined;

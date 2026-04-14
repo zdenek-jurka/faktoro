@@ -21,6 +21,18 @@ export function buildBaseInvoiceXml(input: InvoiceXmlBuildInput): string {
   const { invoice, items, client, seller, buyer } = input;
   const sellerAddress = buildSellerAddress(seller);
   const buyerAddress = buildBuyerAddress(buyer);
+  const taxableSupplyDateXml = invoice.taxableAt
+    ? `  <TaxableSupplyDate>${escapeXml(isoDateFromMs(invoice.taxableAt))}</TaxableSupplyDate>\n`
+    : '';
+  const sellerVatNumberXml = seller.vatNumber
+    ? `    <VatNumber>${escapeXml(seller.vatNumber)}</VatNumber>\n`
+    : '';
+  const sellerRegistrationNoteXml = seller.registrationNote
+    ? `    <RegistrationNote>${escapeXml(seller.registrationNote)}</RegistrationNote>\n`
+    : '';
+  const buyerVatNumberXml = buyer.vatNumber
+    ? `    <VatNumber>${escapeXml(buyer.vatNumber)}</VatNumber>\n`
+    : '';
 
   const itemsXml = items
     .map(
@@ -45,8 +57,7 @@ export function buildBaseInvoiceXml(input: InvoiceXmlBuildInput): string {
   <Number>${escapeXml(invoice.invoiceNumber)}</Number>
   <ClientId>${escapeXml(invoice.clientId)}</ClientId>
   <IssueDate>${escapeXml(isoDateFromMs(invoice.issuedAt))}</IssueDate>
-  <TaxableSupplyDate>${escapeXml(isoDateFromMs(invoice.taxableAt))}</TaxableSupplyDate>
-  <DueDate>${escapeXml(isoDateFromMs(invoice.dueAt))}</DueDate>
+${taxableSupplyDateXml}  <DueDate>${escapeXml(isoDateFromMs(invoice.dueAt))}</DueDate>
   <Currency>${escapeXml(invoice.currency)}</Currency>
   <PaymentMethod>${escapeXml(invoice.paymentMethod)}</PaymentMethod>
   <Status>${escapeXml(invoice.status)}</Status>
@@ -55,9 +66,8 @@ export function buildBaseInvoiceXml(input: InvoiceXmlBuildInput): string {
   <Seller>
     <Name>${escapeXml(seller.companyName)}</Name>
     <CompanyId>${escapeXml(seller.companyId)}</CompanyId>
-    <VatNumber>${escapeXml(seller.vatNumber)}</VatNumber>
-    <Address>${escapeXml(sellerAddress)}</Address>
-    <Email>${escapeXml(seller.email)}</Email>
+${sellerVatNumberXml}    <Address>${escapeXml(sellerAddress)}</Address>
+${sellerRegistrationNoteXml}    <Email>${escapeXml(seller.email)}</Email>
     <Phone>${escapeXml(seller.phone)}</Phone>
     <Website>${escapeXml(seller.website)}</Website>
     <BankAccount>${escapeXml(seller.bankAccount)}</BankAccount>
@@ -68,8 +78,7 @@ export function buildBaseInvoiceXml(input: InvoiceXmlBuildInput): string {
     <Id>${escapeXml(client?.id)}</Id>
     <Name>${escapeXml(buyer.name)}</Name>
     <CompanyId>${escapeXml(buyer.companyId)}</CompanyId>
-    <VatNumber>${escapeXml(buyer.vatNumber)}</VatNumber>
-    <Address>${escapeXml(buyerAddress)}</Address>
+${buyerVatNumberXml}    <Address>${escapeXml(buyerAddress)}</Address>
     <Email>${escapeXml(buyer.email)}</Email>
     <Phone>${escapeXml(buyer.phone)}</Phone>
   </Buyer>

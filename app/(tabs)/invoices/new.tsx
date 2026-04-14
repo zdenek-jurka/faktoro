@@ -131,11 +131,13 @@ function roundCurrency(value: number): number {
   return Math.round(value * 100) / 100;
 }
 
-function calculateTotals(items: DraftInvoiceItemInput[]) {
+function calculateTotals(items: DraftInvoiceItemInput[], includeVat: boolean) {
   const subtotal = roundCurrency(items.reduce((sum, item) => sum + item.totalPrice, 0));
-  const vatTotal = roundCurrency(
-    items.reduce((sum, item) => sum + item.totalPrice * ((item.vatRate ?? 0) / 100), 0),
-  );
+  const vatTotal = includeVat
+    ? roundCurrency(
+        items.reduce((sum, item) => sum + item.totalPrice * ((item.vatRate ?? 0) / 100), 0),
+      )
+    : 0;
   return {
     subtotal,
     vatTotal,
@@ -368,8 +370,11 @@ export default function InvoiceDraftScreen() {
 
   const totals = useMemo(
     () =>
-      calculateTotals(items.map(({ localId: _localId, ...item }) => item as DraftInvoiceItemInput)),
-    [items],
+      calculateTotals(
+        items.map(({ localId: _localId, ...item }) => item as DraftInvoiceItemInput),
+        isVatPayer,
+      ),
+    [isVatPayer, items],
   );
 
   const canCreate = hasClients && !!clientId.trim() && !!invoiceNumber.trim() && items.length > 0;
@@ -1054,12 +1059,14 @@ export default function InvoiceDraftScreen() {
                 {formatPrice(totals.subtotal, headerDraft.currency, locale)}
               </ThemedText>
             </View>
-            <View style={styles.summaryRow}>
-              <ThemedText>{LL.invoices.exportVat()}</ThemedText>
-              <ThemedText type="defaultSemiBold">
-                {formatPrice(totals.vatTotal, headerDraft.currency, locale)}
-              </ThemedText>
-            </View>
+            {isVatPayer ? (
+              <View style={styles.summaryRow}>
+                <ThemedText>{LL.invoices.exportVat()}</ThemedText>
+                <ThemedText type="defaultSemiBold">
+                  {formatPrice(totals.vatTotal, headerDraft.currency, locale)}
+                </ThemedText>
+              </View>
+            ) : null}
             <View style={[styles.summaryRow, styles.summaryRowStrong]}>
               <ThemedText type="defaultSemiBold">{LL.invoices.total()}</ThemedText>
               <ThemedText type="defaultSemiBold">

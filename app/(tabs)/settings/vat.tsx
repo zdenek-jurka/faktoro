@@ -168,7 +168,7 @@ export default function SettingsVatScreen() {
         displayName: getLocalizedVatCodeName(codeName, LL),
       };
     });
-  }, [LL, bootstrapPreview]);
+  }, [LL, bootstrapCountry, bootstrapPreview]);
 
   useEffect(() => {
     const codeSubscription = getVatCodes().observe().subscribe(setVatCodes);

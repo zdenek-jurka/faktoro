@@ -1,5 +1,5 @@
 // Database schema for Faktoro app
-// Generated from WatermelonDB schema version 49
+// Generated from WatermelonDB schema version 51
 // Syntax: DBML (Database Markup Language) - https://www.dbml.org/docs/
 
 Project faktoro {
@@ -28,6 +28,7 @@ Table app_settings {
   invoice_country string [null]
   invoice_company_id string [null, note: 'Company registration number (IČO)']
   invoice_vat_number string [null, note: 'VAT number (DIČ)']
+  invoice_registration_note string [null, note: 'Registry or other business registration note shown on invoices']
   invoice_email string [null]
   invoice_phone string [null]
   invoice_website string [null]
@@ -36,6 +37,7 @@ Table app_settings {
   invoice_swift string [null]
   invoice_logo_uri string [null]
   default_invoice_currency string [null, note: 'Default currency code used when creating new invoices (e.g. CZK, EUR)']
+  default_invoice_vat_code_id string [null, note: 'Default VAT code used for new invoice items and new price list items']
   default_invoice_payment_method string [null, note: 'Default payment method for new invoices']
   default_invoice_due_days number [null, note: 'Default invoice due period in days']
   invoice_qr_type string [null, note: 'Invoice payment QR type: none/spayd/epc/swiss']

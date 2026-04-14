@@ -1,7 +1,9 @@
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { getPriceListUnitLabel } from '@/components/price-list/unit-options';
 import { IconSymbol, type IconSymbolName } from '@/components/ui/icon-symbol';
 import { OptionSheetModal } from '@/components/ui/option-sheet-modal';
+import { isInvoiceHtmlExportEnabled } from '@/constants/features';
 import { Colors } from '@/constants/theme';
 import database from '@/db';
 import { useBottomSafeAreaStyle } from '@/hooks/use-bottom-safe-area-style';
@@ -39,25 +41,63 @@ import {
 } from '@/utils/error-utils';
 import { buildPdfLogoHtml } from '@/utils/pdf-logo';
 import { formatPrice } from '@/utils/price-utils';
+import { isIos } from '@/utils/platform';
 import { Q } from '@nozbe/watermelondb';
 import { Stack, useLocalSearchParams } from 'expo-router';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useEffectEvent, useMemo, useState } from 'react';
 import { Alert, FlatList, StyleSheet, Pressable, View } from 'react-native';
 
 const LAST_INVOICE_EXPORT_ACTION_KEY = 'invoice_export.last_action';
 
 type LastInvoiceExportAction =
   | 'pdf'
+  | 'html'
+  | 'save_pdf'
   | 'xml_base'
   | `structured:${InvoiceXmlFormat}`
   | `integration:${string}`;
 
 type PaymentQrType = 'none' | 'spayd' | 'epc' | 'swiss';
 type StructuredExportFormat = 'none' | InvoiceXmlFormat;
+type PendingExportSheetAction = 'save_pdf' | null;
 type PaymentQrLabels = {
   receiverFallback: string;
   invoiceReference: string;
 };
+
+type InvoicePdfExportResult = {
+  fileName: string;
+  uri: string;
+};
+
+type InvoiceHtmlExportResult = {
+  fileName: string;
+  uri: string;
+};
+
+function splitFileName(fileName: string) {
+  const dotIndex = fileName.lastIndexOf('.');
+  if (dotIndex <= 0) {
+    return { baseName: fileName, extension: '' };
+  }
+  return {
+    baseName: fileName.slice(0, dotIndex),
+    extension: fileName.slice(dotIndex),
+  };
+}
+
+function buildCopyFileName(fileName: string, existingNames: Set<string>): string {
+  const { baseName, extension } = splitFileName(fileName);
+  let copyIndex = 2;
+  let nextName = `${baseName} (${copyIndex})${extension}`;
+
+  while (existingNames.has(nextName)) {
+    copyIndex += 1;
+    nextName = `${baseName} (${copyIndex})${extension}`;
+  }
+
+  return nextName;
+}
 
 function getPaymentMethodLabel(
   LL: ReturnType<typeof useI18nContext>['LL'],
@@ -290,10 +330,14 @@ export default function InvoiceDetailScreen() {
   const [invoice, setInvoice] = useState<InvoiceModel | null>(null);
   const [client, setClient] = useState<ClientModel | null>(null);
   const [items, setItems] = useState<InvoiceItemModel[]>([]);
-  const [exportingTarget, setExportingTarget] = useState<'pdf' | 'xml' | null>(null);
+  const [exportingTarget, setExportingTarget] = useState<
+    'pdf' | 'save_pdf' | 'html' | 'xml' | null
+  >(null);
   const [structuredExportFormat, setStructuredExportFormat] =
     useState<StructuredExportFormat>('none');
   const [isExportFormatSheetVisible, setIsExportFormatSheetVisible] = useState(false);
+  const [pendingExportSheetAction, setPendingExportSheetAction] =
+    useState<PendingExportSheetAction>(null);
   const [exportIntegrationsEnabled, setExportIntegrationsEnabled] = useState(false);
   const [invoiceExportIntegrations, setInvoiceExportIntegrations] = useState<ExportIntegration[]>(
     [],
@@ -395,6 +439,23 @@ export default function InvoiceDetailScreen() {
     void loadExportFormat();
   }, [client?.invoiceDefaultExportFormat]);
 
+  const runPendingExportSheetAction = useEffectEvent(() => {
+    setPendingExportSheetAction(null);
+    void handleSavePdf();
+  });
+
+  useEffect(() => {
+    if (isExportFormatSheetVisible || pendingExportSheetAction !== 'save_pdf') {
+      return;
+    }
+
+    const timeoutId = setTimeout(() => {
+      runPendingExportSheetAction();
+    }, 350);
+
+    return () => clearTimeout(timeoutId);
+  }, [isExportFormatSheetVisible, pendingExportSheetAction, runPendingExportSheetAction]);
+
   const seller = useMemo<SellerSnapshot>(() => {
     if (!invoice?.sellerSnapshotJson) return {};
     try {
@@ -433,120 +494,181 @@ export default function InvoiceDetailScreen() {
     await setConfigValue(LAST_INVOICE_EXPORT_ACTION_KEY, action);
   };
 
+  const buildInvoiceHtmlDocument = async (): Promise<string> => {
+    if (!invoice) {
+      throw new Error(LLExport.invoices.exportError());
+    }
+
+    const logoHtml = await buildPdfLogoHtml(seller.logoUri);
+    const qrType = (seller.qrType || 'none') as PaymentQrType;
+    const paymentQrLabels: PaymentQrLabels = {
+      receiverFallback: LLExport.invoices.exportReceiverFallback(),
+      invoiceReference: LLExport.invoices.exportInvoiceNote({
+        invoiceNumber: invoice.invoiceNumber,
+      }),
+    };
+    const paymentQrPayload = buildPaymentQrPayload(qrType, invoice, seller, paymentQrLabels);
+    const paymentQrHtml = await buildPaymentQrHtmlEmbedded(
+      qrType,
+      paymentQrPayload,
+      LLExport.settings.invoiceQrType(),
+    );
+    const includeVat =
+      !!invoice.taxableAt ||
+      items.some((item) => item.vatRate != null && Number(item.vatRate) >= 0);
+    const documentTitle = includeVat
+      ? LLExport.invoices.exportTaxDocumentTitle()
+      : LLExport.invoices.exportInvoiceTitle();
+
+    return renderInvoicePdfHtml({
+      templateId: 'default',
+      locale: exportLocale,
+      currency: invoice.currency,
+      includeVat,
+      invoiceNumber: invoice.invoiceNumber,
+      issueAt: invoice.issuedAt,
+      taxableAt: invoice.taxableAt,
+      dueAt: invoice.dueAt,
+      subtotal: invoice.subtotal,
+      total: invoice.total,
+      footerNote: invoice.footerNote,
+      bankAccount: seller.bankAccount,
+      iban: seller.iban,
+      swift: seller.swift,
+      logoHtml,
+      paymentQrHtml,
+      labels: {
+        title: documentTitle,
+        taxDocumentTitle: LLExport.invoices.exportTaxDocumentTitle(),
+        invoiceNumber: LLExport.invoices.exportInvoiceNumberLabel(),
+        issueDate: LLExport.invoices.issueDate(),
+        taxableSupplyDate: LLExport.invoices.taxableSupplyDate(),
+        dueDate: LLExport.invoices.dueDate(),
+        client: LLExport.timeTracking.client(),
+        supplier: LLExport.invoices.exportSupplier(),
+        buyer: LLExport.invoices.exportBuyer(),
+        companyId: LLExport.settings.companyId(),
+        vatNumber: LLExport.settings.vatNumber(),
+        vat: LLExport.invoices.exportVat(),
+        vatPercent: LLExport.invoices.exportVatPercent(),
+        taxBase: LLExport.invoices.exportTaxBase(),
+        reference: LLExport.invoices.exportReference(),
+        account: LLExport.invoices.exportAccount(),
+        iban: LLExport.invoices.exportIban(),
+        swift: LLExport.invoices.exportSwift(),
+        itemDescription: LLExport.invoices.itemDescription(),
+        quantity: LLExport.invoices.quantity(),
+        unit: LLExport.invoices.exportUnit(),
+        unitPrice: LLExport.invoices.unitPrice(),
+        subtotal: LLExport.invoices.subtotal(),
+        withoutVat: LLExport.invoices.exportWithoutVat(),
+        vatAmount: LLExport.invoices.exportVatAmount(),
+        withVat: LLExport.invoices.exportWithVat(),
+        lineTotal: LLExport.invoices.lineTotal(),
+        total: LLExport.invoices.total(),
+      },
+      items: items.map((item) => ({
+        description: item.description,
+        quantity: item.quantity,
+        unit: item.unit ? getPriceListUnitLabel(LLExport, item.unit) : undefined,
+        unitPrice: item.unitPrice,
+        totalPrice: item.totalPrice,
+        vatRate: item.vatRate,
+      })),
+      seller: {
+        name: seller.companyName,
+        address: seller.address,
+        street2: seller.street2,
+        city: seller.city,
+        postalCode: seller.postalCode,
+        country: seller.country,
+        companyId: seller.companyId,
+        vatNumber: seller.vatNumber,
+        registrationNote: seller.registrationNote,
+        email: seller.email,
+      },
+      buyer: {
+        name: buyer.name,
+        address: buyer.address,
+        street2: buyer.street2,
+        city: buyer.city,
+        postalCode: buyer.postalCode,
+        country: buyer.country,
+        companyId: buyer.companyId,
+        vatNumber: buyer.vatNumber,
+        email: buyer.email,
+        phone: buyer.phone,
+      },
+    });
+  };
+
+  const getInvoiceExportFileBaseName = () => {
+    if (!invoice) {
+      throw new Error(LLExport.invoices.exportError());
+    }
+    const safeNumber = invoice.invoiceNumber.replace(/[^a-zA-Z0-9_-]+/g, '-');
+    return `invoice-${safeNumber}`;
+  };
+
+  const buildInvoicePdfFile = async (): Promise<InvoicePdfExportResult> => {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const FileSystemLegacy = require('expo-file-system/legacy');
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const Print = require('expo-print');
+
+    const cacheDirectory: string | undefined = FileSystemLegacy.cacheDirectory;
+    if (!cacheDirectory) {
+      throw new Error(LLExport.invoices.exportError());
+    }
+
+    const html = await buildInvoiceHtmlDocument();
+
+    const pdfResult = await Print.printToFileAsync({ html });
+    const fileName = `${getInvoiceExportFileBaseName()}.pdf`;
+    const targetUri = `${cacheDirectory}${fileName}`;
+    await FileSystemLegacy.deleteAsync(targetUri, { idempotent: true });
+    await FileSystemLegacy.copyAsync({
+      from: pdfResult.uri,
+      to: targetUri,
+    });
+
+    return { fileName, uri: targetUri };
+  };
+
+  const buildInvoiceHtmlFile = async (): Promise<InvoiceHtmlExportResult> => {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const FileSystemLegacy = require('expo-file-system/legacy');
+
+    const cacheDirectory: string | undefined = FileSystemLegacy.cacheDirectory;
+    if (!cacheDirectory) {
+      throw new Error(LLExport.invoices.exportError());
+    }
+
+    const html = await buildInvoiceHtmlDocument();
+    const fileName = `${getInvoiceExportFileBaseName()}.html`;
+    const targetUri = `${cacheDirectory}${fileName}`;
+    await FileSystemLegacy.writeAsStringAsync(targetUri, html, {
+      encoding: FileSystemLegacy.EncodingType?.UTF8 ?? 'utf8',
+    });
+
+    return { fileName, uri: targetUri };
+  };
+
   const handleExportPdf = async () => {
     if (!invoice) return;
 
     try {
       setExportingTarget('pdf');
       // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const Print = require('expo-print');
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
       const Sharing = require('expo-sharing');
-
-      const logoHtml = await buildPdfLogoHtml(seller.logoUri);
-      const sellerAddress = [
-        seller.address,
-        seller.street2,
-        seller.city,
-        seller.postalCode,
-        seller.country,
-      ]
-        .filter(Boolean)
-        .join(', ');
-      const buyerAddress = [
-        buyer.address,
-        buyer.street2,
-        buyer.city,
-        buyer.postalCode,
-        buyer.country,
-      ]
-        .filter(Boolean)
-        .join(', ');
-      const qrType = (seller.qrType || 'none') as PaymentQrType;
-      const paymentQrLabels: PaymentQrLabels = {
-        receiverFallback: LLExport.invoices.exportReceiverFallback(),
-        invoiceReference: LLExport.invoices.exportInvoiceNote({
-          invoiceNumber: invoice.invoiceNumber,
-        }),
-      };
-      const paymentQrPayload = buildPaymentQrPayload(qrType, invoice, seller, paymentQrLabels);
-      const paymentQrHtml = await buildPaymentQrHtmlEmbedded(
-        qrType,
-        paymentQrPayload,
-        LLExport.settings.invoiceQrType(),
-      );
-
-      const html = renderInvoicePdfHtml({
-        templateId: 'default',
-        locale: exportLocale,
-        currency: invoice.currency,
-        invoiceNumber: invoice.invoiceNumber,
-        issueAt: invoice.issuedAt,
-        taxableAt: invoice.taxableAt || invoice.issuedAt,
-        dueAt: invoice.dueAt,
-        subtotal: invoice.subtotal,
-        total: invoice.total,
-        footerNote: invoice.footerNote,
-        bankAccount: seller.bankAccount,
-        iban: seller.iban,
-        swift: seller.swift,
-        logoHtml,
-        paymentQrHtml,
-        labels: {
-          title: LLExport.invoices.title(),
-          invoiceNumber: LLExport.invoices.invoiceNumber(),
-          issueDate: LLExport.invoices.issueDate(),
-          taxableSupplyDate: LLExport.invoices.taxableSupplyDate(),
-          dueDate: LLExport.invoices.dueDate(),
-          client: LLExport.timeTracking.client(),
-          supplier: LLExport.invoices.exportSupplier(),
-          buyer: LLExport.invoices.exportBuyer(),
-          vat: LLExport.invoices.exportVat(),
-          vatPercent: LLExport.invoices.exportVatPercent(),
-          taxBase: LLExport.invoices.exportTaxBase(),
-          reference: LLExport.invoices.exportReference(),
-          account: LLExport.invoices.exportAccount(),
-          iban: LLExport.invoices.exportIban(),
-          swift: LLExport.invoices.exportSwift(),
-          itemDescription: LLExport.invoices.itemDescription(),
-          quantity: LLExport.invoices.quantity(),
-          unitPrice: LLExport.invoices.unitPrice(),
-          lineTotal: LLExport.invoices.lineTotal(),
-          total: LLExport.invoices.total(),
-        },
-        items: items.map((item) => ({
-          description: item.description,
-          quantity: item.quantity,
-          unitPrice: item.unitPrice,
-          totalPrice: item.totalPrice,
-          vatRate: item.vatRate,
-        })),
-        seller: {
-          name: seller.companyName,
-          addressLine: sellerAddress,
-          companyId: seller.companyId,
-          vatNumber: seller.vatNumber,
-          email: seller.email,
-        },
-        buyer: {
-          name: buyer.name,
-          addressLine: buyerAddress,
-          companyId: buyer.companyId,
-          vatNumber: buyer.vatNumber,
-          email: buyer.email,
-          phone: buyer.phone,
-        },
-      });
-
-      const pdfResult = await Print.printToFileAsync({ html });
-
+      const pdfFile = await buildInvoicePdfFile();
       const canShare = await Sharing.isAvailableAsync();
       if (!canShare) {
         Alert.alert(LLExport.common.error(), LLExport.invoices.shareUnavailable());
         return;
       }
 
-      await Sharing.shareAsync(pdfResult.uri, {
+      await Sharing.shareAsync(pdfFile.uri, {
         mimeType: 'application/pdf',
         dialogTitle: LLExport.invoices.shareInvoice(),
       });
@@ -554,6 +676,119 @@ export default function InvoiceDetailScreen() {
     } catch (error) {
       const message = error instanceof Error ? error.message : LLExport.invoices.exportError();
       Alert.alert(LLExport.common.error(), message);
+    } finally {
+      setExportingTarget(null);
+    }
+  };
+
+  const handleExportHtml = async () => {
+    if (!invoice || !isInvoiceHtmlExportEnabled) return;
+
+    try {
+      setExportingTarget('html');
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const Sharing = require('expo-sharing');
+      const htmlFile = await buildInvoiceHtmlFile();
+      const canShare = await Sharing.isAvailableAsync();
+      if (!canShare) {
+        Alert.alert(LLExport.common.error(), LLExport.invoices.shareUnavailable());
+        return;
+      }
+
+      await Sharing.shareAsync(htmlFile.uri, {
+        mimeType: 'text/html',
+        dialogTitle: LLExport.invoices.shareInvoice(),
+      });
+      await rememberLastExportAction('html');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : LLExport.invoices.exportError();
+      Alert.alert(LLExport.common.error(), message);
+    } finally {
+      setExportingTarget(null);
+    }
+  };
+
+  const handleSavePdf = async () => {
+    if (!invoice) return;
+
+    try {
+      setExportingTarget('save_pdf');
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const FileSystem = require('expo-file-system') as typeof import('expo-file-system');
+      const prebuiltPdfFile = isIos ? await buildInvoicePdfFile() : null;
+      const pickedDirectory = await FileSystem.Directory.pickDirectoryAsync();
+      if (isIos) {
+        await new Promise((resolve) => setTimeout(resolve, 250));
+      }
+      const pdfFile = prebuiltPdfFile ?? (await buildInvoicePdfFile());
+      const sourceFile = new FileSystem.File(pdfFile.uri);
+      const existingEntries = pickedDirectory.list();
+      const existingEntry = existingEntries.find(
+        (entry: InstanceType<typeof FileSystem.File> | InstanceType<typeof FileSystem.Directory>) =>
+          entry.name === pdfFile.fileName,
+      );
+
+      let targetFileName = pdfFile.fileName;
+      if (existingEntry) {
+        if (existingEntry instanceof FileSystem.Directory) {
+          throw new Error(LLExport.invoices.savePdfNameConflictFolder());
+        }
+
+        const existingNames = new Set(existingEntries.map((entry) => entry.name));
+        const copyFileName = buildCopyFileName(pdfFile.fileName, existingNames);
+        targetFileName = await new Promise<string | null>((resolve) => {
+          Alert.alert(
+            LLExport.invoices.savePdfExistsTitle(),
+            LLExport.invoices.savePdfExistsMessage({ fileName: pdfFile.fileName }),
+            [
+              {
+                text: LL.common.cancel(),
+                style: 'cancel',
+                onPress: () => resolve(null),
+              },
+              {
+                text: LLExport.invoices.savePdfSaveCopy(),
+                onPress: () => resolve(copyFileName),
+              },
+              {
+                text: LLExport.invoices.savePdfReplace(),
+                style: 'destructive',
+                onPress: () => resolve(pdfFile.fileName),
+              },
+            ],
+            {
+              cancelable: true,
+              onDismiss: () => resolve(null),
+            },
+          );
+        });
+
+        if (!targetFileName) {
+          return;
+        }
+
+        if (targetFileName === pdfFile.fileName) {
+          existingEntry.delete();
+        }
+      }
+
+      const targetFile = pickedDirectory.createFile(targetFileName, 'application/pdf');
+      targetFile.write(await sourceFile.bytes());
+
+      Alert.alert(
+        LLExport.common.success(),
+        LLExport.invoices.savePdfSuccess({ fileName: targetFileName }),
+      );
+      await rememberLastExportAction('save_pdf');
+    } catch (error) {
+      const message = getErrorMessage(error, '');
+      if (message && /cancel(?:ed|led)/i.test(message)) {
+        return;
+      }
+      Alert.alert(
+        LLExport.common.error(),
+        error instanceof Error ? error.message : LLExport.invoices.savePdfError(),
+      );
     } finally {
       setExportingTarget(null);
     }
@@ -694,6 +929,11 @@ export default function InvoiceDetailScreen() {
     setIsExportFormatSheetVisible(true);
   };
 
+  const queueSavePdfFromExportSheet = () => {
+    setPendingExportSheetAction('save_pdf');
+    setIsExportFormatSheetVisible(false);
+  };
+
   const recommendedExport = (() => {
     if (!lastExportAction) return null;
 
@@ -702,6 +942,22 @@ export default function InvoiceDetailScreen() {
         label: LL.invoices.exportPdf(),
         icon: 'arrow.down.doc.fill' as IconSymbolName,
         onPress: () => void handleExportPdf(),
+      };
+    }
+
+    if (lastExportAction === 'html' && isInvoiceHtmlExportEnabled) {
+      return {
+        label: LL.invoices.exportHtml(),
+        icon: 'doc.text' as IconSymbolName,
+        onPress: () => void handleExportHtml(),
+      };
+    }
+
+    if (lastExportAction === 'save_pdf') {
+      return {
+        label: LL.invoices.savePdf(),
+        icon: 'folder' as IconSymbolName,
+        onPress: () => void handleSavePdf(),
       };
     }
 
@@ -760,15 +1016,20 @@ export default function InvoiceDetailScreen() {
             <ThemedText type="defaultSemiBold">{invoice.invoiceNumber}</ThemedText>
             <ThemedText style={styles.metaText}>{client?.name || '-'}</ThemedText>
             <ThemedText style={styles.metaText}>
-              {new Date(invoice.issuedAt).toLocaleDateString(intlLocale)} • {invoice.currency}
+              {LL.invoices.issueDate()}: {new Date(invoice.issuedAt).toLocaleDateString(intlLocale)}
             </ThemedText>
             <ThemedText style={styles.metaText}>
               {LL.invoices.paymentMethod()}: {getPaymentMethodLabel(LL, invoice.paymentMethod)}
             </ThemedText>
             {invoice.taxableAt ? (
               <ThemedText style={styles.metaText}>
-                {LL.invoices.taxableSupplyDate()}:{' '}
+                {LL.invoices.taxableSupplyDateShort()}:{' '}
                 {new Date(invoice.taxableAt).toLocaleDateString(intlLocale)}
+              </ThemedText>
+            ) : null}
+            {invoice.dueAt ? (
+              <ThemedText style={styles.metaText}>
+                {LL.invoices.dueDate()}: {new Date(invoice.dueAt).toLocaleDateString(intlLocale)}
               </ThemedText>
             ) : null}
             <ThemedText style={styles.totalText}>
@@ -875,6 +1136,24 @@ export default function InvoiceDetailScreen() {
                   void handleExportPdf();
                 },
               };
+              const htmlOption = isInvoiceHtmlExportEnabled
+                ? [
+                    {
+                      key: 'html',
+                      label: LL.invoices.exportHtml(),
+                      onPress: () => {
+                        void handleExportHtml();
+                      },
+                    },
+                  ]
+                : [];
+              const savePdfOption = {
+                key: 'save-pdf',
+                label: LL.invoices.savePdf(),
+                onPress: () => {
+                  queueSavePdfFromExportSheet();
+                },
+              };
               const structuredOptions = finalOptions.map((option) => ({
                 key: option,
                 label: getXmlExportFormatLabel(option),
@@ -902,7 +1181,13 @@ export default function InvoiceDetailScreen() {
                       })),
                     ]
                   : [];
-              return [pdfOption, ...structuredOptions, ...customOptions];
+              return [
+                pdfOption,
+                ...htmlOption,
+                savePdfOption,
+                ...structuredOptions,
+                ...customOptions,
+              ];
             })()}
           />
         </>
