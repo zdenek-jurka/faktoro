@@ -138,12 +138,15 @@ export default function InvoiceNewItemScreen() {
   const palette = Colors[colorScheme === 'dark' ? 'dark' : 'light'];
   const contentStyle = useBottomSafeAreaStyle(styles.content);
   const params = useLocalSearchParams<{
+    editingInvoiceId?: string;
     source?: string;
     headerDraft?: string;
     itemsDraft?: string;
     footerDraft?: string;
     preselectedTimesheetId?: string;
   }>();
+  const editingInvoiceId =
+    typeof params.editingInvoiceId === 'string' ? params.editingInvoiceId : undefined;
 
   const headerDraft = useMemo<HeaderDraft | null>(() => {
     if (!params.headerDraft || typeof params.headerDraft !== 'string') return null;
@@ -470,6 +473,7 @@ export default function InvoiceNewItemScreen() {
     router.replace({
       pathname: '/invoices/new',
       params: {
+        ...(editingInvoiceId ? { editingInvoiceId } : {}),
         headerDraft: JSON.stringify(headerDraft),
         itemsDraft: JSON.stringify(baseItems),
         ...(footerDraft ? { footerDraft: JSON.stringify(footerDraft) } : {}),
@@ -481,6 +485,7 @@ export default function InvoiceNewItemScreen() {
     router.replace({
       pathname: '/invoices/new',
       params: {
+        ...(editingInvoiceId ? { editingInvoiceId } : {}),
         headerDraft: JSON.stringify(headerDraft),
         itemsDraft: JSON.stringify([...baseItems, ...newItems]),
         ...(footerDraft ? { footerDraft: JSON.stringify(footerDraft) } : {}),

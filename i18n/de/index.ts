@@ -307,6 +307,7 @@ const de = {
   invoices: {
     title: 'Rechnungen',
     draftTitle: 'Neue Rechnung',
+    editDraftTitle: 'Rechnung bearbeiten',
     draftDetailsSection: 'Grunddaten',
     draftNotesSection: 'Notizen',
     draftSummarySection: 'Zusammenfassung',
@@ -370,6 +371,8 @@ const de = {
     subtotal: 'Zwischensumme',
     total: 'Gesamt',
     createInvoice: 'Rechnung erstellen',
+    updateInvoice: 'Änderungen an der Rechnung speichern',
+    backWithoutChanges: 'Ohne Änderungen zurück',
     headerNote: 'Kopfnotiz (optional)',
     footerNote: 'Fußnotiz (optional)',
     errorHeaderRequired: 'Kunden- und Rechnungsnummer sind erforderlich.',
@@ -391,6 +394,10 @@ const de = {
     errorNoItems: 'Fügen Sie mindestens eine Rechnungsposition hinzu.',
     noCompatiblePriceListItems: 'Keine Preislisteneinträge in {currency}.',
     errorCreate: 'Rechnung konnte nicht erstellt werden.',
+    errorUpdate: 'Rechnungsänderungen konnten nicht gespeichert werden.',
+    editExportedWarningTitle: 'Bereits exportierte Rechnung bearbeiten?',
+    editExportedWarningMessage:
+      'Diese Rechnung wurde bereits exportiert. Wenn Sie weiter bearbeiten, stimmt das exportierte Dokument möglicherweise nicht mehr mit der in Faktoro gespeicherten Rechnung überein.',
     exportSupplier: 'Anbieter',
     exportBuyer: 'Käufer',
     exportInvoiceTitle: 'Rechnung',

@@ -1,5 +1,5 @@
 // Database schema for Faktoro app
-// Generated from WatermelonDB schema version 51
+// Generated from WatermelonDB schema version 52
 // Syntax: DBML (Database Markup Language) - https://www.dbml.org/docs/
 
 Project faktoro {
@@ -262,6 +262,7 @@ Table invoice {
   footer_note string [null, note: 'Optional note/footer text']
   seller_snapshot_json string [null, note: 'JSON snapshot of seller details at issue time, including bank account and logo URI']
   buyer_snapshot_json string [null, note: 'JSON snapshot of buyer details at issue time, including preferred invoice address']
+  last_exported_at number [null, note: 'Unix timestamp in milliseconds of the last successful export or save action']
   subtotal number [not null, note: 'Subtotal amount']
   total number [not null, note: 'Final total amount']
   created_at number [not null, note: 'Unix timestamp in milliseconds']
@@ -272,6 +273,7 @@ Table invoice {
     invoice_number [name: 'idx_invoice_invoice_number']
     issued_at [name: 'idx_invoice_issued_at']
     taxable_at [name: 'idx_invoice_taxable_at']
+    last_exported_at [name: 'idx_invoice_last_exported_at']
     status [name: 'idx_invoice_status']
   }
 

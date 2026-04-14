@@ -1,7 +1,7 @@
 // Sync is available in this build.
 const SYNC_AVAILABLE = true;
-const DANGEROUS_APP_DATA_RESET_AVAILABLE = true;
-const INVOICE_HTML_EXPORT_AVAILABLE = true;
+const DANGEROUS_APP_DATA_RESET_AVAILABLE = false;
+const INVOICE_HTML_EXPORT_AVAILABLE = false;
 
 // Temporary investigation flags so we can isolate sync-related regressions
 // without losing access to sync settings and manual sync flows.

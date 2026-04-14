@@ -7,7 +7,7 @@ export enum AddressType {
 }
 
 export default appSchema({
-  version: 51,
+  version: 52,
   tables: [
     tableSchema({
       name: 'app_settings',
@@ -255,6 +255,7 @@ export default appSchema({
         { name: 'footer_note', type: 'string', isOptional: true },
         { name: 'seller_snapshot_json', type: 'string', isOptional: true },
         { name: 'buyer_snapshot_json', type: 'string', isOptional: true },
+        { name: 'last_exported_at', type: 'number', isOptional: true, isIndexed: true },
         { name: 'subtotal', type: 'number' },
         { name: 'total', type: 'number' },
         { name: 'created_at', type: 'number' },

@@ -1044,5 +1044,16 @@ export default schemaMigrations({
         }),
       ],
     },
+    {
+      toVersion: 52,
+      steps: [
+        addColumns({
+          table: 'invoice',
+          columns: [
+            { name: 'last_exported_at', type: 'number', isOptional: true, isIndexed: true },
+          ],
+        }),
+      ],
+    },
   ],
 });

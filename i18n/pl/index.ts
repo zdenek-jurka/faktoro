@@ -298,6 +298,7 @@ const pl = {
   invoices: {
     title: 'Faktury',
     draftTitle: 'Nowa faktura',
+    editDraftTitle: 'Edytuj fakturę',
     draftDetailsSection: 'Dane podstawowe',
     draftNotesSection: 'Notatki',
     draftSummarySection: 'Podsumowanie',
@@ -359,6 +360,8 @@ const pl = {
     subtotal: 'Suma częściowa',
     total: 'Całkowity',
     createInvoice: 'Utwórz fakturę',
+    updateInvoice: 'Zapisz zmiany na fakturze',
+    backWithoutChanges: 'Wróć bez zmian',
     headerNote: 'Notatka nagłówka (opcjonalnie)',
     footerNote: 'Notatka w stopce (opcjonalnie)',
     errorHeaderRequired: 'Wymagany jest numer klienta i faktury.',
@@ -380,6 +383,10 @@ const pl = {
     errorNoItems: 'Dodaj co najmniej jedną pozycję na fakturze.',
     noCompatiblePriceListItems: 'Brak pozycji cennika w walucie {currency}.',
     errorCreate: 'Nie udało się utworzyć faktury.',
+    errorUpdate: 'Nie udało się zapisać zmian faktury.',
+    editExportedWarningTitle: 'Edytować już wyeksportowaną fakturę?',
+    editExportedWarningMessage:
+      'Ta faktura została już wyeksportowana. Jeśli będziesz ją dalej edytować, wyeksportowany dokument może przestać odpowiadać wersji zapisanej w Faktoro.',
     exportSupplier: 'Dostawca',
     exportBuyer: 'Kupujący',
     exportInvoiceTitle: 'Faktura',

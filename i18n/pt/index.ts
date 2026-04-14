@@ -302,6 +302,7 @@ const pt = {
   invoices: {
     title: 'Faturas',
     draftTitle: 'Nova fatura',
+    editDraftTitle: 'Editar fatura',
     draftDetailsSection: 'Dados básicos',
     draftNotesSection: 'Notas',
     draftSummarySection: 'Resumo',
@@ -364,6 +365,8 @@ const pt = {
     subtotal: 'Subtotal',
     total: 'Total',
     createInvoice: 'Criar fatura',
+    updateInvoice: 'Guardar alterações na fatura',
+    backWithoutChanges: 'Voltar sem alterações',
     headerNote: 'Nota de cabeçalho (opcional)',
     footerNote: 'Nota de rodapé (opcional)',
     errorHeaderRequired: 'O número do cliente e da fatura são obrigatórios.',
@@ -385,6 +388,10 @@ const pt = {
     errorNoItems: 'Adicione pelo menos um item de fatura.',
     noCompatiblePriceListItems: 'Nenhum item da lista de preços usa {currency}.',
     errorCreate: 'Falha ao criar fatura.',
+    errorUpdate: 'Falha ao guardar as alterações da fatura.',
+    editExportedWarningTitle: 'Editar uma fatura já exportada?',
+    editExportedWarningMessage:
+      'Esta fatura já foi exportada. Se continuar a editá-la, o documento exportado poderá deixar de corresponder à versão guardada no Faktoro.',
     exportSupplier: 'Fornecedor',
     exportBuyer: 'Comprador',
     exportInvoiceTitle: 'Fatura',

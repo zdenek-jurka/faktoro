@@ -30,6 +30,7 @@ import {
   getActivePriceListForInvoicing,
   getSuggestedInvoiceNumber,
   getTimesheetCandidates,
+  updateIssuedInvoice,
 } from '@/repositories/invoice-repository';
 import { getSettings } from '@/repositories/settings-repository';
 import {
@@ -169,12 +170,16 @@ export default function InvoiceDraftScreen() {
   const contentStyle = useBottomSafeAreaStyle(styles.content);
   const currencies = useCurrencySettings();
   const params = useLocalSearchParams<{
+    editingInvoiceId?: string;
     headerDraft?: string;
     itemsDraft?: string;
     footerDraft?: string;
     preselectedTimesheetId?: string;
     autoOpenTimesheetImport?: string;
   }>();
+  const editingInvoiceId =
+    typeof params.editingInvoiceId === 'string' ? params.editingInvoiceId : undefined;
+  const isEditingInvoice = !!editingInvoiceId;
 
   const restoredHeaderDraft = useMemo(() => {
     if (!params.headerDraft || typeof params.headerDraft !== 'string') return null;
@@ -722,6 +727,7 @@ export default function InvoiceDraftScreen() {
       router.push({
         pathname: '/invoices/new-item',
         params: {
+          ...(editingInvoiceId ? { editingInvoiceId } : {}),
           source,
           headerDraft: JSON.stringify(headerDraft),
           itemsDraft: JSON.stringify(items.map(({ localId: _localId, ...item }) => item)),
@@ -732,7 +738,7 @@ export default function InvoiceDraftScreen() {
         },
       });
     },
-    [footerDraft, headerDraft, items, params.preselectedTimesheetId, router],
+    [editingInvoiceId, footerDraft, headerDraft, items, params.preselectedTimesheetId, router],
   );
 
   useEffect(() => {
@@ -752,6 +758,11 @@ export default function InvoiceDraftScreen() {
 
   const removeItem = (item: DraftListItem) => {
     setItems((current) => current.filter((entry) => entry.localId !== item.localId));
+  };
+
+  const handleBackWithoutChanges = () => {
+    if (!editingInvoiceId) return;
+    router.replace(`/invoices/${editingInvoiceId}`);
   };
 
   const handleCreate = async () => {
@@ -774,7 +785,7 @@ export default function InvoiceDraftScreen() {
 
     try {
       setIsSaving(true);
-      const invoice = await createInvoice({
+      const invoiceInput = {
         clientId: headerDraft.clientId,
         invoiceNumber: headerDraft.invoiceNumber,
         issuedAt: parseISODate(headerDraft.issuedDate) || Date.now(),
@@ -785,15 +796,28 @@ export default function InvoiceDraftScreen() {
         headerNote: headerNote.trim() || undefined,
         footerNote: footerNote.trim() || undefined,
         items: items.map(({ localId: _localId, ...item }) => item as DraftInvoiceItemInput),
-      });
+      };
+      const invoice = editingInvoiceId
+        ? await updateIssuedInvoice({
+            id: editingInvoiceId,
+            ...invoiceInput,
+          })
+        : await createInvoice(invoiceInput);
 
-      router.dismissAll();
-      router.push(`/invoices/${invoice.id}`);
+      if (editingInvoiceId) {
+        router.replace(`/invoices/${invoice.id}`);
+      } else {
+        router.dismissAll();
+        router.push(`/invoices/${invoice.id}`);
+      }
     } catch (error) {
       const message =
         error instanceof Error && error.message === INVOICE_TAXABLE_DATE_REQUIRED_ERROR
           ? LL.invoices.errorTaxableDateRequired()
-          : getErrorMessage(error, LL.invoices.errorCreate());
+          : getErrorMessage(
+              error,
+              editingInvoiceId ? LL.invoices.errorUpdate() : LL.invoices.errorCreate(),
+            );
       Alert.alert(LL.common.error(), message);
     } finally {
       setIsSaving(false);
@@ -814,7 +838,11 @@ export default function InvoiceDraftScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      <Stack.Screen options={{ title: LL.invoices.draftTitle() }} />
+      <Stack.Screen
+        options={{
+          title: isEditingInvoice ? LL.invoices.editDraftTitle() : LL.invoices.draftTitle(),
+        }}
+      />
       <KeyboardAvoidingView
         style={styles.container}
         behavior={isIos ? 'padding' : undefined}
@@ -1075,27 +1103,52 @@ export default function InvoiceDraftScreen() {
             </View>
           </ThemedView>
 
-          <Pressable
-            style={[
-              styles.primaryButton,
-              {
-                backgroundColor: canCreate ? palette.tint : palette.border,
-              },
-            ]}
-            onPress={handleCreate}
-            disabled={!canCreate || isSaving}
-          >
-            <ThemedText
+          <View style={styles.footerActions}>
+            <Pressable
               style={[
-                styles.primaryButtonText,
+                styles.primaryButton,
                 {
-                  color: canCreate ? palette.onTint : palette.icon,
+                  backgroundColor: canCreate ? palette.tint : palette.border,
                 },
               ]}
+              onPress={handleCreate}
+              disabled={!canCreate || isSaving}
             >
-              {isSaving ? LL.common.loading() : LL.invoices.createInvoice()}
-            </ThemedText>
-          </Pressable>
+              <ThemedText
+                style={[
+                  styles.primaryButtonText,
+                  {
+                    color: canCreate ? palette.onTint : palette.icon,
+                  },
+                ]}
+              >
+                {isSaving
+                  ? LL.common.loading()
+                  : isEditingInvoice
+                    ? LL.invoices.updateInvoice()
+                    : LL.invoices.createInvoice()}
+              </ThemedText>
+            </Pressable>
+
+            {isEditingInvoice ? (
+              <Pressable
+                style={[
+                  styles.secondaryFooterButton,
+                  {
+                    borderColor: palette.border,
+                    backgroundColor: palette.cardBackground,
+                    opacity: isSaving ? 0.6 : 1,
+                  },
+                ]}
+                onPress={handleBackWithoutChanges}
+                disabled={isSaving}
+              >
+                <ThemedText style={[styles.secondaryFooterButtonText, { color: palette.text }]}>
+                  {LL.invoices.backWithoutChanges()}
+                </ThemedText>
+              </Pressable>
+            ) : null}
+          </View>
 
           <CrossPlatformDatePicker
             visible={activeDateField !== null}
@@ -1223,6 +1276,23 @@ const styles = StyleSheet.create({
   },
   summaryRowStrong: {
     paddingTop: 6,
+  },
+  footerActions: {
+    gap: 10,
+    alignItems: 'stretch',
+  },
+  secondaryFooterButton: {
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingVertical: 15,
+    paddingHorizontal: 14,
+    minHeight: 50,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  secondaryFooterButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
   },
   primaryButton: {
     borderRadius: 12,

@@ -297,6 +297,7 @@ const cs = {
   invoices: {
     title: 'Faktury',
     draftTitle: 'Nová faktura',
+    editDraftTitle: 'Upravit fakturu',
     draftDetailsSection: 'Základní údaje',
     draftNotesSection: 'Poznámky',
     draftSummarySection: 'Souhrn',
@@ -356,6 +357,8 @@ const cs = {
     subtotal: 'Mezisoučet',
     total: 'Celkem',
     createInvoice: 'Vystavit fakturu',
+    updateInvoice: 'Uložit změny ve faktuře',
+    backWithoutChanges: 'Zpět beze změny',
     headerNote: 'Poznámka v hlavičce (volitelně)',
     footerNote: 'Poznámka v patičce (volitelně)',
     errorHeaderRequired: 'Klient a číslo faktury jsou povinné.',
@@ -375,6 +378,10 @@ const cs = {
     errorNoItems: 'Přidejte alespoň jednu položku faktury.',
     noCompatiblePriceListItems: 'Žádné položky ceníku nejsou v měně {currency}.',
     errorCreate: 'Nepodařilo se vytvořit fakturu.',
+    errorUpdate: 'Nepodařilo se uložit změny faktury.',
+    editExportedWarningTitle: 'Upravit už vyexportovanou fakturu?',
+    editExportedWarningMessage:
+      'Tato faktura už byla exportována. Pokud budete pokračovat v úpravách, vyexportovaný doklad už nemusí odpovídat verzi uložené ve Faktoro.',
     exportSupplier: 'Dodavatel',
     exportBuyer: 'Odběratel',
     exportInvoiceTitle: 'Faktura',

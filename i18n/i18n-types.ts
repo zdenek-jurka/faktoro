@@ -1124,6 +1124,10 @@ type RootTranslation = {
 		 */
 		draftTitle: string
 		/**
+		 * E​d​i​t​ ​i​n​v​o​i​c​e
+		 */
+		editDraftTitle: string
+		/**
 		 * B​a​s​i​c​s
 		 */
 		draftDetailsSection: string
@@ -1357,6 +1361,14 @@ type RootTranslation = {
 		 */
 		createInvoice: string
 		/**
+		 * S​a​v​e​ ​i​n​v​o​i​c​e​ ​c​h​a​n​g​e​s
+		 */
+		updateInvoice: string
+		/**
+		 * B​a​c​k​ ​w​i​t​h​o​u​t​ ​s​a​v​i​n​g
+		 */
+		backWithoutChanges: string
+		/**
 		 * H​e​a​d​e​r​ ​n​o​t​e​ ​(​o​p​t​i​o​n​a​l​)
 		 */
 		headerNote: string
@@ -1430,6 +1442,18 @@ type RootTranslation = {
 		 * F​a​i​l​e​d​ ​t​o​ ​c​r​e​a​t​e​ ​i​n​v​o​i​c​e​.
 		 */
 		errorCreate: string
+		/**
+		 * F​a​i​l​e​d​ ​t​o​ ​u​p​d​a​t​e​ ​i​n​v​o​i​c​e​.
+		 */
+		errorUpdate: string
+		/**
+		 * E​d​i​t​ ​e​x​p​o​r​t​e​d​ ​i​n​v​o​i​c​e​?
+		 */
+		editExportedWarningTitle: string
+		/**
+		 * T​h​i​s​ ​i​n​v​o​i​c​e​ ​h​a​s​ ​a​l​r​e​a​d​y​ ​b​e​e​n​ ​e​x​p​o​r​t​e​d​.​ ​I​f​ ​y​o​u​ ​c​o​n​t​i​n​u​e​ ​e​d​i​t​i​n​g​ ​i​t​,​ ​t​h​e​ ​e​x​p​o​r​t​e​d​ ​d​o​c​u​m​e​n​t​ ​m​a​y​ ​n​o​ ​l​o​n​g​e​r​ ​m​a​t​c​h​ ​t​h​e​ ​i​n​v​o​i​c​e​ ​s​t​o​r​e​d​ ​i​n​ ​F​a​k​t​o​r​o​.
+		 */
+		editExportedWarningMessage: string
 		/**
 		 * S​u​p​p​l​i​e​r
 		 */
@@ -5253,6 +5277,10 @@ export type TranslationFunctions = {
 		 */
 		draftTitle: () => LocalizedString
 		/**
+		 * Edit invoice
+		 */
+		editDraftTitle: () => LocalizedString
+		/**
 		 * Basics
 		 */
 		draftDetailsSection: () => LocalizedString
@@ -5473,6 +5501,14 @@ export type TranslationFunctions = {
 		 */
 		createInvoice: () => LocalizedString
 		/**
+		 * Save invoice changes
+		 */
+		updateInvoice: () => LocalizedString
+		/**
+		 * Back without saving
+		 */
+		backWithoutChanges: () => LocalizedString
+		/**
 		 * Header note (optional)
 		 */
 		headerNote: () => LocalizedString
@@ -5540,6 +5576,18 @@ export type TranslationFunctions = {
 		 * Failed to create invoice.
 		 */
 		errorCreate: () => LocalizedString
+		/**
+		 * Failed to update invoice.
+		 */
+		errorUpdate: () => LocalizedString
+		/**
+		 * Edit exported invoice?
+		 */
+		editExportedWarningTitle: () => LocalizedString
+		/**
+		 * This invoice has already been exported. If you continue editing it, the exported document may no longer match the invoice stored in Faktoro.
+		 */
+		editExportedWarningMessage: () => LocalizedString
 		/**
 		 * Supplier
 		 */

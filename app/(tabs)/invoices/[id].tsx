@@ -22,6 +22,7 @@ import {
   validateBaseExportXml,
 } from '@/repositories/export-integration-repository';
 import { getConfigValue, setConfigValue } from '@/repositories/config-storage-repository';
+import { type DraftInvoiceItemInput, markInvoiceExported } from '@/repositories/invoice-repository';
 import { getSettings } from '@/repositories/settings-repository';
 import { getBetaSettings } from '@/repositories/beta-settings-repository';
 import {
@@ -43,7 +44,7 @@ import { buildPdfLogoHtml } from '@/utils/pdf-logo';
 import { formatPrice } from '@/utils/price-utils';
 import { isIos } from '@/utils/platform';
 import { Q } from '@nozbe/watermelondb';
-import { Stack, useLocalSearchParams } from 'expo-router';
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useEffectEvent, useMemo, useState } from 'react';
 import { Alert, FlatList, StyleSheet, Pressable, View } from 'react-native';
 
@@ -75,6 +76,21 @@ type InvoiceHtmlExportResult = {
   uri: string;
 };
 
+type HeaderDraft = {
+  clientId: string;
+  invoiceNumber: string;
+  issuedDate: string;
+  taxableDate?: string;
+  dueDate: string;
+  currency: string;
+  paymentMethod: string;
+};
+
+type FooterDraft = {
+  headerNote: string;
+  footerNote: string;
+};
+
 function splitFileName(fileName: string) {
   const dotIndex = fileName.lastIndexOf('.');
   if (dotIndex <= 0) {
@@ -97,6 +113,14 @@ function buildCopyFileName(fileName: string, existingNames: Set<string>): string
   }
 
   return nextName;
+}
+
+function toLocalISODate(value: number): string {
+  const date = new Date(value);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 }
 
 function getPaymentMethodLabel(
@@ -321,6 +345,7 @@ async function buildPaymentQrHtmlEmbedded(
 
 export default function InvoiceDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const router = useRouter();
   const colorScheme = useColorScheme();
   const palette = Colors[colorScheme ?? 'light'];
   const { LL, locale } = useI18nContext();
@@ -492,6 +517,65 @@ export default function InvoiceDetailScreen() {
   const rememberLastExportAction = async (action: LastInvoiceExportAction) => {
     setLastExportAction(action);
     await setConfigValue(LAST_INVOICE_EXPORT_ACTION_KEY, action);
+  };
+
+  const openEditInvoiceDraft = () => {
+    if (!invoice) return;
+
+    const headerDraft: HeaderDraft = {
+      clientId: invoice.clientId,
+      invoiceNumber: invoice.invoiceNumber,
+      issuedDate: toLocalISODate(invoice.issuedAt),
+      taxableDate: invoice.taxableAt ? toLocalISODate(invoice.taxableAt) : undefined,
+      dueDate: invoice.dueAt ? toLocalISODate(invoice.dueAt) : toLocalISODate(invoice.issuedAt),
+      currency: normalizeCurrencyCode(invoice.currency),
+      paymentMethod: invoice.paymentMethod || 'bank_transfer',
+    };
+    const footerDraft: FooterDraft = {
+      headerNote: invoice.headerNote || '',
+      footerNote: invoice.footerNote || '',
+    };
+    const itemsDraft: DraftInvoiceItemInput[] = items.map((item) => ({
+      sourceKind: item.sourceKind as DraftInvoiceItemInput['sourceKind'],
+      sourceId: item.sourceId,
+      description: item.description,
+      quantity: item.quantity,
+      unit: item.unit,
+      unitPrice: item.unitPrice,
+      totalPrice: item.totalPrice,
+      vatCodeId: item.vatCodeId,
+      vatRate: item.vatRate,
+    }));
+
+    router.push({
+      pathname: '/invoices/new',
+      params: {
+        editingInvoiceId: invoice.id,
+        headerDraft: JSON.stringify(headerDraft),
+        itemsDraft: JSON.stringify(itemsDraft),
+        footerDraft: JSON.stringify(footerDraft),
+      },
+    });
+  };
+
+  const handleEditInvoice = () => {
+    if (!invoice) return;
+
+    if (!invoice.lastExportedAt) {
+      openEditInvoiceDraft();
+      return;
+    }
+
+    Alert.alert(LL.invoices.editExportedWarningTitle(), LL.invoices.editExportedWarningMessage(), [
+      {
+        text: LL.common.cancel(),
+        style: 'cancel',
+      },
+      {
+        text: LL.common.continueEditing(),
+        onPress: openEditInvoiceDraft,
+      },
+    ]);
   };
 
   const buildInvoiceHtmlDocument = async (): Promise<string> => {
@@ -673,6 +757,7 @@ export default function InvoiceDetailScreen() {
         dialogTitle: LLExport.invoices.shareInvoice(),
       });
       await rememberLastExportAction('pdf');
+      await markInvoiceExported(invoice.id);
     } catch (error) {
       const message = error instanceof Error ? error.message : LLExport.invoices.exportError();
       Alert.alert(LLExport.common.error(), message);
@@ -700,6 +785,7 @@ export default function InvoiceDetailScreen() {
         dialogTitle: LLExport.invoices.shareInvoice(),
       });
       await rememberLastExportAction('html');
+      await markInvoiceExported(invoice.id);
     } catch (error) {
       const message = error instanceof Error ? error.message : LLExport.invoices.exportError();
       Alert.alert(LLExport.common.error(), message);
@@ -780,6 +866,7 @@ export default function InvoiceDetailScreen() {
         LLExport.invoices.savePdfSuccess({ fileName: targetFileName }),
       );
       await rememberLastExportAction('save_pdf');
+      await markInvoiceExported(invoice.id);
     } catch (error) {
       const message = getErrorMessage(error, '');
       if (message && /cancel(?:ed|led)/i.test(message)) {
@@ -827,6 +914,7 @@ export default function InvoiceDetailScreen() {
         dialogTitle: LLExport.invoices.shareInvoice(),
       });
       await rememberLastExportAction(`structured:${format}`);
+      await markInvoiceExported(invoice.id);
     } catch (error) {
       const message = error instanceof Error ? error.message : LLExport.invoices.exportError();
       Alert.alert(LLExport.common.error(), message);
@@ -875,6 +963,7 @@ export default function InvoiceDetailScreen() {
           );
         }
         await rememberLastExportAction(`integration:${integration.id}`);
+        await markInvoiceExported(invoice.id);
         return;
       }
 
@@ -894,6 +983,7 @@ export default function InvoiceDetailScreen() {
         dialogTitle: LLExport.invoices.shareInvoice(),
       });
       await rememberLastExportAction('xml_base');
+      await markInvoiceExported(invoice.id);
     } catch (error) {
       const message = isHttpError(error)
         ? LLExport.invoices.exportWebhookError({
@@ -1003,7 +1093,27 @@ export default function InvoiceDetailScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      <Stack.Screen options={{ title: invoice?.invoiceNumber || LL.invoices.title() }} />
+      <Stack.Screen
+        options={{
+          title: invoice?.invoiceNumber || LL.invoices.title(),
+          headerRight: () =>
+            invoice ? (
+              <Pressable
+                style={({ pressed }) => [
+                  styles.headerActionButton,
+                  { opacity: exportingTarget !== null ? 0.45 : pressed ? 0.65 : 1 },
+                ]}
+                onPress={handleEditInvoice}
+                disabled={exportingTarget !== null}
+                accessibilityRole="button"
+                accessibilityLabel={LL.common.edit()}
+                hitSlop={8}
+              >
+                <IconSymbol name="pencil" size={18} color={palette.tint} />
+              </Pressable>
+            ) : null,
+        }}
+      />
 
       {invoice ? (
         <>
@@ -1235,6 +1345,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderLeftWidth: StyleSheet.hairlineWidth,
+  },
+  headerActionButton: {
+    paddingHorizontal: 6,
+    paddingVertical: 4,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   exportRow: { flexDirection: 'row', gap: 8, marginBottom: 12, alignItems: 'stretch' },
   listContent: { paddingBottom: 24 },

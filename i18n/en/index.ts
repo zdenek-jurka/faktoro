@@ -295,6 +295,7 @@ const en = {
   invoices: {
     title: 'Invoices',
     draftTitle: 'New invoice',
+    editDraftTitle: 'Edit invoice',
     draftDetailsSection: 'Basics',
     draftNotesSection: 'Notes',
     draftSummarySection: 'Summary',
@@ -355,6 +356,8 @@ const en = {
     subtotal: 'Subtotal',
     total: 'Total',
     createInvoice: 'Create invoice',
+    updateInvoice: 'Save invoice changes',
+    backWithoutChanges: 'Back without saving',
     headerNote: 'Header note (optional)',
     footerNote: 'Footer note (optional)',
     errorHeaderRequired: 'Client and invoice number are required.',
@@ -374,6 +377,10 @@ const en = {
     errorNoItems: 'Add at least one invoice item.',
     noCompatiblePriceListItems: 'No price list items use {currency}.',
     errorCreate: 'Failed to create invoice.',
+    errorUpdate: 'Failed to update invoice.',
+    editExportedWarningTitle: 'Edit exported invoice?',
+    editExportedWarningMessage:
+      'This invoice has already been exported. If you continue editing it, the exported document may no longer match the invoice stored in Faktoro.',
     exportSupplier: 'Supplier',
     exportBuyer: 'Buyer',
     exportInvoiceTitle: 'Invoice',

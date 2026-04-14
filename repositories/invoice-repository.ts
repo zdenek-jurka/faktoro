@@ -43,6 +43,10 @@ export type CreateInvoiceInput = {
   items: DraftInvoiceItemInput[];
 };
 
+export type UpdateIssuedInvoiceInput = CreateInvoiceInput & {
+  id: string;
+};
+
 export const INVOICE_TAXABLE_DATE_REQUIRED_ERROR = 'invoice.taxable_date_required';
 
 type SellerSnapshot = {
@@ -76,6 +80,20 @@ type BuyerSnapshot = {
   city?: string;
   postalCode?: string;
   country?: string;
+};
+
+type ResolvedInvoiceWriteData = {
+  buyerSnapshot: BuyerSnapshot;
+  sellerSnapshot: SellerSnapshot;
+  normalizedItems: DraftInvoiceItemInput[];
+  totals: {
+    subtotal: number;
+    total: number;
+  };
+  normalizedCurrency: string;
+  normalizedPaymentMethod?: string;
+  normalizedHeaderNote?: string;
+  normalizedFooterNote?: string;
 };
 
 function roundCurrency(value: number): number {
@@ -146,141 +164,185 @@ export function getInvoices() {
   return database.get<InvoiceModel>(InvoiceModel.table).query(Q.sortBy('issued_at', Q.desc));
 }
 
+async function resolveInvoiceWriteData(
+  input: CreateInvoiceInput,
+  settings?: AppSettingsModel,
+): Promise<ResolvedInvoiceWriteData> {
+  const client = await database.get<ClientModel>(ClientModel.table).find(input.clientId);
+  const buyerAddress = await getPreferredInvoiceAddress(input.clientId);
+  if (settings?.isVatPayer && !input.taxableAt) {
+    throw new Error(INVOICE_TAXABLE_DATE_REQUIRED_ERROR);
+  }
+
+  const effectiveQrType = client.invoiceQrType || settings?.invoiceQrType || 'none';
+  const isVatPayer = !!settings?.isVatPayer;
+  const sellerSnapshot: SellerSnapshot = {
+    companyName: settings?.invoiceCompanyName,
+    address: settings?.invoiceAddress,
+    street2: settings?.invoiceStreet2,
+    city: settings?.invoiceCity,
+    postalCode: settings?.invoicePostalCode,
+    country: settings?.invoiceCountry,
+    companyId: settings?.invoiceCompanyId,
+    vatNumber: isVatPayer ? settings?.invoiceVatNumber : undefined,
+    registrationNote: settings?.invoiceRegistrationNote,
+    email: settings?.invoiceEmail,
+    phone: settings?.invoicePhone,
+    website: settings?.invoiceWebsite,
+    bankAccount: settings?.invoiceBankAccount,
+    iban: settings?.invoiceIban,
+    swift: settings?.invoiceSwift,
+    logoUri: settings?.invoiceLogoUri,
+    qrType: effectiveQrType,
+  };
+  const buyerSnapshot: BuyerSnapshot = {
+    name: client.name,
+    companyId: client.companyId,
+    vatNumber: client.vatNumber,
+    email: client.email,
+    phone: client.phone,
+    address: buyerAddress?.street,
+    street2: buyerAddress?.street2,
+    city: buyerAddress?.city,
+    postalCode: buyerAddress?.postalCode,
+    country: buyerAddress?.country,
+  };
+
+  const taxableAt = input.taxableAt || input.issuedAt;
+  const priceListItemIds = Array.from(
+    new Set(
+      input.items
+        .filter((item) => item.sourceKind === 'price_list' && !!item.sourceId)
+        .map((item) => item.sourceId as string),
+    ),
+  );
+
+  const priceListById = new Map<string, PriceListItemModel>();
+  if (priceListItemIds.length > 0) {
+    const priceListItems = await database
+      .get<PriceListItemModel>(PriceListItemModel.table)
+      .query(Q.where('id', Q.oneOf(priceListItemIds)))
+      .fetch();
+    for (const item of priceListItems) {
+      priceListById.set(item.id, item);
+    }
+  }
+
+  const vatNameSet = new Set<string>();
+  const vatCodeIdSet = new Set<string>();
+  for (const draftItem of input.items) {
+    if (draftItem.sourceKind !== 'price_list' || !draftItem.sourceId) continue;
+    const priceListItem = priceListById.get(draftItem.sourceId);
+    if (priceListItem?.vatCodeId) {
+      vatCodeIdSet.add(priceListItem.vatCodeId);
+    }
+    const normalized = normalizeVatName(priceListItem?.vatName);
+    if (normalized) vatNameSet.add(normalized);
+  }
+
+  const vatCodeNameToId = new Map<string, string>();
+  const vatRatesByCodeId = new Map<string, VatRateModel[]>();
+  if (vatNameSet.size > 0 || vatCodeIdSet.size > 0) {
+    const vatCodes = await database.get<VatCodeModel>(VatCodeModel.table).query().fetch();
+    for (const code of vatCodes) {
+      const normalized = normalizeVatName(code.name);
+      if (vatNameSet.has(normalized)) {
+        vatCodeNameToId.set(normalized, code.id);
+      }
+    }
+
+    const vatCodeIds = Array.from(new Set([...vatCodeIdSet, ...vatCodeNameToId.values()]));
+    if (vatCodeIds.length > 0) {
+      const vatRates = await database
+        .get<VatRateModel>(VatRateModel.table)
+        .query(Q.where('vat_code_id', Q.oneOf(vatCodeIds)))
+        .fetch();
+      for (const rate of vatRates) {
+        const key = rate.vatCodeId || '';
+        if (!key) continue;
+        const current = vatRatesByCodeId.get(key) || [];
+        current.push(rate);
+        vatRatesByCodeId.set(key, current);
+      }
+    }
+  }
+
+  const resolvedItems: DraftInvoiceItemInput[] = input.items.map((draftItem) => {
+    if (draftItem.sourceKind !== 'price_list' || !draftItem.sourceId) {
+      return draftItem;
+    }
+
+    const priceListItem = priceListById.get(draftItem.sourceId);
+    const vatName = normalizeVatName(priceListItem?.vatName);
+    const vatCodeId =
+      priceListItem?.vatCodeId || (vatName ? vatCodeNameToId.get(vatName) : undefined);
+    const rates = vatCodeId ? vatRatesByCodeId.get(vatCodeId) || [] : [];
+    const rateByTaxableDate = resolveVatRateForDate(rates, taxableAt);
+
+    return {
+      ...draftItem,
+      vatCodeId: vatCodeId ?? draftItem.vatCodeId,
+      vatRate: rateByTaxableDate ?? draftItem.vatRate,
+    };
+  });
+
+  const normalizedItems = isVatPayer
+    ? resolvedItems
+    : resolvedItems.map((item) => ({
+        ...item,
+        vatCodeId: undefined,
+        vatRate: undefined,
+      }));
+
+  return {
+    buyerSnapshot,
+    sellerSnapshot,
+    normalizedItems,
+    totals: calculateInvoiceTotals(normalizedItems, isVatPayer),
+    normalizedCurrency: normalizeCurrencyCode(
+      input.currency,
+      settings?.defaultInvoiceCurrency || DEFAULT_CURRENCY_CODE,
+    ),
+    normalizedPaymentMethod: input.paymentMethod?.trim() || undefined,
+    normalizedHeaderNote: input.headerNote?.trim() || undefined,
+    normalizedFooterNote: input.footerNote?.trim() || undefined,
+  };
+}
+
+async function replaceInvoiceItems(
+  invoiceId: string,
+  items: DraftInvoiceItemInput[],
+  invoiceItemCollection = database.get<InvoiceItemModel>(InvoiceItemModel.table),
+): Promise<void> {
+  const existingItems = await invoiceItemCollection.query(Q.where('invoice_id', invoiceId)).fetch();
+  if (existingItems.length > 0) {
+    await Promise.all(existingItems.map((item) => item.markAsDeleted()));
+  }
+
+  for (const sourceItem of items) {
+    await invoiceItemCollection.create((item: InvoiceItemModel) => {
+      item.invoiceId = invoiceId;
+      item.sourceKind = sourceItem.sourceKind;
+      item.sourceId = sourceItem.sourceId;
+      item.description = sourceItem.description;
+      item.quantity = sourceItem.quantity;
+      item.unit = sourceItem.unit;
+      item.unitPrice = sourceItem.unitPrice;
+      item.totalPrice = sourceItem.totalPrice;
+      item.vatCodeId = sourceItem.vatCodeId;
+      item.vatRate = sourceItem.vatRate;
+    });
+  }
+}
+
 export async function createInvoice(input: CreateInvoiceInput): Promise<InvoiceModel> {
   const invoiceCollection = database.get<InvoiceModel>(InvoiceModel.table);
   const invoiceItemCollection = database.get<InvoiceItemModel>(InvoiceItemModel.table);
-  const clientCollection = database.get<ClientModel>(ClientModel.table);
   const settings = await getSettings();
   const deviceSettings = await getDeviceSyncSettings(settings);
 
   return database.write(async () => {
-    const client = await clientCollection.find(input.clientId);
-    const buyerAddress = await getPreferredInvoiceAddress(input.clientId);
-    if (settings?.isVatPayer && !input.taxableAt) {
-      throw new Error(INVOICE_TAXABLE_DATE_REQUIRED_ERROR);
-    }
-
-    const effectiveQrType = client.invoiceQrType || settings?.invoiceQrType || 'none';
-    const isVatPayer = !!settings?.isVatPayer;
-    const sellerSnapshot: SellerSnapshot = {
-      companyName: settings?.invoiceCompanyName,
-      address: settings?.invoiceAddress,
-      street2: settings?.invoiceStreet2,
-      city: settings?.invoiceCity,
-      postalCode: settings?.invoicePostalCode,
-      country: settings?.invoiceCountry,
-      companyId: settings?.invoiceCompanyId,
-      vatNumber: isVatPayer ? settings?.invoiceVatNumber : undefined,
-      registrationNote: settings?.invoiceRegistrationNote,
-      email: settings?.invoiceEmail,
-      phone: settings?.invoicePhone,
-      website: settings?.invoiceWebsite,
-      bankAccount: settings?.invoiceBankAccount,
-      iban: settings?.invoiceIban,
-      swift: settings?.invoiceSwift,
-      logoUri: settings?.invoiceLogoUri,
-      qrType: effectiveQrType,
-    };
-    const buyerSnapshot: BuyerSnapshot = {
-      name: client.name,
-      companyId: client.companyId,
-      vatNumber: client.vatNumber,
-      email: client.email,
-      phone: client.phone,
-      address: buyerAddress?.street,
-      street2: buyerAddress?.street2,
-      city: buyerAddress?.city,
-      postalCode: buyerAddress?.postalCode,
-      country: buyerAddress?.country,
-    };
-
-    const taxableAt = input.taxableAt || input.issuedAt;
-    const priceListItemIds = Array.from(
-      new Set(
-        input.items
-          .filter((item) => item.sourceKind === 'price_list' && !!item.sourceId)
-          .map((item) => item.sourceId as string),
-      ),
-    );
-
-    const priceListById = new Map<string, PriceListItemModel>();
-    if (priceListItemIds.length > 0) {
-      const priceListItems = await database
-        .get<PriceListItemModel>(PriceListItemModel.table)
-        .query(Q.where('id', Q.oneOf(priceListItemIds)))
-        .fetch();
-      for (const item of priceListItems) {
-        priceListById.set(item.id, item);
-      }
-    }
-
-    const vatNameSet = new Set<string>();
-    const vatCodeIdSet = new Set<string>();
-    for (const draftItem of input.items) {
-      if (draftItem.sourceKind !== 'price_list' || !draftItem.sourceId) continue;
-      const priceListItem = priceListById.get(draftItem.sourceId);
-      if (priceListItem?.vatCodeId) {
-        vatCodeIdSet.add(priceListItem.vatCodeId);
-      }
-      const normalized = normalizeVatName(priceListItem?.vatName);
-      if (normalized) vatNameSet.add(normalized);
-    }
-
-    const vatCodeNameToId = new Map<string, string>();
-    const vatRatesByCodeId = new Map<string, VatRateModel[]>();
-    if (vatNameSet.size > 0 || vatCodeIdSet.size > 0) {
-      const vatCodes = await database.get<VatCodeModel>(VatCodeModel.table).query().fetch();
-      for (const code of vatCodes) {
-        const normalized = normalizeVatName(code.name);
-        if (vatNameSet.has(normalized)) {
-          vatCodeNameToId.set(normalized, code.id);
-        }
-      }
-
-      const vatCodeIds = Array.from(new Set([...vatCodeIdSet, ...vatCodeNameToId.values()]));
-      if (vatCodeIds.length > 0) {
-        const vatRates = await database
-          .get<VatRateModel>(VatRateModel.table)
-          .query(Q.where('vat_code_id', Q.oneOf(vatCodeIds)))
-          .fetch();
-        for (const rate of vatRates) {
-          const key = rate.vatCodeId || '';
-          if (!key) continue;
-          const current = vatRatesByCodeId.get(key) || [];
-          current.push(rate);
-          vatRatesByCodeId.set(key, current);
-        }
-      }
-    }
-
-    const resolvedItems: DraftInvoiceItemInput[] = input.items.map((draftItem) => {
-      if (draftItem.sourceKind !== 'price_list' || !draftItem.sourceId) {
-        return draftItem;
-      }
-
-      const priceListItem = priceListById.get(draftItem.sourceId);
-      const vatName = normalizeVatName(priceListItem?.vatName);
-      const vatCodeId =
-        priceListItem?.vatCodeId || (vatName ? vatCodeNameToId.get(vatName) : undefined);
-      const rates = vatCodeId ? vatRatesByCodeId.get(vatCodeId) || [] : [];
-      const rateByTaxableDate = resolveVatRateForDate(rates, taxableAt);
-
-      return {
-        ...draftItem,
-        vatCodeId: vatCodeId ?? draftItem.vatCodeId,
-        vatRate: rateByTaxableDate ?? draftItem.vatRate,
-      };
-    });
-
-    const normalizedItems = isVatPayer
-      ? resolvedItems
-      : resolvedItems.map((item) => ({
-          ...item,
-          vatCodeId: undefined,
-          vatRate: undefined,
-        }));
-
-    const totals = calculateInvoiceTotals(normalizedItems, isVatPayer);
+    const resolved = await resolveInvoiceWriteData(input, settings);
 
     const invoice = await invoiceCollection.create((item: InvoiceModel) => {
       item.clientId = input.clientId;
@@ -289,34 +351,18 @@ export async function createInvoice(input: CreateInvoiceInput): Promise<InvoiceM
       item.issuedAt = input.issuedAt;
       item.taxableAt = input.taxableAt;
       item.dueAt = input.dueAt;
-      item.currency = normalizeCurrencyCode(
-        input.currency,
-        settings?.defaultInvoiceCurrency || DEFAULT_CURRENCY_CODE,
-      );
-      item.paymentMethod = input.paymentMethod?.trim() || undefined;
+      item.currency = resolved.normalizedCurrency;
+      item.paymentMethod = resolved.normalizedPaymentMethod;
       item.status = 'issued';
-      item.headerNote = input.headerNote?.trim() || undefined;
-      item.footerNote = input.footerNote?.trim() || undefined;
-      item.sellerSnapshotJson = JSON.stringify(sellerSnapshot);
-      item.buyerSnapshotJson = JSON.stringify(buyerSnapshot);
-      item.subtotal = totals.subtotal;
-      item.total = totals.total;
+      item.headerNote = resolved.normalizedHeaderNote;
+      item.footerNote = resolved.normalizedFooterNote;
+      item.sellerSnapshotJson = JSON.stringify(resolved.sellerSnapshot);
+      item.buyerSnapshotJson = JSON.stringify(resolved.buyerSnapshot);
+      item.subtotal = resolved.totals.subtotal;
+      item.total = resolved.totals.total;
     });
 
-    for (const sourceItem of normalizedItems) {
-      await invoiceItemCollection.create((item: InvoiceItemModel) => {
-        item.invoiceId = invoice.id;
-        item.sourceKind = sourceItem.sourceKind;
-        item.sourceId = sourceItem.sourceId;
-        item.description = sourceItem.description;
-        item.quantity = sourceItem.quantity;
-        item.unit = sourceItem.unit;
-        item.unitPrice = sourceItem.unitPrice;
-        item.totalPrice = sourceItem.totalPrice;
-        item.vatCodeId = sourceItem.vatCodeId;
-        item.vatRate = sourceItem.vatRate;
-      });
-    }
+    await replaceInvoiceItems(invoice.id, resolved.normalizedItems, invoiceItemCollection);
 
     if (settings) {
       await settings.update((s: AppSettingsModel) => {
@@ -326,6 +372,54 @@ export async function createInvoice(input: CreateInvoiceInput): Promise<InvoiceM
     }
 
     return invoice;
+  });
+}
+
+export async function updateIssuedInvoice(input: UpdateIssuedInvoiceInput): Promise<InvoiceModel> {
+  const invoiceCollection = database.get<InvoiceModel>(InvoiceModel.table);
+  const invoiceItemCollection = database.get<InvoiceItemModel>(InvoiceItemModel.table);
+  const settings = await getSettings();
+
+  return database.write(async () => {
+    const invoice = await invoiceCollection.find(input.id);
+    const resolved = await resolveInvoiceWriteData(input, settings);
+
+    await invoice.update((item: InvoiceModel) => {
+      item.clientId = input.clientId;
+      item.invoiceNumber = input.invoiceNumber.trim();
+      item.issuedAt = input.issuedAt;
+      item.taxableAt = input.taxableAt;
+      item.dueAt = input.dueAt;
+      item.currency = resolved.normalizedCurrency;
+      item.paymentMethod = resolved.normalizedPaymentMethod;
+      item.status = 'issued';
+      item.headerNote = resolved.normalizedHeaderNote;
+      item.footerNote = resolved.normalizedFooterNote;
+      item.sellerSnapshotJson =
+        invoice.sellerSnapshotJson || JSON.stringify(resolved.sellerSnapshot);
+      item.buyerSnapshotJson =
+        invoice.clientId === input.clientId && invoice.buyerSnapshotJson
+          ? invoice.buyerSnapshotJson
+          : JSON.stringify(resolved.buyerSnapshot);
+      item.lastExportedAt = undefined;
+      item.subtotal = resolved.totals.subtotal;
+      item.total = resolved.totals.total;
+    });
+
+    await replaceInvoiceItems(invoice.id, resolved.normalizedItems, invoiceItemCollection);
+
+    return invoice;
+  });
+}
+
+export async function markInvoiceExported(id: string, exportedAt = Date.now()): Promise<void> {
+  const invoiceCollection = database.get<InvoiceModel>(InvoiceModel.table);
+
+  await database.write(async () => {
+    const invoice = await invoiceCollection.find(id);
+    await invoice.update((item: InvoiceModel) => {
+      item.lastExportedAt = exportedAt;
+    });
   });
 }
 
