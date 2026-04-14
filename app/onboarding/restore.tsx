@@ -1,5 +1,6 @@
 import { ThemedText } from '@/components/themed-text';
 import { IconSymbol } from '@/components/ui/icon-symbol';
+import { KeyboardAwareScroll } from '@/components/ui/keyboard-aware-scroll';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useI18nContext } from '@/i18n/i18n-react';
@@ -10,21 +11,10 @@ import {
 } from '@/repositories/offline-backup-repository';
 import { setOnboardingCompleted } from '@/repositories/onboarding-repository';
 import { showConfirm } from '@/utils/platform-alert';
-import { isIos } from '@/utils/platform';
-import { useHeaderHeight } from '@react-navigation/elements';
 import { useRouter } from 'expo-router';
 import React, { useMemo, useState } from 'react';
-import {
-  ActivityIndicator,
-  Alert,
-  KeyboardAvoidingView,
-  Pressable,
-  SafeAreaView,
-  ScrollView,
-  StyleSheet,
-  TextInput,
-  View,
-} from 'react-native';
+import { ActivityIndicator, Alert, Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 type SelectedFile = {
   name: string;
@@ -45,7 +35,6 @@ export default function OnboardingRestoreScreen() {
   const { LL, locale } = useI18nContext();
   const intlLocale = normalizeIntlLocale(locale, 'en');
   const router = useRouter();
-  const headerHeight = useHeaderHeight();
 
   const [selectedFile, setSelectedFile] = useState<SelectedFile | null>(null);
   const [restorePassword, setRestorePassword] = useState('');
@@ -127,123 +116,117 @@ export default function OnboardingRestoreScreen() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: palette.background }]}>
-      <KeyboardAvoidingView
+      <KeyboardAwareScroll
         style={styles.flex}
-        behavior={isIos ? 'padding' : undefined}
-        keyboardVerticalOffset={isIos ? headerHeight : 0}
+        scrollViewStyle={styles.flex}
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
       >
-        <ScrollView
-          style={styles.flex}
-          contentContainerStyle={styles.scrollContent}
-          keyboardDismissMode="on-drag"
-          keyboardShouldPersistTaps="handled"
-        >
-          <View style={styles.header}>
-            <Pressable style={styles.backButton} onPress={() => router.back()}>
-              <IconSymbol name="chevron.left" size={20} color={palette.tint} />
-              <ThemedText style={[styles.backLabel, { color: palette.tint }]}>
-                {LL.onboarding.back()}
-              </ThemedText>
-            </Pressable>
-            <ThemedText type="title" style={styles.title}>
-              {LL.onboarding.restoreTitle()}
+        <View style={styles.header}>
+          <Pressable style={styles.backButton} onPress={() => router.back()}>
+            <IconSymbol name="chevron.left" size={20} color={palette.tint} />
+            <ThemedText style={[styles.backLabel, { color: palette.tint }]}>
+              {LL.onboarding.back()}
             </ThemedText>
-            <ThemedText style={[styles.subtitle, { color: palette.textSecondary }]}>
-              {LL.onboarding.restoreSubtitle()}
-            </ThemedText>
-          </View>
-
-          {/* File picker */}
-          <Pressable
-            style={[
-              styles.pickButton,
-              { backgroundColor: palette.cardBackground, borderColor: palette.border },
-            ]}
-            onPress={handlePickFile}
-            disabled={isPickLoading}
-            android_ripple={{ color: palette.border }}
-          >
-            {isPickLoading ? (
-              <ActivityIndicator size="small" color={palette.tint} />
-            ) : (
-              <>
-                <IconSymbol name="folder" size={22} color={palette.tint} />
-                <ThemedText style={[styles.pickButtonText, { color: palette.tint }]}>
-                  {LL.onboarding.restorePickFile()}
-                </ThemedText>
-              </>
-            )}
           </Pressable>
+          <ThemedText type="title" style={styles.title}>
+            {LL.onboarding.restoreTitle()}
+          </ThemedText>
+          <ThemedText style={[styles.subtitle, { color: palette.textSecondary }]}>
+            {LL.onboarding.restoreSubtitle()}
+          </ThemedText>
+        </View>
 
-          {/* File info */}
-          {selectedFile && (
-            <View style={[styles.card, { backgroundColor: palette.cardBackground }]}>
-              <View style={styles.fileRow}>
-                <IconSymbol name="doc.fill" size={20} color={palette.icon} />
-                <ThemedText type="defaultSemiBold" style={styles.fileName} numberOfLines={1}>
-                  {selectedFile.name}
-                </ThemedText>
-              </View>
-
-              <View style={styles.metaRow}>
-                <ThemedText style={[styles.metaLabel, { color: palette.textSecondary }]}>
-                  {LL.onboarding.restoreCreatedAt()}
-                </ThemedText>
-                <ThemedText style={styles.metaValue}>{formattedDate}</ThemedText>
-              </View>
-
-              <View style={styles.metaRow}>
-                <ThemedText style={[styles.metaLabel, { color: palette.textSecondary }]}>
-                  {LL.onboarding.restoreEncryptedLabel()}
-                </ThemedText>
-                <ThemedText style={styles.metaValue}>
-                  {selectedFile.encrypted
-                    ? LL.onboarding.restoreEncryptedLabel()
-                    : LL.onboarding.restoreNotEncryptedLabel()}
-                </ThemedText>
-              </View>
-
-              {selectedFile.encrypted && (
-                <View style={styles.field}>
-                  <ThemedText style={[styles.fieldLabel, { color: palette.textSecondary }]}>
-                    {LL.onboarding.restorePasswordLabel()} *
-                  </ThemedText>
-                  <TextInput
-                    style={[
-                      styles.input,
-                      {
-                        backgroundColor: palette.inputBackground,
-                        borderColor: palette.inputBorder,
-                        color: palette.text,
-                      },
-                    ]}
-                    value={restorePassword}
-                    onChangeText={setRestorePassword}
-                    placeholder={LL.onboarding.restorePasswordLabel()}
-                    placeholderTextColor={palette.placeholder}
-                    secureTextEntry
-                  />
-                </View>
-              )}
-
-              <Pressable
-                style={[styles.restoreButton, { backgroundColor: palette.tint }]}
-                onPress={handleRestore}
-                disabled={isRestoreLoading}
-                android_ripple={{ color: 'rgba(255,255,255,0.2)' }}
-              >
-                {isRestoreLoading ? (
-                  <ActivityIndicator size="small" color={palette.onTint} />
-                ) : (
-                  <ThemedText style={[styles.restoreButtonText, { color: palette.onTint }]}>
-                    {LL.onboarding.restoreButton()}
-                  </ThemedText>
-                )}
-              </Pressable>
-            </View>
+        {/* File picker */}
+        <Pressable
+          style={[
+            styles.pickButton,
+            { backgroundColor: palette.cardBackground, borderColor: palette.border },
+          ]}
+          onPress={handlePickFile}
+          disabled={isPickLoading}
+          android_ripple={{ color: palette.border }}
+        >
+          {isPickLoading ? (
+            <ActivityIndicator size="small" color={palette.tint} />
+          ) : (
+            <>
+              <IconSymbol name="folder" size={22} color={palette.tint} />
+              <ThemedText style={[styles.pickButtonText, { color: palette.tint }]}>
+                {LL.onboarding.restorePickFile()}
+              </ThemedText>
+            </>
           )}
-        </ScrollView>
-      </KeyboardAvoidingView>
+        </Pressable>
+
+        {/* File info */}
+        {selectedFile && (
+          <View style={[styles.card, { backgroundColor: palette.cardBackground }]}>
+            <View style={styles.fileRow}>
+              <IconSymbol name="doc.fill" size={20} color={palette.icon} />
+              <ThemedText type="defaultSemiBold" style={styles.fileName} numberOfLines={1}>
+                {selectedFile.name}
+              </ThemedText>
+            </View>
+
+            <View style={styles.metaRow}>
+              <ThemedText style={[styles.metaLabel, { color: palette.textSecondary }]}>
+                {LL.onboarding.restoreCreatedAt()}
+              </ThemedText>
+              <ThemedText style={styles.metaValue}>{formattedDate}</ThemedText>
+            </View>
+
+            <View style={styles.metaRow}>
+              <ThemedText style={[styles.metaLabel, { color: palette.textSecondary }]}>
+                {LL.onboarding.restoreEncryptedLabel()}
+              </ThemedText>
+              <ThemedText style={styles.metaValue}>
+                {selectedFile.encrypted
+                  ? LL.onboarding.restoreEncryptedLabel()
+                  : LL.onboarding.restoreNotEncryptedLabel()}
+              </ThemedText>
+            </View>
+
+            {selectedFile.encrypted && (
+              <View style={styles.field}>
+                <ThemedText style={[styles.fieldLabel, { color: palette.textSecondary }]}>
+                  {LL.onboarding.restorePasswordLabel()} *
+                </ThemedText>
+                <TextInput
+                  style={[
+                    styles.input,
+                    {
+                      backgroundColor: palette.inputBackground,
+                      borderColor: palette.inputBorder,
+                      color: palette.text,
+                    },
+                  ]}
+                  value={restorePassword}
+                  onChangeText={setRestorePassword}
+                  placeholder={LL.onboarding.restorePasswordLabel()}
+                  placeholderTextColor={palette.placeholder}
+                  secureTextEntry
+                />
+              </View>
+            )}
+
+            <Pressable
+              style={[styles.restoreButton, { backgroundColor: palette.tint }]}
+              onPress={handleRestore}
+              disabled={isRestoreLoading}
+              android_ripple={{ color: 'rgba(255,255,255,0.2)' }}
+            >
+              {isRestoreLoading ? (
+                <ActivityIndicator size="small" color={palette.onTint} />
+              ) : (
+                <ThemedText style={[styles.restoreButtonText, { color: palette.onTint }]}>
+                  {LL.onboarding.restoreButton()}
+                </ThemedText>
+              )}
+            </Pressable>
+          </View>
+        )}
+      </KeyboardAwareScroll>
     </SafeAreaView>
   );
 }

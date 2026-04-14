@@ -6,23 +6,35 @@ import { useI18nContext } from '@/i18n/i18n-react';
 import { getVatRates } from '@/repositories/vat-rate-repository';
 import { setOnboardingCompleted } from '@/repositories/onboarding-repository';
 import { getSettings } from '@/repositories/settings-repository';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { Pressable, SafeAreaView, ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function OnboardingDoneScreen() {
   const colorScheme = useColorScheme();
   const palette = Colors[colorScheme ?? 'light'];
   const { LL } = useI18nContext();
   const router = useRouter();
+  const params = useLocalSearchParams<{ vatConfigured?: string | string[] }>();
 
   const [hasVatWarning, setHasVatWarning] = useState(false);
+  const vatConfiguredParam = Array.isArray(params.vatConfigured)
+    ? params.vatConfigured[0]
+    : params.vatConfigured;
 
   useEffect(() => {
     let cancelled = false;
     const checkVat = async () => {
       const settings = await getSettings();
-      if (!settings.isVatPayer) return;
+      if (!settings.isVatPayer) {
+        if (!cancelled) setHasVatWarning(false);
+        return;
+      }
+      if (vatConfiguredParam === '1') {
+        if (!cancelled) setHasVatWarning(false);
+        return;
+      }
       const rates = await getVatRates().fetch();
       if (!cancelled) setHasVatWarning(rates.length === 0);
     };
@@ -30,7 +42,7 @@ export default function OnboardingDoneScreen() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [vatConfiguredParam]);
 
   async function handleFinish() {
     await setOnboardingCompleted();

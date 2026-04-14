@@ -428,6 +428,14 @@ const fr = {
     advancedExportIntegrationsTitle: "Intégrations d'export",
     advancedExportIntegrationsDescription:
       'Active les exportations XML personnalisées basées sur XSLT dans les exports de feuilles de temps et dans Paramètres > Services externes.',
+    advancedDangerousResetDataTitle: "Réinitialiser toutes les données locales de l'application",
+    advancedDangerousResetDataDescription:
+      "Supprime toutes les données locales de Faktoro sur cet appareil et relance l'onboarding. À utiliser uniquement pour les tests ou une réinitialisation locale complète.",
+    advancedDangerousResetDataAction: 'Supprimer toutes les données locales',
+    advancedDangerousResetDataConfirmTitle: 'Supprimer toutes les données locales de Faktoro ?',
+    advancedDangerousResetDataConfirmMessage:
+      "Cela supprimera les clients, les entrées de temps, les feuilles de temps, les factures, les paramètres de synchronisation, les sauvegardes stockées par l'application, les secrets d'export et la progression de l'onboarding sur cet appareil. Cette action est irréversible.",
+    advancedDangerousResetDataConfirmContinue: 'Tout supprimer',
     offlineBackupCreateTitle: 'Create backup',
     offlineBackupCreateDescription:
       'Create a full offline backup file of your local Faktoro data and save it somewhere safe.',
@@ -1046,10 +1054,15 @@ const fr = {
     vatTitle: 'Taux de TVA',
     vatSubtitle:
       "L'application a besoin des taux de TVA actuels pour calculer correctement la taxe sur les factures.",
+    vatAutoLoadHint:
+      'Après avoir choisi un pays, Faktoro prépare les taux de TVA actuels pour vérification. Ils seront enregistrés automatiquement lorsque vous continuerez.',
     vatCountryLabel: "Pays de l'UE pour la recherche des taux",
-    vatLoadButton: "Charger les taux actuels depuis la base de données de l'UE",
+    vatLoadButton: 'Charger et utiliser les taux actuels',
     vatManualButton: 'Saisir les taux manuellement',
     vatSkipButton: 'Ignorer, configurer plus tard',
+    vatRetryAction: 'Réessayer',
+    vatImportFailedPrompt:
+      "Faktoro n'a pas pu enregistrer les taux de TVA pour le moment. Vous pouvez réessayer ou ignorer cette étape et les configurer plus tard.",
     vatLoadedFor: 'Taux pour {country}',
     vatLoadedOn: 'Chargé le {date}',
     vatUseRates: 'Utiliser ces taux',

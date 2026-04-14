@@ -707,6 +707,16 @@ export async function deleteExportIntegration(id: string): Promise<void> {
   await clearCachedToken(id);
 }
 
+export async function clearAllExportIntegrationSecrets(): Promise<void> {
+  const all = await loadAll();
+  await Promise.all(
+    all.flatMap((integration) => [
+      clearIntegrationSecrets(integration.id),
+      clearCachedToken(integration.id),
+    ]),
+  );
+}
+
 export async function validateExportIntegrationXslt(
   documentType: ExportIntegrationDocumentType,
   xsltStr: string,

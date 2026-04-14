@@ -1,15 +1,16 @@
 import { ThemedText } from '@/components/themed-text';
-import { IconSymbol } from '@/components/ui/icon-symbol';
+import { IconSymbol, type IconSymbolName } from '@/components/ui/icon-symbol';
 import { isSyncEnabled } from '@/constants/features';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useI18nContext } from '@/i18n/i18n-react';
 import { useRouter } from 'expo-router';
 import React from 'react';
-import { Pressable, SafeAreaView, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 type ChoiceItem = {
-  icon: string;
+  icon: IconSymbolName;
   title: string;
   description: string;
   onPress: () => void;
@@ -77,7 +78,7 @@ export default function OnboardingStartScreen() {
               android_ripple={{ color: palette.border }}
             >
               <View style={[styles.choiceIcon, { backgroundColor: palette.backgroundSubtle }]}>
-                <IconSymbol name={choice.icon as any} size={28} color={palette.tint} />
+                <IconSymbol name={choice.icon} size={28} color={palette.tint} />
               </View>
               <View style={styles.choiceText}>
                 <ThemedText type="defaultSemiBold" style={styles.choiceTitle}>

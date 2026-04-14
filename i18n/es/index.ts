@@ -426,6 +426,14 @@ const es = {
     advancedExportIntegrationsTitle: 'Integraciones de exportación',
     advancedExportIntegrationsDescription:
       'Activa exportaciones XML personalizadas basadas en XSLT en las exportaciones de hojas de horas y en Ajustes > Servicios externos.',
+    advancedDangerousResetDataTitle: 'Restablecer todos los datos locales de la app',
+    advancedDangerousResetDataDescription:
+      'Elimina todos los datos locales de Faktoro en este dispositivo y vuelve a abrir el onboarding. Úsalo solo para pruebas o para un reinicio local completo.',
+    advancedDangerousResetDataAction: 'Eliminar todos los datos locales',
+    advancedDangerousResetDataConfirmTitle: '¿Eliminar todos los datos locales de Faktoro?',
+    advancedDangerousResetDataConfirmMessage:
+      'Esto eliminará clientes, entradas de tiempo, hojas de horas, facturas, ajustes de sincronización, copias de seguridad guardadas por la app, secretos de exportación y el progreso del onboarding en este dispositivo. No se puede deshacer.',
+    advancedDangerousResetDataConfirmContinue: 'Eliminar todo',
     offlineBackupCreateTitle: 'Create backup',
     offlineBackupCreateDescription:
       'Create a full offline backup file of your local Faktoro data and save it somewhere safe.',
@@ -1040,10 +1048,15 @@ const es = {
     vatTitle: 'Tipos de IVA',
     vatSubtitle:
       'La aplicación necesita tipos de IVA actuales para calcular el impuesto correctamente en las facturas.',
+    vatAutoLoadHint:
+      'Después de elegir un país, Faktoro prepara los tipos de IVA actuales para revisarlos. Se guardarán automáticamente cuando continúes.',
     vatCountryLabel: 'País de la UE para consultar tipos',
-    vatLoadButton: 'Cargar tipos actuales desde la base de datos de la UE',
+    vatLoadButton: 'Cargar y usar los tipos actuales',
     vatManualButton: 'Introducir tipos manualmente',
     vatSkipButton: 'Omitir, configurar después',
+    vatRetryAction: 'Intentarlo de nuevo',
+    vatImportFailedPrompt:
+      'Faktoro no pudo guardar los tipos de IVA en este momento. Puedes intentarlo de nuevo o omitir este paso y configurarlos más tarde.',
     vatLoadedFor: 'Tipos para {country}',
     vatLoadedOn: 'Cargado el {date}',
     vatUseRates: 'Usar estos tipos',

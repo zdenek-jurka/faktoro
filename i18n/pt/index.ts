@@ -423,6 +423,14 @@ const pt = {
     advancedExportIntegrationsTitle: 'Integrações de exportação',
     advancedExportIntegrationsDescription:
       'Ativa exportações XML personalizadas baseadas em XSLT nas exportações de folhas de horas e em Definições > Serviços externos.',
+    advancedDangerousResetDataTitle: 'Redefinir todos os dados locais do app',
+    advancedDangerousResetDataDescription:
+      'Apaga todos os dados locais do Faktoro neste dispositivo e abre o onboarding novamente. Use apenas para testes ou para um reset local completo.',
+    advancedDangerousResetDataAction: 'Apagar todos os dados locais',
+    advancedDangerousResetDataConfirmTitle: 'Apagar todos os dados locais do Faktoro?',
+    advancedDangerousResetDataConfirmMessage:
+      'Isso removerá clientes, registros de tempo, timesheets, faturas, configurações de sincronização, backups armazenados pelo app, segredos de exportação e o progresso do onboarding neste dispositivo. Esta ação não pode ser desfeita.',
+    advancedDangerousResetDataConfirmContinue: 'Apagar tudo',
     offlineBackupCreateTitle: 'Create backup',
     offlineBackupCreateDescription:
       'Create a full offline backup file of your local Faktoro data and save it somewhere safe.',
@@ -1035,10 +1043,15 @@ const pt = {
     vatTitle: 'Taxas de IVA',
     vatSubtitle:
       'O aplicativo precisa das taxas de IVA atuais para calcular o imposto corretamente nas faturas.',
+    vatAutoLoadHint:
+      'Depois de escolher um país, o Faktoro prepara as taxas de IVA atuais para revisão. Elas serão guardadas automaticamente quando continuar.',
     vatCountryLabel: 'País da UE para consulta de taxas',
-    vatLoadButton: 'Carregar taxas atuais da base de dados da UE',
+    vatLoadButton: 'Carregar e usar as taxas atuais',
     vatManualButton: 'Inserir taxas manualmente',
     vatSkipButton: 'Pular, configurar depois',
+    vatRetryAction: 'Tentar novamente',
+    vatImportFailedPrompt:
+      'O Faktoro não conseguiu guardar as taxas de IVA agora. Pode tentar novamente ou ignorar esta etapa e configurá-las mais tarde.',
     vatLoadedFor: 'Taxas para {country}',
     vatLoadedOn: 'Carregado em {date}',
     vatUseRates: 'Usar essas taxas',

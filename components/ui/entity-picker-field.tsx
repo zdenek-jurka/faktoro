@@ -16,6 +16,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export type EntityPickerOption = {
   value: string;
@@ -52,6 +53,7 @@ export function EntityPickerField({
   const colorScheme = useColorScheme();
   const palette = Colors[colorScheme ?? 'light'];
   const { LL } = useI18nContext();
+  const insets = useSafeAreaInsets();
   const modalContentStyle = useBottomSafeAreaStyle(styles.modalContent);
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -115,7 +117,10 @@ export function EntityPickerField({
 
       <Modal visible={open} animationType="slide" transparent={true} onRequestClose={closePicker}>
         <KeyboardAvoidingView
-          style={[styles.modalOverlay, { backgroundColor: palette.overlayBackdrop }]}
+          style={[
+            styles.modalOverlay,
+            { backgroundColor: palette.overlayBackdrop, paddingTop: insets.top + 12 },
+          ]}
           behavior={isIos ? 'padding' : 'height'}
           keyboardVerticalOffset={0}
         >

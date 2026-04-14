@@ -395,6 +395,14 @@ const en = {
     advancedExportIntegrationsTitle: 'Export integrations',
     advancedExportIntegrationsDescription:
       'Enables custom XSLT-based XML export integrations in timesheet exports and the Settings > External services section.',
+    advancedDangerousResetDataTitle: 'Reset all local app data',
+    advancedDangerousResetDataDescription:
+      'Deletes all local Faktoro data on this device and opens onboarding again. Use only for testing or a full local reset.',
+    advancedDangerousResetDataAction: 'Delete all local data',
+    advancedDangerousResetDataConfirmTitle: 'Delete all local Faktoro data?',
+    advancedDangerousResetDataConfirmMessage:
+      'This will remove clients, time entries, timesheets, invoices, sync settings, backups stored by the app, export secrets, and onboarding progress on this device. This cannot be undone.',
+    advancedDangerousResetDataConfirmContinue: 'Delete everything',
     languageTitle: 'Language',
     languageSubtitle: 'App language and interface localization.',
     invoicingTitle: 'Invoicing',
@@ -1002,10 +1010,15 @@ const en = {
     profileRegistryLabel: 'Registry for company ID lookup',
     vatTitle: 'VAT rates',
     vatSubtitle: 'The app needs current VAT rates to calculate tax correctly on invoices.',
+    vatAutoLoadHint:
+      'After you choose a country, Faktoro prepares the current VAT rates for review. They will be saved automatically when you continue.',
     vatCountryLabel: 'EU country for rate lookup',
-    vatLoadButton: 'Load current rates from EU database',
+    vatLoadButton: 'Load and use current rates',
     vatManualButton: 'Enter rates manually',
     vatSkipButton: 'Skip, set up later',
+    vatRetryAction: 'Try again',
+    vatImportFailedPrompt:
+      'Faktoro could not save VAT rates right now. You can retry or skip this step and set them up later.',
     vatLoadedFor: 'Rates for {country:string}',
     vatLoadedOn: 'Loaded on {date:string}',
     vatUseRates: 'Use these rates',

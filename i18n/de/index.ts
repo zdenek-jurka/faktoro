@@ -429,6 +429,14 @@ const de = {
     advancedExportIntegrationsTitle: 'Exportintegrationen',
     advancedExportIntegrationsDescription:
       'Aktiviert benutzerdefinierte XML-Exporte auf Basis von XSLT in Stundenzettel-Exporten und im Bereich Einstellungen > Externe Dienste.',
+    advancedDangerousResetDataTitle: 'Alle lokalen App-Daten zurücksetzen',
+    advancedDangerousResetDataDescription:
+      'Löscht alle lokalen Faktoro-Daten auf diesem Gerät und startet das Onboarding erneut. Nur für Tests oder einen vollständigen lokalen Reset verwenden.',
+    advancedDangerousResetDataAction: 'Alle lokalen Daten löschen',
+    advancedDangerousResetDataConfirmTitle: 'Alle lokalen Faktoro-Daten löschen?',
+    advancedDangerousResetDataConfirmMessage:
+      'Dadurch werden Kunden, Zeiteinträge, Timesheets, Rechnungen, Sync-Einstellungen, von der App gespeicherte Backups, Export-Geheimnisse und der Onboarding-Status auf diesem Gerät entfernt. Dies kann nicht rückgängig gemacht werden.',
+    advancedDangerousResetDataConfirmContinue: 'Alles löschen',
     offlineBackupCreateTitle: 'Create backup',
     offlineBackupCreateDescription:
       'Create a full offline backup file of your local Faktoro data and save it somewhere safe.',
@@ -1046,10 +1054,15 @@ const de = {
     vatTitle: 'MwSt.-Sätze',
     vatSubtitle:
       'Die App benötigt aktuelle MwSt.-Sätze, um die Steuer auf Rechnungen korrekt zu berechnen.',
+    vatAutoLoadHint:
+      'Nach der Auswahl eines Landes bereitet Faktoro die aktuellen MwSt.-Sätze zur Prüfung vor. Beim Fortfahren werden sie automatisch gespeichert.',
     vatCountryLabel: 'EU-Land für den Satzabruf',
-    vatLoadButton: 'Aktuelle Sätze aus der EU-Datenbank laden',
+    vatLoadButton: 'Aktuelle Sätze laden und verwenden',
     vatManualButton: 'Sätze manuell eingeben',
     vatSkipButton: 'Überspringen, später einrichten',
+    vatRetryAction: 'Erneut versuchen',
+    vatImportFailedPrompt:
+      'Faktoro konnte die MwSt.-Sätze gerade nicht speichern. Du kannst es erneut versuchen oder diesen Schritt überspringen und sie später einrichten.',
     vatLoadedFor: 'Sätze für {country}',
     vatLoadedOn: 'Geladen am {date}',
     vatUseRates: 'Diese Sätze verwenden',

@@ -6,6 +6,7 @@ import { Colors } from '@/constants/theme';
 import { useBottomSafeAreaStyle } from '@/hooks/use-bottom-safe-area-style';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { type CompanyRegistryKey } from '@/repositories/company-registry';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   COMPANY_REGISTRY_OPTIONS,
   getRegistryLabel,
@@ -29,12 +30,13 @@ export function CompanyRegistryPickerModal({
 }: Props) {
   const colorScheme = useColorScheme() ?? 'light';
   const palette = Colors[colorScheme];
+  const insets = useSafeAreaInsets();
   const sheetStyle = useBottomSafeAreaStyle(styles.sheet);
   const optionsContentStyle = useBottomSafeAreaStyle(styles.optionsContent);
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <View style={styles.overlay}>
+      <View style={[styles.overlay, { paddingTop: insets.top + 12 }]}>
         <Pressable
           style={[styles.backdrop, { backgroundColor: palette.overlayBackdropSoft }]}
           onPress={onClose}

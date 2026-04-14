@@ -420,6 +420,14 @@ const pl = {
     advancedExportIntegrationsTitle: 'Integracje eksportu',
     advancedExportIntegrationsDescription:
       'Włącza własne eksporty XML oparte na XSLT w eksporcie timesheetów i w Ustawienia > Usługi zewnętrzne.',
+    advancedDangerousResetDataTitle: 'Wyczyść wszystkie lokalne dane aplikacji',
+    advancedDangerousResetDataDescription:
+      'Usuwa wszystkie lokalne dane Faktoro z tego urządzenia i ponownie otwiera onboarding. Używaj tylko do testów albo pełnego lokalnego resetu.',
+    advancedDangerousResetDataAction: 'Usuń wszystkie lokalne dane',
+    advancedDangerousResetDataConfirmTitle: 'Usunąć wszystkie lokalne dane Faktoro?',
+    advancedDangerousResetDataConfirmMessage:
+      'Spowoduje to usunięcie klientów, wpisów czasu, timesheetów, faktur, ustawień synchronizacji, kopii zapasowych zapisanych przez aplikację, sekretów eksportu i postępu onboardingu na tym urządzeniu. Tej operacji nie można cofnąć.',
+    advancedDangerousResetDataConfirmContinue: 'Usuń wszystko',
     offlineBackupCreateTitle: 'Create backup',
     offlineBackupCreateDescription:
       'Create a full offline backup file of your local Faktoro data and save it somewhere safe.',
@@ -1020,10 +1028,15 @@ const pl = {
     vatTitle: 'Stawki VAT',
     vatSubtitle:
       'Aplikacja potrzebuje aktualnych stawek VAT, aby poprawnie obliczać podatek na fakturach.',
+    vatAutoLoadHint:
+      'Po wybraniu kraju Faktoro przygotowuje aktualne stawki VAT do podglądu. Zostaną zapisane automatycznie po przejściu dalej.',
     vatCountryLabel: 'Kraj UE do pobrania stawek',
-    vatLoadButton: 'Załaduj aktualne stawki z bazy UE',
+    vatLoadButton: 'Załaduj i użyj aktualnych stawek',
     vatManualButton: 'Wprowadź stawki ręcznie',
     vatSkipButton: 'Pomiń, skonfiguruj później',
+    vatRetryAction: 'Spróbuj ponownie',
+    vatImportFailedPrompt:
+      'Faktoro nie mogło teraz zapisać stawek VAT. Możesz spróbować ponownie albo pominąć ten krok i skonfigurować je później.',
     vatLoadedFor: 'Stawki dla {country}',
     vatLoadedOn: 'Załadowano {date}',
     vatUseRates: 'Użyj tych stawek',

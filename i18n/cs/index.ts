@@ -397,6 +397,14 @@ const cs = {
     advancedExportIntegrationsTitle: 'Exportní integrace',
     advancedExportIntegrationsDescription:
       'Zapne vlastní XML exporty přes XSLT v detailu timesheetu a v sekci Nastavení > Externí služby.',
+    advancedDangerousResetDataTitle: 'Smazat všechna lokální data aplikace',
+    advancedDangerousResetDataDescription:
+      'Smaže všechna lokální data Faktoro na tomto zařízení a znovu otevře onboarding. Používejte jen pro testování nebo úplný lokální reset.',
+    advancedDangerousResetDataAction: 'Smazat všechna lokální data',
+    advancedDangerousResetDataConfirmTitle: 'Smazat všechna lokální data Faktoro?',
+    advancedDangerousResetDataConfirmMessage:
+      'Tímto odstraníte klienty, časové záznamy, timesheety, faktury, sync nastavení, zálohy uložené aplikací, exportní tajné údaje i průběh onboardingu na tomto zařízení. Tuto akci nelze vrátit zpět.',
+    advancedDangerousResetDataConfirmContinue: 'Smazat vše',
     languageTitle: 'Jazyk',
     languageSubtitle: 'Jazyk aplikace a lokalizace rozhraní.',
     invoicingTitle: 'Fakturace',
@@ -1009,10 +1017,15 @@ const cs = {
     profileRegistryLabel: 'Registr pro dohledání podle IČ',
     vatTitle: 'Sazby DPH',
     vatSubtitle: 'Aplikace potřebuje aktuální sazby DPH pro správný výpočet daně na fakturách.',
+    vatAutoLoadHint:
+      'Po výběru země Faktoro připraví aktuální sazby DPH k náhledu. Při pokračování se automaticky uloží.',
     vatCountryLabel: 'Země EU pro načtení sazeb',
-    vatLoadButton: 'Načíst aktuální sazby z databáze EU',
+    vatLoadButton: 'Načíst a použít aktuální sazby',
     vatManualButton: 'Zadat sazby ručně',
     vatSkipButton: 'Přeskočit, nastavím později',
+    vatRetryAction: 'Zkusit znovu',
+    vatImportFailedPrompt:
+      'Faktoro teď nedokázalo sazby DPH uložit. Můžete to zkusit znovu, nebo tento krok přeskočit a nastavit je později.',
     vatLoadedFor: 'Sazby pro {country:string}',
     vatLoadedOn: 'Načteno {date:string}',
     vatUseRates: 'Použít tyto sazby',

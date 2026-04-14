@@ -19,17 +19,17 @@ import { getSettings } from '@/repositories/settings-repository';
 import { addVatRates, replaceAllVatRates } from '@/repositories/vat-rate-repository';
 import { createBootstrapVatCodeToken, getLocalizedVatCodeName } from '@/utils/vat-code-utils';
 import { useRouter } from 'expo-router';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
   Pressable,
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   Switch,
   View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function OnboardingVatScreen() {
   const colorScheme = useColorScheme();
@@ -41,9 +41,12 @@ export default function OnboardingVatScreen() {
 
   const [bootstrapCountry, setBootstrapCountry] = useState('');
   const [bootstrapPreview, setBootstrapPreview] = useState<EuVatBootstrapPreview | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isImported, setIsImported] = useState(false);
+  const [isPreviewLoading, setIsPreviewLoading] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
+  const [importedCountry, setImportedCountry] = useState<string | null>(null);
   const [replaceMode, setReplaceMode] = useState(true);
+  const autoLoadedCountryRef = useRef<string | null>(null);
+  const isImported = !!bootstrapCountry && importedCountry === bootstrapCountry;
 
   const euCountryOptions = useMemo(() => getEuMemberStateOptions(locale), [locale]);
 
@@ -90,47 +93,123 @@ export default function OnboardingVatScreen() {
         displayName: getLocalizedVatCodeName(codeName, LL),
       };
     });
-  }, [LL, bootstrapPreview]);
+  }, [LL, bootstrapCountry, bootstrapPreview]);
 
-  async function handleLoadPreview() {
-    if (!bootstrapCountry) {
-      Alert.alert(LL.common.error(), LL.settings.vatBootstrapCountryRequired());
-      return;
-    }
-    setIsLoading(true);
-    try {
-      const preview = await fetchEuVatBootstrapPreview(bootstrapCountry);
-      setBootstrapPreview(preview);
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      Alert.alert(LL.common.error(), msg);
-    } finally {
-      setIsLoading(false);
-    }
-  }
+  const buildRateItems = useCallback(
+    (preview: EuVatBootstrapPreview, countryCode: string) => {
+      const totalByKind = preview.rates.reduce<Record<EuVatBootstrapRateKind, number>>(
+        (acc, rate) => {
+          acc[rate.kind] += 1;
+          return acc;
+        },
+        { standard: 0, reduced: 0, superReduced: 0, parking: 0, exempt: 0 },
+      );
 
-  async function handleImport() {
-    if (!bootstrapPreviewRows.length) return;
-    setIsLoading(true);
-    const rateItems = bootstrapPreviewRows.map((rate) => ({
-      codeName: rate.codeName,
-      countryCode: bootstrapCountry || null,
-      matchNames: [rate.displayName],
-      ratePercent: rate.ratePercent,
-      validFrom: rate.validFrom,
-    }));
+      const seenByKind = {
+        standard: 0,
+        reduced: 0,
+        superReduced: 0,
+        parking: 0,
+        exempt: 0,
+      } satisfies Record<EuVatBootstrapRateKind, number>;
+
+      return preview.rates.map((rate) => {
+        seenByKind[rate.kind] += 1;
+        const index = seenByKind[rate.kind];
+        const total = totalByKind[rate.kind];
+        const codeName = createBootstrapVatCodeToken(rate.kind, index, total, countryCode);
+        const displayName = getLocalizedVatCodeName(codeName, LL);
+        return {
+          codeName,
+          countryCode: countryCode || null,
+          matchNames: [displayName],
+          ratePercent: rate.ratePercent,
+          validFrom: rate.validFrom,
+        };
+      });
+    },
+    [LL],
+  );
+
+  const loadPreviewForCountry = useCallback(
+    async (countryCode: string): Promise<EuVatBootstrapPreview> => {
+      if (!countryCode) {
+        throw new Error(LL.settings.vatBootstrapCountryRequired());
+      }
+      setIsPreviewLoading(true);
+      try {
+        const preview = await fetchEuVatBootstrapPreview(countryCode);
+        setBootstrapPreview(preview);
+        return preview;
+      } finally {
+        setIsPreviewLoading(false);
+      }
+    },
+    [LL],
+  );
+
+  useEffect(() => {
+    if (!bootstrapCountry || isImported) return;
+    if (bootstrapPreview?.memberState === bootstrapCountry) return;
+    if (autoLoadedCountryRef.current === bootstrapCountry) return;
+
+    autoLoadedCountryRef.current = bootstrapCountry;
+    void loadPreviewForCountry(bootstrapCountry).catch(() => {});
+  }, [bootstrapCountry, bootstrapPreview, isImported, loadPreviewForCountry]);
+
+  async function importRatesForCountry(countryCode: string) {
+    autoLoadedCountryRef.current = countryCode || null;
+    const activePreview =
+      bootstrapPreview?.memberState === countryCode
+        ? bootstrapPreview
+        : await loadPreviewForCountry(countryCode);
+    setIsImporting(true);
+    const rateItems = buildRateItems(activePreview, countryCode);
     try {
       if (replaceMode) {
         await replaceAllVatRates(rateItems);
       } else {
         await addVatRates(rateItems);
       }
-      setIsImported(true);
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      Alert.alert(LL.common.error(), msg);
+      setImportedCountry(countryCode);
     } finally {
-      setIsLoading(false);
+      setIsImporting(false);
+    }
+  }
+
+  function promptVatImportFailure(errorMessage: string): Promise<'retry' | 'skip' | 'cancel'> {
+    return new Promise((resolve) => {
+      Alert.alert(LL.common.error(), errorMessage, [
+        { text: LL.common.cancel(), style: 'cancel', onPress: () => resolve('cancel') },
+        { text: LL.onboarding.skip(), onPress: () => resolve('skip') },
+        { text: LL.onboarding.vatRetryAction(), onPress: () => resolve('retry') },
+      ]);
+    });
+  }
+
+  async function handleNext() {
+    if (!bootstrapCountry || isImported) {
+      goToCurrencyStep();
+      return;
+    }
+
+    while (true) {
+      try {
+        await importRatesForCountry(bootstrapCountry);
+        goToCurrencyStep();
+        return;
+      } catch (err) {
+        const technicalMessage = err instanceof Error ? err.message : String(err);
+        const decision = await promptVatImportFailure(
+          `${technicalMessage}\n\n${LL.onboarding.vatImportFailedPrompt()}`,
+        );
+
+        if (decision === 'retry') continue;
+        if (decision === 'skip') {
+          goToCurrencyStep();
+        }
+        return;
+      }
     }
   }
 
@@ -140,6 +219,13 @@ export default function OnboardingVatScreen() {
   const countryLabel = bootstrapPreview
     ? getEuMemberStateLabel(bootstrapPreview.memberState, locale)
     : '';
+
+  function goToCurrencyStep() {
+    router.push({
+      pathname: '/onboarding/currency',
+      params: isImported ? { vatConfigured: '1' } : undefined,
+    });
+  }
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: palette.background }]}>
@@ -183,6 +269,9 @@ export default function OnboardingVatScreen() {
             <ThemedText style={[styles.fieldLabel, { color: palette.textSecondary }]}>
               {LL.settings.vatBootstrapCountryLabel()}
             </ThemedText>
+            <ThemedText style={[styles.note, { color: palette.textMuted }]}>
+              {LL.onboarding.vatAutoLoadHint()}
+            </ThemedText>
 
             <EntityPickerField
               value={bootstrapCountry}
@@ -194,32 +283,6 @@ export default function OnboardingVatScreen() {
               emptySearchText={LL.settings.vatBootstrapCountryEmptySearch()}
               options={euCountryOptions}
             />
-
-            <Pressable
-              style={[
-                styles.loadButton,
-                {
-                  backgroundColor: bootstrapCountry
-                    ? palette.tint
-                    : palette.buttonNeutralBackground,
-                },
-              ]}
-              onPress={handleLoadPreview}
-              disabled={isLoading || !bootstrapCountry}
-            >
-              {isLoading && !bootstrapPreview ? (
-                <ActivityIndicator size="small" color={palette.onTint} />
-              ) : (
-                <ThemedText
-                  style={[
-                    styles.loadButtonText,
-                    { color: bootstrapCountry ? palette.onTint : palette.textMuted },
-                  ]}
-                >
-                  {LL.settings.vatBootstrapPreviewAction()}
-                </ThemedText>
-              )}
-            </Pressable>
 
             {bootstrapPreview && bootstrapPreviewRows.length > 0 && (
               <View style={[styles.previewCard, { borderColor: palette.border }]}>
@@ -248,21 +311,6 @@ export default function OnboardingVatScreen() {
                     ios_backgroundColor={switchColors.ios_backgroundColor}
                   />
                 </View>
-                <Pressable
-                  style={[styles.importButton, { backgroundColor: palette.tint }]}
-                  onPress={handleImport}
-                  disabled={isLoading}
-                >
-                  {isLoading ? (
-                    <ActivityIndicator size="small" color={palette.onTint} />
-                  ) : (
-                    <ThemedText style={[styles.importButtonText, { color: palette.onTint }]}>
-                      {replaceMode
-                        ? LL.settings.vatBootstrapImportAction()
-                        : LL.settings.vatBootstrapAddImportAction()}
-                    </ThemedText>
-                  )}
-                </Pressable>
               </View>
             )}
           </View>
@@ -271,15 +319,22 @@ export default function OnboardingVatScreen() {
         <View style={styles.actions}>
           <Pressable
             style={[styles.primaryButton, { backgroundColor: palette.tint }]}
-            onPress={() => router.push('/onboarding/currency')}
+            onPress={() => {
+              void handleNext();
+            }}
             android_ripple={{ color: 'rgba(255,255,255,0.2)' }}
+            disabled={isPreviewLoading || isImporting}
           >
-            <ThemedText style={[styles.primaryButtonText, { color: palette.onTint }]}>
-              {LL.onboarding.next()}
-            </ThemedText>
+            {isPreviewLoading || isImporting ? (
+              <ActivityIndicator size="small" color={palette.onTint} />
+            ) : (
+              <ThemedText style={[styles.primaryButtonText, { color: palette.onTint }]}>
+                {LL.onboarding.next()}
+              </ThemedText>
+            )}
           </Pressable>
 
-          <Pressable style={styles.skipButton} onPress={() => router.push('/onboarding/currency')}>
+          <Pressable style={styles.skipButton} onPress={goToCurrencyStep}>
             <ThemedText style={[styles.skipText, { color: palette.textMuted }]}>
               {LL.onboarding.vatSkipButton()}
             </ThemedText>
@@ -307,13 +362,6 @@ const styles = StyleSheet.create({
   subtitle: { fontSize: 15, lineHeight: 22 },
   card: { borderRadius: 14, padding: 16, gap: 12 },
   fieldLabel: { fontSize: 13 },
-  loadButton: {
-    height: 44,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  loadButtonText: { fontSize: 15, fontWeight: '600' },
   previewCard: {
     borderRadius: 10,
     borderWidth: 1,

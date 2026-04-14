@@ -1,5 +1,6 @@
 import { ThemedText } from '@/components/themed-text';
 import { IconSymbol } from '@/components/ui/icon-symbol';
+import { KeyboardAwareScroll } from '@/components/ui/keyboard-aware-scroll';
 import { isSyncEnabled } from '@/constants/features';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
@@ -7,7 +8,6 @@ import { useI18nContext } from '@/i18n/i18n-react';
 import { updateDeviceSyncSettings } from '@/repositories/device-sync-settings-repository';
 import { getSettings } from '@/repositories/settings-repository';
 import { isPlausibleEmail } from '@/utils/email-utils';
-import { isIos } from '@/utils/platform';
 import { showAlert } from '@/utils/platform-alert';
 import {
   ADD_DEVICE_PAYLOAD_PEM_BEGIN,
@@ -20,17 +20,8 @@ import Constants from 'expo-constants';
 import { useCameraPermissions } from 'expo-camera';
 import { Redirect, useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import {
-  ActivityIndicator,
-  KeyboardAvoidingView,
-  Pressable,
-  SafeAreaView,
-  ScrollView,
-  StyleSheet,
-  TextInput,
-  View,
-} from 'react-native';
-import { useHeaderHeight } from '@react-navigation/elements';
+import { ActivityIndicator, Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function OnboardingConnectScreen() {
   if (!isSyncEnabled) {
@@ -44,7 +35,6 @@ function OnboardingConnectScreenContent() {
   const palette = Colors[colorScheme ?? 'light'];
   const { LL } = useI18nContext();
   const router = useRouter();
-  const headerHeight = useHeaderHeight();
 
   const [payloadInput, setPayloadInput] = useState('');
   const [deviceName, setDeviceName] = useState(
@@ -138,149 +128,143 @@ function OnboardingConnectScreenContent() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: palette.background }]}>
-      <KeyboardAvoidingView
+      <KeyboardAwareScroll
         style={styles.flex}
-        behavior={isIos ? 'padding' : undefined}
-        keyboardVerticalOffset={isIos ? headerHeight : 0}
+        scrollViewStyle={styles.flex}
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
       >
-        <ScrollView
-          style={styles.flex}
-          contentContainerStyle={styles.scrollContent}
-          keyboardDismissMode="on-drag"
-          keyboardShouldPersistTaps="handled"
-        >
-          <View style={styles.header}>
-            <Pressable style={styles.backButton} onPress={() => router.back()}>
-              <IconSymbol name="chevron.left" size={20} color={palette.tint} />
-              <ThemedText style={[styles.backLabel, { color: palette.tint }]}>
-                {LL.onboarding.back()}
-              </ThemedText>
-            </Pressable>
-            <ThemedText type="title" style={styles.title}>
-              {LL.onboarding.connectTitle()}
+        <View style={styles.header}>
+          <Pressable style={styles.backButton} onPress={() => router.back()}>
+            <IconSymbol name="chevron.left" size={20} color={palette.tint} />
+            <ThemedText style={[styles.backLabel, { color: palette.tint }]}>
+              {LL.onboarding.back()}
             </ThemedText>
-            <ThemedText style={[styles.subtitle, { color: palette.textSecondary }]}>
-              {LL.onboarding.connectSubtitle()}
-            </ThemedText>
-          </View>
-
-          <View style={[styles.card, { backgroundColor: palette.cardBackground }]}>
-            {/* Payload */}
-            <View style={styles.field}>
-              <View style={styles.fieldLabelRow}>
-                <ThemedText style={[styles.fieldLabel, { color: palette.textSecondary }]}>
-                  {LL.onboarding.connectPayloadLabel()} *
-                </ThemedText>
-                <Pressable
-                  style={[styles.scanButton, { backgroundColor: palette.tint }]}
-                  onPress={handleOpenScanner}
-                  hitSlop={8}
-                >
-                  <IconSymbol name="qrcode.viewfinder" size={16} color={palette.onTint} />
-                  <ThemedText style={[styles.scanButtonText, { color: palette.onTint }]}>
-                    {LL.onboarding.connectScanQr()}
-                  </ThemedText>
-                </Pressable>
-              </View>
-              <TextInput
-                style={[
-                  styles.payloadInput,
-                  {
-                    backgroundColor: palette.inputBackground,
-                    borderColor: palette.inputBorder,
-                    color: palette.text,
-                  },
-                ]}
-                value={payloadInput}
-                onChangeText={setPayloadInput}
-                placeholder={LL.onboarding.connectPayloadPlaceholder()}
-                placeholderTextColor={palette.placeholder}
-                multiline
-                autoCapitalize="none"
-                autoCorrect={false}
-              />
-            </View>
-
-            {/* Device name */}
-            <View style={styles.field}>
-              <ThemedText style={[styles.fieldLabel, { color: palette.textSecondary }]}>
-                {LL.onboarding.connectDeviceNameLabel()}
-              </ThemedText>
-              <TextInput
-                style={[
-                  styles.input,
-                  {
-                    backgroundColor: palette.inputBackground,
-                    borderColor: palette.inputBorder,
-                    color: palette.text,
-                  },
-                ]}
-                value={deviceName}
-                onChangeText={setDeviceName}
-                placeholder={LL.onboarding.connectDeviceNameLabel()}
-                placeholderTextColor={palette.placeholder}
-              />
-            </View>
-
-            {/* Recovery email */}
-            <View style={styles.field}>
-              <ThemedText style={[styles.fieldLabel, { color: palette.textSecondary }]}>
-                {LL.onboarding.connectEmailLabel()} *
-              </ThemedText>
-              <TextInput
-                style={[
-                  styles.input,
-                  {
-                    backgroundColor: palette.inputBackground,
-                    borderColor: palette.inputBorder,
-                    color: palette.text,
-                  },
-                ]}
-                value={recoveryEmail}
-                onChangeText={setRecoveryEmail}
-                placeholder={LL.onboarding.connectEmailPlaceholder()}
-                placeholderTextColor={palette.placeholder}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                autoCorrect={false}
-              />
-            </View>
-          </View>
-
-          <Pressable
-            style={[
-              styles.primaryButton,
-              {
-                backgroundColor:
-                  payloadInput.trim() && recoveryEmail.trim()
-                    ? palette.tint
-                    : palette.buttonNeutralBackground,
-              },
-            ]}
-            onPress={handleConnect}
-            disabled={isConnecting || !payloadInput.trim() || !recoveryEmail.trim()}
-            android_ripple={{ color: 'rgba(255,255,255,0.2)' }}
-          >
-            {isConnecting ? (
-              <ActivityIndicator size="small" color={palette.onTint} />
-            ) : (
-              <ThemedText
-                style={[
-                  styles.primaryButtonText,
-                  {
-                    color:
-                      payloadInput.trim() && recoveryEmail.trim()
-                        ? palette.onTint
-                        : palette.textMuted,
-                  },
-                ]}
-              >
-                {LL.onboarding.connectButton()}
-              </ThemedText>
-            )}
           </Pressable>
-        </ScrollView>
-      </KeyboardAvoidingView>
+          <ThemedText type="title" style={styles.title}>
+            {LL.onboarding.connectTitle()}
+          </ThemedText>
+          <ThemedText style={[styles.subtitle, { color: palette.textSecondary }]}>
+            {LL.onboarding.connectSubtitle()}
+          </ThemedText>
+        </View>
+
+        <View style={[styles.card, { backgroundColor: palette.cardBackground }]}>
+          {/* Payload */}
+          <View style={styles.field}>
+            <View style={styles.fieldLabelRow}>
+              <ThemedText style={[styles.fieldLabel, { color: palette.textSecondary }]}>
+                {LL.onboarding.connectPayloadLabel()} *
+              </ThemedText>
+              <Pressable
+                style={[styles.scanButton, { backgroundColor: palette.tint }]}
+                onPress={handleOpenScanner}
+                hitSlop={8}
+              >
+                <IconSymbol name="qrcode.viewfinder" size={16} color={palette.onTint} />
+                <ThemedText style={[styles.scanButtonText, { color: palette.onTint }]}>
+                  {LL.onboarding.connectScanQr()}
+                </ThemedText>
+              </Pressable>
+            </View>
+            <TextInput
+              style={[
+                styles.payloadInput,
+                {
+                  backgroundColor: palette.inputBackground,
+                  borderColor: palette.inputBorder,
+                  color: palette.text,
+                },
+              ]}
+              value={payloadInput}
+              onChangeText={setPayloadInput}
+              placeholder={LL.onboarding.connectPayloadPlaceholder()}
+              placeholderTextColor={palette.placeholder}
+              multiline
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
+          </View>
+
+          {/* Device name */}
+          <View style={styles.field}>
+            <ThemedText style={[styles.fieldLabel, { color: palette.textSecondary }]}>
+              {LL.onboarding.connectDeviceNameLabel()}
+            </ThemedText>
+            <TextInput
+              style={[
+                styles.input,
+                {
+                  backgroundColor: palette.inputBackground,
+                  borderColor: palette.inputBorder,
+                  color: palette.text,
+                },
+              ]}
+              value={deviceName}
+              onChangeText={setDeviceName}
+              placeholder={LL.onboarding.connectDeviceNameLabel()}
+              placeholderTextColor={palette.placeholder}
+            />
+          </View>
+
+          {/* Recovery email */}
+          <View style={styles.field}>
+            <ThemedText style={[styles.fieldLabel, { color: palette.textSecondary }]}>
+              {LL.onboarding.connectEmailLabel()} *
+            </ThemedText>
+            <TextInput
+              style={[
+                styles.input,
+                {
+                  backgroundColor: palette.inputBackground,
+                  borderColor: palette.inputBorder,
+                  color: palette.text,
+                },
+              ]}
+              value={recoveryEmail}
+              onChangeText={setRecoveryEmail}
+              placeholder={LL.onboarding.connectEmailPlaceholder()}
+              placeholderTextColor={palette.placeholder}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
+          </View>
+        </View>
+
+        <Pressable
+          style={[
+            styles.primaryButton,
+            {
+              backgroundColor:
+                payloadInput.trim() && recoveryEmail.trim()
+                  ? palette.tint
+                  : palette.buttonNeutralBackground,
+            },
+          ]}
+          onPress={handleConnect}
+          disabled={isConnecting || !payloadInput.trim() || !recoveryEmail.trim()}
+          android_ripple={{ color: 'rgba(255,255,255,0.2)' }}
+        >
+          {isConnecting ? (
+            <ActivityIndicator size="small" color={palette.onTint} />
+          ) : (
+            <ThemedText
+              style={[
+                styles.primaryButtonText,
+                {
+                  color:
+                    payloadInput.trim() && recoveryEmail.trim()
+                      ? palette.onTint
+                      : palette.textMuted,
+                },
+              ]}
+            >
+              {LL.onboarding.connectButton()}
+            </ThemedText>
+          )}
+        </Pressable>
+      </KeyboardAwareScroll>
 
       <QrScannerModal
         visible={scannerOpen}

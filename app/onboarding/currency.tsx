@@ -1,5 +1,6 @@
 import { ThemedText } from '@/components/themed-text';
 import { IconSymbol } from '@/components/ui/icon-symbol';
+import { KeyboardAwareScroll } from '@/components/ui/keyboard-aware-scroll';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useCurrencySettings } from '@/hooks/use-currency-settings';
@@ -7,30 +8,24 @@ import { useI18nContext } from '@/i18n/i18n-react';
 import { getSettings, updateSettings } from '@/repositories/settings-repository';
 import { DEFAULT_CURRENCY_CODE, normalizeCurrencyCode } from '@/utils/currency-utils';
 import { DEFAULT_INVOICE_DUE_DAYS, parseInvoiceDueDaysInput } from '@/utils/invoice-defaults';
-import { isIos } from '@/utils/platform';
-import { useHeaderHeight } from '@react-navigation/elements';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import {
-  KeyboardAvoidingView,
-  Pressable,
-  SafeAreaView,
-  ScrollView,
-  StyleSheet,
-  TextInput,
-  View,
-} from 'react-native';
+import { Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function OnboardingCurrencyScreen() {
   const colorScheme = useColorScheme();
   const palette = Colors[colorScheme ?? 'light'];
   const { LL } = useI18nContext();
   const router = useRouter();
-  const headerHeight = useHeaderHeight();
+  const params = useLocalSearchParams<{ vatConfigured?: string | string[] }>();
   const currencies = useCurrencySettings();
 
   const [selectedCurrency, setSelectedCurrency] = useState(DEFAULT_CURRENCY_CODE);
   const [dueDaysInput, setDueDaysInput] = useState(String(DEFAULT_INVOICE_DUE_DAYS));
+  const vatConfiguredParam = Array.isArray(params.vatConfigured)
+    ? params.vatConfigured[0]
+    : params.vatConfigured;
 
   useEffect(() => {
     getSettings().then((s) => {
@@ -49,106 +44,101 @@ export default function OnboardingCurrencyScreen() {
       defaultInvoiceCurrency: selectedCurrency,
       defaultInvoiceDueDays: dueDays,
     });
-    router.push('/onboarding/done');
+    router.push({
+      pathname: '/onboarding/done',
+      params: vatConfiguredParam ? { vatConfigured: vatConfiguredParam } : undefined,
+    });
   }
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: palette.background }]}>
-      <KeyboardAvoidingView
+      <KeyboardAwareScroll
         style={styles.flex}
-        behavior={isIos ? 'padding' : undefined}
-        keyboardVerticalOffset={isIos ? headerHeight : 0}
+        scrollViewStyle={styles.flex}
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
       >
-        <ScrollView
-          style={styles.flex}
-          contentContainerStyle={styles.scrollContent}
-          keyboardDismissMode="on-drag"
-          keyboardShouldPersistTaps="handled"
-        >
-          <View style={styles.header}>
-            <Pressable style={styles.backButton} onPress={() => router.back()}>
-              <IconSymbol name="chevron.left" size={20} color={palette.tint} />
-              <ThemedText style={[styles.backLabel, { color: palette.tint }]}>
-                {LL.onboarding.back()}
-              </ThemedText>
-            </Pressable>
-            <ThemedText type="title" style={styles.title}>
-              {LL.onboarding.currencyTitle()}
-            </ThemedText>
-            <ThemedText style={[styles.subtitle, { color: palette.textSecondary }]}>
-              {LL.onboarding.currencySubtitle()}
-            </ThemedText>
-          </View>
-
-          {/* Currency picker */}
-          <View style={styles.currencyList}>
-            {currencies.map((cur) => {
-              const selected = selectedCurrency === cur.code;
-              return (
-                <Pressable
-                  key={cur.code}
-                  style={({ pressed }) => [
-                    styles.currencyRow,
-                    {
-                      backgroundColor: palette.cardBackground,
-                      borderColor: selected ? palette.tint : palette.border,
-                      borderWidth: selected ? 2 : 1,
-                    },
-                    pressed && styles.rowPressed,
-                  ]}
-                  onPress={() => setSelectedCurrency(cur.code)}
-                  android_ripple={{ color: palette.border }}
-                >
-                  <View
-                    style={[styles.codeBadge, { backgroundColor: palette.infoBadgeBackground }]}
-                  >
-                    <ThemedText style={[styles.codeText, { color: palette.infoBadgeText }]}>
-                      {cur.code}
-                    </ThemedText>
-                  </View>
-                  <ThemedText style={styles.currencyLabel}>
-                    {cur.prefix || ''}
-                    {cur.suffix ? `${cur.suffix}` : ''}
-                  </ThemedText>
-                  {selected && <IconSymbol name="checkmark" size={18} color={palette.tint} />}
-                </Pressable>
-              );
-            })}
-          </View>
-
-          {/* Due days */}
-          <View style={[styles.card, { backgroundColor: palette.cardBackground }]}>
-            <ThemedText style={[styles.fieldLabel, { color: palette.textSecondary }]}>
-              {LL.onboarding.dueDaysLabel()}
-            </ThemedText>
-            <TextInput
-              style={[
-                styles.input,
-                {
-                  backgroundColor: palette.inputBackground,
-                  borderColor: palette.inputBorder,
-                  color: palette.text,
-                },
-              ]}
-              value={dueDaysInput}
-              onChangeText={setDueDaysInput}
-              keyboardType="number-pad"
-              placeholder={String(DEFAULT_INVOICE_DUE_DAYS)}
-              placeholderTextColor={palette.placeholder}
-            />
-          </View>
-
-          <Pressable
-            style={[styles.primaryButton, { backgroundColor: palette.tint }]}
-            onPress={handleNext}
-            android_ripple={{ color: 'rgba(255,255,255,0.2)' }}
-          >
-            <ThemedText style={[styles.primaryButtonText, { color: palette.onTint }]}>
-              {LL.onboarding.next()}
+        <View style={styles.header}>
+          <Pressable style={styles.backButton} onPress={() => router.back()}>
+            <IconSymbol name="chevron.left" size={20} color={palette.tint} />
+            <ThemedText style={[styles.backLabel, { color: palette.tint }]}>
+              {LL.onboarding.back()}
             </ThemedText>
           </Pressable>
-        </ScrollView>
-      </KeyboardAvoidingView>
+          <ThemedText type="title" style={styles.title}>
+            {LL.onboarding.currencyTitle()}
+          </ThemedText>
+          <ThemedText style={[styles.subtitle, { color: palette.textSecondary }]}>
+            {LL.onboarding.currencySubtitle()}
+          </ThemedText>
+        </View>
+
+        {/* Currency picker */}
+        <View style={styles.currencyList}>
+          {currencies.map((cur) => {
+            const selected = selectedCurrency === cur.code;
+            return (
+              <Pressable
+                key={cur.code}
+                style={({ pressed }) => [
+                  styles.currencyRow,
+                  {
+                    backgroundColor: palette.cardBackground,
+                    borderColor: selected ? palette.tint : palette.border,
+                    borderWidth: selected ? 2 : 1,
+                  },
+                  pressed && styles.rowPressed,
+                ]}
+                onPress={() => setSelectedCurrency(cur.code)}
+                android_ripple={{ color: palette.border }}
+              >
+                <View style={[styles.codeBadge, { backgroundColor: palette.infoBadgeBackground }]}>
+                  <ThemedText style={[styles.codeText, { color: palette.infoBadgeText }]}>
+                    {cur.code}
+                  </ThemedText>
+                </View>
+                <ThemedText style={styles.currencyLabel}>
+                  {cur.prefix || ''}
+                  {cur.suffix ? `${cur.suffix}` : ''}
+                </ThemedText>
+                {selected && <IconSymbol name="checkmark" size={18} color={palette.tint} />}
+              </Pressable>
+            );
+          })}
+        </View>
+
+        {/* Due days */}
+        <View style={[styles.card, { backgroundColor: palette.cardBackground }]}>
+          <ThemedText style={[styles.fieldLabel, { color: palette.textSecondary }]}>
+            {LL.onboarding.dueDaysLabel()}
+          </ThemedText>
+          <TextInput
+            style={[
+              styles.input,
+              {
+                backgroundColor: palette.inputBackground,
+                borderColor: palette.inputBorder,
+                color: palette.text,
+              },
+            ]}
+            value={dueDaysInput}
+            onChangeText={setDueDaysInput}
+            keyboardType="number-pad"
+            placeholder={String(DEFAULT_INVOICE_DUE_DAYS)}
+            placeholderTextColor={palette.placeholder}
+          />
+        </View>
+
+        <Pressable
+          style={[styles.primaryButton, { backgroundColor: palette.tint }]}
+          onPress={handleNext}
+          android_ripple={{ color: 'rgba(255,255,255,0.2)' }}
+        >
+          <ThemedText style={[styles.primaryButtonText, { color: palette.onTint }]}>
+            {LL.onboarding.next()}
+          </ThemedText>
+        </Pressable>
+      </KeyboardAwareScroll>
     </SafeAreaView>
   );
 }

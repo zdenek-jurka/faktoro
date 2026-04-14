@@ -1,11 +1,12 @@
 import { ThemedText } from '@/components/themed-text';
-import { Colors } from '@/constants/theme';
+import { Colors, withOpacity } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useI18nContext } from '@/i18n/i18n-react';
 import { setOnboardingCompleted } from '@/repositories/onboarding-repository';
 import { useRouter } from 'expo-router';
 import React from 'react';
-import { Pressable, SafeAreaView, StyleSheet, View } from 'react-native';
+import { Image, Pressable, StyleSheet, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function OnboardingWelcomeScreen() {
   const colorScheme = useColorScheme();
@@ -26,6 +27,39 @@ export default function OnboardingWelcomeScreen() {
     <SafeAreaView style={[styles.container, { backgroundColor: palette.background }]}>
       <View style={styles.content}>
         <View style={styles.hero}>
+          <View
+            style={[
+              styles.heroMarkShell,
+              {
+                backgroundColor: palette.cardBackground,
+                borderColor: palette.border,
+                shadowColor: palette.tint,
+              },
+            ]}
+          >
+            <View
+              style={[
+                styles.heroMarkGlow,
+                {
+                  backgroundColor: withOpacity(palette.tint, colorScheme === 'dark' ? 0.28 : 0.18),
+                },
+              ]}
+            />
+            <View
+              style={[
+                styles.heroMarkPlate,
+                {
+                  backgroundColor: withOpacity(palette.tint, colorScheme === 'dark' ? 0.2 : 0.1),
+                },
+              ]}
+            >
+              <Image
+                source={require('../../assets/images/faktoro-mark.png')}
+                style={styles.heroMarkImage}
+                resizeMode="contain"
+              />
+            </View>
+          </View>
           <ThemedText style={styles.appName}>Faktoro</ThemedText>
           <ThemedText type="title" style={styles.title}>
             {LL.onboarding.welcomeTitle()}
@@ -41,7 +75,10 @@ export default function OnboardingWelcomeScreen() {
             onPress={handleStart}
             android_ripple={{ color: 'rgba(255,255,255,0.2)' }}
           >
-            <ThemedText style={[styles.primaryButtonText, { color: palette.onTint }]}>
+            <ThemedText
+              style={[styles.primaryButtonText, { color: palette.onTint }]}
+              numberOfLines={2}
+            >
               {LL.onboarding.startSetup()}
             </ThemedText>
           </Pressable>
@@ -77,6 +114,36 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 16,
   },
+  heroMarkShell: {
+    width: 108,
+    height: 108,
+    borderRadius: 28,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.18,
+    shadowRadius: 24,
+    elevation: 6,
+  },
+  heroMarkGlow: {
+    position: 'absolute',
+    width: 84,
+    height: 84,
+    borderRadius: 999,
+  },
+  heroMarkPlate: {
+    width: 72,
+    height: 72,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  heroMarkImage: {
+    width: 48,
+    height: 48,
+  },
   appName: {
     fontSize: 18,
     fontWeight: '600',
@@ -97,21 +164,32 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   primaryButton: {
-    height: 52,
+    minHeight: 72,
     borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
+    width: '100%',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
   },
   primaryButtonText: {
-    fontSize: 17,
+    width: '100%',
+    maxWidth: '100%',
+    fontSize: 16,
+    lineHeight: 20,
     fontWeight: '600',
+    textAlign: 'center',
+    includeFontPadding: false,
   },
   secondaryButton: {
-    height: 44,
+    minHeight: 44,
     alignItems: 'center',
     justifyContent: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
   },
   secondaryButtonText: {
     fontSize: 16,
+    textAlign: 'center',
   },
 });

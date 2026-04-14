@@ -2,6 +2,7 @@ import { CompanyRegistryPickerModal } from '@/components/clients/company-registr
 import { loadRegistrySettingsForLookup } from '@/components/clients/company-registry-lookup';
 import { ThemedText } from '@/components/themed-text';
 import { IconSymbol } from '@/components/ui/icon-symbol';
+import { KeyboardAwareScroll } from '@/components/ui/keyboard-aware-scroll';
 import { Colors, getSwitchColors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useI18nContext } from '@/i18n/i18n-react';
@@ -12,22 +13,18 @@ import {
   type CompanyRegistryKey,
 } from '@/repositories/company-registry';
 import { getSettings, updateSettings } from '@/repositories/settings-repository';
-import { isIos } from '@/utils/platform';
-import { useHeaderHeight } from '@react-navigation/elements';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
-  KeyboardAvoidingView,
   Pressable,
-  SafeAreaView,
-  ScrollView,
   StyleSheet,
   Switch,
   TextInput,
   View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 /** Registries that work without any extra configuration. */
 const FREE_REGISTRY_KEYS: CompanyRegistryKey[] = ['ares', 'no_brreg', 'ee_ariregister'];
@@ -39,7 +36,6 @@ export default function OnboardingProfileScreen() {
   const { LL, locale } = useI18nContext();
   const intlLocale = normalizeIntlLocale(locale, 'en');
   const router = useRouter();
-  const headerHeight = useHeaderHeight();
 
   const [companyName, setCompanyName] = useState('');
   const [companyId, setCompanyId] = useState('');
@@ -115,146 +111,140 @@ export default function OnboardingProfileScreen() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: palette.background }]}>
-      <KeyboardAvoidingView
+      <KeyboardAwareScroll
         style={styles.flex}
-        behavior={isIos ? 'padding' : undefined}
-        keyboardVerticalOffset={isIos ? headerHeight : 0}
+        scrollViewStyle={styles.flex}
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
       >
-        <ScrollView
-          style={styles.flex}
-          contentContainerStyle={styles.scrollContent}
-          keyboardDismissMode="on-drag"
-          keyboardShouldPersistTaps="handled"
-        >
-          <View style={styles.header}>
-            <Pressable style={styles.backButton} onPress={() => router.back()}>
-              <IconSymbol name="chevron.left" size={20} color={palette.tint} />
-              <ThemedText style={[styles.backLabel, { color: palette.tint }]}>
-                {LL.onboarding.back()}
-              </ThemedText>
-            </Pressable>
-            <ThemedText type="title" style={styles.title}>
-              {LL.onboarding.profileTitle()}
+        <View style={styles.header}>
+          <Pressable style={styles.backButton} onPress={() => router.back()}>
+            <IconSymbol name="chevron.left" size={20} color={palette.tint} />
+            <ThemedText style={[styles.backLabel, { color: palette.tint }]}>
+              {LL.onboarding.back()}
             </ThemedText>
-            <ThemedText style={[styles.subtitle, { color: palette.textSecondary }]}>
-              {LL.onboarding.profileSubtitle()}
+          </Pressable>
+          <ThemedText type="title" style={styles.title}>
+            {LL.onboarding.profileTitle()}
+          </ThemedText>
+          <ThemedText style={[styles.subtitle, { color: palette.textSecondary }]}>
+            {LL.onboarding.profileSubtitle()}
+          </ThemedText>
+        </View>
+
+        <View style={[styles.card, { backgroundColor: palette.cardBackground }]}>
+          {/* Company name */}
+          <View style={styles.field}>
+            <ThemedText style={[styles.fieldLabel, { color: palette.textSecondary }]}>
+              {LL.settings.companyName()} *
             </ThemedText>
+            <TextInput
+              style={[
+                styles.input,
+                {
+                  backgroundColor: palette.inputBackground,
+                  borderColor: palette.inputBorder,
+                  color: palette.text,
+                },
+              ]}
+              value={companyName}
+              onChangeText={setCompanyName}
+              placeholder={LL.settings.companyName()}
+              placeholderTextColor={palette.placeholder}
+              autoCapitalize="words"
+            />
           </View>
 
-          <View style={[styles.card, { backgroundColor: palette.cardBackground }]}>
-            {/* Company name */}
-            <View style={styles.field}>
-              <ThemedText style={[styles.fieldLabel, { color: palette.textSecondary }]}>
-                {LL.settings.companyName()} *
-              </ThemedText>
+          {/* Company ID + lookup button */}
+          <View style={styles.field}>
+            <ThemedText style={[styles.fieldLabel, { color: palette.textSecondary }]}>
+              {LL.settings.companyId()}
+            </ThemedText>
+            <View style={styles.lookupRow}>
               <TextInput
                 style={[
                   styles.input,
+                  styles.inputFlex,
                   {
                     backgroundColor: palette.inputBackground,
                     borderColor: palette.inputBorder,
                     color: palette.text,
                   },
                 ]}
-                value={companyName}
-                onChangeText={setCompanyName}
-                placeholder={LL.settings.companyName()}
+                value={companyId}
+                onChangeText={setCompanyId}
+                placeholder={LL.settings.companyId()}
                 placeholderTextColor={palette.placeholder}
-                autoCapitalize="words"
+                keyboardType="default"
               />
-            </View>
-
-            {/* Company ID + lookup button */}
-            <View style={styles.field}>
-              <ThemedText style={[styles.fieldLabel, { color: palette.textSecondary }]}>
-                {LL.settings.companyId()}
-              </ThemedText>
-              <View style={styles.lookupRow}>
-                <TextInput
-                  style={[
-                    styles.input,
-                    styles.inputFlex,
-                    {
-                      backgroundColor: palette.inputBackground,
-                      borderColor: palette.inputBorder,
-                      color: palette.text,
-                    },
-                  ]}
-                  value={companyId}
-                  onChangeText={setCompanyId}
-                  placeholder={LL.settings.companyId()}
-                  placeholderTextColor={palette.placeholder}
-                  keyboardType="default"
-                />
-                <Pressable
-                  style={[
-                    styles.lookupButton,
-                    {
-                      backgroundColor: companyId.trim()
-                        ? palette.tint
-                        : palette.buttonNeutralBackground,
-                    },
-                  ]}
-                  onPress={handleLookup}
-                  disabled={isLookingUp || !companyId.trim()}
-                >
-                  {isLookingUp ? (
-                    <ActivityIndicator size="small" color={palette.onTint} />
-                  ) : (
-                    <IconSymbol
-                      name="magnifyingglass"
-                      size={18}
-                      color={companyId.trim() ? palette.onTint : palette.icon}
-                    />
-                  )}
-                </Pressable>
-              </View>
-            </View>
-
-            {/* Country — read-only, filled from registry lookup */}
-            {countryName ? (
-              <View style={styles.field}>
-                <ThemedText style={[styles.fieldLabel, { color: palette.textSecondary }]}>
-                  {LL.onboarding.profileCountryLabel()}
-                </ThemedText>
-                <View
-                  style={[
-                    styles.countryBadge,
-                    { backgroundColor: palette.inputBackground, borderColor: palette.inputBorder },
-                  ]}
-                >
-                  <ThemedText style={styles.countryBadgeText}>{countryName}</ThemedText>
-                </View>
-              </View>
-            ) : null}
-
-            {/* VAT payer toggle */}
-            <View style={[styles.field, styles.switchField]}>
-              <ThemedText style={styles.fieldLabelInline}>{LL.settings.isVatPayer()}</ThemedText>
-              <Switch
-                value={isVatPayer}
-                onValueChange={setIsVatPayer}
-                trackColor={switchColors.trackColor}
-                ios_backgroundColor={switchColors.ios_backgroundColor}
-              />
+              <Pressable
+                style={[
+                  styles.lookupButton,
+                  {
+                    backgroundColor: companyId.trim()
+                      ? palette.tint
+                      : palette.buttonNeutralBackground,
+                  },
+                ]}
+                onPress={handleLookup}
+                disabled={isLookingUp || !companyId.trim()}
+              >
+                {isLookingUp ? (
+                  <ActivityIndicator size="small" color={palette.onTint} />
+                ) : (
+                  <IconSymbol
+                    name="magnifyingglass"
+                    size={18}
+                    color={companyId.trim() ? palette.onTint : palette.icon}
+                  />
+                )}
+              </Pressable>
             </View>
           </View>
 
-          <ThemedText style={[styles.note, { color: palette.textMuted }]}>
-            {LL.onboarding.profileNote()}
-          </ThemedText>
+          {/* Country — read-only, filled from registry lookup */}
+          {countryName ? (
+            <View style={styles.field}>
+              <ThemedText style={[styles.fieldLabel, { color: palette.textSecondary }]}>
+                {LL.onboarding.profileCountryLabel()}
+              </ThemedText>
+              <View
+                style={[
+                  styles.countryBadge,
+                  { backgroundColor: palette.inputBackground, borderColor: palette.inputBorder },
+                ]}
+              >
+                <ThemedText style={styles.countryBadgeText}>{countryName}</ThemedText>
+              </View>
+            </View>
+          ) : null}
 
-          <Pressable
-            style={[styles.primaryButton, { backgroundColor: palette.tint }]}
-            onPress={handleNext}
-            android_ripple={{ color: 'rgba(255,255,255,0.2)' }}
-          >
-            <ThemedText style={[styles.primaryButtonText, { color: palette.onTint }]}>
-              {LL.onboarding.next()}
-            </ThemedText>
-          </Pressable>
-        </ScrollView>
-      </KeyboardAvoidingView>
+          {/* VAT payer toggle */}
+          <View style={[styles.field, styles.switchField]}>
+            <ThemedText style={styles.fieldLabelInline}>{LL.settings.isVatPayer()}</ThemedText>
+            <Switch
+              value={isVatPayer}
+              onValueChange={setIsVatPayer}
+              trackColor={switchColors.trackColor}
+              ios_backgroundColor={switchColors.ios_backgroundColor}
+            />
+          </View>
+        </View>
+
+        <ThemedText style={[styles.note, { color: palette.textMuted }]}>
+          {LL.onboarding.profileNote()}
+        </ThemedText>
+
+        <Pressable
+          style={[styles.primaryButton, { backgroundColor: palette.tint }]}
+          onPress={handleNext}
+          android_ripple={{ color: 'rgba(255,255,255,0.2)' }}
+        >
+          <ThemedText style={[styles.primaryButtonText, { color: palette.onTint }]}>
+            {LL.onboarding.next()}
+          </ThemedText>
+        </Pressable>
+      </KeyboardAwareScroll>
 
       <CompanyRegistryPickerModal
         visible={registryPickerVisible}

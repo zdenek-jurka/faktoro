@@ -1503,6 +1503,30 @@ type RootTranslation = {
 		 */
 		advancedExportIntegrationsDescription: string
 		/**
+		 * R​e​s​e​t​ ​a​l​l​ ​l​o​c​a​l​ ​a​p​p​ ​d​a​t​a
+		 */
+		advancedDangerousResetDataTitle: string
+		/**
+		 * D​e​l​e​t​e​s​ ​a​l​l​ ​l​o​c​a​l​ ​F​a​k​t​o​r​o​ ​d​a​t​a​ ​o​n​ ​t​h​i​s​ ​d​e​v​i​c​e​ ​a​n​d​ ​o​p​e​n​s​ ​o​n​b​o​a​r​d​i​n​g​ ​a​g​a​i​n​.​ ​U​s​e​ ​o​n​l​y​ ​f​o​r​ ​t​e​s​t​i​n​g​ ​o​r​ ​a​ ​f​u​l​l​ ​l​o​c​a​l​ ​r​e​s​e​t​.
+		 */
+		advancedDangerousResetDataDescription: string
+		/**
+		 * D​e​l​e​t​e​ ​a​l​l​ ​l​o​c​a​l​ ​d​a​t​a
+		 */
+		advancedDangerousResetDataAction: string
+		/**
+		 * D​e​l​e​t​e​ ​a​l​l​ ​l​o​c​a​l​ ​F​a​k​t​o​r​o​ ​d​a​t​a​?
+		 */
+		advancedDangerousResetDataConfirmTitle: string
+		/**
+		 * T​h​i​s​ ​w​i​l​l​ ​r​e​m​o​v​e​ ​c​l​i​e​n​t​s​,​ ​t​i​m​e​ ​e​n​t​r​i​e​s​,​ ​t​i​m​e​s​h​e​e​t​s​,​ ​i​n​v​o​i​c​e​s​,​ ​s​y​n​c​ ​s​e​t​t​i​n​g​s​,​ ​b​a​c​k​u​p​s​ ​s​t​o​r​e​d​ ​b​y​ ​t​h​e​ ​a​p​p​,​ ​e​x​p​o​r​t​ ​s​e​c​r​e​t​s​,​ ​a​n​d​ ​o​n​b​o​a​r​d​i​n​g​ ​p​r​o​g​r​e​s​s​ ​o​n​ ​t​h​i​s​ ​d​e​v​i​c​e​.​ ​T​h​i​s​ ​c​a​n​n​o​t​ ​b​e​ ​u​n​d​o​n​e​.
+		 */
+		advancedDangerousResetDataConfirmMessage: string
+		/**
+		 * D​e​l​e​t​e​ ​e​v​e​r​y​t​h​i​n​g
+		 */
+		advancedDangerousResetDataConfirmContinue: string
+		/**
 		 * L​a​n​g​u​a​g​e
 		 */
 		languageTitle: string
@@ -3649,11 +3673,15 @@ type RootTranslation = {
 		 */
 		vatSubtitle: string
 		/**
+		 * A​f​t​e​r​ ​y​o​u​ ​c​h​o​o​s​e​ ​a​ ​c​o​u​n​t​r​y​,​ ​F​a​k​t​o​r​o​ ​p​r​e​p​a​r​e​s​ ​t​h​e​ ​c​u​r​r​e​n​t​ ​V​A​T​ ​r​a​t​e​s​ ​f​o​r​ ​r​e​v​i​e​w​.​ ​T​h​e​y​ ​w​i​l​l​ ​b​e​ ​s​a​v​e​d​ ​a​u​t​o​m​a​t​i​c​a​l​l​y​ ​w​h​e​n​ ​y​o​u​ ​c​o​n​t​i​n​u​e​.
+		 */
+		vatAutoLoadHint: string
+		/**
 		 * E​U​ ​c​o​u​n​t​r​y​ ​f​o​r​ ​r​a​t​e​ ​l​o​o​k​u​p
 		 */
 		vatCountryLabel: string
 		/**
-		 * L​o​a​d​ ​c​u​r​r​e​n​t​ ​r​a​t​e​s​ ​f​r​o​m​ ​E​U​ ​d​a​t​a​b​a​s​e
+		 * L​o​a​d​ ​a​n​d​ ​u​s​e​ ​c​u​r​r​e​n​t​ ​r​a​t​e​s
 		 */
 		vatLoadButton: string
 		/**
@@ -3664,6 +3692,14 @@ type RootTranslation = {
 		 * S​k​i​p​,​ ​s​e​t​ ​u​p​ ​l​a​t​e​r
 		 */
 		vatSkipButton: string
+		/**
+		 * T​r​y​ ​a​g​a​i​n
+		 */
+		vatRetryAction: string
+		/**
+		 * F​a​k​t​o​r​o​ ​c​o​u​l​d​ ​n​o​t​ ​s​a​v​e​ ​V​A​T​ ​r​a​t​e​s​ ​r​i​g​h​t​ ​n​o​w​.​ ​Y​o​u​ ​c​a​n​ ​r​e​t​r​y​ ​o​r​ ​s​k​i​p​ ​t​h​i​s​ ​s​t​e​p​ ​a​n​d​ ​s​e​t​ ​t​h​e​m​ ​u​p​ ​l​a​t​e​r​.
+		 */
+		vatImportFailedPrompt: string
 		/**
 		 * R​a​t​e​s​ ​f​o​r​ ​{​c​o​u​n​t​r​y​}
 		 * @param {string} country
@@ -5399,6 +5435,30 @@ export type TranslationFunctions = {
 		 * Enables custom XSLT-based XML export integrations in timesheet exports and the Settings > External services section.
 		 */
 		advancedExportIntegrationsDescription: () => LocalizedString
+		/**
+		 * Reset all local app data
+		 */
+		advancedDangerousResetDataTitle: () => LocalizedString
+		/**
+		 * Deletes all local Faktoro data on this device and opens onboarding again. Use only for testing or a full local reset.
+		 */
+		advancedDangerousResetDataDescription: () => LocalizedString
+		/**
+		 * Delete all local data
+		 */
+		advancedDangerousResetDataAction: () => LocalizedString
+		/**
+		 * Delete all local Faktoro data?
+		 */
+		advancedDangerousResetDataConfirmTitle: () => LocalizedString
+		/**
+		 * This will remove clients, time entries, timesheets, invoices, sync settings, backups stored by the app, export secrets, and onboarding progress on this device. This cannot be undone.
+		 */
+		advancedDangerousResetDataConfirmMessage: () => LocalizedString
+		/**
+		 * Delete everything
+		 */
+		advancedDangerousResetDataConfirmContinue: () => LocalizedString
 		/**
 		 * Language
 		 */
@@ -7534,11 +7594,15 @@ export type TranslationFunctions = {
 		 */
 		vatSubtitle: () => LocalizedString
 		/**
+		 * After you choose a country, Faktoro prepares the current VAT rates for review. They will be saved automatically when you continue.
+		 */
+		vatAutoLoadHint: () => LocalizedString
+		/**
 		 * EU country for rate lookup
 		 */
 		vatCountryLabel: () => LocalizedString
 		/**
-		 * Load current rates from EU database
+		 * Load and use current rates
 		 */
 		vatLoadButton: () => LocalizedString
 		/**
@@ -7549,6 +7613,14 @@ export type TranslationFunctions = {
 		 * Skip, set up later
 		 */
 		vatSkipButton: () => LocalizedString
+		/**
+		 * Try again
+		 */
+		vatRetryAction: () => LocalizedString
+		/**
+		 * Faktoro could not save VAT rates right now. You can retry or skip this step and set them up later.
+		 */
+		vatImportFailedPrompt: () => LocalizedString
 		/**
 		 * Rates for {country}
 		 */

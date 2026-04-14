@@ -1,6 +1,6 @@
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { isSyncEnabled } from '@/constants/features';
+import { isDangerousAppDataResetEnabled, isSyncEnabled } from '@/constants/features';
 import { Colors, getSwitchColors } from '@/constants/theme';
 import { useBottomSafeAreaStyle } from '@/hooks/use-bottom-safe-area-style';
 import { useColorScheme } from '@/hooks/use-color-scheme';
@@ -10,10 +10,12 @@ import {
   updateDeviceSyncSettings,
 } from '@/repositories/device-sync-settings-repository';
 import { observeBetaSettings, updateBetaSettings } from '@/repositories/beta-settings-repository';
+import { dangerouslyResetAllLocalAppData } from '@/repositories/dangerous-local-data-reset-repository';
+import { showAlert, showConfirm } from '@/utils/platform-alert';
 import { isIos } from '@/utils/platform';
-import { Redirect, Stack } from 'expo-router';
+import { Redirect, Stack, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, Switch, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Switch, View } from 'react-native';
 
 export default function SettingsAdvancedScreen() {
   if (!isSyncEnabled) {
@@ -24,6 +26,7 @@ export default function SettingsAdvancedScreen() {
 }
 
 function SettingsAdvancedScreenContent() {
+  const router = useRouter();
   const colorScheme = useColorScheme();
   const palette = Colors[colorScheme === 'dark' ? 'dark' : 'light'];
   const { LL } = useI18nContext();
@@ -32,6 +35,7 @@ function SettingsAdvancedScreenContent() {
   const [syncFeatureEnabled, setSyncFeatureEnabled] = useState(false);
   const [timerWidgetsEnabled, setTimerWidgetsEnabled] = useState(true);
   const [exportIntegrationsEnabled, setExportIntegrationsEnabled] = useState(false);
+  const [resettingLocalData, setResettingLocalData] = useState(false);
 
   useEffect(() => {
     const unsub = observeDeviceSyncSettings((settings) => {
@@ -61,6 +65,28 @@ function SettingsAdvancedScreenContent() {
   const handleToggleTimerWidgets = async (value: boolean) => {
     setTimerWidgetsEnabled(value);
     await updateDeviceSyncSettings({ timerWidgetsEnabled: value });
+  };
+
+  const handleDangerousResetAppData = async () => {
+    const confirmed = await showConfirm({
+      title: LL.settings.advancedDangerousResetDataConfirmTitle(),
+      message: LL.settings.advancedDangerousResetDataConfirmMessage(),
+      cancelText: LL.common.cancel(),
+      confirmText: LL.settings.advancedDangerousResetDataConfirmContinue(),
+      destructive: true,
+    });
+    if (!confirmed) return;
+
+    try {
+      setResettingLocalData(true);
+      await dangerouslyResetAllLocalAppData();
+      router.replace('/onboarding');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : LL.common.errorUnknown();
+      showAlert(LL.common.error(), message);
+    } finally {
+      setResettingLocalData(false);
+    }
   };
 
   return (
@@ -121,6 +147,39 @@ function SettingsAdvancedScreenContent() {
             />
           </View>
         </View>
+
+        {isDangerousAppDataResetEnabled ? (
+          <View
+            style={[styles.card, styles.dangerCard, { backgroundColor: palette.cardBackground }]}
+          >
+            <View style={styles.dangerHeader}>
+              <ThemedText type="defaultSemiBold" style={styles.rowTitle}>
+                {LL.settings.advancedDangerousResetDataTitle()}
+              </ThemedText>
+              <ThemedText style={[styles.rowDescription, { color: palette.textSecondary }]}>
+                {LL.settings.advancedDangerousResetDataDescription()}
+              </ThemedText>
+            </View>
+            <Pressable
+              onPress={() => void handleDangerousResetAppData()}
+              disabled={resettingLocalData}
+              style={({ pressed }) => [
+                styles.dangerButton,
+                {
+                  borderColor: palette.destructive,
+                  backgroundColor: pressed ? `${palette.destructive}18` : 'transparent',
+                  opacity: resettingLocalData ? 0.65 : 1,
+                },
+              ]}
+            >
+              <ThemedText style={[styles.dangerButtonLabel, { color: palette.destructive }]}>
+                {resettingLocalData
+                  ? LL.common.loading()
+                  : LL.settings.advancedDangerousResetDataAction()}
+              </ThemedText>
+            </Pressable>
+          </View>
+        ) : null}
       </ScrollView>
     </ThemedView>
   );
@@ -144,4 +203,22 @@ const styles = StyleSheet.create({
   rowTitle: { fontSize: 16, marginBottom: 4 },
   rowDescription: { fontSize: 13 },
   divider: { height: StyleSheet.hairlineWidth },
+  dangerCard: {
+    marginTop: 16,
+    padding: 14,
+    gap: 14,
+  },
+  dangerHeader: { gap: 4 },
+  dangerButton: {
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  dangerButtonLabel: {
+    fontSize: 15,
+    fontWeight: '700',
+  },
 });

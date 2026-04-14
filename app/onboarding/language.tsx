@@ -12,7 +12,8 @@ import {
 import { getSettings, updateSettings } from '@/repositories/settings-repository';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { Pressable, SafeAreaView, ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function OnboardingLanguageScreen() {
   const colorScheme = useColorScheme();
