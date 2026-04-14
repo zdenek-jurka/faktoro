@@ -687,6 +687,11 @@ const fr = {
     defaultInvoiceCurrency: 'Devise par défaut des factures',
     defaultInvoiceCurrencyHelp:
       'Choisissez quelle devise configurée sera utilisée par défaut pour les nouvelles factures.',
+    defaultInvoiceVatCode: 'Taux de TVA par défaut pour les nouvelles lignes',
+    defaultInvoiceVatCodeHelp:
+      'Utilisé pour les lignes de facture ajoutées manuellement et les nouveaux articles du catalogue.',
+    defaultInvoiceVatCodeEmpty:
+      'Aucun taux de TVA n’est encore configuré. Configurez-les dans Réglages → TVA.',
     defaultInvoicePaymentMethod: 'Mode de paiement par défaut',
     defaultInvoicePaymentMethodHelp:
       "Prérempli sur les nouvelles factures si le client n'a pas son propre réglage.",

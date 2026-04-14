@@ -2443,6 +2443,18 @@ type RootTranslation = {
 		 */
 		defaultInvoiceCurrencyHelp: string
 		/**
+		 * D​e​f​a​u​l​t​ ​V​A​T​ ​r​a​t​e​ ​f​o​r​ ​n​e​w​ ​i​t​e​m​s
+		 */
+		defaultInvoiceVatCode: string
+		/**
+		 * U​s​e​d​ ​f​o​r​ ​m​a​n​u​a​l​l​y​ ​a​d​d​e​d​ ​i​n​v​o​i​c​e​ ​i​t​e​m​s​ ​a​n​d​ ​n​e​w​ ​p​r​i​c​e​ ​l​i​s​t​ ​i​t​e​m​s​.
+		 */
+		defaultInvoiceVatCodeHelp: string
+		/**
+		 * N​o​ ​V​A​T​ ​r​a​t​e​s​ ​a​r​e​ ​c​o​n​f​i​g​u​r​e​d​ ​y​e​t​.​ ​S​e​t​ ​t​h​e​m​ ​u​p​ ​i​n​ ​S​e​t​t​i​n​g​s​ ​→​ ​V​A​T​.
+		 */
+		defaultInvoiceVatCodeEmpty: string
+		/**
 		 * D​e​f​a​u​l​t​ ​p​a​y​m​e​n​t​ ​m​e​t​h​o​d
 		 */
 		defaultInvoicePaymentMethod: string
@@ -6456,6 +6468,18 @@ export type TranslationFunctions = {
 		 * Choose which configured currency is used by default on new invoices.
 		 */
 		defaultInvoiceCurrencyHelp: () => LocalizedString
+		/**
+		 * Default VAT rate for new items
+		 */
+		defaultInvoiceVatCode: () => LocalizedString
+		/**
+		 * Used for manually added invoice items and new price list items.
+		 */
+		defaultInvoiceVatCodeHelp: () => LocalizedString
+		/**
+		 * No VAT rates are configured yet. Set them up in Settings → VAT.
+		 */
+		defaultInvoiceVatCodeEmpty: () => LocalizedString
 		/**
 		 * Default payment method
 		 */

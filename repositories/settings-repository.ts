@@ -36,6 +36,7 @@ export type UpdateSettingsInput = {
   invoiceSwift?: string | null;
   invoiceLogoUri?: string | null;
   defaultInvoiceCurrency?: string | null;
+  defaultInvoiceVatCodeId?: string | null;
   defaultInvoicePaymentMethod?: string | null;
   defaultInvoiceDueDays?: number | null;
   invoiceQrType?: string | null;
@@ -200,6 +201,9 @@ export async function updateSettings(input: UpdateSettingsInput): Promise<void> 
       }
       if (input.defaultInvoiceCurrency !== undefined) {
         s.defaultInvoiceCurrency = input.defaultInvoiceCurrency || undefined;
+      }
+      if (input.defaultInvoiceVatCodeId !== undefined) {
+        s.defaultInvoiceVatCodeId = input.defaultInvoiceVatCodeId || undefined;
       }
       if (input.defaultInvoicePaymentMethod !== undefined) {
         s.defaultInvoicePaymentMethod = input.defaultInvoicePaymentMethod || undefined;

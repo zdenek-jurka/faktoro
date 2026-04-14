@@ -1,4 +1,5 @@
 import { NoClientsRequiredNotice } from '@/components/clients/no-clients-required-notice';
+import { getPriceListUnitLabel } from '@/components/price-list/unit-options';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { CrossPlatformDatePicker } from '@/components/ui/cross-platform-date-picker';
@@ -547,6 +548,14 @@ export default function InvoiceDraftScreen() {
     [LL.invoices],
   );
 
+  const reviewRequiresConfirmation = useCallback((review: ClientChangeReview) => {
+    return (
+      review.timesheetCount > 0 ||
+      review.priceChangedCount > 0 ||
+      review.priceListNeedsReviewCount > 0
+    );
+  }, []);
+
   const openDatePicker = (field: 'issued' | 'taxable' | 'due') => {
     const currentValue =
       field === 'issued' ? issuedDate : field === 'taxable' ? taxableDate : dueDate;
@@ -601,6 +610,12 @@ export default function InvoiceDraftScreen() {
     void buildClientChangeReview(nextClientId)
       .then((review) => {
         if (clientChangeReviewRequestRef.current !== requestId) return;
+
+        if (!reviewRequiresConfirmation(review)) {
+          applyClientChange(nextClientId, review.nextItemsKeepingTimesheets);
+          finishClientChangeReview(requestId);
+          return;
+        }
 
         const message = buildClientChangeReviewMessage(review);
         const title = nextClient?.name
@@ -784,6 +799,12 @@ export default function InvoiceDraftScreen() {
     if (sourceKind === 'timesheet') return LL.invoices.addFromTimesheets();
     if (sourceKind === 'price_list') return LL.invoices.addFromPriceList();
     return LL.invoices.addManualItemSection();
+  };
+
+  const getItemUnitLabel = (unit: string) => {
+    const normalizedUnit = unit.trim();
+    if (!normalizedUnit) return '';
+    return getPriceListUnitLabel(LL, normalizedUnit);
   };
 
   return (
@@ -973,24 +994,29 @@ export default function InvoiceDraftScreen() {
               keyExtractor={(item) => item.localId}
               emptyText={LL.invoices.errorNoItems()}
               showAddButton={false}
-              renderItem={(item) => (
-                <View style={styles.itemRow}>
-                  <View style={styles.itemHeaderRow}>
-                    <ThemedText type="defaultSemiBold" style={styles.itemDescription}>
-                      {item.description}
-                    </ThemedText>
-                    <View style={[styles.sourceBadge, { borderColor: palette.borderStrong }]}>
-                      <ThemedText style={styles.sourceBadgeText}>
-                        {getSourceLabel(item.sourceKind)}
+              renderItem={(item) => {
+                const itemUnitLabel = getItemUnitLabel(item.unit);
+
+                return (
+                  <View style={styles.itemRow}>
+                    <View style={styles.itemHeaderRow}>
+                      <ThemedText type="defaultSemiBold" style={styles.itemDescription}>
+                        {item.description}
                       </ThemedText>
+                      <View style={[styles.sourceBadge, { borderColor: palette.borderStrong }]}>
+                        <ThemedText style={styles.sourceBadgeText}>
+                          {getSourceLabel(item.sourceKind)}
+                        </ThemedText>
+                      </View>
                     </View>
+                    <ThemedText style={styles.selectionMeta}>
+                      {item.quantity}
+                      {itemUnitLabel ? ` ${itemUnitLabel}` : ''} × {item.unitPrice.toFixed(2)} ={' '}
+                      {formatPrice(item.totalPrice, headerDraft.currency, locale)}
+                    </ThemedText>
                   </View>
-                  <ThemedText style={styles.selectionMeta}>
-                    {item.quantity} × {item.unitPrice.toFixed(2)} ={' '}
-                    {formatPrice(item.totalPrice, headerDraft.currency, locale)}
-                  </ThemedText>
-                </View>
-              )}
+                );
+              }}
             />
           </ThemedView>
 

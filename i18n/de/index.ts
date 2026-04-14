@@ -689,6 +689,11 @@ const de = {
     defaultInvoiceCurrency: 'Standardwährung für Rechnungen',
     defaultInvoiceCurrencyHelp:
       'Wählen Sie, welche konfigurierte Währung standardmäßig für neue Rechnungen verwendet wird.',
+    defaultInvoiceVatCode: 'Standard-Umsatzsteuersatz für neue Positionen',
+    defaultInvoiceVatCodeHelp:
+      'Wird für manuell hinzugefügte Rechnungspositionen und neue Preislistenpositionen verwendet.',
+    defaultInvoiceVatCodeEmpty:
+      'Es sind noch keine Umsatzsteuersätze konfiguriert. Richte sie unter Einstellungen → Umsatzsteuer ein.',
     defaultInvoicePaymentMethod: 'Standardzahlungsart',
     defaultInvoicePaymentMethodHelp:
       'Wird bei neuen Rechnungen vorausgefüllt, sofern der Kunde keine eigene Vorgabe hat.',

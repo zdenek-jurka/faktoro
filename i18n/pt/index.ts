@@ -681,6 +681,11 @@ const pt = {
     defaultInvoiceCurrency: 'Moeda predefinida das faturas',
     defaultInvoiceCurrencyHelp:
       'Escolha qual moeda configurada será usada por predefinição nas novas faturas.',
+    defaultInvoiceVatCode: 'Taxa de IVA predefinida para novos itens',
+    defaultInvoiceVatCodeHelp:
+      'Usada para itens de fatura adicionados manualmente e novos itens da lista de preços.',
+    defaultInvoiceVatCodeEmpty:
+      'Ainda não existem taxas de IVA configuradas. Configure-as em Definições → IVA.',
     defaultInvoicePaymentMethod: 'Método de pagamento predefinido',
     defaultInvoicePaymentMethodHelp:
       'Será pré-preenchido em novas faturas, a menos que o cliente tenha a sua própria configuração.',

@@ -31,7 +31,7 @@ import {
 import { getVatCodes, getVatRates } from '@/repositories/vat-rate-repository';
 import { hasMatchingCurrency, normalizeCurrencyCode } from '@/utils/currency-utils';
 import { isIos } from '@/utils/platform';
-import { getLocalizedVatCodeName } from '@/utils/vat-code-utils';
+import { getLocalizedVatCodeName, resolvePreferredVatCodeId } from '@/utils/vat-code-utils';
 import { Q } from '@nozbe/watermelondb';
 import { useHeaderHeight } from '@react-navigation/elements';
 import SegmentedControl from '@react-native-segmented-control/segmented-control';
@@ -195,6 +195,7 @@ export default function InvoiceNewItemScreen() {
   const [vatCodes, setVatCodes] = useState<VatCodeModel[]>([]);
   const [vatRates, setVatRates] = useState<VatRateModel[]>([]);
   const [isVatPayer, setIsVatPayer] = useState(false);
+  const [defaultInvoiceVatCodeId, setDefaultInvoiceVatCodeId] = useState('');
   const [missingTimesheetEntries, setMissingTimesheetEntries] = useState<MissingTimesheetEntry[]>(
     [],
   );
@@ -275,13 +276,14 @@ export default function InvoiceNewItemScreen() {
   const selectedTimesheetNeedsPricing = missingTimesheetEntries.length > 0;
 
   useEffect(() => {
-    if (!headerDraft?.clientId) return;
     setSourcesLoaded(false);
 
     const load = async () => {
       try {
         const [allTimesheets, allPriceItems, settings] = await Promise.all([
-          getTimesheetCandidates(headerDraft.clientId),
+          headerDraft?.clientId
+            ? getTimesheetCandidates(headerDraft.clientId)
+            : Promise.resolve([]),
           getActivePriceListForInvoicing(),
           getSettings(),
         ]);
@@ -307,7 +309,13 @@ export default function InvoiceNewItemScreen() {
 
         const vatPayer = !!settings.isVatPayer;
         setIsVatPayer(vatPayer);
-        if (!vatPayer) return;
+        if (!vatPayer) {
+          setVatCodes([]);
+          setVatRates([]);
+          setDefaultInvoiceVatCodeId('');
+          setManualVatCodeId('');
+          return;
+        }
 
         const [allVatCodes, allVatRates] = await Promise.all([
           getVatCodes().fetch(),
@@ -315,8 +323,13 @@ export default function InvoiceNewItemScreen() {
         ]);
         setVatCodes(allVatCodes);
         setVatRates(allVatRates);
+        const resolvedDefaultInvoiceVatCodeId = resolvePreferredVatCodeId(
+          allVatCodes,
+          settings.defaultInvoiceVatCodeId,
+        );
+        setDefaultInvoiceVatCodeId(resolvedDefaultInvoiceVatCodeId);
         if (allVatCodes.length > 0) {
-          setManualVatCodeId((current) => current || allVatCodes[0].id);
+          setManualVatCodeId((current) => current || resolvedDefaultInvoiceVatCodeId);
         }
       } catch (error) {
         console.error('Failed to load invoice item sources', error);
@@ -393,7 +406,7 @@ export default function InvoiceNewItemScreen() {
         setMissingEntryVatCodeById((current) => {
           const next: Record<string, string> = {};
           for (const entry of timesheetRows) {
-            next[entry.id] = current[entry.id] || vatCodes[0]?.id || '';
+            next[entry.id] = current[entry.id] || defaultInvoiceVatCodeId || vatCodes[0]?.id || '';
           }
           return next;
         });
@@ -415,7 +428,13 @@ export default function InvoiceNewItemScreen() {
     };
 
     void loadMissingEntries();
-  }, [timesheetId, compatiblePriceListItems, usedTimesheetEntryIdsByTimesheet, vatCodes]);
+  }, [
+    timesheetId,
+    compatiblePriceListItems,
+    defaultInvoiceVatCodeId,
+    usedTimesheetEntryIdsByTimesheet,
+    vatCodes,
+  ]);
 
   useEffect(() => {
     if (!sourcesLoaded) return;
@@ -887,7 +906,7 @@ export default function InvoiceNewItemScreen() {
                             />
                           ) : (
                             <>
-                              <ThemedText style={styles.vatLabel}>{LL.priceList.unit()}</ThemedText>
+                              <ThemedText style={styles.label}>{LL.priceList.unit()}</ThemedText>
                               <Select
                                 value={missingEntryUnitById[entry.id] || 'hour'}
                                 onValueChange={(value) =>
@@ -930,7 +949,7 @@ export default function InvoiceNewItemScreen() {
                               />
                               {isVatPayer && (
                                 <>
-                                  <ThemedText style={styles.vatLabel}>
+                                  <ThemedText style={styles.label}>
                                     {LL.invoices.vatCode()}
                                   </ThemedText>
                                   <Select
@@ -1036,40 +1055,52 @@ export default function InvoiceNewItemScreen() {
 
           {source === 'manual' && (
             <View>
+              <ThemedText style={styles.label}>{LL.invoices.itemDescription()}</ThemedText>
               <TextInput
-                style={[styles.input, stylesField(palette)]}
+                style={[styles.input, styles.labeledInput, stylesField(palette)]}
                 value={manualDescription}
                 onChangeText={setManualDescription}
                 placeholder={LL.invoices.itemDescription()}
                 placeholderTextColor={placeholder(palette)}
               />
+
+              <View style={styles.inlineFieldRow}>
+                <View style={styles.inlineFieldPrimary}>
+                  <ThemedText style={styles.label}>{LL.invoices.quantity()}</ThemedText>
+                  <TextInput
+                    style={[styles.input, styles.labeledInput, stylesField(palette)]}
+                    value={manualQty}
+                    onChangeText={setManualQty}
+                    placeholder={LL.invoices.quantity()}
+                    placeholderTextColor={placeholder(palette)}
+                    keyboardType="decimal-pad"
+                  />
+                </View>
+                <View style={styles.inlineFieldSecondary}>
+                  <ThemedText style={styles.label}>{LL.priceList.unit()}</ThemedText>
+                  <TextInput
+                    style={[styles.input, styles.labeledInput, stylesField(palette)]}
+                    value={manualUnit}
+                    onChangeText={setManualUnit}
+                    placeholder={LL.priceList.unit()}
+                    placeholderTextColor={placeholder(palette)}
+                  />
+                </View>
+              </View>
+
+              <ThemedText style={styles.label}>{LL.invoices.unitPrice()}</ThemedText>
               <TextInput
-                style={[styles.input, stylesField(palette)]}
-                value={manualQty}
-                onChangeText={setManualQty}
-                placeholder={LL.invoices.quantity()}
-                placeholderTextColor={placeholder(palette)}
-                keyboardType="decimal-pad"
-              />
-              <TextInput
-                style={[styles.input, stylesField(palette)]}
+                style={[styles.input, styles.labeledInput, stylesField(palette)]}
                 value={manualUnitPrice}
                 onChangeText={setManualUnitPrice}
                 placeholder={LL.invoices.unitPrice()}
                 placeholderTextColor={placeholder(palette)}
                 keyboardType="decimal-pad"
               />
-              <TextInput
-                style={[styles.input, stylesField(palette)]}
-                value={manualUnit}
-                onChangeText={setManualUnit}
-                placeholder={LL.priceList.unit()}
-                placeholderTextColor={placeholder(palette)}
-              />
 
               {isVatPayer && (
                 <>
-                  <ThemedText style={styles.vatLabel}>{LL.invoices.vatCode()}</ThemedText>
+                  <ThemedText style={styles.label}>{LL.invoices.vatCode()}</ThemedText>
                   <Select value={manualVatCodeId} onValueChange={setManualVatCodeId}>
                     <SelectTrigger>
                       <SelectValue
@@ -1145,6 +1176,18 @@ const styles = StyleSheet.create({
   content: { padding: 16, paddingBottom: 24 },
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   segmented: { marginBottom: 12 },
+  label: { fontSize: 13, opacity: 0.7, marginBottom: 4 },
+  inlineFieldRow: {
+    flexDirection: 'row',
+    gap: 12,
+    alignItems: 'flex-start',
+  },
+  inlineFieldPrimary: {
+    flex: 1.15,
+  },
+  inlineFieldSecondary: {
+    flex: 0.85,
+  },
   timesheetPricingWrap: {
     marginTop: 10,
     marginBottom: 4,
@@ -1171,7 +1214,9 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     fontSize: 16,
   },
-  vatLabel: { fontSize: 14, fontWeight: '600', marginBottom: 8, marginTop: 6 },
+  labeledInput: {
+    marginTop: 0,
+  },
   vatHelperText: { fontSize: 12, opacity: 0.7, marginTop: -4, marginBottom: 10 },
   actionButton: {
     marginTop: 12,

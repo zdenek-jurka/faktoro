@@ -28,6 +28,7 @@ export default class AppSettingsModel extends Model {
   @text('invoice_swift') invoiceSwift?: string;
   @text('invoice_logo_uri') invoiceLogoUri?: string;
   @text('default_invoice_currency') defaultInvoiceCurrency?: string;
+  @text('default_invoice_vat_code_id') defaultInvoiceVatCodeId?: string;
   @text('default_invoice_payment_method') defaultInvoicePaymentMethod?: string;
   @field('default_invoice_due_days') defaultInvoiceDueDays?: number;
   @text('invoice_qr_type') invoiceQrType?: string;

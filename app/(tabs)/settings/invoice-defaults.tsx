@@ -18,7 +18,9 @@ import { useBottomSafeAreaStyle } from '@/hooks/use-bottom-safe-area-style';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useCurrencySettings } from '@/hooks/use-currency-settings';
 import { useI18nContext } from '@/i18n/i18n-react';
+import { VatCodeModel, VatRateModel } from '@/model';
 import { getSettings, updateSettings } from '@/repositories/settings-repository';
+import { getVatCodes, getVatRates } from '@/repositories/vat-rate-repository';
 import { DEFAULT_CURRENCY_CODE, normalizeCurrencyCode } from '@/utils/currency-utils';
 import {
   DEFAULT_INVOICE_DUE_DAYS,
@@ -35,9 +37,10 @@ import {
   validateTimerLimitOrder,
 } from '@/utils/timer-limit-utils';
 import { parseBillingIntervalMinutesInput } from '@/utils/time-utils';
+import { getLocalizedVatCodeName, resolvePreferredVatCodeId } from '@/utils/vat-code-utils';
 import { useHeaderHeight } from '@react-navigation/elements';
 import { Stack } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   Alert,
   KeyboardAvoidingView,
@@ -48,6 +51,22 @@ import {
   TextInput,
   View,
 } from 'react-native';
+
+function resolveVatRateForDate(rates: VatRateModel[], taxableAt: number): number | null {
+  const matching = rates.filter(
+    (rate) => rate.validFrom <= taxableAt && (rate.validTo == null || rate.validTo >= taxableAt),
+  );
+  if (matching.length === 0) return null;
+  matching.sort((a, b) => b.validFrom - a.validFrom);
+  return matching[0].ratePercent;
+}
+
+function formatVatRatePercent(ratePercent: number): string {
+  return new Intl.NumberFormat(undefined, {
+    minimumFractionDigits: Number.isInteger(ratePercent) ? 0 : 1,
+    maximumFractionDigits: 2,
+  }).format(ratePercent);
+}
 
 export default function SettingsInvoiceDefaultsScreen() {
   const colorScheme = useColorScheme();
@@ -78,39 +97,102 @@ export default function SettingsInvoiceDefaultsScreen() {
   const [invoiceBankAccount, setInvoiceBankAccount] = useState('');
   const [invoiceIban, setInvoiceIban] = useState('');
   const [invoiceSwift, setInvoiceSwift] = useState('');
+  const [isVatPayer, setIsVatPayer] = useState(false);
+  const [vatCodes, setVatCodes] = useState<VatCodeModel[]>([]);
+  const [vatRates, setVatRates] = useState<VatRateModel[]>([]);
+  const [defaultInvoiceVatCodeId, setDefaultInvoiceVatCodeId] = useState('');
+  const displayVatCodes = useMemo(
+    () =>
+      [...vatCodes].sort((a, b) =>
+        getLocalizedVatCodeName(a.name, LL).localeCompare(getLocalizedVatCodeName(b.name, LL)),
+      ),
+    [LL, vatCodes],
+  );
+  const vatCodeDisplayLabelById = useMemo(() => {
+    const ratesByCodeId = new Map<string, VatRateModel[]>();
+
+    for (const rate of vatRates) {
+      if (!rate.vatCodeId) continue;
+      const current = ratesByCodeId.get(rate.vatCodeId) || [];
+      current.push(rate);
+      ratesByCodeId.set(rate.vatCodeId, current);
+    }
+
+    const labels = new Map<string, string>();
+    const effectiveTaxableAt = Date.now();
+
+    for (const vatCode of displayVatCodes) {
+      const resolvedRate = resolveVatRateForDate(
+        ratesByCodeId.get(vatCode.id) || [],
+        effectiveTaxableAt,
+      );
+      const baseLabel = getLocalizedVatCodeName(vatCode.name, LL);
+      labels.set(
+        vatCode.id,
+        resolvedRate == null ? baseLabel : `${formatVatRatePercent(resolvedRate)} % - ${baseLabel}`,
+      );
+    }
+
+    return labels;
+  }, [LL, displayVatCodes, vatRates]);
 
   useEffect(() => {
     const loadSettings = async () => {
-      const settings = await getSettings();
-      setDefaultInvoiceCurrency(normalizeCurrencyCode(settings.defaultInvoiceCurrency));
-      setDefaultInvoicePaymentMethod(
-        normalizeInvoicePaymentMethod(settings.defaultInvoicePaymentMethod),
-      );
-      setDefaultInvoiceDueDays(String(settings.defaultInvoiceDueDays ?? DEFAULT_INVOICE_DUE_DAYS));
-      setInvoiceQrType(settings.invoiceQrType || 'none');
-      const savedFormat = settings.invoiceDefaultExportFormat;
-      setInvoiceDefaultExportFormat(
-        savedFormat === 'none' ||
-          savedFormat === 'isdoc' ||
-          savedFormat === 'peppol' ||
-          savedFormat === 'xrechnung'
-          ? savedFormat
-          : 'none',
-      );
-      const interval = settings.defaultBillingInterval;
-      setUseBillingInterval(interval !== undefined && interval !== null);
-      setDefaultBillingInterval(interval?.toString() || '15');
-      setTimerSoftLimitEnabled(settings.timerSoftLimitEnabled !== false);
-      setTimerSoftLimitHours(
-        formatTimerLimitHours(settings.timerSoftLimitMinutes ?? DEFAULT_TIMER_SOFT_LIMIT_MINUTES),
-      );
-      setTimerHardLimitEnabled(settings.timerHardLimitEnabled !== false);
-      setTimerHardLimitHours(
-        formatTimerLimitHours(settings.timerHardLimitMinutes ?? DEFAULT_TIMER_HARD_LIMIT_MINUTES),
-      );
-      setInvoiceBankAccount(settings.invoiceBankAccount || '');
-      setInvoiceIban(settings.invoiceIban || '');
-      setInvoiceSwift(settings.invoiceSwift || '');
+      try {
+        const settings = await getSettings();
+        setDefaultInvoiceCurrency(normalizeCurrencyCode(settings.defaultInvoiceCurrency));
+        setDefaultInvoicePaymentMethod(
+          normalizeInvoicePaymentMethod(settings.defaultInvoicePaymentMethod),
+        );
+        setDefaultInvoiceDueDays(
+          String(settings.defaultInvoiceDueDays ?? DEFAULT_INVOICE_DUE_DAYS),
+        );
+        setInvoiceQrType(settings.invoiceQrType || 'none');
+        const savedFormat = settings.invoiceDefaultExportFormat;
+        setInvoiceDefaultExportFormat(
+          savedFormat === 'none' ||
+            savedFormat === 'isdoc' ||
+            savedFormat === 'peppol' ||
+            savedFormat === 'xrechnung'
+            ? savedFormat
+            : 'none',
+        );
+        const interval = settings.defaultBillingInterval;
+        setUseBillingInterval(interval !== undefined && interval !== null);
+        setDefaultBillingInterval(interval?.toString() || '15');
+        setTimerSoftLimitEnabled(settings.timerSoftLimitEnabled !== false);
+        setTimerSoftLimitHours(
+          formatTimerLimitHours(settings.timerSoftLimitMinutes ?? DEFAULT_TIMER_SOFT_LIMIT_MINUTES),
+        );
+        setTimerHardLimitEnabled(settings.timerHardLimitEnabled !== false);
+        setTimerHardLimitHours(
+          formatTimerLimitHours(settings.timerHardLimitMinutes ?? DEFAULT_TIMER_HARD_LIMIT_MINUTES),
+        );
+        setInvoiceBankAccount(settings.invoiceBankAccount || '');
+        setInvoiceIban(settings.invoiceIban || '');
+        setInvoiceSwift(settings.invoiceSwift || '');
+        const vatPayer = !!settings.isVatPayer;
+        setIsVatPayer(vatPayer);
+
+        if (!vatPayer) {
+          setVatCodes([]);
+          setVatRates([]);
+          setDefaultInvoiceVatCodeId(settings.defaultInvoiceVatCodeId || '');
+          return;
+        }
+
+        const [allVatCodes, allVatRates] = await Promise.all([
+          getVatCodes().fetch(),
+          getVatRates().fetch(),
+        ]);
+        setVatCodes(allVatCodes);
+        setVatRates(allVatRates);
+        setDefaultInvoiceVatCodeId(
+          resolvePreferredVatCodeId(allVatCodes, settings.defaultInvoiceVatCodeId),
+        );
+      } catch (error) {
+        console.error('Error loading invoice defaults:', error);
+      }
     };
 
     void loadSettings();
@@ -173,10 +255,14 @@ export default function SettingsInvoiceDefaultsScreen() {
       Alert.alert(LL.common.error(), LL.settings.timerLimitOrderInvalid());
       return;
     }
+    const normalizedDefaultInvoiceVatCodeId = isVatPayer
+      ? resolvePreferredVatCodeId(vatCodes, defaultInvoiceVatCodeId) || null
+      : undefined;
 
     try {
       await updateSettings({
         defaultInvoiceCurrency: normalizeCurrencyCode(defaultInvoiceCurrency),
+        defaultInvoiceVatCodeId: normalizedDefaultInvoiceVatCodeId,
         defaultInvoicePaymentMethod: normalizeInvoicePaymentMethod(defaultInvoicePaymentMethod),
         defaultInvoiceDueDays: invoiceDueDays,
         invoiceQrType: invoiceQrType || null,
@@ -189,6 +275,9 @@ export default function SettingsInvoiceDefaultsScreen() {
       });
 
       setDefaultInvoiceCurrency(normalizeCurrencyCode(defaultInvoiceCurrency));
+      if (normalizedDefaultInvoiceVatCodeId !== undefined) {
+        setDefaultInvoiceVatCodeId(normalizedDefaultInvoiceVatCodeId || '');
+      }
       setDefaultInvoicePaymentMethod(normalizeInvoicePaymentMethod(defaultInvoicePaymentMethod));
       setDefaultInvoiceDueDays(String(invoiceDueDays));
       setTimerSoftLimitHours(formatTimerLimitHours(timerSoftLimitMinutes));
@@ -304,6 +393,52 @@ export default function SettingsInvoiceDefaultsScreen() {
               onChangeText={setDefaultInvoiceDueDays}
               keyboardType="numeric"
             />
+
+            {isVatPayer && (
+              <>
+                <ThemedText style={styles.label}>{LL.settings.defaultInvoiceVatCode()}</ThemedText>
+                <ThemedText style={styles.hintText}>
+                  {LL.settings.defaultInvoiceVatCodeHelp()}
+                </ThemedText>
+                {displayVatCodes.length > 0 ? (
+                  <Select
+                    value={defaultInvoiceVatCodeId}
+                    onValueChange={setDefaultInvoiceVatCodeId}
+                  >
+                    <SelectTrigger>
+                      <SelectValue
+                        placeholder={
+                          vatCodeDisplayLabelById.get(defaultInvoiceVatCodeId) ||
+                          LL.settings.defaultInvoiceVatCode()
+                        }
+                      />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        <SelectLabel>{LL.settings.defaultInvoiceVatCode()}</SelectLabel>
+                        {displayVatCodes.map((vatCode) => (
+                          <SelectItem
+                            key={vatCode.id}
+                            value={vatCode.id}
+                            label={
+                              vatCodeDisplayLabelById.get(vatCode.id) ||
+                              getLocalizedVatCodeName(vatCode.name, LL)
+                            }
+                          >
+                            {vatCodeDisplayLabelById.get(vatCode.id) ||
+                              getLocalizedVatCodeName(vatCode.name, LL)}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <ThemedText style={styles.hintText}>
+                    {LL.settings.defaultInvoiceVatCodeEmpty()}
+                  </ThemedText>
+                )}
+              </>
+            )}
 
             <View style={styles.switchRow}>
               <View style={styles.switchLabelContainer}>

@@ -669,6 +669,11 @@ const pl = {
     defaultInvoiceCurrency: 'Domyślna waluta faktur',
     defaultInvoiceCurrencyHelp:
       'Wybierz, która skonfigurowana waluta ma być domyślnie używana na nowych fakturach.',
+    defaultInvoiceVatCode: 'Domyślna stawka VAT dla nowych pozycji',
+    defaultInvoiceVatCodeHelp:
+      'Używana dla ręcznie dodawanych pozycji faktury oraz nowych pozycji cennika.',
+    defaultInvoiceVatCodeEmpty:
+      'Nie skonfigurowano jeszcze żadnych stawek VAT. Ustaw je w Ustawienia → VAT.',
     defaultInvoicePaymentMethod: 'Domyślna metoda płatności',
     defaultInvoicePaymentMethodHelp:
       'Będzie wstępnie ustawiana na nowych fakturach, jeśli klient nie ma własnego ustawienia.',

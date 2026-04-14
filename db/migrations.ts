@@ -1026,5 +1026,14 @@ export default schemaMigrations({
         }),
       ],
     },
+    {
+      toVersion: 50,
+      steps: [
+        addColumns({
+          table: 'app_settings',
+          columns: [{ name: 'default_invoice_vat_code_id', type: 'string', isOptional: true }],
+        }),
+      ],
+    },
   ],
 });

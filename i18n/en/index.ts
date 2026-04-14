@@ -660,6 +660,9 @@ const en = {
     defaultInvoiceCurrency: 'Default invoice currency',
     defaultInvoiceCurrencyHelp:
       'Choose which configured currency is used by default on new invoices.',
+    defaultInvoiceVatCode: 'Default VAT rate for new items',
+    defaultInvoiceVatCodeHelp: 'Used for manually added invoice items and new price list items.',
+    defaultInvoiceVatCodeEmpty: 'No VAT rates are configured yet. Set them up in Settings → VAT.',
     defaultInvoicePaymentMethod: 'Default payment method',
     defaultInvoicePaymentMethodHelp:
       'Pre-filled on new invoices unless the client has its own override.',

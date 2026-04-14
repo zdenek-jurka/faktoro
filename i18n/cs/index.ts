@@ -666,6 +666,11 @@ const cs = {
     defaultInvoiceCurrency: 'Výchozí měna faktur',
     defaultInvoiceCurrencyHelp:
       'Vyber, která z nakonfigurovaných měn se má výchozí použít na nové faktuře.',
+    defaultInvoiceVatCode: 'Výchozí sazba DPH pro nové položky',
+    defaultInvoiceVatCodeHelp:
+      'Použije se pro ručně přidávané položky faktur a nové položky ceníku.',
+    defaultInvoiceVatCodeEmpty:
+      'Zatím nejsou nastavené žádné sazby DPH. Nastav je v Nastavení → DPH.',
     defaultInvoicePaymentMethod: 'Výchozí typ úhrady',
     defaultInvoicePaymentMethodHelp:
       'Předvyplní se na nové faktuře, pokud klient nemá vlastní nastavení.',

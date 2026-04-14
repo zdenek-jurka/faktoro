@@ -117,3 +117,18 @@ export function getLocalizedVatCodeName(
   const kindLabel = parsed.total <= 1 ? baseLabel : `${baseLabel} ${parsed.index}`;
   return parsed.countryCode ? `${parsed.countryCode} – ${kindLabel}` : kindLabel;
 }
+
+export function resolvePreferredVatCodeId<T extends { id: string }>(
+  vatCodes: T[],
+  preferredVatCodeId?: string | null,
+): string {
+  const normalizedPreferredVatCodeId = preferredVatCodeId?.trim();
+  if (
+    normalizedPreferredVatCodeId &&
+    vatCodes.some((vatCode) => vatCode.id === normalizedPreferredVatCodeId)
+  ) {
+    return normalizedPreferredVatCodeId;
+  }
+
+  return vatCodes[0]?.id || '';
+}

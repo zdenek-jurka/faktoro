@@ -13,6 +13,7 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
+  TextInput,
   View,
   findNodeHandle,
   useWindowDimensions,
@@ -97,6 +98,15 @@ type SelectProps = {
   children: ReactNode;
 };
 
+function matchesComponentName(type: unknown, componentName: string): boolean {
+  if (!type || typeof type !== 'function') {
+    return false;
+  }
+
+  const namedType = type as { displayName?: string; name?: string };
+  return namedType.displayName === componentName || namedType.name === componentName;
+}
+
 function findSelectValuePlaceholder(children: ReactNode): string | undefined {
   let resolvedPlaceholder: string | undefined;
 
@@ -108,7 +118,10 @@ function findSelectValuePlaceholder(children: ReactNode): string | undefined {
         placeholder?: unknown;
       };
 
-      if (child.type === SelectValue && typeof props.placeholder === 'string') {
+      if (
+        (child.type === SelectValue || matchesComponentName(child.type, 'SelectValue')) &&
+        typeof props.placeholder === 'string'
+      ) {
         resolvedPlaceholder = props.placeholder;
         return;
       }
@@ -135,11 +148,7 @@ function collectSelectOptions(children: ReactNode): SelectOption[] {
         label?: unknown;
       };
 
-      if (
-        child.type === SelectItem &&
-        typeof props.value === 'string' &&
-        typeof props.label === 'string'
-      ) {
+      if (typeof props.value === 'string' && typeof props.label === 'string') {
         result.push({ value: props.value, label: props.label });
       }
 
@@ -238,9 +247,16 @@ export function SelectTrigger({ children }: SelectTriggerProps) {
       return;
     }
 
-    triggerRef.current?.measureInWindow((x, y, width, height) => {
-      setTriggerLayout({ x, y, width, height });
-      setOpen(true);
+    const focusedInput = TextInput.State.currentlyFocusedInput();
+    if (focusedInput) {
+      TextInput.State.blurTextInput(focusedInput);
+    }
+
+    requestAnimationFrame(() => {
+      triggerRef.current?.measureInWindow((x, y, width, height) => {
+        setTriggerLayout({ x, y, width, height });
+        setOpen(true);
+      });
     });
   };
 
@@ -333,6 +349,7 @@ export function SelectValue({ placeholder }: SelectValueProps) {
     </ThemedText>
   );
 }
+SelectValue.displayName = 'SelectValue';
 
 type SelectContentProps = {
   children: ReactNode;
@@ -488,6 +505,7 @@ export function SelectItem({ value: itemValue, label }: SelectItemProps) {
 
   return null;
 }
+SelectItem.displayName = 'SelectItem';
 
 const styles = StyleSheet.create({
   trigger: {

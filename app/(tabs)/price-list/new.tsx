@@ -23,7 +23,7 @@ import { getVatCodes } from '@/repositories/vat-rate-repository';
 import { Stack, useRouter } from 'expo-router';
 import React, { useEffect, useMemo, useState } from 'react';
 import { Alert, Pressable, StyleSheet, TextInput, View } from 'react-native';
-import { getLocalizedVatCodeName } from '@/utils/vat-code-utils';
+import { getLocalizedVatCodeName, resolvePreferredVatCodeId } from '@/utils/vat-code-utils';
 
 type PriceListFormData = {
   name: string;
@@ -76,9 +76,13 @@ export default function AddPriceListItemScreen() {
           const codes = await getVatCodes().fetch();
           setVatCodes(codes);
           if (codes.length > 0) {
+            const resolvedDefaultVatCodeId = resolvePreferredVatCodeId(
+              codes,
+              settings.defaultInvoiceVatCodeId,
+            );
             setFormData((prev) => ({
               ...prev,
-              vatCodeId: prev.vatCodeId || codes[0].id,
+              vatCodeId: prev.vatCodeId || resolvedDefaultVatCodeId,
             }));
           }
         }
