@@ -1508,6 +1508,27 @@ type RootTranslation = {
 		 */
 		invoiceNumberExistsWarning: string
 		/**
+		 * U​s​e​ ​a​ ​n​e​w​ ​i​n​v​o​i​c​e​ ​n​u​m​b​e​r​?
+		 */
+		invoiceNumberConflictTitle: string
+		/**
+		 * I​n​v​o​i​c​e​ ​n​u​m​b​e​r​ ​{​c​u​r​r​e​n​t​}​ ​h​a​s​ ​a​l​r​e​a​d​y​ ​b​e​e​n​ ​u​s​e​d​.​ ​D​o​ ​y​o​u​ ​w​a​n​t​ ​t​o​ ​u​s​e​ ​t​h​e​ ​n​e​x​t​ ​a​v​a​i​l​a​b​l​e​ ​n​u​m​b​e​r​ ​{​s​u​g​g​e​s​t​e​d​}​ ​i​n​s​t​e​a​d​?
+		 * @param {string} current
+		 * @param {string} suggested
+		 */
+		invoiceNumberConflictAutoMessage: RequiredParams<'current' | 'suggested'>
+		/**
+		 * I​n​v​o​i​c​e​ ​n​u​m​b​e​r​ ​{​c​u​r​r​e​n​t​}​ ​i​s​ ​a​l​r​e​a​d​y​ ​u​s​e​d​ ​b​y​ ​a​n​o​t​h​e​r​ ​d​o​c​u​m​e​n​t​.​ ​Y​o​u​ ​c​a​n​ ​c​h​a​n​g​e​ ​i​t​ ​m​a​n​u​a​l​l​y​,​ ​o​r​ ​u​s​e​ ​t​h​e​ ​n​e​x​t​ ​a​v​a​i​l​a​b​l​e​ ​n​u​m​b​e​r​ ​{​s​u​g​g​e​s​t​e​d​}​ ​i​n​s​t​e​a​d​.
+		 * @param {string} current
+		 * @param {string} suggested
+		 */
+		invoiceNumberConflictManualMessage: RequiredParams<'current' | 'suggested'>
+		/**
+		 * U​s​e​ ​{​s​u​g​g​e​s​t​e​d​}
+		 * @param {string} suggested
+		 */
+		invoiceNumberConflictUseSuggested: RequiredParams<'suggested'>
+		/**
 		 * N​o​ ​p​r​i​c​e​ ​l​i​s​t​ ​i​t​e​m​s​ ​u​s​e​ ​{​c​u​r​r​e​n​c​y​}​.
 		 * @param {unknown} currency
 		 */
@@ -5966,6 +5987,22 @@ export type TranslationFunctions = {
 		 * A document with this number already exists. Saving will not be possible until you change it.
 		 */
 		invoiceNumberExistsWarning: () => LocalizedString
+		/**
+		 * Use a new invoice number?
+		 */
+		invoiceNumberConflictTitle: () => LocalizedString
+		/**
+		 * Invoice number {current} has already been used. Do you want to use the next available number {suggested} instead?
+		 */
+		invoiceNumberConflictAutoMessage: (arg: { current: string, suggested: string }) => LocalizedString
+		/**
+		 * Invoice number {current} is already used by another document. You can change it manually, or use the next available number {suggested} instead.
+		 */
+		invoiceNumberConflictManualMessage: (arg: { current: string, suggested: string }) => LocalizedString
+		/**
+		 * Use {suggested}
+		 */
+		invoiceNumberConflictUseSuggested: (arg: { suggested: string }) => LocalizedString
 		/**
 		 * No price list items use {currency}.
 		 */

@@ -416,6 +416,12 @@ const de = {
     errorInvoiceNumberExists: 'Eine Rechnung mit dieser Nummer existiert bereits.',
     invoiceNumberExistsWarning:
       'Ein Beleg mit dieser Nummer existiert bereits. Speichern ist erst möglich, wenn Sie die Nummer ändern.',
+    invoiceNumberConflictTitle: 'Neue Rechnungsnummer verwenden?',
+    invoiceNumberConflictAutoMessage:
+      'Die Rechnungsnummer {current:string} wurde inzwischen bereits verwendet. Möchten Sie stattdessen die nächste freie Nummer {suggested:string} verwenden?',
+    invoiceNumberConflictManualMessage:
+      'Die Rechnungsnummer {current:string} wird bereits von einem anderen Beleg verwendet. Sie können sie manuell ändern oder stattdessen die nächste freie Nummer {suggested:string} verwenden.',
+    invoiceNumberConflictUseSuggested: '{suggested:string} verwenden',
     noCompatiblePriceListItems: 'Keine Preislisteneinträge in {currency}.',
     errorCreate: 'Rechnung konnte nicht erstellt werden.',
     errorUpdate: 'Rechnungsänderungen konnten nicht gespeichert werden.',

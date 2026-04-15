@@ -50,6 +50,7 @@ import {
 type HeaderDraft = {
   clientId: string;
   invoiceNumber: string;
+  invoiceNumberManuallyEdited?: boolean;
   issuedDate: string;
   taxableDate?: string;
   dueDate: string;

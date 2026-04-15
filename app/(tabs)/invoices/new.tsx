@@ -69,6 +69,7 @@ import {
 type HeaderDraft = {
   clientId: string;
   invoiceNumber: string;
+  invoiceNumberManuallyEdited?: boolean;
   issuedDate: string;
   taxableDate?: string;
   dueDate: string;
@@ -230,6 +231,8 @@ export default function InvoiceDraftScreen() {
   const [clients, setClients] = useState<ClientModel[]>([]);
   const [clientId, setClientId] = useState('');
   const [invoiceNumber, setInvoiceNumber] = useState('');
+  const [isInvoiceNumberManuallyEdited, setIsInvoiceNumberManuallyEdited] =
+    useState(isEditingInvoice);
   const [issuedDate, setIssuedDate] = useState(todayISODate());
   const [taxableDate, setTaxableDate] = useState(todayISODate());
   const [dueDate, setDueDate] = useState(todayISODate());
@@ -272,6 +275,9 @@ export default function InvoiceDraftScreen() {
     if (!restoredHeaderDraft) return;
     setClientId(restoredHeaderDraft.clientId || '');
     setInvoiceNumber(restoredHeaderDraft.invoiceNumber || '');
+    setIsInvoiceNumberManuallyEdited(
+      isEditingInvoice || !!restoredHeaderDraft.invoiceNumberManuallyEdited,
+    );
     setIssuedDate(restoredHeaderDraft.issuedDate || todayISODate());
     setTaxableDate(restoredHeaderDraft.taxableDate || todayISODate());
     setDueDate(restoredHeaderDraft.dueDate || todayISODate());
@@ -279,7 +285,7 @@ export default function InvoiceDraftScreen() {
     setPaymentMethod(normalizeInvoicePaymentMethod(restoredHeaderDraft.paymentMethod));
     dueDateTouchedRef.current = !!restoredHeaderDraft.dueDate;
     paymentMethodTouchedRef.current = !!restoredHeaderDraft.paymentMethod;
-  }, [restoredHeaderDraft]);
+  }, [isEditingInvoice, restoredHeaderDraft]);
 
   useEffect(() => {
     const withIds = withLocalIds(restoredItemsDraft, localIdRef.current);
@@ -313,6 +319,7 @@ export default function InvoiceDraftScreen() {
       if (invoiceNumber.trim()) return;
       const suggested = await getSuggestedInvoiceNumber();
       setInvoiceNumber(suggested);
+      setIsInvoiceNumberManuallyEdited(false);
     };
     void loadSuggestedNumber();
   }, [invoiceNumber]);
@@ -391,6 +398,7 @@ export default function InvoiceDraftScreen() {
     () => ({
       clientId,
       invoiceNumber: invoiceNumber.trim(),
+      invoiceNumberManuallyEdited: isInvoiceNumberManuallyEdited,
       issuedDate: issuedDate.trim(),
       taxableDate: isVatPayer ? taxableDate.trim() : undefined,
       dueDate: dueDate.trim(),
@@ -402,6 +410,7 @@ export default function InvoiceDraftScreen() {
       currency,
       dueDate,
       invoiceNumber,
+      isInvoiceNumberManuallyEdited,
       isVatPayer,
       issuedDate,
       paymentMethod,
@@ -819,6 +828,106 @@ export default function InvoiceDraftScreen() {
     router.replace(`/invoices/${editingInvoiceId}`);
   };
 
+  const handleInvoiceNumberChange = (value: string) => {
+    setInvoiceNumber(value);
+    setIsInvoiceNumberManuallyEdited(true);
+  };
+
+  const promptUseSuggestedInvoiceNumber = useCallback(
+    async (currentInvoiceNumber: string, manuallyEdited: boolean): Promise<string | null> => {
+      const suggestedInvoiceNumber = await getSuggestedInvoiceNumber();
+      if (
+        !suggestedInvoiceNumber.trim() ||
+        suggestedInvoiceNumber === currentInvoiceNumber.trim()
+      ) {
+        return null;
+      }
+
+      return new Promise<string | null>((resolve) => {
+        Alert.alert(
+          LL.invoices.invoiceNumberConflictTitle(),
+          manuallyEdited
+            ? LL.invoices.invoiceNumberConflictManualMessage({
+                current: currentInvoiceNumber,
+                suggested: suggestedInvoiceNumber,
+              })
+            : LL.invoices.invoiceNumberConflictAutoMessage({
+                current: currentInvoiceNumber,
+                suggested: suggestedInvoiceNumber,
+              }),
+          [
+            {
+              text: LL.common.cancel(),
+              style: 'cancel',
+              onPress: () => resolve(null),
+            },
+            {
+              text: LL.invoices.invoiceNumberConflictUseSuggested({
+                suggested: suggestedInvoiceNumber,
+              }),
+              onPress: () => resolve(suggestedInvoiceNumber),
+            },
+          ],
+          {
+            cancelable: true,
+            onDismiss: () => resolve(null),
+          },
+        );
+      });
+    },
+    [LL.common, LL.invoices],
+  );
+
+  const buildInvoiceInput = useCallback(
+    (invoiceNumberOverride?: string) => ({
+      clientId: headerDraft.clientId,
+      invoiceNumber: invoiceNumberOverride ?? headerDraft.invoiceNumber,
+      issuedAt: parseISODate(headerDraft.issuedDate) || Date.now(),
+      taxableAt: parseISODate(headerDraft.taxableDate),
+      dueAt: parseISODate(headerDraft.dueDate),
+      currency: headerDraft.currency,
+      paymentMethod: headerDraft.paymentMethod,
+      headerNote: headerNote.trim() || undefined,
+      footerNote: footerNote.trim() || undefined,
+      items: items.map(({ localId: _localId, ...item }) => item as DraftInvoiceItemInput),
+    }),
+    [footerNote, headerDraft, headerNote, items],
+  );
+
+  const createInvoiceWithConflictResolution =
+    useCallback(async (): Promise<InvoiceModel | null> => {
+      let nextInvoiceNumber = headerDraft.invoiceNumber;
+      let manuallyEdited = isInvoiceNumberManuallyEdited;
+
+      while (true) {
+        try {
+          return await createInvoice(buildInvoiceInput(nextInvoiceNumber));
+        } catch (error) {
+          if (!(error instanceof Error) || error.message !== INVOICE_NUMBER_EXISTS_ERROR) {
+            throw error;
+          }
+
+          const suggestedInvoiceNumber = await promptUseSuggestedInvoiceNumber(
+            nextInvoiceNumber,
+            manuallyEdited,
+          );
+          if (!suggestedInvoiceNumber) {
+            return null;
+          }
+
+          nextInvoiceNumber = suggestedInvoiceNumber;
+          manuallyEdited = false;
+          setInvoiceNumber(suggestedInvoiceNumber);
+          setIsInvoiceNumberManuallyEdited(false);
+        }
+      }
+    }, [
+      buildInvoiceInput,
+      headerDraft.invoiceNumber,
+      isInvoiceNumberManuallyEdited,
+      promptUseSuggestedInvoiceNumber,
+    ]);
+
   const handleCreate = async () => {
     if (!headerDraft.clientId || !headerDraft.invoiceNumber.trim()) {
       Alert.alert(LL.common.error(), LL.invoices.errorHeaderRequired());
@@ -839,24 +948,16 @@ export default function InvoiceDraftScreen() {
 
     try {
       setIsSaving(true);
-      const invoiceInput = {
-        clientId: headerDraft.clientId,
-        invoiceNumber: headerDraft.invoiceNumber,
-        issuedAt: parseISODate(headerDraft.issuedDate) || Date.now(),
-        taxableAt: parseISODate(headerDraft.taxableDate),
-        dueAt: parseISODate(headerDraft.dueDate),
-        currency: headerDraft.currency,
-        paymentMethod: headerDraft.paymentMethod,
-        headerNote: headerNote.trim() || undefined,
-        footerNote: footerNote.trim() || undefined,
-        items: items.map(({ localId: _localId, ...item }) => item as DraftInvoiceItemInput),
-      };
       const invoice = editingInvoiceId
         ? await updateIssuedInvoice({
             id: editingInvoiceId,
-            ...invoiceInput,
+            ...buildInvoiceInput(),
           })
-        : await createInvoice(invoiceInput);
+        : await createInvoiceWithConflictResolution();
+
+      if (!invoice) {
+        return;
+      }
 
       if (editingInvoiceId) {
         router.replace(`/invoices/${invoice.id}`);
@@ -945,7 +1046,7 @@ export default function InvoiceDraftScreen() {
             <TextInput
               style={[styles.input, stylesField(palette)]}
               value={invoiceNumber}
-              onChangeText={setInvoiceNumber}
+              onChangeText={handleInvoiceNumberChange}
               placeholder={LL.invoices.invoiceNumberPlaceholder()}
               placeholderTextColor={placeholder(palette)}
             />

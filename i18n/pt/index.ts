@@ -410,6 +410,12 @@ const pt = {
     errorInvoiceNumberExists: 'Já existe uma fatura com este número.',
     invoiceNumberExistsWarning:
       'Já existe um documento com este número. Não será possível salvar até que você altere o número.',
+    invoiceNumberConflictTitle: 'Usar um novo número de fatura?',
+    invoiceNumberConflictAutoMessage:
+      'O número de fatura {current:string} já foi usado entretanto. Quer usar em vez disso o próximo número disponível {suggested:string}?',
+    invoiceNumberConflictManualMessage:
+      'O número de fatura {current:string} já está a ser usado por outro documento. Pode alterá-lo manualmente ou usar em vez disso o próximo número disponível {suggested:string}.',
+    invoiceNumberConflictUseSuggested: 'Usar {suggested:string}',
     noCompatiblePriceListItems: 'Nenhum item da lista de preços usa {currency}.',
     errorCreate: 'Falha ao criar fatura.',
     errorUpdate: 'Falha ao guardar as alterações da fatura.',

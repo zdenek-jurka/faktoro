@@ -399,6 +399,12 @@ const en = {
     errorInvoiceNumberExists: 'An invoice with this number already exists.',
     invoiceNumberExistsWarning:
       'A document with this number already exists. Saving will not be possible until you change it.',
+    invoiceNumberConflictTitle: 'Use a new invoice number?',
+    invoiceNumberConflictAutoMessage:
+      'Invoice number {current:string} has already been used. Do you want to use the next available number {suggested:string} instead?',
+    invoiceNumberConflictManualMessage:
+      'Invoice number {current:string} is already used by another document. You can change it manually, or use the next available number {suggested:string} instead.',
+    invoiceNumberConflictUseSuggested: 'Use {suggested:string}',
     noCompatiblePriceListItems: 'No price list items use {currency}.',
     errorCreate: 'Failed to create invoice.',
     errorUpdate: 'Failed to update invoice.',

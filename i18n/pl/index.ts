@@ -405,6 +405,12 @@ const pl = {
     errorInvoiceNumberExists: 'Faktura o tym numerze już istnieje.',
     invoiceNumberExistsWarning:
       'Dokument o tym numerze już istnieje. Zapis nie będzie możliwy, dopóki nie zmienisz numeru.',
+    invoiceNumberConflictTitle: 'Użyć nowego numeru faktury?',
+    invoiceNumberConflictAutoMessage:
+      'Numer faktury {current:string} został już w międzyczasie użyty. Czy chcesz zamiast niego użyć kolejnego wolnego numeru {suggested:string}?',
+    invoiceNumberConflictManualMessage:
+      'Numer faktury {current:string} jest już używany przez inny dokument. Możesz zmienić go ręcznie albo użyć zamiast niego kolejnego wolnego numeru {suggested:string}.',
+    invoiceNumberConflictUseSuggested: 'Użyj {suggested:string}',
     noCompatiblePriceListItems: 'Brak pozycji cennika w walucie {currency}.',
     errorCreate: 'Nie udało się utworzyć faktury.',
     errorUpdate: 'Nie udało się zapisać zmian faktury.',

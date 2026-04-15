@@ -400,6 +400,12 @@ const cs = {
     errorInvoiceNumberExists: 'Faktura s tímto číslem už existuje.',
     invoiceNumberExistsWarning:
       'Doklad s tímto číslem už existuje. Uložení nebude možné, dokud číslo nezměníte.',
+    invoiceNumberConflictTitle: 'Použít nové číslo faktury?',
+    invoiceNumberConflictAutoMessage:
+      'Číslo {current:string} už bylo mezitím použito. Chcete místo něj použít nové volné číslo {suggested:string}?',
+    invoiceNumberConflictManualMessage:
+      'Číslo {current:string} už používá jiný doklad. Můžete ho upravit ručně, nebo místo něj použít nové volné číslo {suggested:string}.',
+    invoiceNumberConflictUseSuggested: 'Použít {suggested:string}',
     noCompatiblePriceListItems: 'Žádné položky ceníku nejsou v měně {currency}.',
     errorCreate: 'Nepodařilo se vytvořit fakturu.',
     errorUpdate: 'Nepodařilo se uložit změny faktury.',
