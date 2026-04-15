@@ -1,12 +1,13 @@
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { SwipeableRow } from '@/components/ui/swipeable-row';
-import { Colors } from '@/constants/theme';
+import { Colors, withOpacity } from '@/constants/theme';
 import { useBottomSafeAreaStyle } from '@/hooks/use-bottom-safe-area-style';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useI18nContext } from '@/i18n/i18n-react';
 import { normalizeIntlLocale } from '@/i18n/locale-options';
 import { InvoiceModel } from '@/model';
+import { getInvoiceStatusLabel } from '@/utils/invoice-status';
 import { formatPriceValue } from '@/utils/price-utils';
 import React from 'react';
 import type { ReactNode } from 'react';
@@ -41,6 +42,7 @@ export function InvoicesList({
       automaticallyAdjustContentInsets={true}
       renderItem={({ item, index }) => {
         const isLast = index === invoices.length - 1;
+        const statusLabel = getInvoiceStatusLabel(item, LL);
         return (
           <SwipeableRow>
             <Pressable
@@ -61,6 +63,30 @@ export function InvoicesList({
                 <ThemedText style={styles.metaText}>
                   {clientNameById.get(item.clientId) || '-'}
                 </ThemedText>
+                {statusLabel ? (
+                  <View
+                    style={[
+                      styles.statusBadge,
+                      {
+                        backgroundColor: withOpacity(
+                          Colors[colorScheme ?? 'light'].destructive,
+                          0.14,
+                        ),
+                      },
+                    ]}
+                  >
+                    <ThemedText
+                      style={[
+                        styles.statusText,
+                        {
+                          color: Colors[colorScheme ?? 'light'].destructive,
+                        },
+                      ]}
+                    >
+                      {statusLabel}
+                    </ThemedText>
+                  </View>
+                ) : null}
               </View>
               <View style={styles.rowAside}>
                 <ThemedText
@@ -115,6 +141,14 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   metaText: { fontSize: 12, opacity: 0.65 },
+  statusBadge: {
+    alignSelf: 'flex-start',
+    borderRadius: 999,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    marginTop: 4,
+  },
+  statusText: { fontSize: 12, fontWeight: '700' },
   metaAsideText: { fontSize: 12, opacity: 0.65, textAlign: 'right' },
   totalText: {
     fontSize: 14,

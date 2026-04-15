@@ -1055,5 +1055,18 @@ export default schemaMigrations({
         }),
       ],
     },
+    {
+      toVersion: 53,
+      steps: [
+        addColumns({
+          table: 'invoice',
+          columns: [
+            { name: 'corrected_invoice_id', type: 'string', isOptional: true, isIndexed: true },
+            { name: 'correction_kind', type: 'string', isOptional: true },
+            { name: 'cancellation_reason', type: 'string', isOptional: true },
+          ],
+        }),
+      ],
+    },
   ],
 });

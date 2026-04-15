@@ -17,6 +17,10 @@
       <xs:element name="Currency"           type="xs:string"/>
       <xs:element name="PaymentMethod"      type="xs:string" minOccurs="0"/>
       <xs:element name="Status"             type="xs:string" minOccurs="0"/>
+      <xs:element name="DocumentType"       type="tns:DocumentTypeValue"/>
+      <xs:element name="CorrectedInvoiceId" type="xs:string" minOccurs="0"/>
+      <xs:element name="CorrectionKind"     type="xs:string" minOccurs="0"/>
+      <xs:element name="CancellationReason" type="xs:string" minOccurs="0"/>
       <xs:element name="HeaderNote"         type="xs:string" minOccurs="0"/>
       <xs:element name="FooterNote"         type="xs:string" minOccurs="0"/>
       <xs:element name="Seller"             type="tns:SellerType"/>
@@ -32,6 +36,11 @@
       <xs:element name="CompanyId"   type="xs:string" minOccurs="0"/>
       <xs:element name="VatNumber"   type="xs:string" minOccurs="0"/>
       <xs:element name="Address"     type="xs:string" minOccurs="0"/>
+      <xs:element name="Street2"     type="xs:string" minOccurs="0"/>
+      <xs:element name="City"        type="xs:string" minOccurs="0"/>
+      <xs:element name="PostalCode"  type="xs:string" minOccurs="0"/>
+      <xs:element name="Country"     type="xs:string" minOccurs="0"/>
+      <xs:element name="RegistrationNote" type="xs:string" minOccurs="0"/>
       <xs:element name="Email"       type="xs:string" minOccurs="0"/>
       <xs:element name="Phone"       type="xs:string" minOccurs="0"/>
       <xs:element name="Website"     type="xs:string" minOccurs="0"/>
@@ -48,6 +57,10 @@
       <xs:element name="CompanyId" type="xs:string" minOccurs="0"/>
       <xs:element name="VatNumber" type="xs:string" minOccurs="0"/>
       <xs:element name="Address"   type="xs:string" minOccurs="0"/>
+      <xs:element name="Street2"   type="xs:string" minOccurs="0"/>
+      <xs:element name="City"      type="xs:string" minOccurs="0"/>
+      <xs:element name="PostalCode" type="xs:string" minOccurs="0"/>
+      <xs:element name="Country"   type="xs:string" minOccurs="0"/>
       <xs:element name="Email"     type="xs:string" minOccurs="0"/>
       <xs:element name="Phone"     type="xs:string" minOccurs="0"/>
     </xs:sequence>
@@ -59,6 +72,15 @@
       <xs:element name="Total"    type="xs:decimal"/>
     </xs:sequence>
   </xs:complexType>
+
+  <xs:simpleType name="DocumentTypeValue">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="invoice"/>
+      <xs:enumeration value="tax_document"/>
+      <xs:enumeration value="cancellation_document"/>
+      <xs:enumeration value="corrective_tax_document"/>
+    </xs:restriction>
+  </xs:simpleType>
 
   <xs:complexType name="ItemsType">
     <xs:sequence>

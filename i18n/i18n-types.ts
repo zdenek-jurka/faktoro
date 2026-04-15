@@ -73,6 +73,14 @@ type RootTranslation = {
 		 */
 		success: string
 		/**
+		 * O​K
+		 */
+		ok: string
+		/**
+		 * C​o​n​t​i​n​u​e
+		 */
+		continueAction: string
+		/**
 		 * D​i​s​c​a​r​d​ ​c​h​a​n​g​e​s
 		 */
 		discard: string
@@ -1513,6 +1521,153 @@ type RootTranslation = {
 		 */
 		editExportedWarningMessage: string
 		/**
+		 * C​a​n​c​e​l​ ​d​o​c​u​m​e​n​t
+		 */
+		cancelDocument: string
+		/**
+		 * C​a​n​c​e​l​ ​d​o​c​u​m​e​n​t
+		 */
+		cancelScreenTitle: string
+		/**
+		 * C​h​o​o​s​e​ ​h​o​w​ ​y​o​u​ ​w​a​n​t​ ​t​o​ ​c​a​n​c​e​l​ ​t​h​i​s​ ​d​o​c​u​m​e​n​t​.
+		 */
+		cancelModeSection: string
+		/**
+		 * T​h​i​s​ ​d​o​c​u​m​e​n​t​ ​c​a​n​ ​n​o​ ​l​o​n​g​e​r​ ​b​e​ ​c​a​n​c​e​l​e​d​ ​a​g​a​i​n​.
+		 */
+		cancelUnavailable: string
+		/**
+		 * A​ ​c​a​n​c​e​l​l​a​t​i​o​n​ ​d​o​c​u​m​e​n​t​ ​a​l​r​e​a​d​y​ ​e​x​i​s​t​s​ ​f​o​r​ ​t​h​i​s​ ​i​n​v​o​i​c​e​.
+		 */
+		cancelAlreadyExists: string
+		/**
+		 * R​e​c​o​m​m​e​n​d​e​d
+		 */
+		cancelRecommendedBadge: string
+		/**
+		 * V​o​i​d​ ​b​e​f​o​r​e​ ​d​e​l​i​v​e​r​y
+		 */
+		cancelModeVoidTitle: string
+		/**
+		 * U​s​e​ ​t​h​i​s​ ​i​f​ ​t​h​e​ ​d​o​c​u​m​e​n​t​ ​h​a​s​ ​n​o​t​ ​y​e​t​ ​b​e​e​n​ ​d​e​l​i​v​e​r​e​d​ ​t​o​ ​t​h​e​ ​c​u​s​t​o​m​e​r​ ​a​n​d​ ​s​h​o​u​l​d​ ​n​o​t​ ​e​n​t​e​r​ ​c​i​r​c​u​l​a​t​i​o​n​.​ ​T​h​e​ ​o​r​i​g​i​n​a​l​ ​d​o​c​u​m​e​n​t​ ​s​t​a​y​s​ ​i​n​ ​t​h​e​ ​r​e​c​o​r​d​s​ ​a​s​ ​v​o​i​d​e​d​.
+		 */
+		cancelModeVoidDescription: string
+		/**
+		 * U​s​e​ ​t​h​i​s​ ​i​f​ ​t​h​e​ ​d​o​c​u​m​e​n​t​ ​h​a​s​ ​n​o​t​ ​y​e​t​ ​b​e​e​n​ ​d​e​l​i​v​e​r​e​d​ ​t​o​ ​t​h​e​ ​c​u​s​t​o​m​e​r​ ​a​n​d​ ​s​h​o​u​l​d​ ​n​o​t​ ​e​n​t​e​r​ ​c​i​r​c​u​l​a​t​i​o​n​.​ ​T​h​e​ ​o​r​i​g​i​n​a​l​ ​d​o​c​u​m​e​n​t​ ​s​t​a​y​s​ ​i​n​ ​t​h​e​ ​r​e​c​o​r​d​s​ ​a​s​ ​v​o​i​d​e​d​ ​a​n​d​ ​l​i​n​k​e​d​ ​t​i​m​e​s​h​e​e​t​s​ ​b​e​c​o​m​e​ ​b​i​l​l​a​b​l​e​ ​a​g​a​i​n​.
+		 */
+		cancelModeVoidDescriptionWithTimesheets: string
+		/**
+		 * I​s​s​u​e​ ​c​a​n​c​e​l​l​a​t​i​o​n​ ​c​r​e​d​i​t​ ​n​o​t​e
+		 */
+		cancelModeCorrectionVatTitle: string
+		/**
+		 * I​s​s​u​e​ ​c​a​n​c​e​l​l​a​t​i​o​n​ ​d​o​c​u​m​e​n​t
+		 */
+		cancelModeCorrectionNonVatTitle: string
+		/**
+		 * U​s​e​ ​t​h​i​s​ ​i​f​ ​t​h​e​ ​d​o​c​u​m​e​n​t​ ​h​a​s​ ​a​l​r​e​a​d​y​ ​b​e​e​n​ ​d​e​l​i​v​e​r​e​d​ ​t​o​ ​t​h​e​ ​c​u​s​t​o​m​e​r​ ​o​r​ ​e​x​p​o​r​t​e​d​.​ ​A​ ​n​e​w​ ​c​o​r​r​e​c​t​i​v​e​ ​t​a​x​ ​d​o​c​u​m​e​n​t​ ​w​i​l​l​ ​b​e​ ​c​r​e​a​t​e​d​ ​t​o​ ​f​u​l​l​y​ ​o​f​f​s​e​t​ ​t​h​e​ ​o​r​i​g​i​n​a​l​ ​i​n​v​o​i​c​e​.
+		 */
+		cancelModeCorrectionVatDescription: string
+		/**
+		 * U​s​e​ ​t​h​i​s​ ​i​f​ ​t​h​e​ ​d​o​c​u​m​e​n​t​ ​h​a​s​ ​a​l​r​e​a​d​y​ ​b​e​e​n​ ​d​e​l​i​v​e​r​e​d​ ​t​o​ ​t​h​e​ ​c​u​s​t​o​m​e​r​ ​o​r​ ​e​x​p​o​r​t​e​d​.​ ​A​ ​n​e​w​ ​c​o​r​r​e​c​t​i​v​e​ ​t​a​x​ ​d​o​c​u​m​e​n​t​ ​w​i​l​l​ ​b​e​ ​c​r​e​a​t​e​d​ ​t​o​ ​f​u​l​l​y​ ​o​f​f​s​e​t​ ​t​h​e​ ​o​r​i​g​i​n​a​l​ ​i​n​v​o​i​c​e​.​ ​L​i​n​k​e​d​ ​t​i​m​e​s​h​e​e​t​s​ ​r​e​m​a​i​n​ ​a​t​t​a​c​h​e​d​ ​t​o​ ​t​h​e​ ​o​r​i​g​i​n​a​l​ ​i​n​v​o​i​c​e​.
+		 */
+		cancelModeCorrectionVatDescriptionWithTimesheets: string
+		/**
+		 * U​s​e​ ​t​h​i​s​ ​i​f​ ​t​h​e​ ​d​o​c​u​m​e​n​t​ ​h​a​s​ ​a​l​r​e​a​d​y​ ​b​e​e​n​ ​d​e​l​i​v​e​r​e​d​ ​t​o​ ​t​h​e​ ​c​u​s​t​o​m​e​r​ ​o​r​ ​e​x​p​o​r​t​e​d​.​ ​A​ ​n​e​w​ ​c​a​n​c​e​l​l​a​t​i​o​n​ ​d​o​c​u​m​e​n​t​ ​w​i​l​l​ ​b​e​ ​c​r​e​a​t​e​d​ ​t​o​ ​f​u​l​l​y​ ​o​f​f​s​e​t​ ​t​h​e​ ​o​r​i​g​i​n​a​l​ ​i​n​v​o​i​c​e​.
+		 */
+		cancelModeCorrectionNonVatDescription: string
+		/**
+		 * U​s​e​ ​t​h​i​s​ ​i​f​ ​t​h​e​ ​d​o​c​u​m​e​n​t​ ​h​a​s​ ​a​l​r​e​a​d​y​ ​b​e​e​n​ ​d​e​l​i​v​e​r​e​d​ ​t​o​ ​t​h​e​ ​c​u​s​t​o​m​e​r​ ​o​r​ ​e​x​p​o​r​t​e​d​.​ ​A​ ​n​e​w​ ​c​a​n​c​e​l​l​a​t​i​o​n​ ​d​o​c​u​m​e​n​t​ ​w​i​l​l​ ​b​e​ ​c​r​e​a​t​e​d​ ​t​o​ ​f​u​l​l​y​ ​o​f​f​s​e​t​ ​t​h​e​ ​o​r​i​g​i​n​a​l​ ​i​n​v​o​i​c​e​.​ ​L​i​n​k​e​d​ ​t​i​m​e​s​h​e​e​t​s​ ​r​e​m​a​i​n​ ​a​t​t​a​c​h​e​d​ ​t​o​ ​t​h​e​ ​o​r​i​g​i​n​a​l​ ​i​n​v​o​i​c​e​.
+		 */
+		cancelModeCorrectionNonVatDescriptionWithTimesheets: string
+		/**
+		 * R​e​c​o​m​m​e​n​d​e​d​ ​b​e​c​a​u​s​e​ ​t​h​e​ ​d​o​c​u​m​e​n​t​ ​h​a​s​ ​n​o​t​ ​b​e​e​n​ ​e​x​p​o​r​t​e​d​ ​y​e​t​.
+		 */
+		cancelRecommendationVoid: string
+		/**
+		 * R​e​c​o​m​m​e​n​d​e​d​ ​b​e​c​a​u​s​e​ ​t​h​e​ ​d​o​c​u​m​e​n​t​ ​h​a​s​ ​a​l​r​e​a​d​y​ ​b​e​e​n​ ​e​x​p​o​r​t​e​d​.
+		 */
+		cancelRecommendationCorrection: string
+		/**
+		 * C​a​n​c​e​l​l​a​t​i​o​n​ ​r​e​a​s​o​n
+		 */
+		cancelReasonLabel: string
+		/**
+		 * B​r​i​e​f​l​y​ ​d​e​s​c​r​i​b​e​ ​w​h​y​ ​t​h​e​ ​d​o​c​u​m​e​n​t​ ​i​s​ ​b​e​i​n​g​ ​c​a​n​c​e​l​e​d
+		 */
+		cancelReasonPlaceholder: string
+		/**
+		 * E​n​t​e​r​ ​a​ ​c​a​n​c​e​l​l​a​t​i​o​n​ ​r​e​a​s​o​n​.
+		 */
+		cancelReasonRequired: string
+		/**
+		 * V​o​i​d​ ​d​o​c​u​m​e​n​t
+		 */
+		cancelConfirmVoid: string
+		/**
+		 * I​s​s​u​e​ ​c​a​n​c​e​l​l​a​t​i​o​n​ ​c​r​e​d​i​t​ ​n​o​t​e
+		 */
+		cancelConfirmCorrectionVat: string
+		/**
+		 * I​s​s​u​e​ ​c​a​n​c​e​l​l​a​t​i​o​n​ ​d​o​c​u​m​e​n​t
+		 */
+		cancelConfirmCorrectionNonVat: string
+		/**
+		 * C​o​n​t​i​n​u​e​ ​w​i​t​h​ ​a​ ​n​o​n​-​r​e​c​o​m​m​e​n​d​e​d​ ​m​o​d​e​?
+		 */
+		cancelOverrideWarningTitle: string
+		/**
+		 * T​h​i​s​ ​d​o​c​u​m​e​n​t​ ​h​a​s​ ​a​l​r​e​a​d​y​ ​b​e​e​n​ ​e​x​p​o​r​t​e​d​.​ ​I​t​ ​i​s​ ​u​s​u​a​l​l​y​ ​s​a​f​e​r​ ​t​o​ ​i​s​s​u​e​ ​a​ ​l​i​n​k​e​d​ ​c​a​n​c​e​l​l​a​t​i​o​n​ ​d​o​c​u​m​e​n​t​.​ ​D​o​ ​y​o​u​ ​s​t​i​l​l​ ​w​a​n​t​ ​t​o​ ​c​o​n​t​i​n​u​e​ ​w​i​t​h​ ​v​o​i​d​i​n​g​ ​b​e​f​o​r​e​ ​d​e​l​i​v​e​r​y​?
+		 */
+		cancelOverrideVoidWarning: string
+		/**
+		 * T​h​i​s​ ​d​o​c​u​m​e​n​t​ ​h​a​s​ ​n​o​t​ ​b​e​e​n​ ​e​x​p​o​r​t​e​d​ ​y​e​t​.​ ​I​t​ ​i​s​ ​u​s​u​a​l​l​y​ ​s​i​m​p​l​e​r​ ​t​o​ ​v​o​i​d​ ​i​t​ ​b​e​f​o​r​e​ ​d​e​l​i​v​e​r​y​.​ ​D​o​ ​y​o​u​ ​s​t​i​l​l​ ​w​a​n​t​ ​t​o​ ​i​s​s​u​e​ ​a​ ​l​i​n​k​e​d​ ​c​a​n​c​e​l​l​a​t​i​o​n​ ​d​o​c​u​m​e​n​t​ ​i​n​s​t​e​a​d​?
+		 */
+		cancelOverrideCorrectionWarning: string
+		/**
+		 * T​h​e​ ​d​o​c​u​m​e​n​t​ ​w​a​s​ ​v​o​i​d​e​d​ ​b​e​f​o​r​e​ ​d​e​l​i​v​e​r​y​.
+		 */
+		cancelSuccessVoid: string
+		/**
+		 * C​a​n​c​e​l​l​a​t​i​o​n​ ​d​o​c​u​m​e​n​t​ ​{​i​n​v​o​i​c​e​N​u​m​b​e​r​}​ ​w​a​s​ ​c​r​e​a​t​e​d​.
+		 * @param {unknown} invoiceNumber
+		 */
+		cancelSuccessCorrection: RequiredParams<'invoiceNumber'>
+		/**
+		 * F​a​i​l​e​d​ ​t​o​ ​c​a​n​c​e​l​ ​d​o​c​u​m​e​n​t​.
+		 */
+		cancelError: string
+		/**
+		 * V​o​i​d​e​d​ ​b​e​f​o​r​e​ ​d​e​l​i​v​e​r​y
+		 */
+		statusVoidedBeforeDelivery: string
+		/**
+		 * C​a​n​c​e​l​e​d​ ​b​y​ ​c​o​r​r​e​c​t​i​o​n​ ​d​o​c​u​m​e​n​t
+		 */
+		statusCanceledByCorrection: string
+		/**
+		 * C​a​n​c​e​l​l​a​t​i​o​n​ ​d​o​c​u​m​e​n​t
+		 */
+		statusCancellationDocument: string
+		/**
+		 * T​h​i​s​ ​c​a​n​c​e​l​l​a​t​i​o​n​ ​d​o​c​u​m​e​n​t​ ​i​s​ ​a​ ​s​e​p​a​r​a​t​e​ ​l​i​n​k​e​d​ ​d​o​c​u​m​e​n​t​ ​w​i​t​h​ ​i​t​s​ ​o​w​n​ ​i​n​v​o​i​c​e​ ​n​u​m​b​e​r​.
+		 */
+		cancellationDocumentInfo: string
+		/**
+		 * T​h​i​s​ ​i​n​v​o​i​c​e​ ​r​e​m​a​i​n​s​ ​i​n​ ​t​h​e​ ​r​e​c​o​r​d​s​ ​a​n​d​ ​w​a​s​ ​c​a​n​c​e​l​e​d​ ​b​y​ ​a​ ​l​i​n​k​e​d​ ​c​a​n​c​e​l​l​a​t​i​o​n​ ​d​o​c​u​m​e​n​t​.
+		 */
+		canceledByCorrectionInfo: string
+		/**
+		 * C​a​n​c​e​l​e​d​ ​b​y​ ​d​o​c​u​m​e​n​t​ ​{​i​n​v​o​i​c​e​N​u​m​b​e​r​}
+		 * @param {unknown} invoiceNumber
+		 */
+		canceledByInvoiceLabel: RequiredParams<'invoiceNumber'>
+		/**
+		 * C​a​n​c​e​l​s​ ​d​o​c​u​m​e​n​t​ ​{​i​n​v​o​i​c​e​N​u​m​b​e​r​}
+		 * @param {unknown} invoiceNumber
+		 */
+		correctsInvoiceLabel: RequiredParams<'invoiceNumber'>
+		/**
 		 * S​u​p​p​l​i​e​r
 		 */
 		exportSupplier: string
@@ -1528,6 +1683,14 @@ type RootTranslation = {
 		 * I​n​v​o​i​c​e​ ​-​ ​T​a​x​ ​d​o​c​u​m​e​n​t
 		 */
 		exportTaxDocumentTitle: string
+		/**
+		 * C​a​n​c​e​l​l​a​t​i​o​n​ ​d​o​c​u​m​e​n​t
+		 */
+		exportCancellationDocumentTitle: string
+		/**
+		 * C​o​r​r​e​c​t​i​v​e​ ​t​a​x​ ​d​o​c​u​m​e​n​t
+		 */
+		exportCancellationTaxDocumentTitle: string
 		/**
 		 * I​n​v​o​i​c​e​ ​n​u​m​b​e​r
 		 */
@@ -1585,6 +1748,29 @@ type RootTranslation = {
 		 * @param {unknown} invoiceNumber
 		 */
 		exportInvoiceNote: RequiredParams<'invoiceNumber'>
+		/**
+		 * C​a​n​c​e​l​l​a​t​i​o​n​ ​r​e​a​s​o​n​:​ ​{​r​e​a​s​o​n​}
+		 * @param {unknown} reason
+		 */
+		exportCancellationReason: RequiredParams<'reason'>
+		/**
+		 * T​h​i​s​ ​d​o​c​u​m​e​n​t​ ​c​a​n​c​e​l​s​ ​i​n​v​o​i​c​e​ ​{​i​n​v​o​i​c​e​N​u​m​b​e​r​}​.
+		 * @param {unknown} invoiceNumber
+		 */
+		exportCancellationCorrectsInvoice: RequiredParams<'invoiceNumber'>
+		/**
+		 * T​h​i​s​ ​d​o​c​u​m​e​n​t​ ​w​a​s​ ​v​o​i​d​e​d​ ​b​e​f​o​r​e​ ​d​e​l​i​v​e​r​y​.
+		 */
+		exportVoidedNotice: string
+		/**
+		 * V​O​I​D​E​D
+		 */
+		exportVoidedWatermark: string
+		/**
+		 * T​h​i​s​ ​d​o​c​u​m​e​n​t​ ​w​a​s​ ​c​a​n​c​e​l​e​d​ ​b​y​ ​l​i​n​k​e​d​ ​c​a​n​c​e​l​l​a​t​i​o​n​ ​d​o​c​u​m​e​n​t​ ​{​i​n​v​o​i​c​e​N​u​m​b​e​r​}​.
+		 * @param {unknown} invoiceNumber
+		 */
+		exportCanceledByCorrection: RequiredParams<'invoiceNumber'>
 		/**
 		 * S​h​a​r​e​ ​P​D​F
 		 */
@@ -4351,6 +4537,14 @@ export type TranslationFunctions = {
 		 */
 		success: () => LocalizedString
 		/**
+		 * OK
+		 */
+		ok: () => LocalizedString
+		/**
+		 * Continue
+		 */
+		continueAction: () => LocalizedString
+		/**
 		 * Discard changes
 		 */
 		discard: () => LocalizedString
@@ -5753,6 +5947,150 @@ export type TranslationFunctions = {
 		 */
 		editExportedWarningMessage: () => LocalizedString
 		/**
+		 * Cancel document
+		 */
+		cancelDocument: () => LocalizedString
+		/**
+		 * Cancel document
+		 */
+		cancelScreenTitle: () => LocalizedString
+		/**
+		 * Choose how you want to cancel this document.
+		 */
+		cancelModeSection: () => LocalizedString
+		/**
+		 * This document can no longer be canceled again.
+		 */
+		cancelUnavailable: () => LocalizedString
+		/**
+		 * A cancellation document already exists for this invoice.
+		 */
+		cancelAlreadyExists: () => LocalizedString
+		/**
+		 * Recommended
+		 */
+		cancelRecommendedBadge: () => LocalizedString
+		/**
+		 * Void before delivery
+		 */
+		cancelModeVoidTitle: () => LocalizedString
+		/**
+		 * Use this if the document has not yet been delivered to the customer and should not enter circulation. The original document stays in the records as voided.
+		 */
+		cancelModeVoidDescription: () => LocalizedString
+		/**
+		 * Use this if the document has not yet been delivered to the customer and should not enter circulation. The original document stays in the records as voided and linked timesheets become billable again.
+		 */
+		cancelModeVoidDescriptionWithTimesheets: () => LocalizedString
+		/**
+		 * Issue cancellation credit note
+		 */
+		cancelModeCorrectionVatTitle: () => LocalizedString
+		/**
+		 * Issue cancellation document
+		 */
+		cancelModeCorrectionNonVatTitle: () => LocalizedString
+		/**
+		 * Use this if the document has already been delivered to the customer or exported. A new corrective tax document will be created to fully offset the original invoice.
+		 */
+		cancelModeCorrectionVatDescription: () => LocalizedString
+		/**
+		 * Use this if the document has already been delivered to the customer or exported. A new corrective tax document will be created to fully offset the original invoice. Linked timesheets remain attached to the original invoice.
+		 */
+		cancelModeCorrectionVatDescriptionWithTimesheets: () => LocalizedString
+		/**
+		 * Use this if the document has already been delivered to the customer or exported. A new cancellation document will be created to fully offset the original invoice.
+		 */
+		cancelModeCorrectionNonVatDescription: () => LocalizedString
+		/**
+		 * Use this if the document has already been delivered to the customer or exported. A new cancellation document will be created to fully offset the original invoice. Linked timesheets remain attached to the original invoice.
+		 */
+		cancelModeCorrectionNonVatDescriptionWithTimesheets: () => LocalizedString
+		/**
+		 * Recommended because the document has not been exported yet.
+		 */
+		cancelRecommendationVoid: () => LocalizedString
+		/**
+		 * Recommended because the document has already been exported.
+		 */
+		cancelRecommendationCorrection: () => LocalizedString
+		/**
+		 * Cancellation reason
+		 */
+		cancelReasonLabel: () => LocalizedString
+		/**
+		 * Briefly describe why the document is being canceled
+		 */
+		cancelReasonPlaceholder: () => LocalizedString
+		/**
+		 * Enter a cancellation reason.
+		 */
+		cancelReasonRequired: () => LocalizedString
+		/**
+		 * Void document
+		 */
+		cancelConfirmVoid: () => LocalizedString
+		/**
+		 * Issue cancellation credit note
+		 */
+		cancelConfirmCorrectionVat: () => LocalizedString
+		/**
+		 * Issue cancellation document
+		 */
+		cancelConfirmCorrectionNonVat: () => LocalizedString
+		/**
+		 * Continue with a non-recommended mode?
+		 */
+		cancelOverrideWarningTitle: () => LocalizedString
+		/**
+		 * This document has already been exported. It is usually safer to issue a linked cancellation document. Do you still want to continue with voiding before delivery?
+		 */
+		cancelOverrideVoidWarning: () => LocalizedString
+		/**
+		 * This document has not been exported yet. It is usually simpler to void it before delivery. Do you still want to issue a linked cancellation document instead?
+		 */
+		cancelOverrideCorrectionWarning: () => LocalizedString
+		/**
+		 * The document was voided before delivery.
+		 */
+		cancelSuccessVoid: () => LocalizedString
+		/**
+		 * Cancellation document {invoiceNumber} was created.
+		 */
+		cancelSuccessCorrection: (arg: { invoiceNumber: unknown }) => LocalizedString
+		/**
+		 * Failed to cancel document.
+		 */
+		cancelError: () => LocalizedString
+		/**
+		 * Voided before delivery
+		 */
+		statusVoidedBeforeDelivery: () => LocalizedString
+		/**
+		 * Canceled by correction document
+		 */
+		statusCanceledByCorrection: () => LocalizedString
+		/**
+		 * Cancellation document
+		 */
+		statusCancellationDocument: () => LocalizedString
+		/**
+		 * This cancellation document is a separate linked document with its own invoice number.
+		 */
+		cancellationDocumentInfo: () => LocalizedString
+		/**
+		 * This invoice remains in the records and was canceled by a linked cancellation document.
+		 */
+		canceledByCorrectionInfo: () => LocalizedString
+		/**
+		 * Canceled by document {invoiceNumber}
+		 */
+		canceledByInvoiceLabel: (arg: { invoiceNumber: unknown }) => LocalizedString
+		/**
+		 * Cancels document {invoiceNumber}
+		 */
+		correctsInvoiceLabel: (arg: { invoiceNumber: unknown }) => LocalizedString
+		/**
 		 * Supplier
 		 */
 		exportSupplier: () => LocalizedString
@@ -5768,6 +6106,14 @@ export type TranslationFunctions = {
 		 * Invoice - Tax document
 		 */
 		exportTaxDocumentTitle: () => LocalizedString
+		/**
+		 * Cancellation document
+		 */
+		exportCancellationDocumentTitle: () => LocalizedString
+		/**
+		 * Corrective tax document
+		 */
+		exportCancellationTaxDocumentTitle: () => LocalizedString
 		/**
 		 * Invoice number
 		 */
@@ -5824,6 +6170,26 @@ export type TranslationFunctions = {
 		 * Invoice {invoiceNumber}
 		 */
 		exportInvoiceNote: (arg: { invoiceNumber: unknown }) => LocalizedString
+		/**
+		 * Cancellation reason: {reason}
+		 */
+		exportCancellationReason: (arg: { reason: unknown }) => LocalizedString
+		/**
+		 * This document cancels invoice {invoiceNumber}.
+		 */
+		exportCancellationCorrectsInvoice: (arg: { invoiceNumber: unknown }) => LocalizedString
+		/**
+		 * This document was voided before delivery.
+		 */
+		exportVoidedNotice: () => LocalizedString
+		/**
+		 * VOIDED
+		 */
+		exportVoidedWatermark: () => LocalizedString
+		/**
+		 * This document was canceled by linked cancellation document {invoiceNumber}.
+		 */
+		exportCanceledByCorrection: (arg: { invoiceNumber: unknown }) => LocalizedString
 		/**
 		 * Share PDF
 		 */

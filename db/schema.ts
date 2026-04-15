@@ -7,7 +7,7 @@ export enum AddressType {
 }
 
 export default appSchema({
-  version: 52,
+  version: 53,
   tables: [
     tableSchema({
       name: 'app_settings',
@@ -256,6 +256,9 @@ export default appSchema({
         { name: 'seller_snapshot_json', type: 'string', isOptional: true },
         { name: 'buyer_snapshot_json', type: 'string', isOptional: true },
         { name: 'last_exported_at', type: 'number', isOptional: true, isIndexed: true },
+        { name: 'corrected_invoice_id', type: 'string', isOptional: true, isIndexed: true },
+        { name: 'correction_kind', type: 'string', isOptional: true },
+        { name: 'cancellation_reason', type: 'string', isOptional: true },
         { name: 'subtotal', type: 'number' },
         { name: 'total', type: 'number' },
         { name: 'created_at', type: 'number' },

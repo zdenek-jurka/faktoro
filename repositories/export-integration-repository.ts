@@ -210,12 +210,29 @@ function getSampleXml(documentType: ExportIntegrationDocumentType): string {
   <Number>2026-001</Number>
   <ClientId>client-1</ClientId>
   <IssueDate>2026-03-22</IssueDate>
+  <DueDate>2026-04-05</DueDate>
   <Currency>EUR</Currency>
+  <PaymentMethod>bank</PaymentMethod>
+  <Status>issued</Status>
+  <DocumentType>tax_document</DocumentType>
+  <HeaderNote>Thank you for your business.</HeaderNote>
+  <FooterNote>Payable within 14 days.</FooterNote>
   <Seller>
     <Name>Faktoro s.r.o.</Name>
+    <CompanyId>12345678</CompanyId>
+    <VatNumber>CZ12345678</VatNumber>
+    <Address>Sample Street 1</Address>
+    <City>Prague</City>
+    <PostalCode>110 00</PostalCode>
+    <Country>CZ</Country>
+    <RegistrationNote>Company registered in the Commercial Register.</RegistrationNote>
   </Seller>
   <Buyer>
     <Name>Example Client</Name>
+    <Address>Client Street 8</Address>
+    <City>Prague</City>
+    <PostalCode>120 00</PostalCode>
+    <Country>CZ</Country>
   </Buyer>
   <Summary>
     <Subtotal>100.00</Subtotal>
@@ -367,7 +384,18 @@ export function validateBaseExportXml(
     }
     assertRequiredChildren(
       root,
-      ['Id', 'Number', 'ClientId', 'IssueDate', 'Currency', 'Seller', 'Buyer', 'Summary', 'Items'],
+      [
+        'Id',
+        'Number',
+        'ClientId',
+        'IssueDate',
+        'Currency',
+        'DocumentType',
+        'Seller',
+        'Buyer',
+        'Summary',
+        'Items',
+      ],
       'Generated XML',
     );
     assertRequiredChildren(

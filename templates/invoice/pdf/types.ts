@@ -56,6 +56,7 @@ export type BuildDefaultInvoicePdfHtmlInput = {
   locale: string;
   currency: string;
   includeVat: boolean;
+  watermarkText?: string;
   invoiceNumber: string;
   issueAt?: number;
   taxableAt?: number;

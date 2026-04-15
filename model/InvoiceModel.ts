@@ -25,6 +25,9 @@ export default class InvoiceModel extends Model {
   @text('seller_snapshot_json') sellerSnapshotJson?: string;
   @text('buyer_snapshot_json') buyerSnapshotJson?: string;
   @field('last_exported_at') lastExportedAt?: number;
+  @text('corrected_invoice_id') correctedInvoiceId?: string;
+  @text('correction_kind') correctionKind?: string;
+  @text('cancellation_reason') cancellationReason?: string;
   @field('subtotal') subtotal: number;
   @field('total') total: number;
   @readonly @date('created_at') createdAt: Date;

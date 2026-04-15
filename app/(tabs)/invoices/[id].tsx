@@ -8,7 +8,7 @@ import {
   isPdfOpenEnabled,
   isPdfSaveEnabled,
 } from '@/constants/features';
-import { Colors } from '@/constants/theme';
+import { Colors, withOpacity } from '@/constants/theme';
 import database from '@/db';
 import { useBottomSafeAreaStyle } from '@/hooks/use-bottom-safe-area-style';
 import { useColorScheme } from '@/hooks/use-color-scheme';
@@ -26,7 +26,11 @@ import {
   validateBaseExportXml,
 } from '@/repositories/export-integration-repository';
 import { getConfigValue, setConfigValue } from '@/repositories/config-storage-repository';
-import { type DraftInvoiceItemInput, markInvoiceExported } from '@/repositories/invoice-repository';
+import {
+  type DraftInvoiceItemInput,
+  getInvoiceCancellationLink,
+  markInvoiceExported,
+} from '@/repositories/invoice-repository';
 import { getSettings } from '@/repositories/settings-repository';
 import { getBetaSettings } from '@/repositories/beta-settings-repository';
 import {
@@ -46,6 +50,12 @@ import {
 } from '@/utils/error-utils';
 import { openLocalFile } from '@/utils/open-local-file';
 import { buildCopyFileName } from '@/utils/file-name-utils';
+import {
+  canCancelIssuedInvoice,
+  canEditIssuedInvoice,
+  getInvoiceStatusLabel,
+  isInvoiceCancellationDocument,
+} from '@/utils/invoice-status';
 import { buildPdfLogoHtml } from '@/utils/pdf-logo';
 import { formatPrice } from '@/utils/price-utils';
 import { isIos } from '@/utils/platform';
@@ -345,6 +355,7 @@ export default function InvoiceDetailScreen() {
 
   const [invoice, setInvoice] = useState<InvoiceModel | null>(null);
   const [client, setClient] = useState<ClientModel | null>(null);
+  const [relatedInvoice, setRelatedInvoice] = useState<InvoiceModel | null>(null);
   const [items, setItems] = useState<InvoiceItemModel[]>([]);
   const [exportingTarget, setExportingTarget] = useState<
     'pdf' | 'open_pdf' | 'save_pdf' | 'html' | 'xml' | null
@@ -436,6 +447,27 @@ export default function InvoiceDetailScreen() {
 
     return () => clientSubscription.unsubscribe();
   }, [invoice?.clientId]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadRelatedInvoice = async () => {
+      if (!invoice) {
+        if (isMounted) setRelatedInvoice(null);
+        return;
+      }
+      const linkedInvoice = await getInvoiceCancellationLink(invoice.id);
+      if (isMounted) {
+        setRelatedInvoice(linkedInvoice);
+      }
+    };
+
+    void loadRelatedInvoice();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [invoice]);
 
   useEffect(() => {
     const loadExportFormat = async () => {
@@ -609,6 +641,11 @@ export default function InvoiceDetailScreen() {
     ]);
   };
 
+  const handleOpenCancelFlow = () => {
+    if (!invoice) return;
+    router.push(`/invoices/${invoice.id}/cancel`);
+  };
+
   const buildInvoiceHtmlDocument = async (): Promise<string> => {
     if (!invoice) {
       throw new Error(LLExport.invoices.exportError());
@@ -631,22 +668,67 @@ export default function InvoiceDetailScreen() {
     const includeVat =
       !!invoice.taxableAt ||
       items.some((item) => item.vatRate != null && Number(item.vatRate) >= 0);
-    const documentTitle = includeVat
-      ? LLExport.invoices.exportTaxDocumentTitle()
-      : LLExport.invoices.exportInvoiceTitle();
+    const documentTitle = isInvoiceCancellationDocument(invoice)
+      ? includeVat
+        ? LLExport.invoices.exportCancellationTaxDocumentTitle()
+        : LLExport.invoices.exportCancellationDocumentTitle()
+      : includeVat
+        ? LLExport.invoices.exportTaxDocumentTitle()
+        : LLExport.invoices.exportInvoiceTitle();
+    const cancellationNoteLines =
+      invoice.correctionKind === 'cancellation'
+        ? [
+            LLExport.invoices.exportCancellationCorrectsInvoice({
+              invoiceNumber: relatedInvoice?.invoiceNumber || invoice.correctedInvoiceId || '-',
+            }),
+            invoice.cancellationReason
+              ? LLExport.invoices.exportCancellationReason({
+                  reason: invoice.cancellationReason,
+                })
+              : null,
+          ]
+        : invoice.status === 'voided_before_delivery'
+          ? [
+              LLExport.invoices.exportVoidedNotice(),
+              invoice.cancellationReason
+                ? LLExport.invoices.exportCancellationReason({
+                    reason: invoice.cancellationReason,
+                  })
+                : null,
+            ]
+          : invoice.status === 'canceled_by_correction'
+            ? [
+                LLExport.invoices.exportCanceledByCorrection({
+                  invoiceNumber: relatedInvoice?.invoiceNumber || '-',
+                }),
+                invoice.cancellationReason
+                  ? LLExport.invoices.exportCancellationReason({
+                      reason: invoice.cancellationReason,
+                    })
+                  : null,
+              ]
+            : [];
+    const effectiveFooterNote = [invoice.footerNote, ...cancellationNoteLines]
+      .filter(Boolean)
+      .join('\n');
+    const watermarkText =
+      invoice.status === 'voided_before_delivery'
+        ? LLExport.invoices.exportVoidedWatermark()
+        : undefined;
 
     return renderInvoicePdfHtml({
       templateId: 'default',
       locale: exportLocale,
       currency: invoice.currency,
       includeVat,
+      watermarkText,
       invoiceNumber: invoice.invoiceNumber,
       issueAt: invoice.issuedAt,
       taxableAt: invoice.taxableAt,
       dueAt: invoice.dueAt,
       subtotal: invoice.subtotal,
       total: invoice.total,
-      footerNote: invoice.footerNote,
+      footerNote: effectiveFooterNote,
       bankAccount: seller.bankAccount,
       iban: seller.iban,
       swift: seller.swift,
@@ -654,7 +736,7 @@ export default function InvoiceDetailScreen() {
       paymentQrHtml,
       labels: {
         title: documentTitle,
-        taxDocumentTitle: LLExport.invoices.exportTaxDocumentTitle(),
+        taxDocumentTitle: documentTitle,
         invoiceNumber: LLExport.invoices.exportInvoiceNumberLabel(),
         issueDate: LLExport.invoices.issueDate(),
         taxableSupplyDate: LLExport.invoices.taxableSupplyDate(),
@@ -1187,6 +1269,33 @@ export default function InvoiceDetailScreen() {
         icon: 'arrow.down.doc.fill' as IconSymbolName,
         onPress: () => openExportFormatMenu(),
       };
+  const statusLabel = invoice ? getInvoiceStatusLabel(invoice, LL) : null;
+  const relatedInvoiceLabel = relatedInvoice
+    ? invoice?.correctionKind === 'cancellation'
+      ? LL.invoices.correctsInvoiceLabel({
+          invoiceNumber: relatedInvoice.invoiceNumber,
+        })
+      : LL.invoices.canceledByInvoiceLabel({
+          invoiceNumber: relatedInvoice.invoiceNumber,
+        })
+    : null;
+  const cancellationInfo = invoice
+    ? invoice.correctionKind === 'cancellation'
+      ? {
+          title: isInvoiceVatPayer(invoice)
+            ? LL.invoices.exportCancellationTaxDocumentTitle()
+            : LL.invoices.statusCancellationDocument(),
+          description: LL.invoices.cancellationDocumentInfo(),
+          icon: 'doc.fill' as IconSymbolName,
+        }
+      : invoice.status === 'canceled_by_correction'
+        ? {
+            title: LL.invoices.statusCanceledByCorrection(),
+            description: LL.invoices.canceledByCorrectionInfo(),
+            icon: 'xmark.circle.fill' as IconSymbolName,
+          }
+        : null
+    : null;
 
   return (
     <ThemedView style={styles.container}>
@@ -1194,34 +1303,55 @@ export default function InvoiceDetailScreen() {
         options={{
           title: invoice?.invoiceNumber || LL.invoices.title(),
           headerRight: () =>
-            invoice ? (
-              <Pressable
-                style={({ pressed }) => [
-                  styles.headerActionButton,
-                  { opacity: exportingTarget !== null ? 0.45 : pressed ? 0.65 : 1 },
-                ]}
-                onPress={handleEditInvoice}
-                disabled={exportingTarget !== null}
-                accessibilityRole="button"
-                accessibilityLabel={LL.common.edit()}
-                hitSlop={8}
-              >
-                <IconSymbol name="pencil" size={18} color={palette.tint} />
-              </Pressable>
+            invoice && (canCancelIssuedInvoice(invoice) || canEditIssuedInvoice(invoice)) ? (
+              <View style={styles.headerActionGroup}>
+                {canCancelIssuedInvoice(invoice) ? (
+                  <Pressable
+                    style={({ pressed }) => [
+                      styles.headerActionButton,
+                      { opacity: exportingTarget !== null ? 0.45 : pressed ? 0.65 : 1 },
+                    ]}
+                    onPress={handleOpenCancelFlow}
+                    disabled={exportingTarget !== null}
+                    accessibilityRole="button"
+                    accessibilityLabel={LL.invoices.cancelDocument()}
+                    hitSlop={8}
+                  >
+                    <IconSymbol name="xmark.circle.fill" size={18} color={palette.destructive} />
+                  </Pressable>
+                ) : null}
+                {canEditIssuedInvoice(invoice) ? (
+                  <Pressable
+                    style={({ pressed }) => [
+                      styles.headerActionButton,
+                      { opacity: exportingTarget !== null ? 0.45 : pressed ? 0.65 : 1 },
+                    ]}
+                    onPress={handleEditInvoice}
+                    disabled={exportingTarget !== null}
+                    accessibilityRole="button"
+                    accessibilityLabel={LL.common.edit()}
+                    hitSlop={8}
+                  >
+                    <IconSymbol name="pencil" size={18} color={palette.tint} />
+                  </Pressable>
+                ) : null}
+              </View>
             ) : null,
         }}
       />
 
       {invoice ? (
         <>
-          <View
-            style={[
-              styles.summaryCard,
-              { backgroundColor: Colors[colorScheme ?? 'light'].cardBackground },
-            ]}
-          >
+          <View style={styles.summaryCard}>
             <ThemedText type="defaultSemiBold">{invoice.invoiceNumber}</ThemedText>
             <ThemedText type="defaultSemiBold">{client?.name || '-'}</ThemedText>
+            {statusLabel ? (
+              <ThemedText
+                style={[styles.metaText, styles.statusText, { color: palette.destructive }]}
+              >
+                {statusLabel}
+              </ThemedText>
+            ) : null}
             <ThemedText style={styles.metaText}>
               {LL.invoices.issueDate()}: {new Date(invoice.issuedAt).toLocaleDateString(intlLocale)}
             </ThemedText>
@@ -1239,10 +1369,60 @@ export default function InvoiceDetailScreen() {
                 {LL.invoices.dueDate()}: {new Date(invoice.dueAt).toLocaleDateString(intlLocale)}
               </ThemedText>
             ) : null}
+            {invoice.cancellationReason ? (
+              <ThemedText style={styles.metaText}>
+                {LL.invoices.cancelReasonLabel()}: {invoice.cancellationReason}
+              </ThemedText>
+            ) : null}
+            {relatedInvoice ? (
+              <Pressable
+                onPress={() => router.push(`/invoices/${relatedInvoice.id}`)}
+                accessibilityRole="button"
+                accessibilityLabel={relatedInvoiceLabel || undefined}
+              >
+                <ThemedText
+                  style={[styles.metaText, styles.relatedInvoiceText, { color: palette.tint }]}
+                >
+                  {relatedInvoiceLabel}
+                </ThemedText>
+              </Pressable>
+            ) : null}
             <ThemedText style={styles.totalText}>
               {formatPrice(invoice.total, normalizeCurrencyCode(invoice.currency), intlLocale)}
             </ThemedText>
           </View>
+          {cancellationInfo ? (
+            <View
+              style={[
+                styles.cancellationInfoCard,
+                {
+                  backgroundColor: withOpacity(palette.destructive, 0.08),
+                  borderColor: withOpacity(palette.destructive, 0.22),
+                },
+              ]}
+            >
+              <View style={styles.cancellationInfoHeader}>
+                <IconSymbol name={cancellationInfo.icon} size={16} color={palette.destructive} />
+                <ThemedText style={[styles.cancellationInfoTitle, { color: palette.destructive }]}>
+                  {cancellationInfo.title}
+                </ThemedText>
+              </View>
+              <ThemedText style={styles.cancellationInfoDescription}>
+                {cancellationInfo.description}
+              </ThemedText>
+              {relatedInvoice ? (
+                <Pressable
+                  onPress={() => router.push(`/invoices/${relatedInvoice.id}`)}
+                  accessibilityRole="button"
+                  accessibilityLabel={relatedInvoiceLabel || undefined}
+                >
+                  <ThemedText style={[styles.cancellationInfoLink, { color: palette.tint }]}>
+                    {relatedInvoiceLabel}
+                  </ThemedText>
+                </Pressable>
+              ) : null}
+            </View>
+          ) : null}
 
           <View style={styles.exportRow}>
             <View
@@ -1427,7 +1607,36 @@ const styles = StyleSheet.create({
   container: { flex: 1, paddingHorizontal: 16, paddingTop: 16 },
   summaryCard: { borderRadius: 10, padding: 12, gap: 2, marginBottom: 10 },
   metaText: { fontSize: 12, opacity: 0.7 },
+  statusText: { marginTop: 2, fontWeight: '700', opacity: 1 },
+  relatedInvoiceText: { marginTop: 2, fontWeight: '600', opacity: 1 },
   totalText: { marginTop: 4, fontSize: 15, fontWeight: '700' },
+  cancellationInfoCard: {
+    marginBottom: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    gap: 6,
+  },
+  cancellationInfoHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  cancellationInfoTitle: {
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  cancellationInfoDescription: {
+    fontSize: 13,
+    lineHeight: 18,
+    opacity: 0.82,
+  },
+  cancellationInfoLink: {
+    fontSize: 13,
+    fontWeight: '700',
+    marginTop: 2,
+  },
   exportButtonSecondaryText: { fontSize: 13, fontWeight: '600', flex: 1, minWidth: 0 },
   exportSplit: {
     borderRadius: 12,
@@ -1464,6 +1673,11 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  headerActionGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginRight: -6,
   },
   exportRow: { flexDirection: 'row', gap: 8, marginBottom: 12, alignItems: 'stretch' },
   listContent: { paddingBottom: 24 },

@@ -4,7 +4,10 @@ import { formatPrice } from '@/utils/price-utils';
 
 export function buildDefaultInvoicePdfHtml(input: BuildDefaultInvoicePdfHtmlInput): string {
   const formatMoney = (value: number) => formatPrice(value, input.currency, input.locale);
-  const documentTitle = input.includeVat ? input.labels.taxDocumentTitle : input.labels.title;
+  const documentTitle = input.labels.title;
+  const watermarkHtml = input.watermarkText?.trim()
+    ? `<div class="watermark">${escapeHtml(input.watermarkText.trim())}</div>`
+    : '';
   const buildMultilinePartyHtml = (value?: string) => {
     const trimmed = (value || '').trim();
     if (!trimmed) return '';
@@ -167,7 +170,11 @@ export function buildDefaultInvoicePdfHtml(input: BuildDefaultInvoicePdfHtmlInpu
       <head>
         <meta charset="utf-8" />
         <style>
-          body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; padding: 30px; color: #111111; }
+          body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; margin: 0; padding: 0; color: #111111; background: #ffffff; }
+          .page-shell { position: relative; padding: 30px; box-sizing: border-box; overflow: hidden; }
+          .page-content { position: relative; z-index: 1; }
+          .watermark-layer { position: absolute; inset: 0; z-index: 2; display: flex; align-items: center; justify-content: center; overflow: hidden; pointer-events: none; }
+          .watermark { width: 160%; text-align: center; transform: rotate(-24deg); font-size: 96px; font-weight: 900; letter-spacing: 8px; color: rgba(185, 28, 28, 0.14); white-space: nowrap; text-transform: uppercase; }
           .header { display:flex; align-items:flex-start; justify-content:space-between; margin-bottom: 18px; }
           .title-wrap { flex:1; min-width:0; text-align:right; padding-left: 16px; }
           .title { font-size: 30px; font-weight: 800; letter-spacing: .4px; margin: 0; }
@@ -202,10 +209,13 @@ export function buildDefaultInvoicePdfHtml(input: BuildDefaultInvoicePdfHtmlInpu
           .party-line { font-size:11px; color:#111111; line-height:1.45; }
           .party-bank { border-top:1px solid #444444; margin-top:8px; padding-top:6px; }
           .party-bank .bank-value { min-width:110px; }
-          .footer-note { margin-top: 14px; font-size: 11px; color:#111111; white-space: pre-line; border-top:1px solid #444444; padding-top: 10px; }
+          .footer-note { margin-top: 14px; font-size: 12px; color:#111111; white-space: pre-line; border-top:1px solid #444444; padding-top: 10px; }
         </style>
       </head>
       <body>
+        <div class="page-shell">
+        ${watermarkHtml ? `<div class="watermark-layer">${watermarkHtml}</div>` : ''}
+        <div class="page-content">
         <div class="header">
           <div class="logo-box">${input.logoHtml}</div>
           <div class="title-wrap">
@@ -273,6 +283,8 @@ export function buildDefaultInvoicePdfHtml(input: BuildDefaultInvoicePdfHtmlInpu
         </div>
 
         <div class="footer-note">${escapeHtml(input.footerNote || '')}</div>
+        </div>
+        </div>
       </body>
     </html>
   `;
