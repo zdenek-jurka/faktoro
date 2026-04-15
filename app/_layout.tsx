@@ -11,6 +11,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  AppState,
   Image,
   KeyboardAvoidingView,
   Pressable,
@@ -49,6 +50,7 @@ import {
 } from '@/repositories/onboarding-repository';
 import { getErrorMessage } from '@/utils/error-utils';
 import { getSettings } from '@/repositories/settings-repository';
+import { sanitizeAppLockGracePeriodSeconds } from '@/utils/app-lock-grace-period';
 import { handleTimerActionUrl } from '@/repositories/timer-deeplink-repository';
 import { normalizeAppLockPinInput } from '@/utils/app-lock-pin';
 import { isAndroid, isIos } from '@/utils/platform';
@@ -152,7 +154,14 @@ function RootLayoutNav({ colorScheme }: { colorScheme: ReturnType<typeof useColo
   const [biometricAvailable, setBiometricAvailable] = useState(false);
   const pendingTimerActionUrl = useRef<string | null>(null);
   const hasCheckedOnboarding = useRef(false);
+  const lastBackgroundAtRef = useRef<number | null>(null);
+  const wentThroughBackgroundRef = useRef(false);
+  const isSessionUnlockedRef = useRef(false);
   useTimerLimitGuard();
+
+  useEffect(() => {
+    isSessionUnlockedRef.current = isSessionUnlocked;
+  }, [isSessionUnlocked]);
 
   const processTimerDeepLink = useCallback(async (url: string | null | undefined) => {
     const normalized = url?.trim();
@@ -194,6 +203,26 @@ function RootLayoutNav({ colorScheme }: { colorScheme: ReturnType<typeof useColo
     }
   }, [LL.settings]);
 
+  const syncBiometricAvailability = useCallback(async (): Promise<boolean> => {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const localAuth = require('expo-local-authentication');
+      if (!localAuth) {
+        setBiometricAvailable(false);
+        return false;
+      }
+
+      const hasHardware = await localAuth.hasHardwareAsync();
+      const isEnrolled = await localAuth.isEnrolledAsync();
+      const available = hasHardware && isEnrolled;
+      setBiometricAvailable(available);
+      return available;
+    } catch {
+      setBiometricAvailable(false);
+      return false;
+    }
+  }, []);
+
   useEffect(() => {
     const checkLock = async () => {
       try {
@@ -201,7 +230,7 @@ function RootLayoutNav({ colorScheme }: { colorScheme: ReturnType<typeof useColo
         const pinExists = await hasPinHash();
         const shouldLock = !!settings.appLockEnabled && pinExists;
 
-        if (!shouldLock || isSessionUnlocked) {
+        if (!shouldLock || isSessionUnlockedRef.current) {
           setNeedsUnlock(false);
           setIsSessionUnlocked(true);
           setIsCheckingLock(false);
@@ -210,18 +239,10 @@ function RootLayoutNav({ colorScheme }: { colorScheme: ReturnType<typeof useColo
 
         setNeedsUnlock(true);
         setBiometricEnabled(!!settings.appLockBiometricEnabled);
+        const available = await syncBiometricAvailability();
 
-        // eslint-disable-next-line @typescript-eslint/no-require-imports
-        const localAuth = require('expo-local-authentication');
-        if (localAuth) {
-          const hasHardware = await localAuth.hasHardwareAsync();
-          const isEnrolled = await localAuth.isEnrolledAsync();
-          const available = hasHardware && isEnrolled;
-          setBiometricAvailable(available);
-
-          if (available && settings.appLockBiometricEnabled) {
-            await tryBiometricUnlock();
-          }
+        if (available && settings.appLockBiometricEnabled) {
+          await tryBiometricUnlock();
         }
       } catch (error) {
         console.error('Error checking app lock state:', error);
@@ -231,7 +252,64 @@ function RootLayoutNav({ colorScheme }: { colorScheme: ReturnType<typeof useColo
     };
 
     void checkLock();
-  }, [isSessionUnlocked, tryBiometricUnlock]);
+  }, [syncBiometricAvailability, tryBiometricUnlock]);
+
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (nextState) => {
+      if (nextState === 'background') {
+        lastBackgroundAtRef.current = Date.now();
+        wentThroughBackgroundRef.current = true;
+        return;
+      }
+
+      if (nextState !== 'active' || !wentThroughBackgroundRef.current) {
+        return;
+      }
+      wentThroughBackgroundRef.current = false;
+
+      void (async () => {
+        try {
+          const settings = await getSettings();
+          const pinExists = await hasPinHash();
+          const shouldLock = !!settings.appLockEnabled && pinExists;
+
+          if (!shouldLock || !isSessionUnlockedRef.current) {
+            return;
+          }
+
+          const gracePeriodSeconds = sanitizeAppLockGracePeriodSeconds(
+            settings.appLockGracePeriodSeconds,
+          );
+          const backgroundAt = lastBackgroundAtRef.current;
+          if (backgroundAt === null) {
+            return;
+          }
+
+          const elapsedMilliseconds = Date.now() - backgroundAt;
+          if (elapsedMilliseconds < gracePeriodSeconds * 1000) {
+            return;
+          }
+
+          setPin('');
+          setUnlockError('');
+          setNeedsUnlock(true);
+          setIsSessionUnlocked(false);
+          setBiometricEnabled(!!settings.appLockBiometricEnabled);
+
+          const available = await syncBiometricAvailability();
+          if (available && settings.appLockBiometricEnabled) {
+            await tryBiometricUnlock();
+          }
+        } catch (error) {
+          console.error('Error relocking app after returning to foreground:', error);
+        }
+      })();
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, [syncBiometricAvailability, tryBiometricUnlock]);
 
   useEffect(() => {
     if (!isSessionUnlocked || hasCheckedOnboarding.current) return;

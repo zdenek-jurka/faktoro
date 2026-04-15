@@ -6,6 +6,7 @@ import {
   mergeAppSettingsRecords,
   toAppSettingsRaw,
 } from '@/repositories/app-settings-singleton';
+import { sanitizeAppLockGracePeriodSeconds } from '@/utils/app-lock-grace-period';
 import { sanitizeInvoiceDueDays } from '@/utils/invoice-defaults';
 import { sanitizeTimerLimitMinutes } from '@/utils/timer-limit-utils';
 import { sanitizeBillingIntervalMinutes } from '@/utils/time-utils';
@@ -56,6 +57,7 @@ export type UpdateSettingsInput = {
   timesheetSeriesDeviceCode?: string | null;
   appLockEnabled?: boolean;
   appLockBiometricEnabled?: boolean;
+  appLockGracePeriodSeconds?: number | null;
 };
 
 /** Internal WatermelonDB model properties not exposed in public types */
@@ -262,6 +264,11 @@ export async function updateSettings(input: UpdateSettingsInput): Promise<void> 
       }
       if (input.appLockBiometricEnabled !== undefined) {
         s.appLockBiometricEnabled = input.appLockBiometricEnabled;
+      }
+      if (input.appLockGracePeriodSeconds !== undefined) {
+        s.appLockGracePeriodSeconds = sanitizeAppLockGracePeriodSeconds(
+          input.appLockGracePeriodSeconds,
+        );
       }
     });
   });

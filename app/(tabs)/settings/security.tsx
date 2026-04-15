@@ -1,5 +1,14 @@
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Colors, getSwitchColors } from '@/constants/theme';
 import { useBottomSafeAreaStyle } from '@/hooks/use-bottom-safe-area-style';
 import { useColorScheme } from '@/hooks/use-color-scheme';
@@ -13,6 +22,11 @@ import {
 } from '@/repositories/app-lock-repository';
 import { getSettings, updateSettings } from '@/repositories/settings-repository';
 import { normalizeAppLockPinInput } from '@/utils/app-lock-pin';
+import {
+  APP_LOCK_GRACE_PERIOD_OPTIONS,
+  DEFAULT_APP_LOCK_GRACE_PERIOD_SECONDS,
+  sanitizeAppLockGracePeriodSeconds,
+} from '@/utils/app-lock-grace-period';
 import { isIos } from '@/utils/platform';
 import { useHeaderHeight } from '@react-navigation/elements';
 import { Stack } from 'expo-router';
@@ -89,6 +103,9 @@ export default function SettingsSecurityScreen() {
   const [appLockPin, setAppLockPin] = useState('');
   const [confirmPin, setConfirmPin] = useState('');
   const [biometricEnabled, setBiometricEnabled] = useState(false);
+  const [appLockGracePeriodSeconds, setAppLockGracePeriodSeconds] = useState(
+    DEFAULT_APP_LOCK_GRACE_PERIOD_SECONDS,
+  );
   const [biometricState, setBiometricState] = useState<BiometricState>(() => ({
     isAvailable: false,
     label: LL.settings.securityBiometricNotAvailableLabel(),
@@ -137,6 +154,7 @@ export default function SettingsSecurityScreen() {
         const settings = await getSettings();
         const lockEnabled = !!settings.appLockEnabled;
         const biometricSettingEnabled = !!settings.appLockBiometricEnabled;
+        const gracePeriod = sanitizeAppLockGracePeriodSeconds(settings.appLockGracePeriodSeconds);
         const pinExists = await hasPinHash();
         const state = await getBiometricState(biometricLabelsRef.current);
 
@@ -144,6 +162,7 @@ export default function SettingsSecurityScreen() {
 
         setAppLockEnabled(lockEnabled);
         setBiometricEnabled(biometricSettingEnabled);
+        setAppLockGracePeriodSeconds(gracePeriod);
         setHasStoredPin(pinExists);
         setBiometricState(state);
 
@@ -259,6 +278,7 @@ export default function SettingsSecurityScreen() {
         appLockEnabled,
         appLockBiometricEnabled:
           appLockEnabled && biometricState.isAvailable ? biometricEnabled : false,
+        appLockGracePeriodSeconds,
       });
       Alert.alert(LL.common.success(), LL.settings.saveSuccess());
     } catch (error) {
@@ -409,6 +429,37 @@ export default function SettingsSecurityScreen() {
                   maxLength={10}
                 />
 
+                <ThemedText type="defaultSemiBold">
+                  {LL.settings.securityGracePeriodTitle()}
+                </ThemedText>
+                <ThemedText style={styles.sectionDescription}>
+                  {LL.settings.securityGracePeriodDescription()}
+                </ThemedText>
+                <Select
+                  value={String(appLockGracePeriodSeconds)}
+                  onValueChange={(value) =>
+                    setAppLockGracePeriodSeconds(sanitizeAppLockGracePeriodSeconds(Number(value)))
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder={getGracePeriodLabel(LL, appLockGracePeriodSeconds)} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectLabel>{LL.settings.securityGracePeriodTitle()}</SelectLabel>
+                      {APP_LOCK_GRACE_PERIOD_OPTIONS.map((option) => (
+                        <SelectItem
+                          key={option}
+                          value={String(option)}
+                          label={getGracePeriodLabel(LL, option)}
+                        >
+                          {getGracePeriodLabel(LL, option)}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+
                 <View style={styles.switchRow}>
                   <View style={styles.switchLabelContainer}>
                     <ThemedText type="defaultSemiBold">
@@ -459,6 +510,23 @@ function inputStyle(colorScheme: ReturnType<typeof useColorScheme>) {
 
 function placeholder(colorScheme: ReturnType<typeof useColorScheme>) {
   return Colors[colorScheme ?? 'light'].placeholder;
+}
+
+function getGracePeriodLabel(LL: ReturnType<typeof useI18nContext>['LL'], value: number): string {
+  switch (value) {
+    case 0:
+      return LL.settings.securityGracePeriodImmediate();
+    case 15:
+      return LL.settings.securityGracePeriod15Seconds();
+    case 30:
+      return LL.settings.securityGracePeriod30Seconds();
+    case 60:
+      return LL.settings.securityGracePeriod1Minute();
+    case 300:
+      return LL.settings.securityGracePeriod5Minutes();
+    default:
+      return LL.settings.securityGracePeriod30Seconds();
+  }
 }
 
 const styles = StyleSheet.create({

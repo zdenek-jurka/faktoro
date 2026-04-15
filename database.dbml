@@ -57,6 +57,7 @@ Table app_settings {
 
   app_lock_enabled boolean [null, note: 'Whether app-level lock is enabled']
   app_lock_biometric_enabled boolean [null, note: 'Whether biometric unlock is enabled when available']
+  app_lock_grace_period_seconds number [null, note: 'Grace period before relocking after app returns from background']
 
   created_at number [not null, note: 'Unix timestamp in milliseconds']
   updated_at number [not null, note: 'Unix timestamp in milliseconds']

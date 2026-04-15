@@ -1,5 +1,6 @@
 import type { DirtyRaw, RawRecord as WMRawRecord } from '@nozbe/watermelondb/RawRecord';
 import { DEFAULT_CURRENCY_CODE } from '@/utils/currency-utils';
+import { DEFAULT_APP_LOCK_GRACE_PERIOD_SECONDS } from '@/utils/app-lock-grace-period';
 import { DEFAULT_INVOICE_DUE_DAYS, DEFAULT_INVOICE_PAYMENT_METHOD } from '@/utils/invoice-defaults';
 import {
   DEFAULT_TIMER_HARD_LIMIT_MINUTES,
@@ -19,6 +20,7 @@ const APP_SETTINGS_DEFAULT_VALUES = {
   timer_hard_limit_minutes: DEFAULT_TIMER_HARD_LIMIT_MINUTES,
   app_lock_enabled: false,
   app_lock_biometric_enabled: false,
+  app_lock_grace_period_seconds: DEFAULT_APP_LOCK_GRACE_PERIOD_SECONDS,
   invoice_series_prefix: 'INV',
   default_invoice_currency: DEFAULT_CURRENCY_CODE,
   default_invoice_payment_method: DEFAULT_INVOICE_PAYMENT_METHOD,

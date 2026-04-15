@@ -7,7 +7,7 @@ export enum AddressType {
 }
 
 export default appSchema({
-  version: 53,
+  version: 54,
   tables: [
     tableSchema({
       name: 'app_settings',
@@ -56,6 +56,7 @@ export default appSchema({
         { name: 'timesheet_series_device_code', type: 'string', isOptional: true },
         { name: 'app_lock_enabled', type: 'boolean', isOptional: true },
         { name: 'app_lock_biometric_enabled', type: 'boolean', isOptional: true },
+        { name: 'app_lock_grace_period_seconds', type: 'number', isOptional: true },
         { name: 'created_at', type: 'number' },
         { name: 'updated_at', type: 'number' },
       ],

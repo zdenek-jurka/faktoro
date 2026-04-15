@@ -4173,6 +4173,34 @@ type RootTranslation = {
 		 */
 		securityBiometricGenericLabel: string
 		/**
+		 * R​e​l​o​c​k​ ​a​f​t​e​r​ ​r​e​t​u​r​n​i​n​g​ ​t​o​ ​t​h​e​ ​a​p​p
+		 */
+		securityGracePeriodTitle: string
+		/**
+		 * C​h​o​o​s​e​ ​h​o​w​ ​l​o​n​g​ ​F​a​k​t​o​r​o​ ​c​a​n​ ​s​t​a​y​ ​i​n​ ​t​h​e​ ​b​a​c​k​g​r​o​u​n​d​ ​b​e​f​o​r​e​ ​u​n​l​o​c​k​i​n​g​ ​i​s​ ​r​e​q​u​i​r​e​d​ ​a​g​a​i​n​.
+		 */
+		securityGracePeriodDescription: string
+		/**
+		 * I​m​m​e​d​i​a​t​e​l​y
+		 */
+		securityGracePeriodImmediate: string
+		/**
+		 * 1​5​ ​s​e​c​o​n​d​s
+		 */
+		securityGracePeriod15Seconds: string
+		/**
+		 * 3​0​ ​s​e​c​o​n​d​s
+		 */
+		securityGracePeriod30Seconds: string
+		/**
+		 * 1​ ​m​i​n​u​t​e
+		 */
+		securityGracePeriod1Minute: string
+		/**
+		 * 5​ ​m​i​n​u​t​e​s
+		 */
+		securityGracePeriod5Minutes: string
+		/**
 		 * U​n​l​o​c​k​ ​F​a​k​t​o​r​o
 		 */
 		unlockTitle: string
@@ -8705,6 +8733,34 @@ export type TranslationFunctions = {
 		 * Biometrics
 		 */
 		securityBiometricGenericLabel: () => LocalizedString
+		/**
+		 * Relock after returning to the app
+		 */
+		securityGracePeriodTitle: () => LocalizedString
+		/**
+		 * Choose how long Faktoro can stay in the background before unlocking is required again.
+		 */
+		securityGracePeriodDescription: () => LocalizedString
+		/**
+		 * Immediately
+		 */
+		securityGracePeriodImmediate: () => LocalizedString
+		/**
+		 * 15 seconds
+		 */
+		securityGracePeriod15Seconds: () => LocalizedString
+		/**
+		 * 30 seconds
+		 */
+		securityGracePeriod30Seconds: () => LocalizedString
+		/**
+		 * 1 minute
+		 */
+		securityGracePeriod1Minute: () => LocalizedString
+		/**
+		 * 5 minutes
+		 */
+		securityGracePeriod5Minutes: () => LocalizedString
 		/**
 		 * Unlock Faktoro
 		 */

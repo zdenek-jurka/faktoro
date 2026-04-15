@@ -1068,5 +1068,18 @@ export default schemaMigrations({
         }),
       ],
     },
+    {
+      toVersion: 54,
+      steps: [
+        addColumns({
+          table: 'app_settings',
+          columns: [{ name: 'app_lock_grace_period_seconds', type: 'number', isOptional: true }],
+        }),
+        unsafeExecuteSql(`
+          update "app_settings"
+          set "app_lock_grace_period_seconds" = coalesce("app_lock_grace_period_seconds", 30);
+        `),
+      ],
+    },
   ],
 });

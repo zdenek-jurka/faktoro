@@ -48,6 +48,7 @@ export default class AppSettingsModel extends Model {
   @text('timesheet_series_device_code') timesheetSeriesDeviceCode?: string;
   @field('app_lock_enabled') appLockEnabled?: boolean;
   @field('app_lock_biometric_enabled') appLockBiometricEnabled?: boolean;
+  @field('app_lock_grace_period_seconds') appLockGracePeriodSeconds?: number;
   @readonly @date('created_at') createdAt: Date;
   @readonly @date('updated_at') updatedAt: Date;
 }
