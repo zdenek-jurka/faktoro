@@ -317,6 +317,21 @@ const fr = {
     errorInvalidDate: 'Utilisez le format de date AAAA-MM-JJ.',
     errorInvalidRange: 'La date de début doit être antérieure ou égale à la date de fin.',
     errorCreate: 'Échec de la création de la feuille de temps.',
+    deleteAction: 'Supprimer la feuille de temps',
+    deleteScreenTitle: 'Supprimer la feuille de temps',
+    deleteDescription:
+      'La feuille de temps sera supprimée, mais les entrées de temps individuelles seront conservées.',
+    deleteBlockedByInvoice:
+      'Cette feuille de temps a été utilisée dans une facture et ne peut pas être supprimée.',
+    deleteLinkedInvoiceDescription:
+      'Cette feuille de temps est utilisée dans la facture {invoiceNumber} et reste liée au document émis.',
+    deleteConfirmTitle: 'Supprimer la feuille de temps ?',
+    deleteConfirmMessage:
+      'La feuille de temps sera supprimée définitivement, mais les entrées de temps individuelles seront conservées.',
+    deleteConfirmAction: 'Supprimer la feuille de temps',
+    deleteSuccess: 'La feuille de temps a été supprimée.',
+    deleteError: 'Impossible de supprimer la feuille de temps.',
+    openLinkedInvoice: 'Ouvrir la facture',
   },
   invoices: {
     title: 'Factures',

@@ -14,6 +14,12 @@ export default function TimesheetsStackLayout() {
           headerLeft: () => <DrawerToggleButton />,
         }}
       />
+      <Stack.Screen name="client/[id]" options={{ title: LL.timesheets.title() }} />
+      <Stack.Screen name="timesheet/[id]" options={{ title: LL.timesheets.detailTitle() }} />
+      <Stack.Screen
+        name="timesheet/delete/[id]"
+        options={{ title: LL.timesheets.deleteScreenTitle() }}
+      />
     </Stack>
   );
 }

@@ -320,6 +320,21 @@ const de = {
     errorInvalidDate: 'Verwenden Sie das Datumsformat JJJJ-MM-TT.',
     errorInvalidRange: 'Das Von-Datum muss vor oder gleich dem Bis-Datum liegen.',
     errorCreate: 'Zeiterfassung konnte nicht erstellt werden.',
+    deleteAction: 'Stundenzettel löschen',
+    deleteScreenTitle: 'Stundenzettel löschen',
+    deleteDescription:
+      'Der Stundenzettel wird entfernt, die einzelnen Zeiteinträge bleiben jedoch erhalten.',
+    deleteBlockedByInvoice:
+      'Dieser Stundenzettel wurde in einer Rechnung verwendet und kann nicht gelöscht werden.',
+    deleteLinkedInvoiceDescription:
+      'Dieser Stundenzettel wird in Rechnung {invoiceNumber} verwendet und bleibt Teil des ausgestellten Dokuments.',
+    deleteConfirmTitle: 'Stundenzettel löschen?',
+    deleteConfirmMessage:
+      'Der Stundenzettel wird dauerhaft entfernt, die einzelnen Zeiteinträge bleiben jedoch erhalten.',
+    deleteConfirmAction: 'Stundenzettel löschen',
+    deleteSuccess: 'Der Stundenzettel wurde gelöscht.',
+    deleteError: 'Der Stundenzettel konnte nicht gelöscht werden.',
+    openLinkedInvoice: 'Rechnung öffnen',
   },
   invoices: {
     title: 'Rechnungen',

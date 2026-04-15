@@ -310,6 +310,19 @@ const cs = {
     errorInvalidDate: 'Datum zadejte ve formátu YYYY-MM-DD.',
     errorInvalidRange: 'Datum od musí být menší nebo rovno datu do.',
     errorCreate: 'Nepodařilo se vytvořit timesheet.',
+    deleteAction: 'Smazat timesheet',
+    deleteScreenTitle: 'Smazání timesheetu',
+    deleteDescription: 'Timesheet bude odstraněn, ale jednotlivé záznamy času zůstanou zachované.',
+    deleteBlockedByInvoice: 'Tento timesheet byl použit ve faktuře a nelze ho smazat.',
+    deleteLinkedInvoiceDescription:
+      'Tento timesheet je použitý ve faktuře {invoiceNumber} a zůstává součástí vystaveného dokladu.',
+    deleteConfirmTitle: 'Smazat timesheet?',
+    deleteConfirmMessage:
+      'Timesheet bude trvale odstraněn, ale jednotlivé záznamy času zůstanou zachované.',
+    deleteConfirmAction: 'Smazat timesheet',
+    deleteSuccess: 'Timesheet byl smazán.',
+    deleteError: 'Nepodařilo se smazat timesheet.',
+    openLinkedInvoice: 'Otevřít fakturu',
   },
   invoices: {
     title: 'Faktury',

@@ -311,6 +311,20 @@ const pl = {
     errorInvalidDate: 'Użyj formatu daty RRRR-MM-DD.',
     errorInvalidRange: 'Data od musi być wcześniejsza lub równa Do daty.',
     errorCreate: 'Nie udało się utworzyć grafiku.',
+    deleteAction: 'Usuń timesheet',
+    deleteScreenTitle: 'Usuwanie timesheetu',
+    deleteDescription:
+      'Timesheet zostanie usunięty, ale pojedyncze wpisy czasu pozostaną zachowane.',
+    deleteBlockedByInvoice: 'Ten timesheet został użyty na fakturze i nie można go usunąć.',
+    deleteLinkedInvoiceDescription:
+      'Ten timesheet jest użyty na fakturze {invoiceNumber} i pozostaje częścią wystawionego dokumentu.',
+    deleteConfirmTitle: 'Usunąć timesheet?',
+    deleteConfirmMessage:
+      'Timesheet zostanie trwale usunięty, ale pojedyncze wpisy czasu pozostaną zachowane.',
+    deleteConfirmAction: 'Usuń timesheet',
+    deleteSuccess: 'Timesheet został usunięty.',
+    deleteError: 'Nie udało się usunąć timesheetu.',
+    openLinkedInvoice: 'Otwórz fakturę',
   },
   invoices: {
     title: 'Faktury',

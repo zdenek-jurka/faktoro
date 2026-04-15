@@ -1171,6 +1171,51 @@ type RootTranslation = {
 		 * F​a​i​l​e​d​ ​t​o​ ​c​r​e​a​t​e​ ​t​i​m​e​s​h​e​e​t​.
 		 */
 		errorCreate: string
+		/**
+		 * D​e​l​e​t​e​ ​t​i​m​e​s​h​e​e​t
+		 */
+		deleteAction: string
+		/**
+		 * D​e​l​e​t​e​ ​t​i​m​e​s​h​e​e​t
+		 */
+		deleteScreenTitle: string
+		/**
+		 * T​h​e​ ​t​i​m​e​s​h​e​e​t​ ​w​i​l​l​ ​b​e​ ​r​e​m​o​v​e​d​,​ ​b​u​t​ ​t​h​e​ ​i​n​d​i​v​i​d​u​a​l​ ​t​i​m​e​ ​e​n​t​r​i​e​s​ ​w​i​l​l​ ​s​t​a​y​ ​p​r​e​s​e​r​v​e​d​.
+		 */
+		deleteDescription: string
+		/**
+		 * T​h​i​s​ ​t​i​m​e​s​h​e​e​t​ ​w​a​s​ ​u​s​e​d​ ​i​n​ ​a​n​ ​i​n​v​o​i​c​e​ ​a​n​d​ ​c​a​n​n​o​t​ ​b​e​ ​d​e​l​e​t​e​d​.
+		 */
+		deleteBlockedByInvoice: string
+		/**
+		 * T​h​i​s​ ​t​i​m​e​s​h​e​e​t​ ​i​s​ ​u​s​e​d​ ​i​n​ ​i​n​v​o​i​c​e​ ​{​i​n​v​o​i​c​e​N​u​m​b​e​r​}​ ​a​n​d​ ​r​e​m​a​i​n​s​ ​p​a​r​t​ ​o​f​ ​t​h​e​ ​i​s​s​u​e​d​ ​d​o​c​u​m​e​n​t​.
+		 * @param {unknown} invoiceNumber
+		 */
+		deleteLinkedInvoiceDescription: RequiredParams<'invoiceNumber'>
+		/**
+		 * D​e​l​e​t​e​ ​t​i​m​e​s​h​e​e​t​?
+		 */
+		deleteConfirmTitle: string
+		/**
+		 * T​h​e​ ​t​i​m​e​s​h​e​e​t​ ​w​i​l​l​ ​b​e​ ​p​e​r​m​a​n​e​n​t​l​y​ ​r​e​m​o​v​e​d​,​ ​b​u​t​ ​t​h​e​ ​i​n​d​i​v​i​d​u​a​l​ ​t​i​m​e​ ​e​n​t​r​i​e​s​ ​w​i​l​l​ ​s​t​a​y​ ​p​r​e​s​e​r​v​e​d​.
+		 */
+		deleteConfirmMessage: string
+		/**
+		 * D​e​l​e​t​e​ ​t​i​m​e​s​h​e​e​t
+		 */
+		deleteConfirmAction: string
+		/**
+		 * T​i​m​e​s​h​e​e​t​ ​w​a​s​ ​d​e​l​e​t​e​d​.
+		 */
+		deleteSuccess: string
+		/**
+		 * F​a​i​l​e​d​ ​t​o​ ​d​e​l​e​t​e​ ​t​i​m​e​s​h​e​e​t​.
+		 */
+		deleteError: string
+		/**
+		 * O​p​e​n​ ​i​n​v​o​i​c​e
+		 */
+		openLinkedInvoice: string
 	}
 	invoices: {
 		/**
@@ -5781,6 +5826,50 @@ export type TranslationFunctions = {
 		 * Failed to create timesheet.
 		 */
 		errorCreate: () => LocalizedString
+		/**
+		 * Delete timesheet
+		 */
+		deleteAction: () => LocalizedString
+		/**
+		 * Delete timesheet
+		 */
+		deleteScreenTitle: () => LocalizedString
+		/**
+		 * The timesheet will be removed, but the individual time entries will stay preserved.
+		 */
+		deleteDescription: () => LocalizedString
+		/**
+		 * This timesheet was used in an invoice and cannot be deleted.
+		 */
+		deleteBlockedByInvoice: () => LocalizedString
+		/**
+		 * This timesheet is used in invoice {invoiceNumber} and remains part of the issued document.
+		 */
+		deleteLinkedInvoiceDescription: (arg: { invoiceNumber: unknown }) => LocalizedString
+		/**
+		 * Delete timesheet?
+		 */
+		deleteConfirmTitle: () => LocalizedString
+		/**
+		 * The timesheet will be permanently removed, but the individual time entries will stay preserved.
+		 */
+		deleteConfirmMessage: () => LocalizedString
+		/**
+		 * Delete timesheet
+		 */
+		deleteConfirmAction: () => LocalizedString
+		/**
+		 * Timesheet was deleted.
+		 */
+		deleteSuccess: () => LocalizedString
+		/**
+		 * Failed to delete timesheet.
+		 */
+		deleteError: () => LocalizedString
+		/**
+		 * Open invoice
+		 */
+		openLinkedInvoice: () => LocalizedString
 	}
 	invoices: {
 		/**

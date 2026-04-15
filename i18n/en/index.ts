@@ -308,6 +308,20 @@ const en = {
     errorInvalidDate: 'Use date format YYYY-MM-DD.',
     errorInvalidRange: 'From date must be before or equal to To date.',
     errorCreate: 'Failed to create timesheet.',
+    deleteAction: 'Delete timesheet',
+    deleteScreenTitle: 'Delete timesheet',
+    deleteDescription:
+      'The timesheet will be removed, but the individual time entries will stay preserved.',
+    deleteBlockedByInvoice: 'This timesheet was used in an invoice and cannot be deleted.',
+    deleteLinkedInvoiceDescription:
+      'This timesheet is used in invoice {invoiceNumber} and remains part of the issued document.',
+    deleteConfirmTitle: 'Delete timesheet?',
+    deleteConfirmMessage:
+      'The timesheet will be permanently removed, but the individual time entries will stay preserved.',
+    deleteConfirmAction: 'Delete timesheet',
+    deleteSuccess: 'Timesheet was deleted.',
+    deleteError: 'Failed to delete timesheet.',
+    openLinkedInvoice: 'Open invoice',
   },
   invoices: {
     title: 'Invoices',

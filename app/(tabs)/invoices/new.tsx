@@ -987,8 +987,8 @@ export default function InvoiceDraftScreen() {
     return LL.invoices.addManualItemSection();
   };
 
-  const getItemUnitLabel = (unit: string) => {
-    const normalizedUnit = unit.trim();
+  const getItemUnitLabel = (unit?: string) => {
+    const normalizedUnit = unit?.trim() || '';
     if (!normalizedUnit) return '';
     return getPriceListUnitLabel(LL, normalizedUnit);
   };

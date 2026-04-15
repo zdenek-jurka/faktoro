@@ -1,5 +1,12 @@
 import database from '@/db';
-import { AppSettingsModel, ClientModel, TimeEntryModel, TimesheetModel } from '@/model';
+import {
+  AppSettingsModel,
+  ClientModel,
+  InvoiceItemModel,
+  InvoiceModel,
+  TimeEntryModel,
+  TimesheetModel,
+} from '@/model';
 import { getDeviceSyncSettings } from '@/repositories/device-sync-settings-repository';
 import { getSettings } from '@/repositories/settings-repository';
 import { buildSeriesIdentifier } from '@/utils/series-utils';
@@ -25,6 +32,14 @@ export type CreateTimesheetInput = {
   periodFrom?: number;
   periodTo?: number;
   label?: string;
+};
+
+export const TIMESHEET_DELETE_LINKED_INVOICE_ERROR = 'timesheet.delete_linked_invoice';
+
+export type TimesheetDeletionContext = {
+  canDelete: boolean;
+  linkedInvoiceId: string | null;
+  linkedInvoiceNumber: string | null;
 };
 
 function buildTimesheetNumberFromSettings(
@@ -147,5 +162,72 @@ export async function createTimesheetFromPeriod(
     });
 
     return { timesheet, entriesCount: entries.length };
+  });
+}
+
+export async function getTimesheetDeletionContext(
+  timesheetId: string,
+): Promise<TimesheetDeletionContext> {
+  const invoiceItemCollection = database.get<InvoiceItemModel>(InvoiceItemModel.table);
+  const invoiceCollection = database.get<InvoiceModel>(InvoiceModel.table);
+
+  const linkedInvoiceItems = await invoiceItemCollection
+    .query(Q.where('source_kind', 'timesheet'), Q.where('source_id', timesheetId))
+    .fetch();
+
+  if (linkedInvoiceItems.length === 0) {
+    return {
+      canDelete: true,
+      linkedInvoiceId: null,
+      linkedInvoiceNumber: null,
+    };
+  }
+
+  const linkedInvoiceIds = Array.from(
+    new Set(linkedInvoiceItems.map((item) => item.invoiceId).filter(Boolean)),
+  );
+
+  if (linkedInvoiceIds.length === 0) {
+    return {
+      canDelete: true,
+      linkedInvoiceId: null,
+      linkedInvoiceNumber: null,
+    };
+  }
+
+  const invoices = await invoiceCollection.query(Q.where('id', Q.oneOf(linkedInvoiceIds))).fetch();
+  invoices.sort((left, right) => right.issuedAt - left.issuedAt);
+
+  const linkedInvoice = invoices[0];
+  return {
+    canDelete: false,
+    linkedInvoiceId: linkedInvoice?.id ?? null,
+    linkedInvoiceNumber: linkedInvoice?.invoiceNumber?.trim() || linkedInvoice?.id || null,
+  };
+}
+
+export async function deleteTimesheet(id: string): Promise<void> {
+  const timesheetCollection = database.get<TimesheetModel>(TimesheetModel.table);
+  const timeEntryCollection = database.get<TimeEntryModel>(TimeEntryModel.table);
+
+  await database.write(async () => {
+    const deletionContext = await getTimesheetDeletionContext(id);
+    if (!deletionContext.canDelete) {
+      throw new Error(TIMESHEET_DELETE_LINKED_INVOICE_ERROR);
+    }
+
+    const timesheet = await timesheetCollection.find(id);
+    const linkedEntries = await timeEntryCollection.query(Q.where('timesheet_id', id)).fetch();
+
+    await Promise.all(
+      linkedEntries.map((entry) =>
+        entry.update((item: TimeEntryModel) => {
+          item.timesheetId = undefined;
+          item.timesheetDuration = undefined;
+        }),
+      ),
+    );
+
+    await timesheet.markAsDeleted();
   });
 }

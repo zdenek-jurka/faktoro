@@ -317,6 +317,20 @@ const es = {
     errorInvalidDate: 'Utilice el formato de fecha AAAA-MM-DD.',
     errorInvalidRange: 'La fecha desde debe ser anterior o igual a la fecha hasta.',
     errorCreate: 'No se pudo crear la hoja de horas.',
+    deleteAction: 'Eliminar hoja de horas',
+    deleteScreenTitle: 'Eliminar hoja de horas',
+    deleteDescription:
+      'La hoja de horas se eliminará, pero las entradas de tiempo individuales se conservarán.',
+    deleteBlockedByInvoice: 'Esta hoja de horas se usó en una factura y no se puede eliminar.',
+    deleteLinkedInvoiceDescription:
+      'Esta hoja de horas se usa en la factura {invoiceNumber} y sigue formando parte del documento emitido.',
+    deleteConfirmTitle: '¿Eliminar hoja de horas?',
+    deleteConfirmMessage:
+      'La hoja de horas se eliminará permanentemente, pero las entradas de tiempo individuales se conservarán.',
+    deleteConfirmAction: 'Eliminar hoja de horas',
+    deleteSuccess: 'La hoja de horas fue eliminada.',
+    deleteError: 'No se pudo eliminar la hoja de horas.',
+    openLinkedInvoice: 'Abrir factura',
   },
   invoices: {
     title: 'Facturas',

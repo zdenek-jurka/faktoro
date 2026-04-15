@@ -315,6 +315,20 @@ const pt = {
     errorInvalidDate: 'Use o formato de data AAAA-MM-DD.',
     errorInvalidRange: 'A data inicial deve ser anterior ou igual à data final.',
     errorCreate: 'Falha ao criar quadro de horários.',
+    deleteAction: 'Eliminar folha de horas',
+    deleteScreenTitle: 'Eliminar folha de horas',
+    deleteDescription:
+      'A folha de horas será removida, mas os registos de tempo individuais serão preservados.',
+    deleteBlockedByInvoice: 'Esta folha de horas foi usada numa fatura e não pode ser eliminada.',
+    deleteLinkedInvoiceDescription:
+      'Esta folha de horas é usada na fatura {invoiceNumber} e continua a fazer parte do documento emitido.',
+    deleteConfirmTitle: 'Eliminar folha de horas?',
+    deleteConfirmMessage:
+      'A folha de horas será removida permanentemente, mas os registos de tempo individuais serão preservados.',
+    deleteConfirmAction: 'Eliminar folha de horas',
+    deleteSuccess: 'A folha de horas foi eliminada.',
+    deleteError: 'Não foi possível eliminar a folha de horas.',
+    openLinkedInvoice: 'Abrir fatura',
   },
   invoices: {
     title: 'Faturas',

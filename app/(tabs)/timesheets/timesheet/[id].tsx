@@ -903,12 +903,38 @@ export default function TimesheetDetailScreen() {
     setIsXmlExportSheetVisible(false);
   };
 
+  const handleOpenDeleteFlow = () => {
+    if (!timesheet) return;
+
+    router.push({
+      pathname: '/timesheets/timesheet/delete/[id]',
+      params: { id: timesheet.id },
+    });
+  };
+
   return (
     <ThemedView style={styles.container}>
       <Stack.Screen
         options={{
           title: getTimesheetTitle(timesheet, LL),
           headerBackTitle: client?.name || LL.timesheets.title(),
+          headerRight: () =>
+            timesheet ? (
+              <View style={styles.headerActionGroup}>
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.headerActionButton,
+                    { opacity: pressed ? 0.65 : 1 },
+                  ]}
+                  onPress={handleOpenDeleteFlow}
+                  accessibilityRole="button"
+                  accessibilityLabel={LL.timesheets.deleteAction()}
+                  hitSlop={8}
+                >
+                  <IconSymbol name="trash.fill" size={18} color={palette.destructive} />
+                </Pressable>
+              </View>
+            ) : null,
         }}
       />
 
@@ -1200,6 +1226,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderLeftWidth: StyleSheet.hairlineWidth,
+  },
+  headerActionButton: {
+    paddingHorizontal: 6,
+    paddingVertical: 4,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerActionGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginRight: -6,
   },
   exportButtonSecondaryText: {
     fontSize: 13,
