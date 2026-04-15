@@ -27,6 +27,10 @@ export function canCancelIssuedInvoice(
   return isMutableIssuedInvoice(invoice);
 }
 
+export function canCopyInvoice(invoice: Pick<InvoiceModel, 'correctionKind'>): boolean {
+  return !isInvoiceCancellationDocument(invoice);
+}
+
 export function isInvoiceVatPayer(
   invoice?: Pick<InvoiceModel, 'sellerSnapshotJson'> | null,
 ): boolean {

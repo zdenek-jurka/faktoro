@@ -1500,6 +1500,14 @@ type RootTranslation = {
 		 */
 		errorNoItems: string
 		/**
+		 * A​n​ ​i​n​v​o​i​c​e​ ​w​i​t​h​ ​t​h​i​s​ ​n​u​m​b​e​r​ ​a​l​r​e​a​d​y​ ​e​x​i​s​t​s​.
+		 */
+		errorInvoiceNumberExists: string
+		/**
+		 * A​ ​d​o​c​u​m​e​n​t​ ​w​i​t​h​ ​t​h​i​s​ ​n​u​m​b​e​r​ ​a​l​r​e​a​d​y​ ​e​x​i​s​t​s​.​ ​S​a​v​i​n​g​ ​w​i​l​l​ ​n​o​t​ ​b​e​ ​p​o​s​s​i​b​l​e​ ​u​n​t​i​l​ ​y​o​u​ ​c​h​a​n​g​e​ ​i​t​.
+		 */
+		invoiceNumberExistsWarning: string
+		/**
 		 * N​o​ ​p​r​i​c​e​ ​l​i​s​t​ ​i​t​e​m​s​ ​u​s​e​ ​{​c​u​r​r​e​n​c​y​}​.
 		 * @param {unknown} currency
 		 */
@@ -1600,6 +1608,30 @@ type RootTranslation = {
 		 * E​n​t​e​r​ ​a​ ​c​a​n​c​e​l​l​a​t​i​o​n​ ​r​e​a​s​o​n​.
 		 */
 		cancelReasonRequired: string
+		/**
+		 * C​o​p​y​ ​i​n​v​o​i​c​e
+		 */
+		copyInvoice: string
+		/**
+		 * T​h​i​s​ ​i​n​v​o​i​c​e​ ​c​o​n​t​a​i​n​s​ ​t​i​m​e​s​h​e​e​t​ ​i​t​e​m​s
+		 */
+		copyInvoiceTimesheetTitle: string
+		/**
+		 * W​h​e​n​ ​c​o​p​y​i​n​g​ ​a​n​ ​i​n​v​o​i​c​e​,​ ​t​h​e​ ​o​r​i​g​i​n​a​l​ ​t​i​m​e​s​h​e​e​t​ ​l​i​n​k​ ​c​a​n​n​o​t​ ​b​e​ ​s​a​f​e​l​y​ ​p​r​e​s​e​r​v​e​d​ ​w​i​t​h​o​u​t​ ​r​i​s​k​i​n​g​ ​d​u​p​l​i​c​a​t​e​ ​b​i​l​l​i​n​g​ ​o​f​ ​t​h​e​ ​s​a​m​e​ ​w​o​r​k​.
+		 */
+		copyInvoiceTimesheetMessage: string
+		/**
+		 * C​o​n​v​e​r​t​ ​t​o​ ​r​e​g​u​l​a​r​ ​i​t​e​m​s
+		 */
+		copyInvoiceConvertTimesheetItems: string
+		/**
+		 * O​m​i​t​ ​t​i​m​e​s​h​e​e​t​ ​i​t​e​m​s
+		 */
+		copyInvoiceOmitTimesheetItems: string
+		/**
+		 * F​a​i​l​e​d​ ​t​o​ ​p​r​e​p​a​r​e​ ​t​h​e​ ​i​n​v​o​i​c​e​ ​c​o​p​y​.
+		 */
+		copyInvoiceError: string
 		/**
 		 * V​o​i​d​ ​d​o​c​u​m​e​n​t
 		 */
@@ -5927,6 +5959,14 @@ export type TranslationFunctions = {
 		 */
 		errorNoItems: () => LocalizedString
 		/**
+		 * An invoice with this number already exists.
+		 */
+		errorInvoiceNumberExists: () => LocalizedString
+		/**
+		 * A document with this number already exists. Saving will not be possible until you change it.
+		 */
+		invoiceNumberExistsWarning: () => LocalizedString
+		/**
 		 * No price list items use {currency}.
 		 */
 		noCompatiblePriceListItems: (arg: { currency: unknown }) => LocalizedString
@@ -6026,6 +6066,30 @@ export type TranslationFunctions = {
 		 * Enter a cancellation reason.
 		 */
 		cancelReasonRequired: () => LocalizedString
+		/**
+		 * Copy invoice
+		 */
+		copyInvoice: () => LocalizedString
+		/**
+		 * This invoice contains timesheet items
+		 */
+		copyInvoiceTimesheetTitle: () => LocalizedString
+		/**
+		 * When copying an invoice, the original timesheet link cannot be safely preserved without risking duplicate billing of the same work.
+		 */
+		copyInvoiceTimesheetMessage: () => LocalizedString
+		/**
+		 * Convert to regular items
+		 */
+		copyInvoiceConvertTimesheetItems: () => LocalizedString
+		/**
+		 * Omit timesheet items
+		 */
+		copyInvoiceOmitTimesheetItems: () => LocalizedString
+		/**
+		 * Failed to prepare the invoice copy.
+		 */
+		copyInvoiceError: () => LocalizedString
 		/**
 		 * Void document
 		 */

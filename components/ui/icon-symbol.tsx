@@ -36,6 +36,7 @@ const MAPPING = {
   'plus.circle.fill': 'add-circle',
   'checkmark.circle.fill': 'check-circle',
   'doc.badge.plus': 'post-add',
+  'doc.on.doc': 'content-copy',
   'doc.fill': 'description',
   'doc.text': 'description',
   'doc.text.fill': 'description',

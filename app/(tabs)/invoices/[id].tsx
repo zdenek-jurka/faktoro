@@ -29,6 +29,8 @@ import { getConfigValue, setConfigValue } from '@/repositories/config-storage-re
 import {
   type DraftInvoiceItemInput,
   getInvoiceCancellationLink,
+  getInvoiceItems,
+  getSuggestedInvoiceNumber,
   markInvoiceExported,
 } from '@/repositories/invoice-repository';
 import { getSettings } from '@/repositories/settings-repository';
@@ -45,6 +47,7 @@ import { normalizeCurrencyCode } from '@/utils/currency-utils';
 import {
   getErrorMessage,
   getExportIntegrationErrorMessage,
+  getRawErrorMessage,
   isHttpError,
   isNetworkError,
 } from '@/utils/error-utils';
@@ -52,9 +55,11 @@ import { openLocalFile } from '@/utils/open-local-file';
 import { buildCopyFileName } from '@/utils/file-name-utils';
 import {
   canCancelIssuedInvoice,
+  canCopyInvoice,
   canEditIssuedInvoice,
   getInvoiceStatusLabel,
   isInvoiceCancellationDocument,
+  isInvoiceVatPayer,
 } from '@/utils/invoice-status';
 import { buildPdfLogoHtml } from '@/utils/pdf-logo';
 import { formatPrice } from '@/utils/price-utils';
@@ -101,6 +106,8 @@ type InvoiceHtmlExportResult = {
   uri: string;
 };
 
+type InvoiceCopyTimesheetMode = 'convert' | 'omit';
+
 type HeaderDraft = {
   clientId: string;
   invoiceNumber: string;
@@ -122,6 +129,21 @@ function toLocalISODate(value: number): string {
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const day = String(date.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
+}
+
+function addDaysToLocalISODate(baseDate: string, days: number): string {
+  const normalizedDays = Math.max(0, Math.floor(days));
+  const [year, month, day] = baseDate.split('-').map(Number);
+  const nextDate = new Date(year, (month || 1) - 1, day || 1);
+  nextDate.setDate(nextDate.getDate() + normalizedDays);
+  return toLocalISODate(nextDate.getTime());
+}
+
+function getInvoiceDueOffsetDays(invoice: InvoiceModel): number {
+  if (!invoice.dueAt || !invoice.issuedAt) return 0;
+  const diff = invoice.dueAt - invoice.issuedAt;
+  if (!Number.isFinite(diff) || diff <= 0) return 0;
+  return Math.round(diff / (24 * 60 * 60 * 1000));
 }
 
 function getPaymentMethodLabel(
@@ -621,6 +643,119 @@ export default function InvoiceDetailScreen() {
     });
   };
 
+  const buildCopyItemsDraft = (
+    sourceItems: InvoiceItemModel[],
+    timesheetMode: InvoiceCopyTimesheetMode,
+  ): DraftInvoiceItemInput[] =>
+    sourceItems.flatMap((item) => {
+      if (item.sourceKind !== 'timesheet') {
+        return [
+          {
+            sourceKind: item.sourceKind as DraftInvoiceItemInput['sourceKind'],
+            sourceId: item.sourceId,
+            description: item.description,
+            quantity: item.quantity,
+            unit: item.unit,
+            unitPrice: item.unitPrice,
+            totalPrice: item.totalPrice,
+            vatCodeId: item.vatCodeId,
+            vatRate: item.vatRate,
+          },
+        ];
+      }
+
+      if (timesheetMode === 'omit') {
+        return [];
+      }
+
+      return [
+        {
+          sourceKind: 'manual',
+          description: item.description,
+          quantity: item.quantity,
+          unit: item.unit,
+          unitPrice: item.unitPrice,
+          totalPrice: item.totalPrice,
+          vatCodeId: item.vatCodeId,
+          vatRate: item.vatRate,
+        },
+      ];
+    });
+
+  const openCopyInvoiceDraft = async (
+    sourceItems: InvoiceItemModel[],
+    timesheetMode: InvoiceCopyTimesheetMode,
+  ) => {
+    if (!invoice) return;
+
+    const today = toLocalISODate(Date.now());
+    const nextInvoiceNumber = await getSuggestedInvoiceNumber();
+    const dueDate = addDaysToLocalISODate(today, getInvoiceDueOffsetDays(invoice));
+    const includeTaxableDate = isInvoiceVatPayer(invoice);
+    const headerDraft: HeaderDraft = {
+      clientId: invoice.clientId,
+      invoiceNumber: nextInvoiceNumber,
+      issuedDate: today,
+      taxableDate: includeTaxableDate ? today : undefined,
+      dueDate,
+      currency: normalizeCurrencyCode(invoice.currency),
+      paymentMethod: invoice.paymentMethod || 'bank_transfer',
+    };
+    const footerDraft: FooterDraft = {
+      headerNote: invoice.headerNote || '',
+      footerNote: invoice.footerNote || '',
+    };
+    const itemsDraft = buildCopyItemsDraft(sourceItems, timesheetMode);
+
+    router.push({
+      pathname: '/invoices/new',
+      params: {
+        headerDraft: JSON.stringify(headerDraft),
+        itemsDraft: JSON.stringify(itemsDraft),
+        footerDraft: JSON.stringify(footerDraft),
+      },
+    });
+  };
+
+  const handleCopyInvoice = async () => {
+    if (!invoice) return;
+
+    try {
+      const sourceItems = await getInvoiceItems(invoice.id);
+      const hasTimesheetItems = sourceItems.some((item) => item.sourceKind === 'timesheet');
+
+      if (!hasTimesheetItems) {
+        await openCopyInvoiceDraft(sourceItems, 'convert');
+        return;
+      }
+
+      Alert.alert(
+        LL.invoices.copyInvoiceTimesheetTitle(),
+        LL.invoices.copyInvoiceTimesheetMessage(),
+        [
+          {
+            text: LL.common.cancel(),
+            style: 'cancel',
+          },
+          {
+            text: LL.invoices.copyInvoiceOmitTimesheetItems(),
+            onPress: () => {
+              void openCopyInvoiceDraft(sourceItems, 'omit');
+            },
+          },
+          {
+            text: LL.invoices.copyInvoiceConvertTimesheetItems(),
+            onPress: () => {
+              void openCopyInvoiceDraft(sourceItems, 'convert');
+            },
+          },
+        ],
+      );
+    } catch (error) {
+      Alert.alert(LL.common.error(), getErrorMessage(error, LL.invoices.copyInvoiceError()));
+    }
+  };
+
   const handleEditInvoice = () => {
     if (!invoice) return;
 
@@ -872,7 +1007,7 @@ export default function InvoiceDetailScreen() {
       await rememberLastExportAction('pdf');
       await markInvoiceExported(invoice.id);
     } catch (error) {
-      const message = error instanceof Error ? error.message : LLExport.invoices.exportError();
+      const message = getErrorMessage(error, LLExport.invoices.exportError());
       Alert.alert(LLExport.common.error(), message);
     } finally {
       setExportingTarget(null);
@@ -925,7 +1060,7 @@ export default function InvoiceDetailScreen() {
       if (pdfFile) {
         showOpenPdfFallback(pdfFile);
       } else {
-        const message = error instanceof Error ? error.message : LLExport.invoices.openPdfError();
+        const message = getErrorMessage(error, LLExport.invoices.openPdfError());
         Alert.alert(LLExport.common.error(), message);
       }
     } finally {
@@ -954,7 +1089,7 @@ export default function InvoiceDetailScreen() {
       await rememberLastExportAction('html');
       await markInvoiceExported(invoice.id);
     } catch (error) {
-      const message = error instanceof Error ? error.message : LLExport.invoices.exportError();
+      const message = getErrorMessage(error, LLExport.invoices.exportError());
       Alert.alert(LLExport.common.error(), message);
     } finally {
       setExportingTarget(null);
@@ -1035,13 +1170,13 @@ export default function InvoiceDetailScreen() {
       await rememberLastExportAction('save_pdf');
       await markInvoiceExported(invoice.id);
     } catch (error) {
-      const message = getErrorMessage(error, '');
-      if (message && /cancel(?:ed|led)/i.test(message)) {
+      const rawMessage = getRawErrorMessage(error);
+      if (rawMessage && /cancel(?:ed|led)/i.test(rawMessage)) {
         return;
       }
       Alert.alert(
         LLExport.common.error(),
-        error instanceof Error ? error.message : LLExport.invoices.savePdfError(),
+        getErrorMessage(error, LLExport.invoices.savePdfError()),
       );
     } finally {
       setExportingTarget(null);
@@ -1087,7 +1222,7 @@ export default function InvoiceDetailScreen() {
       await rememberLastExportAction(`structured:${format}`);
       await markInvoiceExported(invoice.id);
     } catch (error) {
-      const message = error instanceof Error ? error.message : LLExport.invoices.exportError();
+      const message = getErrorMessage(error, LLExport.invoices.exportError());
       Alert.alert(LLExport.common.error(), message);
     } finally {
       setExportingTarget(null);
@@ -1303,7 +1438,10 @@ export default function InvoiceDetailScreen() {
         options={{
           title: invoice?.invoiceNumber || LL.invoices.title(),
           headerRight: () =>
-            invoice && (canCancelIssuedInvoice(invoice) || canEditIssuedInvoice(invoice)) ? (
+            invoice &&
+            (canCancelIssuedInvoice(invoice) ||
+              canCopyInvoice(invoice) ||
+              canEditIssuedInvoice(invoice)) ? (
               <View style={styles.headerActionGroup}>
                 {canCancelIssuedInvoice(invoice) ? (
                   <Pressable
@@ -1318,6 +1456,21 @@ export default function InvoiceDetailScreen() {
                     hitSlop={8}
                   >
                     <IconSymbol name="xmark.circle.fill" size={18} color={palette.destructive} />
+                  </Pressable>
+                ) : null}
+                {canCopyInvoice(invoice) ? (
+                  <Pressable
+                    style={({ pressed }) => [
+                      styles.headerActionButton,
+                      { opacity: exportingTarget !== null ? 0.45 : pressed ? 0.65 : 1 },
+                    ]}
+                    onPress={() => void handleCopyInvoice()}
+                    disabled={exportingTarget !== null}
+                    accessibilityRole="button"
+                    accessibilityLabel={LL.invoices.copyInvoice()}
+                    hitSlop={8}
+                  >
+                    <IconSymbol name="doc.on.doc" size={18} color={palette.tint} />
                   </Pressable>
                 ) : null}
                 {canEditIssuedInvoice(invoice) ? (

@@ -11,6 +11,7 @@ import {
 } from '@/repositories/device-sync-settings-repository';
 import { observeBetaSettings, updateBetaSettings } from '@/repositories/beta-settings-repository';
 import { dangerouslyResetAllLocalAppData } from '@/repositories/dangerous-local-data-reset-repository';
+import { getErrorMessage } from '@/utils/error-utils';
 import { showAlert, showConfirm } from '@/utils/platform-alert';
 import { isIos } from '@/utils/platform';
 import { Redirect, Stack, useRouter } from 'expo-router';
@@ -82,7 +83,7 @@ function SettingsAdvancedScreenContent() {
       await dangerouslyResetAllLocalAppData();
       router.replace('/onboarding');
     } catch (error) {
-      const message = error instanceof Error ? error.message : LL.common.errorUnknown();
+      const message = getErrorMessage(error, LL.common.errorUnknown());
       showAlert(LL.common.error(), message);
     } finally {
       setResettingLocalData(false);

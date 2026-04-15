@@ -397,6 +397,9 @@ const cs = {
     errorInvalidQuantity: 'Zadejte platné množství.',
     errorInvalidUnitPrice: 'Zadejte platnou jednotkovou cenu.',
     errorNoItems: 'Přidejte alespoň jednu položku faktury.',
+    errorInvoiceNumberExists: 'Faktura s tímto číslem už existuje.',
+    invoiceNumberExistsWarning:
+      'Doklad s tímto číslem už existuje. Uložení nebude možné, dokud číslo nezměníte.',
     noCompatiblePriceListItems: 'Žádné položky ceníku nejsou v měně {currency}.',
     errorCreate: 'Nepodařilo se vytvořit fakturu.',
     errorUpdate: 'Nepodařilo se uložit změny faktury.',
@@ -429,6 +432,13 @@ const cs = {
     cancelReasonLabel: 'Důvod zrušení',
     cancelReasonPlaceholder: 'Stručně popište důvod zrušení dokladu',
     cancelReasonRequired: 'Zadejte důvod zrušení dokladu.',
+    copyInvoice: 'Kopírovat fakturu',
+    copyInvoiceTimesheetTitle: 'Faktura obsahuje položky z timesheetu',
+    copyInvoiceTimesheetMessage:
+      'Při kopii faktury nelze bezpečně zachovat původní vazbu na timesheet, aby nedošlo k dvojímu vyfakturování stejné práce.',
+    copyInvoiceConvertTimesheetItems: 'Převést na běžné položky',
+    copyInvoiceOmitTimesheetItems: 'Vynechat TS položky',
+    copyInvoiceError: 'Nepodařilo se připravit kopii faktury.',
     cancelConfirmVoid: 'Zneplatnit doklad',
     cancelConfirmCorrectionVat: 'Vystavit storno dobropis',
     cancelConfirmCorrectionNonVat: 'Vystavit storno doklad',

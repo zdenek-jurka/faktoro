@@ -402,6 +402,9 @@ const pl = {
     errorInvalidQuantity: 'Proszę wprowadzić prawidłową ilość.',
     errorInvalidUnitPrice: 'Proszę wprowadzić prawidłową cenę jednostkową.',
     errorNoItems: 'Dodaj co najmniej jedną pozycję na fakturze.',
+    errorInvoiceNumberExists: 'Faktura o tym numerze już istnieje.',
+    invoiceNumberExistsWarning:
+      'Dokument o tym numerze już istnieje. Zapis nie będzie możliwy, dopóki nie zmienisz numeru.',
     noCompatiblePriceListItems: 'Brak pozycji cennika w walucie {currency}.',
     errorCreate: 'Nie udało się utworzyć faktury.',
     errorUpdate: 'Nie udało się zapisać zmian faktury.',
@@ -434,6 +437,13 @@ const pl = {
     cancelReasonLabel: 'Powód anulowania',
     cancelReasonPlaceholder: 'Krótko opisz powód anulowania dokumentu',
     cancelReasonRequired: 'Podaj powód anulowania.',
+    copyInvoice: 'Kopiuj fakturę',
+    copyInvoiceTimesheetTitle: 'Ta faktura zawiera pozycje z timesheetu',
+    copyInvoiceTimesheetMessage:
+      'Podczas kopiowania faktury nie można bezpiecznie zachować pierwotnego powiązania z timesheetem bez ryzyka podwójnego zafakturowania tej samej pracy.',
+    copyInvoiceConvertTimesheetItems: 'Przekształć na zwykłe pozycje',
+    copyInvoiceOmitTimesheetItems: 'Pomiń pozycje z timesheetu',
+    copyInvoiceError: 'Nie udało się przygotować kopii faktury.',
     cancelConfirmVoid: 'Unieważnij dokument',
     cancelConfirmCorrectionVat: 'Wystaw korektę anulującą',
     cancelConfirmCorrectionNonVat: 'Wystaw dokument anulujący',

@@ -413,6 +413,9 @@ const de = {
     errorInvalidQuantity: 'Bitte geben Sie eine gültige Menge ein.',
     errorInvalidUnitPrice: 'Bitte geben Sie einen gültigen Stückpreis ein.',
     errorNoItems: 'Fügen Sie mindestens eine Rechnungsposition hinzu.',
+    errorInvoiceNumberExists: 'Eine Rechnung mit dieser Nummer existiert bereits.',
+    invoiceNumberExistsWarning:
+      'Ein Beleg mit dieser Nummer existiert bereits. Speichern ist erst möglich, wenn Sie die Nummer ändern.',
     noCompatiblePriceListItems: 'Keine Preislisteneinträge in {currency}.',
     errorCreate: 'Rechnung konnte nicht erstellt werden.',
     errorUpdate: 'Rechnungsänderungen konnten nicht gespeichert werden.',
@@ -445,6 +448,13 @@ const de = {
     cancelReasonLabel: 'Stornogrund',
     cancelReasonPlaceholder: 'Beschreiben Sie kurz, warum das Dokument storniert wird',
     cancelReasonRequired: 'Geben Sie einen Stornogrund ein.',
+    copyInvoice: 'Rechnung kopieren',
+    copyInvoiceTimesheetTitle: 'Diese Rechnung enthält Timesheet-Positionen',
+    copyInvoiceTimesheetMessage:
+      'Beim Kopieren einer Rechnung kann die ursprüngliche Timesheet-Verknüpfung nicht sicher beibehalten werden, ohne das Risiko einer doppelten Abrechnung derselben Arbeit.',
+    copyInvoiceConvertTimesheetItems: 'In normale Positionen umwandeln',
+    copyInvoiceOmitTimesheetItems: 'Timesheet-Positionen weglassen',
+    copyInvoiceError: 'Die Rechnungskopie konnte nicht vorbereitet werden.',
     cancelConfirmVoid: 'Dokument entwerten',
     cancelConfirmCorrectionVat: 'Storno-Gutschrift ausstellen',
     cancelConfirmCorrectionNonVat: 'Stornodokument ausstellen',

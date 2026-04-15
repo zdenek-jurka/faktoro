@@ -396,6 +396,9 @@ const en = {
     errorInvalidQuantity: 'Please enter a valid quantity.',
     errorInvalidUnitPrice: 'Please enter a valid unit price.',
     errorNoItems: 'Add at least one invoice item.',
+    errorInvoiceNumberExists: 'An invoice with this number already exists.',
+    invoiceNumberExistsWarning:
+      'A document with this number already exists. Saving will not be possible until you change it.',
     noCompatiblePriceListItems: 'No price list items use {currency}.',
     errorCreate: 'Failed to create invoice.',
     errorUpdate: 'Failed to update invoice.',
@@ -428,6 +431,13 @@ const en = {
     cancelReasonLabel: 'Cancellation reason',
     cancelReasonPlaceholder: 'Briefly describe why the document is being canceled',
     cancelReasonRequired: 'Enter a cancellation reason.',
+    copyInvoice: 'Copy invoice',
+    copyInvoiceTimesheetTitle: 'This invoice contains timesheet items',
+    copyInvoiceTimesheetMessage:
+      'When copying an invoice, the original timesheet link cannot be safely preserved without risking duplicate billing of the same work.',
+    copyInvoiceConvertTimesheetItems: 'Convert to regular items',
+    copyInvoiceOmitTimesheetItems: 'Omit timesheet items',
+    copyInvoiceError: 'Failed to prepare the invoice copy.',
     cancelConfirmVoid: 'Void document',
     cancelConfirmCorrectionVat: 'Issue cancellation credit note',
     cancelConfirmCorrectionNonVat: 'Issue cancellation document',

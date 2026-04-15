@@ -1,3 +1,4 @@
+import { isRawErrorMessagesEnabled } from '@/constants/features';
 import type { TranslationFunctions } from '@/i18n/i18n-types';
 
 export function isHttpError(error: unknown): error is Error & { httpStatus: number } {
@@ -9,13 +10,14 @@ export function isNetworkError(error: unknown): error is Error & { networkError:
 }
 
 export function getErrorMessage(error: unknown, fallbackMessage: string): string {
-  if (error instanceof Error && error.message.trim()) {
-    return error.message;
+  const rawMessage = getRawErrorMessage(error);
+  if (isRawErrorMessagesEnabled && rawMessage) {
+    return rawMessage;
   }
   return fallbackMessage;
 }
 
-function getRawErrorMessage(error: unknown): string {
+export function getRawErrorMessage(error: unknown): string {
   if (error instanceof Error && error.message.trim()) {
     return error.message.trim();
   }
@@ -58,7 +60,7 @@ export function getOfflineBackupErrorMessage(
     return LL.settings.offlineBackupInvalidFile();
   }
 
-  return message;
+  return isRawErrorMessagesEnabled ? message : fallbackMessage;
 }
 
 export function getExportIntegrationErrorMessage(
@@ -105,7 +107,7 @@ export function getExportIntegrationErrorMessage(
     return LL.settings.exportIntegrationHttpsRequired();
   }
 
-  return message;
+  return isRawErrorMessagesEnabled ? message : fallbackMessage;
 }
 
 export function getSyncErrorMessage(
@@ -140,5 +142,5 @@ export function getSyncErrorMessage(
     return LL.settings.syncCryptoUnavailable();
   }
 
-  return message;
+  return isRawErrorMessagesEnabled ? message : fallbackMessage;
 }

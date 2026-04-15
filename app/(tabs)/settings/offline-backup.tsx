@@ -10,7 +10,7 @@ import {
   inspectOfflineBackupContent,
   restoreOfflineBackupContent,
 } from '@/repositories/offline-backup-repository';
-import { getErrorMessage, getOfflineBackupErrorMessage } from '@/utils/error-utils';
+import { getOfflineBackupErrorMessage, getRawErrorMessage } from '@/utils/error-utils';
 import { buildCopyFileName } from '@/utils/file-name-utils';
 import { showConfirm } from '@/utils/platform-alert';
 import { isIos } from '@/utils/platform';
@@ -202,8 +202,8 @@ export default function SettingsOfflineBackupScreen() {
         LL.settings.offlineBackupSaveSuccess({ fileName: targetFileName }),
       );
     } catch (error) {
-      const message = getErrorMessage(error, '');
-      if (message && /cancel(?:ed|led)/i.test(message)) {
+      const rawMessage = getRawErrorMessage(error);
+      if (rawMessage && /cancel(?:ed|led)/i.test(rawMessage)) {
         return;
       }
 

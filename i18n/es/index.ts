@@ -409,6 +409,9 @@ const es = {
     errorInvalidQuantity: 'Por favor ingrese una cantidad válida.',
     errorInvalidUnitPrice: 'Por favor ingrese un precio unitario válido.',
     errorNoItems: 'Agregue al menos un artículo de factura.',
+    errorInvoiceNumberExists: 'Ya existe una factura con este número.',
+    invoiceNumberExistsWarning:
+      'Ya existe un documento con este número. No será posible guardar hasta que cambie el número.',
     noCompatiblePriceListItems: 'No hay artículos de lista de precios en {currency}.',
     errorCreate: 'No se pudo crear la factura.',
     errorUpdate: 'No se pudieron guardar los cambios de la factura.',
@@ -441,6 +444,13 @@ const es = {
     cancelReasonLabel: 'Motivo de cancelación',
     cancelReasonPlaceholder: 'Describe brevemente por qué se cancela el documento',
     cancelReasonRequired: 'Introduce un motivo de cancelación.',
+    copyInvoice: 'Copiar factura',
+    copyInvoiceTimesheetTitle: 'Esta factura contiene elementos de timesheet',
+    copyInvoiceTimesheetMessage:
+      'Al copiar una factura, no se puede conservar de forma segura el vínculo original al timesheet sin arriesgar una facturación duplicada del mismo trabajo.',
+    copyInvoiceConvertTimesheetItems: 'Convertir en elementos normales',
+    copyInvoiceOmitTimesheetItems: 'Omitir elementos de timesheet',
+    copyInvoiceError: 'No se pudo preparar la copia de la factura.',
     cancelConfirmVoid: 'Anular documento',
     cancelConfirmCorrectionVat: 'Emitir abono de cancelación',
     cancelConfirmCorrectionNonVat: 'Emitir documento de cancelación',

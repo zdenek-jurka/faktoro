@@ -55,6 +55,7 @@ export type CancelInvoiceInput = {
 };
 
 export const INVOICE_TAXABLE_DATE_REQUIRED_ERROR = 'invoice.taxable_date_required';
+export const INVOICE_NUMBER_EXISTS_ERROR = 'invoice.number_exists';
 export const INVOICE_CANCELLATION_REASON_REQUIRED_ERROR = 'invoice.cancellation_reason_required';
 export const INVOICE_CANCELLATION_INVALID_STATE_ERROR = 'invoice.cancellation_invalid_state';
 export const INVOICE_CANCELLATION_ALREADY_EXISTS_ERROR = 'invoice.cancellation_already_exists';
@@ -206,10 +207,33 @@ async function resolveNextAvailableInvoiceNumber(
   throw new Error('invoice.number_generation_failed');
 }
 
+async function assertInvoiceNumberAvailable(
+  invoiceCollection: ReturnType<typeof database.get<InvoiceModel>>,
+  invoiceNumber: string,
+  excludeInvoiceId?: string,
+): Promise<void> {
+  const normalizedInvoiceNumber = invoiceNumber.trim();
+  if (!normalizedInvoiceNumber) return;
+
+  const existing = await invoiceCollection
+    .query(Q.where('invoice_number', normalizedInvoiceNumber))
+    .fetch();
+  const duplicate = existing.find((invoice) => invoice.id !== excludeInvoiceId);
+  if (duplicate) {
+    throw new Error(INVOICE_NUMBER_EXISTS_ERROR);
+  }
+}
+
 export async function getSuggestedInvoiceNumber(): Promise<string> {
   const settings = await getSettings();
   const deviceSettings = await getDeviceSyncSettings(settings);
-  return buildInvoiceNumberFromSettings(settings, deviceSettings);
+  const invoiceCollection = database.get<InvoiceModel>(InvoiceModel.table);
+  const { invoiceNumber } = await resolveNextAvailableInvoiceNumber(
+    invoiceCollection,
+    settings,
+    deviceSettings,
+  );
+  return invoiceNumber;
 }
 
 export function getInvoices() {
@@ -395,11 +419,16 @@ export async function createInvoice(input: CreateInvoiceInput): Promise<InvoiceM
 
   return database.write(async () => {
     const resolved = await resolveInvoiceWriteData(input, settings);
+    const manualInvoiceNumber = input.invoiceNumber.trim();
+    const autoInvoiceNumber = !manualInvoiceNumber
+      ? await resolveNextAvailableInvoiceNumber(invoiceCollection, settings, deviceSettings)
+      : null;
+    const invoiceNumber = manualInvoiceNumber || autoInvoiceNumber?.invoiceNumber || '';
+    await assertInvoiceNumberAvailable(invoiceCollection, invoiceNumber);
 
     const invoice = await invoiceCollection.create((item: InvoiceModel) => {
       item.clientId = input.clientId;
-      item.invoiceNumber =
-        input.invoiceNumber.trim() || buildInvoiceNumberFromSettings(settings, deviceSettings);
+      item.invoiceNumber = invoiceNumber;
       item.issuedAt = input.issuedAt;
       item.taxableAt = input.taxableAt;
       item.dueAt = input.dueAt;
@@ -418,6 +447,11 @@ export async function createInvoice(input: CreateInvoiceInput): Promise<InvoiceM
 
     if (settings) {
       await settings.update((s: AppSettingsModel) => {
+        if (autoInvoiceNumber) {
+          s.invoiceSeriesNextNumber = autoInvoiceNumber.nextNumberUsed + 1;
+          return;
+        }
+
         const current = Math.max(1, Math.floor(s.invoiceSeriesNextNumber || 1));
         s.invoiceSeriesNextNumber = current + 1;
       });
@@ -435,10 +469,12 @@ export async function updateIssuedInvoice(input: UpdateIssuedInvoiceInput): Prom
   return database.write(async () => {
     const invoice = await invoiceCollection.find(input.id);
     const resolved = await resolveInvoiceWriteData(input, settings);
+    const invoiceNumber = input.invoiceNumber.trim();
+    await assertInvoiceNumberAvailable(invoiceCollection, invoiceNumber, invoice.id);
 
     await invoice.update((item: InvoiceModel) => {
       item.clientId = input.clientId;
-      item.invoiceNumber = input.invoiceNumber.trim();
+      item.invoiceNumber = invoiceNumber;
       item.issuedAt = input.issuedAt;
       item.taxableAt = input.taxableAt;
       item.dueAt = input.dueAt;

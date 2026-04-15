@@ -26,6 +26,7 @@ import { normalizeCurrencyCode } from '@/utils/currency-utils';
 import {
   getErrorMessage,
   getExportIntegrationErrorMessage,
+  getRawErrorMessage,
   isHttpError,
   isNetworkError,
 } from '@/utils/error-utils';
@@ -423,7 +424,7 @@ export default function TimesheetDetailScreen() {
       });
       await rememberLastExportAction('pdf');
     } catch (error) {
-      const message = error instanceof Error ? error.message : LLExport.timesheets.exportErrorPdf();
+      const message = getErrorMessage(error, LLExport.timesheets.exportErrorPdf());
       Alert.alert(LLExport.common.error(), `${LLExport.timesheets.exportErrorPdf()}\n${message}`);
     } finally {
       setIsExportingPdf(false);
@@ -477,7 +478,7 @@ export default function TimesheetDetailScreen() {
       } else {
         Alert.alert(
           LLExport.common.error(),
-          error instanceof Error ? error.message : LLExport.timesheets.openPdfError(),
+          getErrorMessage(error, LLExport.timesheets.openPdfError()),
         );
       }
     } finally {
@@ -644,13 +645,13 @@ export default function TimesheetDetailScreen() {
       );
       await rememberLastExportAction('save_pdf');
     } catch (error) {
-      const message = getErrorMessage(error, '');
-      if (message && /cancel(?:ed|led)/i.test(message)) {
+      const rawMessage = getRawErrorMessage(error);
+      if (rawMessage && /cancel(?:ed|led)/i.test(rawMessage)) {
         return;
       }
       Alert.alert(
         LLExport.common.error(),
-        error instanceof Error ? error.message : LLExport.timesheets.savePdfError(),
+        getErrorMessage(error, LLExport.timesheets.savePdfError()),
       );
     } finally {
       setIsSavingPdf(false);
@@ -706,8 +707,7 @@ export default function TimesheetDetailScreen() {
       });
       await rememberLastExportAction('xlsx');
     } catch (error) {
-      const message =
-        error instanceof Error ? error.message : LLExport.timesheets.exportErrorXlsx();
+      const message = getErrorMessage(error, LLExport.timesheets.exportErrorXlsx());
       Alert.alert(LLExport.common.error(), `${LLExport.timesheets.exportErrorXlsx()}\n${message}`);
     } finally {
       setIsExportingXlsx(false);
@@ -827,7 +827,7 @@ export default function TimesheetDetailScreen() {
         },
       });
     } catch (error) {
-      const message = error instanceof Error ? error.message : LL.common.error();
+      const message = getErrorMessage(error, LL.common.error());
       Alert.alert(LL.common.error(), message);
     } finally {
       setIsPreparingInvoice(false);

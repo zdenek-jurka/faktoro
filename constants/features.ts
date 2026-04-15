@@ -6,6 +6,9 @@ const DANGEROUS_APP_DATA_RESET_AVAILABLE = false;
 const INVOICE_HTML_EXPORT_AVAILABLE = false;
 const PDF_SAVE_AVAILABLE_ON = (process.env.EXPO_PUBLIC_PDF_SAVE_AVAILABLE_ON || 'android').trim();
 const PDF_OPEN_AVAILABLE_ON = (process.env.EXPO_PUBLIC_PDF_OPEN_AVAILABLE_ON || 'android').trim();
+const RAW_ERROR_MESSAGES_FLAG = (process.env.EXPO_PUBLIC_SHOW_RAW_ERROR_MESSAGES || '').trim();
+const RAW_ERROR_MESSAGES_ENABLED =
+  RAW_ERROR_MESSAGES_FLAG === '1' || RAW_ERROR_MESSAGES_FLAG.toLowerCase() === 'true';
 
 // Temporary investigation flags so we can isolate sync-related regressions
 // without losing access to sync settings and manual sync flows.
@@ -44,3 +47,4 @@ export const isDangerousAppDataResetEnabled =
 export const isInvoiceHtmlExportEnabled = INVOICE_HTML_EXPORT_AVAILABLE;
 export const isPdfSaveEnabled = isPlatformFeatureEnabled(PDF_SAVE_AVAILABLE_ON);
 export const isPdfOpenEnabled = isPlatformFeatureEnabled(PDF_OPEN_AVAILABLE_ON);
+export const isRawErrorMessagesEnabled = RAW_ERROR_MESSAGES_ENABLED;

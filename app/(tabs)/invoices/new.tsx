@@ -21,10 +21,11 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useCurrencySettings } from '@/hooks/use-currency-settings';
 import { useI18nContext } from '@/i18n/i18n-react';
 import { normalizeIntlLocale } from '@/i18n/locale-options';
-import { ClientModel, PriceListItemModel } from '@/model';
+import { ClientModel, InvoiceModel, PriceListItemModel } from '@/model';
 import { getEffectivePriceDetails } from '@/repositories/client-price-override-repository';
 import {
   DraftInvoiceItemInput,
+  INVOICE_NUMBER_EXISTS_ERROR,
   INVOICE_TAXABLE_DATE_REQUIRED_ERROR,
   createInvoice,
   getActivePriceListForInvoicing,
@@ -244,6 +245,7 @@ export default function InvoiceDraftScreen() {
   const [canUseTimesheets, setCanUseTimesheets] = useState(false);
   const [canUsePriceList, setCanUsePriceList] = useState(false);
   const [isReviewingClientChange, setIsReviewingClientChange] = useState(false);
+  const [invoiceNumberExists, setInvoiceNumberExists] = useState(false);
   const [activeDateField, setActiveDateField] = useState<'issued' | 'taxable' | 'due' | null>(null);
   const [pickerDate, setPickerDate] = useState<Date>(new Date());
   const [items, setItems] = useState<DraftListItem[]>([]);
@@ -252,6 +254,7 @@ export default function InvoiceDraftScreen() {
   const localIdRef = useRef(1);
   const didAutoOpenImport = useRef(false);
   const clientChangeReviewRequestRef = useRef(0);
+  const invoiceNumberCheckRequestRef = useRef(0);
   const dueDateTouchedRef = useRef(!!restoredHeaderDraft?.dueDate);
   const paymentMethodTouchedRef = useRef(!!restoredHeaderDraft?.paymentMethod);
 
@@ -313,6 +316,29 @@ export default function InvoiceDraftScreen() {
     };
     void loadSuggestedNumber();
   }, [invoiceNumber]);
+
+  useEffect(() => {
+    const normalizedInvoiceNumber = invoiceNumber.trim();
+    if (!normalizedInvoiceNumber) {
+      setInvoiceNumberExists(false);
+      return;
+    }
+
+    const requestId = invoiceNumberCheckRequestRef.current + 1;
+    invoiceNumberCheckRequestRef.current = requestId;
+
+    const checkInvoiceNumber = async () => {
+      const existing = await database
+        .get<InvoiceModel>(InvoiceModel.table)
+        .query(Q.where('invoice_number', normalizedInvoiceNumber), Q.take(1))
+        .fetch();
+      if (invoiceNumberCheckRequestRef.current !== requestId) return;
+      const duplicateExists = existing.some((entry) => entry.id !== editingInvoiceId);
+      setInvoiceNumberExists(duplicateExists);
+    };
+
+    void checkInvoiceNumber();
+  }, [editingInvoiceId, invoiceNumber]);
 
   useEffect(() => {
     if (!clientId) {
@@ -842,10 +868,12 @@ export default function InvoiceDraftScreen() {
       const message =
         error instanceof Error && error.message === INVOICE_TAXABLE_DATE_REQUIRED_ERROR
           ? LL.invoices.errorTaxableDateRequired()
-          : getErrorMessage(
-              error,
-              editingInvoiceId ? LL.invoices.errorUpdate() : LL.invoices.errorCreate(),
-            );
+          : error instanceof Error && error.message === INVOICE_NUMBER_EXISTS_ERROR
+            ? LL.invoices.errorInvoiceNumberExists()
+            : getErrorMessage(
+                error,
+                editingInvoiceId ? LL.invoices.errorUpdate() : LL.invoices.errorCreate(),
+              );
       Alert.alert(LL.common.error(), message);
     } finally {
       setIsSaving(false);
@@ -921,6 +949,21 @@ export default function InvoiceDraftScreen() {
               placeholder={LL.invoices.invoiceNumberPlaceholder()}
               placeholderTextColor={placeholder(palette)}
             />
+            {invoiceNumberExists ? (
+              <View
+                style={[
+                  styles.warningCard,
+                  {
+                    borderColor: palette.destructive,
+                    backgroundColor: palette.cardBackground,
+                  },
+                ]}
+              >
+                <ThemedText style={[styles.warningText, { color: palette.textSecondary }]}>
+                  {LL.invoices.invoiceNumberExistsWarning()}
+                </ThemedText>
+              </View>
+            ) : null}
 
             <View style={styles.fieldRow}>
               <View style={styles.fieldColumn}>

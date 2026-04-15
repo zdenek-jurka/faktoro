@@ -409,6 +409,9 @@ const fr = {
     errorInvalidQuantity: 'Veuillez entrer une quantité valide.',
     errorInvalidUnitPrice: 'Veuillez saisir un prix unitaire valide.',
     errorNoItems: 'Ajoutez au moins un élément de facture.',
+    errorInvoiceNumberExists: 'Une facture portant ce numéro existe déjà.',
+    invoiceNumberExistsWarning:
+      "Un document avec ce numéro existe déjà. L'enregistrement ne sera pas possible tant que vous n'aurez pas modifié le numéro.",
     noCompatiblePriceListItems: "Aucun article de liste de prix n'utilise {currency}.",
     errorCreate: 'Échec de la création de la facture.',
     errorUpdate: "Échec de l'enregistrement des modifications de la facture.",
@@ -441,6 +444,13 @@ const fr = {
     cancelReasonLabel: "Motif d'annulation",
     cancelReasonPlaceholder: 'Décrivez brièvement pourquoi le document est annulé',
     cancelReasonRequired: "Saisissez un motif d'annulation.",
+    copyInvoice: 'Copier la facture',
+    copyInvoiceTimesheetTitle: 'Cette facture contient des éléments de feuille de temps',
+    copyInvoiceTimesheetMessage:
+      "Lors de la copie d'une facture, le lien d'origine vers la feuille de temps ne peut pas être conservé en toute sécurité sans risquer une double facturation du même travail.",
+    copyInvoiceConvertTimesheetItems: 'Convertir en éléments standard',
+    copyInvoiceOmitTimesheetItems: 'Omettre les éléments de feuille de temps',
+    copyInvoiceError: 'Impossible de préparer la copie de la facture.',
     cancelConfirmVoid: 'Invalider le document',
     cancelConfirmCorrectionVat: "Émettre un avoir d'annulation",
     cancelConfirmCorrectionNonVat: "Émettre un document d'annulation",
