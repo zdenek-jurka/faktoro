@@ -14,15 +14,11 @@ import { dangerouslyResetAllLocalAppData } from '@/repositories/dangerous-local-
 import { getErrorMessage } from '@/utils/error-utils';
 import { showAlert, showConfirm } from '@/utils/platform-alert';
 import { isIos } from '@/utils/platform';
-import { Redirect, Stack, useRouter } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Switch, View } from 'react-native';
 
 export default function SettingsAdvancedScreen() {
-  if (!isSyncEnabled) {
-    return <Redirect href="/settings" />;
-  }
-
   return <SettingsAdvancedScreenContent />;
 }
 
@@ -36,6 +32,7 @@ function SettingsAdvancedScreenContent() {
   const [syncFeatureEnabled, setSyncFeatureEnabled] = useState(false);
   const [timerWidgetsEnabled, setTimerWidgetsEnabled] = useState(true);
   const [exportIntegrationsEnabled, setExportIntegrationsEnabled] = useState(false);
+  const [invoiceDeletionEnabled, setInvoiceDeletionEnabled] = useState(false);
   const [resettingLocalData, setResettingLocalData] = useState(false);
 
   useEffect(() => {
@@ -49,6 +46,7 @@ function SettingsAdvancedScreenContent() {
   useEffect(() => {
     const unsub = observeBetaSettings((settings) => {
       setExportIntegrationsEnabled(settings.exportIntegrationsEnabled);
+      setInvoiceDeletionEnabled(settings.invoiceDeletionEnabled);
     });
     return unsub;
   }, []);
@@ -61,6 +59,11 @@ function SettingsAdvancedScreenContent() {
   const handleToggleExportIntegrations = async (value: boolean) => {
     setExportIntegrationsEnabled(value);
     await updateBetaSettings({ exportIntegrationsEnabled: value });
+  };
+
+  const handleToggleInvoiceDeletion = async (value: boolean) => {
+    setInvoiceDeletionEnabled(value);
+    await updateBetaSettings({ invoiceDeletionEnabled: value });
   };
 
   const handleToggleTimerWidgets = async (value: boolean) => {
@@ -96,24 +99,28 @@ function SettingsAdvancedScreenContent() {
 
       <ScrollView contentContainerStyle={contentStyle} showsVerticalScrollIndicator={false}>
         <View style={[styles.card, { backgroundColor: palette.cardBackground }]}>
-          <View style={styles.row}>
-            <View style={styles.rowText}>
-              <ThemedText type="defaultSemiBold" style={styles.rowTitle}>
-                {LL.settings.advancedSyncFeatureTitle()}
-              </ThemedText>
-              <ThemedText style={[styles.rowDescription, { color: palette.textSecondary }]}>
-                {LL.settings.advancedSyncFeatureDescription()}
-              </ThemedText>
+          {isSyncEnabled ? (
+            <View style={styles.row}>
+              <View style={styles.rowText}>
+                <ThemedText type="defaultSemiBold" style={styles.rowTitle}>
+                  {LL.settings.advancedSyncFeatureTitle()}
+                </ThemedText>
+                <ThemedText style={[styles.rowDescription, { color: palette.textSecondary }]}>
+                  {LL.settings.advancedSyncFeatureDescription()}
+                </ThemedText>
+              </View>
+              <Switch
+                value={syncFeatureEnabled}
+                onValueChange={(value) => void handleToggleSync(value)}
+                {...getSwitchColors(palette)}
+              />
             </View>
-            <Switch
-              value={syncFeatureEnabled}
-              onValueChange={(value) => void handleToggleSync(value)}
-              {...getSwitchColors(palette)}
-            />
-          </View>
+          ) : null}
           {isIos ? (
             <>
-              <View style={[styles.divider, { backgroundColor: palette.border }]} />
+              {isSyncEnabled ? (
+                <View style={[styles.divider, { backgroundColor: palette.border }]} />
+              ) : null}
               <View style={styles.row}>
                 <View style={styles.rowText}>
                   <ThemedText type="defaultSemiBold" style={styles.rowTitle}>
@@ -144,6 +151,22 @@ function SettingsAdvancedScreenContent() {
             <Switch
               value={exportIntegrationsEnabled}
               onValueChange={(value) => void handleToggleExportIntegrations(value)}
+              {...getSwitchColors(palette)}
+            />
+          </View>
+          <View style={[styles.divider, { backgroundColor: palette.border }]} />
+          <View style={styles.row}>
+            <View style={styles.rowText}>
+              <ThemedText type="defaultSemiBold" style={styles.rowTitle}>
+                {LL.settings.advancedInvoiceDeletionTitle()}
+              </ThemedText>
+              <ThemedText style={[styles.rowDescription, { color: palette.textSecondary }]}>
+                {LL.settings.advancedInvoiceDeletionDescription()}
+              </ThemedText>
+            </View>
+            <Switch
+              value={invoiceDeletionEnabled}
+              onValueChange={(value) => void handleToggleInvoiceDeletion(value)}
               {...getSwitchColors(palette)}
             />
           </View>

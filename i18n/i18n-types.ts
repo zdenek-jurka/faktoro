@@ -1654,6 +1654,82 @@ type RootTranslation = {
 		 */
 		copyInvoiceError: string
 		/**
+		 * D​e​l​e​t​e​ ​i​n​v​o​i​c​e
+		 */
+		deleteInvoice: string
+		/**
+		 * D​e​l​e​t​e​ ​i​n​v​o​i​c​e
+		 */
+		deleteScreenTitle: string
+		/**
+		 * T​h​i​s​ ​i​n​v​o​i​c​e​ ​c​a​n​n​o​t​ ​b​e​ ​d​e​l​e​t​e​d​.
+		 */
+		deleteUnavailable: string
+		/**
+		 * T​h​e​ ​i​n​v​o​i​c​e​ ​w​i​l​l​ ​b​e​ ​p​e​r​m​a​n​e​n​t​l​y​ ​d​e​l​e​t​e​d​ ​f​r​o​m​ ​F​a​k​t​o​r​o​.
+		 */
+		deleteDescription: string
+		/**
+		 * T​h​i​s​ ​i​n​v​o​i​c​e​ ​w​a​s​ ​a​l​r​e​a​d​y​ ​e​x​p​o​r​t​e​d​ ​a​n​d​ ​m​a​y​ ​s​t​i​l​l​ ​e​x​i​s​t​ ​o​u​t​s​i​d​e​ ​F​a​k​t​o​r​o​.​ ​D​e​l​e​t​i​n​g​ ​i​t​ ​w​i​l​l​ ​c​r​e​a​t​e​ ​a​ ​g​a​p​ ​i​n​ ​y​o​u​r​ ​d​o​c​u​m​e​n​t​ ​r​e​c​o​r​d​s​.
+		 */
+		deleteExportedDescription: string
+		/**
+		 * T​i​m​e​s​h​e​e​t​ ​i​t​e​m​s​ ​l​i​n​k​e​d​ ​t​o​ ​t​h​i​s​ ​i​n​v​o​i​c​e​ ​w​i​l​l​ ​b​e​c​o​m​e​ ​a​v​a​i​l​a​b​l​e​ ​f​o​r​ ​i​n​v​o​i​c​i​n​g​ ​a​g​a​i​n​.
+		 */
+		deleteTimesheetDescription: string
+		/**
+		 * C​o​n​f​i​r​m​ ​d​e​l​e​t​i​o​n
+		 */
+		deleteAppLockTitle: string
+		/**
+		 * B​e​c​a​u​s​e​ ​a​p​p​ ​l​o​c​k​ ​i​s​ ​a​c​t​i​v​e​,​ ​c​o​n​f​i​r​m​ ​t​h​i​s​ ​d​e​l​e​t​i​o​n​ ​u​s​i​n​g​ ​b​i​o​m​e​t​r​i​c​s​ ​o​r​ ​t​h​e​ ​a​p​p​ ​P​I​N​.
+		 */
+		deleteAppLockDescription: string
+		/**
+		 * C​o​n​f​i​r​m​ ​w​i​t​h​ ​P​I​N
+		 */
+		deleteAppLockConfirmAction: string
+		/**
+		 * D​e​l​e​t​i​o​n​ ​i​s​ ​c​o​n​f​i​r​m​e​d​.
+		 */
+		deleteAppLockConfirmed: string
+		/**
+		 * E​n​t​e​r​ ​t​h​e​ ​a​p​p​ ​l​o​c​k​ ​P​I​N​ ​t​o​ ​c​o​n​t​i​n​u​e​.
+		 */
+		deletePinRequired: string
+		/**
+		 * T​h​e​ ​e​n​t​e​r​e​d​ ​P​I​N​ ​i​s​ ​n​o​t​ ​c​o​r​r​e​c​t​.
+		 */
+		deletePinInvalid: string
+		/**
+		 * D​e​l​e​t​e​ ​i​n​v​o​i​c​e​?
+		 */
+		deleteConfirmTitle: string
+		/**
+		 * T​h​i​s​ ​a​c​t​i​o​n​ ​p​e​r​m​a​n​e​n​t​l​y​ ​d​e​l​e​t​e​s​ ​t​h​e​ ​i​n​v​o​i​c​e​ ​f​r​o​m​ ​F​a​k​t​o​r​o​.
+		 */
+		deleteConfirmMessage: string
+		/**
+		 * T​h​i​s​ ​i​n​v​o​i​c​e​ ​h​a​s​ ​a​l​r​e​a​d​y​ ​b​e​e​n​ ​e​x​p​o​r​t​e​d​ ​a​n​d​ ​m​a​y​ ​h​a​v​e​ ​b​e​e​n​ ​s​h​a​r​e​d​ ​o​u​t​s​i​d​e​ ​t​h​e​ ​a​p​p​.​ ​A​r​e​ ​y​o​u​ ​s​u​r​e​ ​y​o​u​ ​w​a​n​t​ ​t​o​ ​d​e​l​e​t​e​ ​i​t​ ​f​r​o​m​ ​F​a​k​t​o​r​o​?
+		 */
+		deleteConfirmExportedMessage: string
+		/**
+		 * T​i​m​e​s​h​e​e​t​ ​i​t​e​m​s​ ​l​i​n​k​e​d​ ​t​o​ ​t​h​i​s​ ​i​n​v​o​i​c​e​ ​w​i​l​l​ ​b​e​c​o​m​e​ ​a​v​a​i​l​a​b​l​e​ ​f​o​r​ ​i​n​v​o​i​c​i​n​g​ ​a​g​a​i​n​.
+		 */
+		deleteConfirmTimesheetMessage: string
+		/**
+		 * D​e​l​e​t​e​ ​i​n​v​o​i​c​e
+		 */
+		deleteConfirmAction: string
+		/**
+		 * T​h​e​ ​i​n​v​o​i​c​e​ ​w​a​s​ ​d​e​l​e​t​e​d​.
+		 */
+		deleteSuccess: string
+		/**
+		 * F​a​i​l​e​d​ ​t​o​ ​d​e​l​e​t​e​ ​i​n​v​o​i​c​e​.
+		 */
+		deleteError: string
+		/**
 		 * V​o​i​d​ ​d​o​c​u​m​e​n​t
 		 */
 		cancelConfirmVoid: string
@@ -2006,6 +2082,14 @@ type RootTranslation = {
 		 * E​n​a​b​l​e​s​ ​c​u​s​t​o​m​ ​X​S​L​T​-​b​a​s​e​d​ ​X​M​L​ ​e​x​p​o​r​t​ ​i​n​t​e​g​r​a​t​i​o​n​s​ ​i​n​ ​t​i​m​e​s​h​e​e​t​ ​e​x​p​o​r​t​s​ ​a​n​d​ ​t​h​e​ ​S​e​t​t​i​n​g​s​ ​>​ ​E​x​t​e​r​n​a​l​ ​s​e​r​v​i​c​e​s​ ​s​e​c​t​i​o​n​.
 		 */
 		advancedExportIntegrationsDescription: string
+		/**
+		 * E​n​a​b​l​e​ ​i​n​v​o​i​c​e​ ​d​e​l​e​t​i​o​n
+		 */
+		advancedInvoiceDeletionTitle: string
+		/**
+		 * A​l​l​o​w​s​ ​i​n​v​o​i​c​e​s​ ​t​o​ ​b​e​ ​p​e​r​m​a​n​e​n​t​l​y​ ​d​e​l​e​t​e​d​ ​f​r​o​m​ ​t​h​e​ ​i​n​v​o​i​c​e​ ​d​e​t​a​i​l​ ​s​c​r​e​e​n​.​ ​T​h​i​s​ ​i​s​ ​a​ ​b​e​t​a​ ​f​e​a​t​u​r​e​ ​w​i​t​h​ ​i​r​r​e​v​e​r​s​i​b​l​e​ ​i​m​p​a​c​t​,​ ​i​n​c​l​u​d​i​n​g​ ​o​n​ ​e​x​p​o​r​t​e​d​ ​d​o​c​u​m​e​n​t​s​.
+		 */
+		advancedInvoiceDeletionDescription: string
 		/**
 		 * R​e​s​e​t​ ​a​l​l​ ​l​o​c​a​l​ ​a​p​p​ ​d​a​t​a
 		 */
@@ -6128,6 +6212,82 @@ export type TranslationFunctions = {
 		 */
 		copyInvoiceError: () => LocalizedString
 		/**
+		 * Delete invoice
+		 */
+		deleteInvoice: () => LocalizedString
+		/**
+		 * Delete invoice
+		 */
+		deleteScreenTitle: () => LocalizedString
+		/**
+		 * This invoice cannot be deleted.
+		 */
+		deleteUnavailable: () => LocalizedString
+		/**
+		 * The invoice will be permanently deleted from Faktoro.
+		 */
+		deleteDescription: () => LocalizedString
+		/**
+		 * This invoice was already exported and may still exist outside Faktoro. Deleting it will create a gap in your document records.
+		 */
+		deleteExportedDescription: () => LocalizedString
+		/**
+		 * Timesheet items linked to this invoice will become available for invoicing again.
+		 */
+		deleteTimesheetDescription: () => LocalizedString
+		/**
+		 * Confirm deletion
+		 */
+		deleteAppLockTitle: () => LocalizedString
+		/**
+		 * Because app lock is active, confirm this deletion using biometrics or the app PIN.
+		 */
+		deleteAppLockDescription: () => LocalizedString
+		/**
+		 * Confirm with PIN
+		 */
+		deleteAppLockConfirmAction: () => LocalizedString
+		/**
+		 * Deletion is confirmed.
+		 */
+		deleteAppLockConfirmed: () => LocalizedString
+		/**
+		 * Enter the app lock PIN to continue.
+		 */
+		deletePinRequired: () => LocalizedString
+		/**
+		 * The entered PIN is not correct.
+		 */
+		deletePinInvalid: () => LocalizedString
+		/**
+		 * Delete invoice?
+		 */
+		deleteConfirmTitle: () => LocalizedString
+		/**
+		 * This action permanently deletes the invoice from Faktoro.
+		 */
+		deleteConfirmMessage: () => LocalizedString
+		/**
+		 * This invoice has already been exported and may have been shared outside the app. Are you sure you want to delete it from Faktoro?
+		 */
+		deleteConfirmExportedMessage: () => LocalizedString
+		/**
+		 * Timesheet items linked to this invoice will become available for invoicing again.
+		 */
+		deleteConfirmTimesheetMessage: () => LocalizedString
+		/**
+		 * Delete invoice
+		 */
+		deleteConfirmAction: () => LocalizedString
+		/**
+		 * The invoice was deleted.
+		 */
+		deleteSuccess: () => LocalizedString
+		/**
+		 * Failed to delete invoice.
+		 */
+		deleteError: () => LocalizedString
+		/**
 		 * Void document
 		 */
 		cancelConfirmVoid: () => LocalizedString
@@ -6469,6 +6629,14 @@ export type TranslationFunctions = {
 		 * Enables custom XSLT-based XML export integrations in timesheet exports and the Settings > External services section.
 		 */
 		advancedExportIntegrationsDescription: () => LocalizedString
+		/**
+		 * Enable invoice deletion
+		 */
+		advancedInvoiceDeletionTitle: () => LocalizedString
+		/**
+		 * Allows invoices to be permanently deleted from the invoice detail screen. This is a beta feature with irreversible impact, including on exported documents.
+		 */
+		advancedInvoiceDeletionDescription: () => LocalizedString
 		/**
 		 * Reset all local app data
 		 */

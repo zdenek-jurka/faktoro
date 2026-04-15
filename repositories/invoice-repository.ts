@@ -59,6 +59,7 @@ export const INVOICE_NUMBER_EXISTS_ERROR = 'invoice.number_exists';
 export const INVOICE_CANCELLATION_REASON_REQUIRED_ERROR = 'invoice.cancellation_reason_required';
 export const INVOICE_CANCELLATION_INVALID_STATE_ERROR = 'invoice.cancellation_invalid_state';
 export const INVOICE_CANCELLATION_ALREADY_EXISTS_ERROR = 'invoice.cancellation_already_exists';
+export const INVOICE_DELETE_INVALID_STATE_ERROR = 'invoice.delete_invalid_state';
 
 type SellerSnapshot = {
   companyName?: string;
@@ -634,6 +635,43 @@ export async function cancelInvoice(input: CancelInvoiceInput): Promise<InvoiceM
     }
 
     return cancellationInvoice;
+  });
+}
+
+export async function deleteInvoice(id: string): Promise<void> {
+  const invoiceCollection = database.get<InvoiceModel>(InvoiceModel.table);
+  const invoiceItemCollection = database.get<InvoiceItemModel>(InvoiceItemModel.table);
+
+  await database.write(async () => {
+    const invoice = await invoiceCollection.find(id);
+
+    if (
+      invoice.correctionKind === 'cancellation' ||
+      (invoice.status !== 'issued' && invoice.status !== 'voided_before_delivery')
+    ) {
+      throw new Error(INVOICE_DELETE_INVALID_STATE_ERROR);
+    }
+
+    const linkedCancellation = await invoiceCollection
+      .query(
+        Q.where('corrected_invoice_id', invoice.id),
+        Q.where('correction_kind', 'cancellation'),
+        Q.take(1),
+      )
+      .fetch();
+
+    if (linkedCancellation.length > 0) {
+      throw new Error(INVOICE_DELETE_INVALID_STATE_ERROR);
+    }
+
+    const existingItems = await invoiceItemCollection
+      .query(Q.where('invoice_id', invoice.id))
+      .fetch();
+    if (existingItems.length > 0) {
+      await Promise.all(existingItems.map((item) => item.markAsDeleted()));
+    }
+
+    await invoice.markAsDeleted();
   });
 }
 

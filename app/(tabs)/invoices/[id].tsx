@@ -34,7 +34,7 @@ import {
   markInvoiceExported,
 } from '@/repositories/invoice-repository';
 import { getSettings } from '@/repositories/settings-repository';
-import { getBetaSettings } from '@/repositories/beta-settings-repository';
+import { observeBetaSettings } from '@/repositories/beta-settings-repository';
 import {
   type BuyerSnapshot,
   buildBaseInvoiceXml,
@@ -56,6 +56,7 @@ import { buildCopyFileName } from '@/utils/file-name-utils';
 import {
   canCancelIssuedInvoice,
   canCopyInvoice,
+  canDeleteInvoice,
   canEditIssuedInvoice,
   getInvoiceStatusLabel,
   isInvoiceCancellationDocument,
@@ -388,6 +389,7 @@ export default function InvoiceDetailScreen() {
   const [pendingExportSheetAction, setPendingExportSheetAction] =
     useState<PendingExportSheetAction>(null);
   const [exportIntegrationsEnabled, setExportIntegrationsEnabled] = useState(false);
+  const [invoiceDeletionEnabled, setInvoiceDeletionEnabled] = useState(false);
   const [invoiceExportIntegrations, setInvoiceExportIntegrations] = useState<ExportIntegration[]>(
     [],
   );
@@ -398,11 +400,11 @@ export default function InvoiceDetailScreen() {
   const LLExport = useMemo(() => i18nObject(exportLocale), [exportLocale]);
 
   useEffect(() => {
-    const loadBetaSettings = async () => {
-      const settings = await getBetaSettings();
+    const unsub = observeBetaSettings((settings) => {
       setExportIntegrationsEnabled(settings.exportIntegrationsEnabled);
-    };
-    void loadBetaSettings();
+      setInvoiceDeletionEnabled(settings.invoiceDeletionEnabled);
+    });
+    return unsub;
   }, []);
 
   useEffect(() => {
@@ -778,7 +780,18 @@ export default function InvoiceDetailScreen() {
 
   const handleOpenCancelFlow = () => {
     if (!invoice) return;
-    router.push(`/invoices/${invoice.id}/cancel`);
+    router.push({
+      pathname: '/invoices/[id]/cancel',
+      params: { id: invoice.id },
+    });
+  };
+
+  const handleOpenDeleteFlow = () => {
+    if (!invoice) return;
+    router.push({
+      pathname: '/invoices/[id]/delete',
+      params: { id: invoice.id },
+    });
   };
 
   const buildInvoiceHtmlDocument = async (): Promise<string> => {
@@ -1439,7 +1452,8 @@ export default function InvoiceDetailScreen() {
           title: invoice?.invoiceNumber || LL.invoices.title(),
           headerRight: () =>
             invoice &&
-            (canCancelIssuedInvoice(invoice) ||
+            ((invoiceDeletionEnabled && canDeleteInvoice(invoice)) ||
+              canCancelIssuedInvoice(invoice) ||
               canCopyInvoice(invoice) ||
               canEditIssuedInvoice(invoice)) ? (
               <View style={styles.headerActionGroup}>
@@ -1456,6 +1470,21 @@ export default function InvoiceDetailScreen() {
                     hitSlop={8}
                   >
                     <IconSymbol name="xmark.circle.fill" size={18} color={palette.destructive} />
+                  </Pressable>
+                ) : null}
+                {invoiceDeletionEnabled && canDeleteInvoice(invoice) ? (
+                  <Pressable
+                    style={({ pressed }) => [
+                      styles.headerActionButton,
+                      { opacity: exportingTarget !== null ? 0.45 : pressed ? 0.65 : 1 },
+                    ]}
+                    onPress={handleOpenDeleteFlow}
+                    disabled={exportingTarget !== null}
+                    accessibilityRole="button"
+                    accessibilityLabel={LL.invoices.deleteInvoice()}
+                    hitSlop={8}
+                  >
+                    <IconSymbol name="trash.fill" size={18} color={palette.destructive} />
                   </Pressable>
                 ) : null}
                 {canCopyInvoice(invoice) ? (

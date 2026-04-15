@@ -9,6 +9,15 @@ function isMutableIssuedInvoice(invoice: Pick<InvoiceModel, 'status' | 'correcti
   return invoice.status === 'issued' && !isInvoiceCancellationDocument(invoice);
 }
 
+function isDeletableInvoiceState(
+  invoice: Pick<InvoiceModel, 'status' | 'correctionKind'>,
+): boolean {
+  return (
+    (invoice.status === 'issued' || invoice.status === 'voided_before_delivery') &&
+    !isInvoiceCancellationDocument(invoice)
+  );
+}
+
 export function isInvoiceCancellationDocument(
   invoice: Pick<InvoiceModel, 'correctionKind'>,
 ): boolean {
@@ -29,6 +38,12 @@ export function canCancelIssuedInvoice(
 
 export function canCopyInvoice(invoice: Pick<InvoiceModel, 'correctionKind'>): boolean {
   return !isInvoiceCancellationDocument(invoice);
+}
+
+export function canDeleteInvoice(
+  invoice: Pick<InvoiceModel, 'status' | 'correctionKind'>,
+): boolean {
+  return isDeletableInvoiceState(invoice);
 }
 
 export function isInvoiceVatPayer(

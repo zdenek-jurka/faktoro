@@ -23,6 +23,9 @@ export default function InvoicesStackLayout() {
         }}
       />
       <Stack.Screen name="[id]" options={{ title: LL.invoices.title() }} />
+      <Stack.Screen name="[id]/cancel" options={{ title: LL.invoices.cancelScreenTitle() }} />
+      <Stack.Screen name="[id]/delete" options={{ title: LL.invoices.deleteScreenTitle() }} />
+      <Stack.Screen name="[id]/delete-auth" options={{ title: LL.invoices.deleteAppLockTitle() }} />
     </Stack>
   );
 }

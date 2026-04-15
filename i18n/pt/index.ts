@@ -455,6 +455,30 @@ const pt = {
     copyInvoiceConvertTimesheetItems: 'Converter em itens comuns',
     copyInvoiceOmitTimesheetItems: 'Omitir itens de timesheet',
     copyInvoiceError: 'Não foi possível preparar a cópia da fatura.',
+    deleteInvoice: 'Apagar fatura',
+    deleteScreenTitle: 'Apagar fatura',
+    deleteUnavailable: 'Esta fatura não pode ser apagada.',
+    deleteDescription: 'A fatura será removida permanentemente do Faktoro.',
+    deleteExportedDescription:
+      'Esta fatura já foi exportada e pode ainda existir fora do Faktoro. Eliminá-la criará uma lacuna no registo de documentos.',
+    deleteTimesheetDescription:
+      'Os itens de timesheet associados a esta fatura voltarão a estar disponíveis para faturação.',
+    deleteAppLockTitle: 'Confirmar eliminação',
+    deleteAppLockDescription:
+      'Como o bloqueio da aplicação está ativo, confirme esta eliminação com biometria ou PIN.',
+    deleteAppLockConfirmAction: 'Confirmar com PIN',
+    deleteAppLockConfirmed: 'A eliminação foi confirmada.',
+    deletePinRequired: 'Introduza o PIN do bloqueio da aplicação para continuar.',
+    deletePinInvalid: 'O PIN introduzido não está correto.',
+    deleteConfirmTitle: 'Apagar fatura?',
+    deleteConfirmMessage: 'Esta ação remove permanentemente a fatura do Faktoro.',
+    deleteConfirmExportedMessage:
+      'Esta fatura já foi exportada e pode ter sido partilhada fora da aplicação. Tem a certeza de que a quer apagar do Faktoro?',
+    deleteConfirmTimesheetMessage:
+      'Os itens de timesheet associados a esta fatura voltarão a estar disponíveis para faturação.',
+    deleteConfirmAction: 'Apagar fatura',
+    deleteSuccess: 'A fatura foi apagada.',
+    deleteError: 'Não foi possível apagar a fatura.',
     cancelConfirmVoid: 'Invalidar documento',
     cancelConfirmCorrectionVat: 'Emitir crédito de cancelamento',
     cancelConfirmCorrectionNonVat: 'Emitir documento de cancelamento',
@@ -573,6 +597,9 @@ const pt = {
     advancedExportIntegrationsTitle: 'Integrações de exportação',
     advancedExportIntegrationsDescription:
       'Ativa exportações XML personalizadas baseadas em XSLT nas exportações de folhas de horas e em Definições > Serviços externos.',
+    advancedInvoiceDeletionTitle: 'Ativar eliminação de faturas',
+    advancedInvoiceDeletionDescription:
+      'Permite apagar faturas permanentemente a partir do detalhe do documento. Esta é uma funcionalidade beta com impacto irreversível, incluindo em documentos exportados.',
     advancedDangerousResetDataTitle: 'Redefinir todos os dados locais do app',
     advancedDangerousResetDataDescription:
       'Apaga todos os dados locais do Faktoro neste dispositivo e abre o onboarding novamente. Use apenas para testes ou para um reset local completo.',

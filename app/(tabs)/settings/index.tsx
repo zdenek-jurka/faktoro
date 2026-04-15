@@ -195,20 +195,16 @@ export default function SettingsScreen() {
           : []),
       ],
     },
-    ...(isSyncEnabled
-      ? [
-          {
-            title: LL.settings.advancedSectionTitle(),
-            items: [
-              {
-                href: '/settings/advanced' as const,
-                title: LL.settings.advancedTitle(),
-                subtitle: LL.settings.advancedSubtitle(),
-              },
-            ],
-          },
-        ]
-      : []),
+    {
+      title: LL.settings.advancedSectionTitle(),
+      items: [
+        {
+          href: '/settings/advanced' as const,
+          title: LL.settings.advancedTitle(),
+          subtitle: LL.settings.advancedSubtitle(),
+        },
+      ],
+    },
   ];
 
   return (

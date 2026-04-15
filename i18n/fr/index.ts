@@ -457,6 +457,30 @@ const fr = {
     copyInvoiceConvertTimesheetItems: 'Convertir en éléments standard',
     copyInvoiceOmitTimesheetItems: 'Omettre les éléments de feuille de temps',
     copyInvoiceError: 'Impossible de préparer la copie de la facture.',
+    deleteInvoice: 'Supprimer la facture',
+    deleteScreenTitle: 'Supprimer la facture',
+    deleteUnavailable: 'Cette facture ne peut pas être supprimée.',
+    deleteDescription: 'La facture sera définitivement supprimée de Faktoro.',
+    deleteExportedDescription:
+      'Cette facture a déjà été exportée et peut encore exister en dehors de Faktoro. Sa suppression créera un trou dans l’historique des documents.',
+    deleteTimesheetDescription:
+      'Les lignes de feuille de temps liées à cette facture redeviendront disponibles pour la facturation.',
+    deleteAppLockTitle: 'Confirmer la suppression',
+    deleteAppLockDescription:
+      'Comme le verrouillage de l’application est actif, confirmez cette suppression avec la biométrie ou le code PIN.',
+    deleteAppLockConfirmAction: 'Confirmer avec le PIN',
+    deleteAppLockConfirmed: 'La suppression est confirmée.',
+    deletePinRequired: 'Saisissez le PIN du verrouillage de l’application pour continuer.',
+    deletePinInvalid: 'Le PIN saisi n’est pas correct.',
+    deleteConfirmTitle: 'Supprimer la facture ?',
+    deleteConfirmMessage: 'Cette action supprime définitivement la facture de Faktoro.',
+    deleteConfirmExportedMessage:
+      'Cette facture a déjà été exportée et a peut-être été transmise en dehors de l’application. Voulez-vous vraiment la supprimer de Faktoro ?',
+    deleteConfirmTimesheetMessage:
+      'Les lignes de feuille de temps liées à cette facture redeviendront disponibles pour la facturation.',
+    deleteConfirmAction: 'Supprimer la facture',
+    deleteSuccess: 'La facture a été supprimée.',
+    deleteError: 'Impossible de supprimer la facture.',
     cancelConfirmVoid: 'Invalider le document',
     cancelConfirmCorrectionVat: "Émettre un avoir d'annulation",
     cancelConfirmCorrectionNonVat: "Émettre un document d'annulation",
@@ -577,6 +601,9 @@ const fr = {
     advancedExportIntegrationsTitle: "Intégrations d'export",
     advancedExportIntegrationsDescription:
       'Active les exportations XML personnalisées basées sur XSLT dans les exports de feuilles de temps et dans Paramètres > Services externes.',
+    advancedInvoiceDeletionTitle: 'Activer la suppression des factures',
+    advancedInvoiceDeletionDescription:
+      'Permet de supprimer définitivement des factures depuis le détail du document. Il s’agit d’une fonctionnalité bêta avec un impact irréversible, y compris sur les documents exportés.',
     advancedDangerousResetDataTitle: "Réinitialiser toutes les données locales de l'application",
     advancedDangerousResetDataDescription:
       "Supprime toutes les données locales de Faktoro sur cet appareil et relance l'onboarding. À utiliser uniquement pour les tests ou une réinitialisation locale complète.",

@@ -461,6 +461,30 @@ const de = {
     copyInvoiceConvertTimesheetItems: 'In normale Positionen umwandeln',
     copyInvoiceOmitTimesheetItems: 'Timesheet-Positionen weglassen',
     copyInvoiceError: 'Die Rechnungskopie konnte nicht vorbereitet werden.',
+    deleteInvoice: 'Rechnung löschen',
+    deleteScreenTitle: 'Rechnung löschen',
+    deleteUnavailable: 'Diese Rechnung kann nicht gelöscht werden.',
+    deleteDescription: 'Die Rechnung wird dauerhaft aus Faktoro gelöscht.',
+    deleteExportedDescription:
+      'Diese Rechnung wurde bereits exportiert und kann auch außerhalb von Faktoro existieren. Das Löschen erzeugt eine Lücke in den Belegen.',
+    deleteTimesheetDescription:
+      'Mit dieser Rechnung verknüpfte Timesheet-Positionen werden wieder zur Abrechnung freigegeben.',
+    deleteAppLockTitle: 'Löschen bestätigen',
+    deleteAppLockDescription:
+      'Da die App-Sperre aktiv ist, bestätigen Sie das Löschen mit Biometrie oder PIN.',
+    deleteAppLockConfirmAction: 'Mit PIN bestätigen',
+    deleteAppLockConfirmed: 'Das Löschen ist bestätigt.',
+    deletePinRequired: 'Geben Sie den PIN der App-Sperre ein, um fortzufahren.',
+    deletePinInvalid: 'Der eingegebene PIN ist nicht korrekt.',
+    deleteConfirmTitle: 'Rechnung löschen?',
+    deleteConfirmMessage: 'Diese Aktion löscht die Rechnung dauerhaft aus Faktoro.',
+    deleteConfirmExportedMessage:
+      'Diese Rechnung wurde bereits exportiert und möglicherweise außerhalb der App weitergegeben. Möchten Sie sie wirklich aus Faktoro löschen?',
+    deleteConfirmTimesheetMessage:
+      'Mit dieser Rechnung verknüpfte Timesheet-Positionen werden wieder zur Abrechnung freigegeben.',
+    deleteConfirmAction: 'Rechnung löschen',
+    deleteSuccess: 'Die Rechnung wurde gelöscht.',
+    deleteError: 'Die Rechnung konnte nicht gelöscht werden.',
     cancelConfirmVoid: 'Dokument entwerten',
     cancelConfirmCorrectionVat: 'Storno-Gutschrift ausstellen',
     cancelConfirmCorrectionNonVat: 'Stornodokument ausstellen',
@@ -579,6 +603,9 @@ const de = {
     advancedExportIntegrationsTitle: 'Exportintegrationen',
     advancedExportIntegrationsDescription:
       'Aktiviert benutzerdefinierte XML-Exporte auf Basis von XSLT in Stundenzettel-Exporten und im Bereich Einstellungen > Externe Dienste.',
+    advancedInvoiceDeletionTitle: 'Löschen von Rechnungen aktivieren',
+    advancedInvoiceDeletionDescription:
+      'Ermöglicht das dauerhafte Löschen von Rechnungen aus der Belegdetailansicht. Dies ist eine Beta-Funktion mit irreversiblen Auswirkungen, auch auf exportierte Belege.',
     advancedDangerousResetDataTitle: 'Alle lokalen App-Daten zurücksetzen',
     advancedDangerousResetDataDescription:
       'Löscht alle lokalen Faktoro-Daten auf diesem Gerät und startet das Onboarding erneut. Nur für Tests oder einen vollständigen lokalen Reset verwenden.',

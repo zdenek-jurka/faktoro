@@ -444,6 +444,30 @@ const en = {
     copyInvoiceConvertTimesheetItems: 'Convert to regular items',
     copyInvoiceOmitTimesheetItems: 'Omit timesheet items',
     copyInvoiceError: 'Failed to prepare the invoice copy.',
+    deleteInvoice: 'Delete invoice',
+    deleteScreenTitle: 'Delete invoice',
+    deleteUnavailable: 'This invoice cannot be deleted.',
+    deleteDescription: 'The invoice will be permanently deleted from Faktoro.',
+    deleteExportedDescription:
+      'This invoice was already exported and may still exist outside Faktoro. Deleting it will create a gap in your document records.',
+    deleteTimesheetDescription:
+      'Timesheet items linked to this invoice will become available for invoicing again.',
+    deleteAppLockTitle: 'Confirm deletion',
+    deleteAppLockDescription:
+      'Because app lock is active, confirm this deletion using biometrics or the app PIN.',
+    deleteAppLockConfirmAction: 'Confirm with PIN',
+    deleteAppLockConfirmed: 'Deletion is confirmed.',
+    deletePinRequired: 'Enter the app lock PIN to continue.',
+    deletePinInvalid: 'The entered PIN is not correct.',
+    deleteConfirmTitle: 'Delete invoice?',
+    deleteConfirmMessage: 'This action permanently deletes the invoice from Faktoro.',
+    deleteConfirmExportedMessage:
+      'This invoice has already been exported and may have been shared outside the app. Are you sure you want to delete it from Faktoro?',
+    deleteConfirmTimesheetMessage:
+      'Timesheet items linked to this invoice will become available for invoicing again.',
+    deleteConfirmAction: 'Delete invoice',
+    deleteSuccess: 'The invoice was deleted.',
+    deleteError: 'Failed to delete invoice.',
     cancelConfirmVoid: 'Void document',
     cancelConfirmCorrectionVat: 'Issue cancellation credit note',
     cancelConfirmCorrectionNonVat: 'Issue cancellation document',
@@ -543,6 +567,9 @@ const en = {
     advancedExportIntegrationsTitle: 'Export integrations',
     advancedExportIntegrationsDescription:
       'Enables custom XSLT-based XML export integrations in timesheet exports and the Settings > External services section.',
+    advancedInvoiceDeletionTitle: 'Enable invoice deletion',
+    advancedInvoiceDeletionDescription:
+      'Allows invoices to be permanently deleted from the invoice detail screen. This is a beta feature with irreversible impact, including on exported documents.',
     advancedDangerousResetDataTitle: 'Reset all local app data',
     advancedDangerousResetDataDescription:
       'Deletes all local Faktoro data on this device and opens onboarding again. Use only for testing or a full local reset.',

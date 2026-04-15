@@ -4,13 +4,16 @@ import { getConfigValuesByPrefix } from '@/repositories/config-storage-repositor
 
 const KEY_PREFIX = 'beta.';
 const EXPORT_INTEGRATIONS_KEY = `${KEY_PREFIX}export_integrations_enabled`;
+const INVOICE_DELETION_KEY = `${KEY_PREFIX}invoice_deletion_enabled`;
 
 export type BetaSettings = {
   exportIntegrationsEnabled: boolean;
+  invoiceDeletionEnabled: boolean;
 };
 
 const DEFAULT_BETA_SETTINGS: BetaSettings = {
   exportIntegrationsEnabled: false,
+  invoiceDeletionEnabled: false,
 };
 
 function parseBoolean(value: string | null | undefined, fallback: boolean): boolean {
@@ -23,6 +26,10 @@ function hydrateBetaSettings(values: Record<string, string>): BetaSettings {
     exportIntegrationsEnabled: parseBoolean(
       values[EXPORT_INTEGRATIONS_KEY],
       DEFAULT_BETA_SETTINGS.exportIntegrationsEnabled,
+    ),
+    invoiceDeletionEnabled: parseBoolean(
+      values[INVOICE_DELETION_KEY],
+      DEFAULT_BETA_SETTINGS.invoiceDeletionEnabled,
     ),
   };
 }
@@ -42,10 +49,15 @@ export async function updateBetaSettings(input: Partial<BetaSettings>): Promise<
       input.exportIntegrationsEnabled !== undefined
         ? input.exportIntegrationsEnabled
         : current.exportIntegrationsEnabled,
+    invoiceDeletionEnabled:
+      input.invoiceDeletionEnabled !== undefined
+        ? input.invoiceDeletionEnabled
+        : current.invoiceDeletionEnabled,
   };
 
-  const keysAndValues: Array<[string, string]> = [
+  const keysAndValues: [string, string][] = [
     [EXPORT_INTEGRATIONS_KEY, String(next.exportIntegrationsEnabled)],
+    [INVOICE_DELETION_KEY, String(next.invoiceDeletionEnabled)],
   ];
 
   const collection = database.get<ConfigStorageModel>(ConfigStorageModel.table);

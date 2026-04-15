@@ -445,6 +445,30 @@ const cs = {
     copyInvoiceConvertTimesheetItems: 'Převést na běžné položky',
     copyInvoiceOmitTimesheetItems: 'Vynechat TS položky',
     copyInvoiceError: 'Nepodařilo se připravit kopii faktury.',
+    deleteInvoice: 'Smazat fakturu',
+    deleteScreenTitle: 'Smazání faktury',
+    deleteUnavailable: 'Tuto fakturu není možné smazat.',
+    deleteDescription: 'Faktura bude trvale smazána z Faktoro.',
+    deleteExportedDescription:
+      'Tato faktura už byla exportována a může existovat i mimo Faktoro. Smazáním vznikne mezera v evidenci dokladů.',
+    deleteTimesheetDescription:
+      'Položky z timesheetu navázané na tuto fakturu se znovu uvolní k fakturaci.',
+    deleteAppLockTitle: 'Potvrzení mazání',
+    deleteAppLockDescription:
+      'Protože je aktivní zámek aplikace, potvrďte smazání pomocí biometrie nebo PINu.',
+    deleteAppLockConfirmAction: 'Potvrdit PINem',
+    deleteAppLockConfirmed: 'Mazání je potvrzené.',
+    deletePinRequired: 'Pro pokračování zadejte PIN k zámku aplikace.',
+    deletePinInvalid: 'Zadaný PIN není správný.',
+    deleteConfirmTitle: 'Smazat fakturu?',
+    deleteConfirmMessage: 'Tato akce trvale smaže fakturu z Faktoro.',
+    deleteConfirmExportedMessage:
+      'Tato faktura už byla exportována a mohla být předána mimo aplikaci. Opravdu ji chcete z Faktoro smazat?',
+    deleteConfirmTimesheetMessage:
+      'Položky z timesheetu navázané na tuto fakturu se znovu uvolní k fakturaci.',
+    deleteConfirmAction: 'Smazat fakturu',
+    deleteSuccess: 'Faktura byla smazána.',
+    deleteError: 'Nepodařilo se smazat fakturu.',
     cancelConfirmVoid: 'Zneplatnit doklad',
     cancelConfirmCorrectionVat: 'Vystavit storno dobropis',
     cancelConfirmCorrectionNonVat: 'Vystavit storno doklad',
@@ -543,6 +567,9 @@ const cs = {
     advancedExportIntegrationsTitle: 'Exportní integrace',
     advancedExportIntegrationsDescription:
       'Zapne vlastní XML exporty přes XSLT v detailu timesheetu a v sekci Nastavení > Externí služby.',
+    advancedInvoiceDeletionTitle: 'Povolit mazání faktur',
+    advancedInvoiceDeletionDescription:
+      'Zpřístupní mazání faktur z detailu dokladu. Jde o beta funkci s nevratným dopadem i na exportované doklady.',
     advancedDangerousResetDataTitle: 'Smazat všechna lokální data aplikace',
     advancedDangerousResetDataDescription:
       'Smaže všechna lokální data Faktoro na tomto zařízení a znovu otevře onboarding. Používejte jen pro testování nebo úplný lokální reset.',

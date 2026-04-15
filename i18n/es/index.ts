@@ -457,6 +457,30 @@ const es = {
     copyInvoiceConvertTimesheetItems: 'Convertir en elementos normales',
     copyInvoiceOmitTimesheetItems: 'Omitir elementos de timesheet',
     copyInvoiceError: 'No se pudo preparar la copia de la factura.',
+    deleteInvoice: 'Eliminar factura',
+    deleteScreenTitle: 'Eliminar factura',
+    deleteUnavailable: 'No es posible eliminar esta factura.',
+    deleteDescription: 'La factura se eliminará permanentemente de Faktoro.',
+    deleteExportedDescription:
+      'Esta factura ya se exportó y puede seguir existiendo fuera de Faktoro. Eliminarla creará un hueco en el registro de documentos.',
+    deleteTimesheetDescription:
+      'Los elementos de timesheet vinculados a esta factura volverán a estar disponibles para facturar.',
+    deleteAppLockTitle: 'Confirmar eliminación',
+    deleteAppLockDescription:
+      'Como el bloqueo de la aplicación está activo, confirme esta eliminación mediante biometría o PIN.',
+    deleteAppLockConfirmAction: 'Confirmar con PIN',
+    deleteAppLockConfirmed: 'La eliminación está confirmada.',
+    deletePinRequired: 'Introduzca el PIN del bloqueo de la aplicación para continuar.',
+    deletePinInvalid: 'El PIN introducido no es correcto.',
+    deleteConfirmTitle: '¿Eliminar factura?',
+    deleteConfirmMessage: 'Esta acción elimina permanentemente la factura de Faktoro.',
+    deleteConfirmExportedMessage:
+      'Esta factura ya se ha exportado y puede haberse compartido fuera de la aplicación. ¿Seguro que desea eliminarla de Faktoro?',
+    deleteConfirmTimesheetMessage:
+      'Los elementos de timesheet vinculados a esta factura volverán a estar disponibles para facturar.',
+    deleteConfirmAction: 'Eliminar factura',
+    deleteSuccess: 'La factura ha sido eliminada.',
+    deleteError: 'No se pudo eliminar la factura.',
     cancelConfirmVoid: 'Anular documento',
     cancelConfirmCorrectionVat: 'Emitir abono de cancelación',
     cancelConfirmCorrectionNonVat: 'Emitir documento de cancelación',
@@ -576,6 +600,9 @@ const es = {
     advancedExportIntegrationsTitle: 'Integraciones de exportación',
     advancedExportIntegrationsDescription:
       'Activa exportaciones XML personalizadas basadas en XSLT en las exportaciones de hojas de horas y en Ajustes > Servicios externos.',
+    advancedInvoiceDeletionTitle: 'Habilitar eliminación de facturas',
+    advancedInvoiceDeletionDescription:
+      'Permite eliminar facturas permanentemente desde el detalle del documento. Esta es una función beta con impacto irreversible, incluso en documentos exportados.',
     advancedDangerousResetDataTitle: 'Restablecer todos los datos locales de la app',
     advancedDangerousResetDataDescription:
       'Elimina todos los datos locales de Faktoro en este dispositivo y vuelve a abrir el onboarding. Úsalo solo para pruebas o para un reinicio local completo.',

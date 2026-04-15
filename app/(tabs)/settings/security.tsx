@@ -12,6 +12,7 @@ import {
   verifyPin,
 } from '@/repositories/app-lock-repository';
 import { getSettings, updateSettings } from '@/repositories/settings-repository';
+import { normalizeAppLockPinInput } from '@/utils/app-lock-pin';
 import { isIos } from '@/utils/platform';
 import { useHeaderHeight } from '@react-navigation/elements';
 import { Stack } from 'expo-router';
@@ -80,7 +81,7 @@ async function getBiometricState(labels: BiometricLabels): Promise<BiometricStat
 export default function SettingsSecurityScreen() {
   const colorScheme = useColorScheme();
   const headerHeight = useHeaderHeight();
-  const { LL } = useI18nContext();
+  const { LL, locale } = useI18nContext();
   const palette = Colors[colorScheme ?? 'light'];
   const contentStyle = useBottomSafeAreaStyle(styles.content);
   const [appLockEnabled, setAppLockEnabled] = useState(false);
@@ -99,10 +100,19 @@ export default function SettingsSecurityScreen() {
   const [accessError, setAccessError] = useState('');
   const pinInputRef = useRef<TextInput>(null);
   const llSettingsRef = useRef(LL.settings);
-
-  useEffect(() => {
-    llSettingsRef.current = LL.settings;
-  }, [LL.settings]);
+  const biometricLabelsRef = useRef<BiometricLabels>({
+    notAvailable: LL.settings.securityBiometricNotAvailableLabel(),
+    faceId: LL.settings.securityBiometricFaceId(),
+    touchId: LL.settings.securityBiometricTouchId(),
+    biometrics: LL.settings.securityBiometricGenericLabel(),
+  });
+  llSettingsRef.current = LL.settings;
+  biometricLabelsRef.current = {
+    notAvailable: LL.settings.securityBiometricNotAvailableLabel(),
+    faceId: LL.settings.securityBiometricFaceId(),
+    touchId: LL.settings.securityBiometricTouchId(),
+    biometrics: LL.settings.securityBiometricGenericLabel(),
+  };
 
   const authenticateWithBiometric = useCallback(async (): Promise<boolean> => {
     try {
@@ -128,12 +138,7 @@ export default function SettingsSecurityScreen() {
         const lockEnabled = !!settings.appLockEnabled;
         const biometricSettingEnabled = !!settings.appLockBiometricEnabled;
         const pinExists = await hasPinHash();
-        const state = await getBiometricState({
-          notAvailable: LL.settings.securityBiometricNotAvailableLabel(),
-          faceId: LL.settings.securityBiometricFaceId(),
-          touchId: LL.settings.securityBiometricTouchId(),
-          biometrics: LL.settings.securityBiometricGenericLabel(),
-        });
+        const state = await getBiometricState(biometricLabelsRef.current);
 
         if (!isMounted) return;
 
@@ -176,7 +181,7 @@ export default function SettingsSecurityScreen() {
     return () => {
       isMounted = false;
     };
-  }, [LL.settings, authenticateWithBiometric]);
+  }, [authenticateWithBiometric, locale]);
 
   const handleVerifyAccessByPin = async () => {
     setAccessError('');
@@ -297,7 +302,10 @@ export default function SettingsSecurityScreen() {
               placeholder={LL.settings.unlockPinPlaceholder()}
               placeholderTextColor={placeholder(colorScheme)}
               value={accessPin}
-              onChangeText={setAccessPin}
+              onChangeText={(value) => {
+                setAccessPin(normalizeAppLockPinInput(value));
+                if (accessError) setAccessError('');
+              }}
               secureTextEntry
               keyboardType="number-pad"
               maxLength={10}
@@ -385,7 +393,7 @@ export default function SettingsSecurityScreen() {
                   placeholder={LL.settings.securityPin()}
                   placeholderTextColor={placeholder(colorScheme)}
                   value={appLockPin}
-                  onChangeText={setAppLockPin}
+                  onChangeText={(value) => setAppLockPin(normalizeAppLockPinInput(value))}
                   secureTextEntry
                   keyboardType="number-pad"
                   maxLength={10}
@@ -395,7 +403,7 @@ export default function SettingsSecurityScreen() {
                   placeholder={LL.settings.securityConfirmPin()}
                   placeholderTextColor={placeholder(colorScheme)}
                   value={confirmPin}
-                  onChangeText={setConfirmPin}
+                  onChangeText={(value) => setConfirmPin(normalizeAppLockPinInput(value))}
                   secureTextEntry
                   keyboardType="number-pad"
                   maxLength={10}

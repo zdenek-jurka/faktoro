@@ -50,6 +50,7 @@ import {
 import { getErrorMessage } from '@/utils/error-utils';
 import { getSettings } from '@/repositories/settings-repository';
 import { handleTimerActionUrl } from '@/repositories/timer-deeplink-repository';
+import { normalizeAppLockPinInput } from '@/utils/app-lock-pin';
 import { isAndroid, isIos } from '@/utils/platform';
 import {
   setTimerWidgetsEnabled,
@@ -449,7 +450,10 @@ function RootLayoutNav({ colorScheme }: { colorScheme: ReturnType<typeof useColo
                     placeholder={LL.settings.unlockPinPlaceholder()}
                     placeholderTextColor={palette.placeholder}
                     value={pin}
-                    onChangeText={setPin}
+                    onChangeText={(value) => {
+                      setPin(normalizeAppLockPinInput(value));
+                      if (unlockError) setUnlockError('');
+                    }}
                     secureTextEntry
                     keyboardType="number-pad"
                     maxLength={10}

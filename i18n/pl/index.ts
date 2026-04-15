@@ -450,6 +450,30 @@ const pl = {
     copyInvoiceConvertTimesheetItems: 'Przekształć na zwykłe pozycje',
     copyInvoiceOmitTimesheetItems: 'Pomiń pozycje z timesheetu',
     copyInvoiceError: 'Nie udało się przygotować kopii faktury.',
+    deleteInvoice: 'Usuń fakturę',
+    deleteScreenTitle: 'Usuwanie faktury',
+    deleteUnavailable: 'Nie można usunąć tej faktury.',
+    deleteDescription: 'Faktura zostanie trwale usunięta z Faktoro.',
+    deleteExportedDescription:
+      'Ta faktura została już wyeksportowana i może nadal istnieć poza Faktoro. Usunięcie spowoduje lukę w ewidencji dokumentów.',
+    deleteTimesheetDescription:
+      'Pozycje timesheet powiązane z tą fakturą będą ponownie dostępne do fakturowania.',
+    deleteAppLockTitle: 'Potwierdź usunięcie',
+    deleteAppLockDescription:
+      'Ponieważ blokada aplikacji jest aktywna, potwierdź usunięcie biometrią lub PIN-em.',
+    deleteAppLockConfirmAction: 'Potwierdź PIN-em',
+    deleteAppLockConfirmed: 'Usunięcie zostało potwierdzone.',
+    deletePinRequired: 'Aby kontynuować, wpisz PIN blokady aplikacji.',
+    deletePinInvalid: 'Wpisany PIN jest nieprawidłowy.',
+    deleteConfirmTitle: 'Usunąć fakturę?',
+    deleteConfirmMessage: 'Ta akcja trwale usunie fakturę z Faktoro.',
+    deleteConfirmExportedMessage:
+      'Ta faktura została już wyeksportowana i mogła zostać udostępniona poza aplikacją. Czy na pewno chcesz usunąć ją z Faktoro?',
+    deleteConfirmTimesheetMessage:
+      'Pozycje timesheet powiązane z tą fakturą będą ponownie dostępne do fakturowania.',
+    deleteConfirmAction: 'Usuń fakturę',
+    deleteSuccess: 'Faktura została usunięta.',
+    deleteError: 'Nie udało się usunąć faktury.',
     cancelConfirmVoid: 'Unieważnij dokument',
     cancelConfirmCorrectionVat: 'Wystaw korektę anulującą',
     cancelConfirmCorrectionNonVat: 'Wystaw dokument anulujący',
@@ -568,6 +592,9 @@ const pl = {
     advancedExportIntegrationsTitle: 'Integracje eksportu',
     advancedExportIntegrationsDescription:
       'Włącza własne eksporty XML oparte na XSLT w eksporcie timesheetów i w Ustawienia > Usługi zewnętrzne.',
+    advancedInvoiceDeletionTitle: 'Włącz usuwanie faktur',
+    advancedInvoiceDeletionDescription:
+      'Umożliwia trwałe usuwanie faktur z widoku szczegółów dokumentu. To funkcja beta o nieodwracalnym wpływie, także na wyeksportowane dokumenty.',
     advancedDangerousResetDataTitle: 'Wyczyść wszystkie lokalne dane aplikacji',
     advancedDangerousResetDataDescription:
       'Usuwa wszystkie lokalne dane Faktoro z tego urządzenia i ponownie otwiera onboarding. Używaj tylko do testów albo pełnego lokalnego resetu.',
