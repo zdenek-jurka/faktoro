@@ -99,10 +99,6 @@ type RootTranslation = {
 	}
 	tabs: {
 		/**
-		 * H​o​m​e
-		 */
-		home: string
-		/**
 		 * C​l​i​e​n​t​s
 		 */
 		clients: string
@@ -110,10 +106,6 @@ type RootTranslation = {
 		 * T​i​m​e
 		 */
 		time: string
-		/**
-		 * I​n​v​o​i​c​e​s
-		 */
-		invoices: string
 		/**
 		 * P​r​i​c​e​ ​L​i​s​t
 		 */
@@ -4773,10 +4765,6 @@ export type TranslationFunctions = {
 	}
 	tabs: {
 		/**
-		 * Home
-		 */
-		home: () => LocalizedString
-		/**
 		 * Clients
 		 */
 		clients: () => LocalizedString
@@ -4784,10 +4772,6 @@ export type TranslationFunctions = {
 		 * Time
 		 */
 		time: () => LocalizedString
-		/**
-		 * Invoices
-		 */
-		invoices: () => LocalizedString
 		/**
 		 * Price List
 		 */

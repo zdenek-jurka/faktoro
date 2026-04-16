@@ -23,10 +23,8 @@ const en = {
     unsavedChangesMessage: 'You have unsaved changes. Do you want to discard them?',
   },
   tabs: {
-    home: 'Home',
     clients: 'Clients',
     time: 'Time',
-    invoices: 'Invoices',
     priceList: 'Price List',
     settings: 'Settings',
   },

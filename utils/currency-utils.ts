@@ -47,21 +47,12 @@ export function getCurrencyFormatDefinition(code?: string | null): CurrencyForma
   );
 }
 
-export function getCachedCurrencyFormatDefinitions(): CurrencyFormatDefinition[] {
-  return Array.from(currencyFormatDefinitions.values()).sort((a, b) => a.sortOrder - b.sortOrder);
-}
-
 export function normalizeCurrencyCode(
   value?: string | null,
   fallback: string = DEFAULT_CURRENCY_CODE,
 ): string {
   const normalized = (value || '').trim().toUpperCase();
   return /^[A-Z]{3}$/.test(normalized) ? normalized : fallback;
-}
-
-export function normalizeOptionalCurrencyCode(value?: string | null): string | null {
-  const normalized = (value || '').trim().toUpperCase();
-  return /^[A-Z]{3}$/.test(normalized) ? normalized : null;
 }
 
 export function hasMatchingCurrency(

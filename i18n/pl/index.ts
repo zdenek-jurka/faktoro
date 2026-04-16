@@ -23,10 +23,8 @@ const pl = {
     unsavedChangesMessage: 'Masz niezapisane zmiany. Czy chcesz je odrzucić?',
   },
   tabs: {
-    home: 'Start',
     clients: 'Klienci',
     time: 'Czas',
-    invoices: 'Faktury',
     priceList: 'Cennik',
     settings: 'Ustawienia',
   },

@@ -23,10 +23,8 @@ const es = {
     unsavedChangesMessage: 'Tienes cambios sin guardar. ¿Quieres descartarlos?',
   },
   tabs: {
-    home: 'Inicio',
     clients: 'Clientes',
     time: 'Tiempo',
-    invoices: 'Facturas',
     priceList: 'Lista de precios',
     settings: 'Ajustes',
   },

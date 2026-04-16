@@ -23,10 +23,8 @@ const cs = {
     unsavedChangesMessage: 'Máte neuložené změny. Chcete je zahodit?',
   },
   tabs: {
-    home: 'Domů',
     clients: 'Klienti',
     time: 'Čas',
-    invoices: 'Faktury',
     priceList: 'Ceník',
     settings: 'Nastavení',
   },

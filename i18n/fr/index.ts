@@ -23,10 +23,8 @@ const fr = {
     unsavedChangesMessage: 'Vous avez des modifications non enregistrées. Voulez-vous les jeter ?',
   },
   tabs: {
-    home: 'Accueil',
     clients: 'Clients',
     time: 'Temps',
-    invoices: 'Factures',
     priceList: 'Liste de prix',
     settings: 'Paramètres',
   },

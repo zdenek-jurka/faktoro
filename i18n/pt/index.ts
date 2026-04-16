@@ -23,10 +23,8 @@ const pt = {
     unsavedChangesMessage: 'Você tem alterações não salvas. Deseja descartá-las?',
   },
   tabs: {
-    home: 'Início',
     clients: 'Clientes',
     time: 'Tempo',
-    invoices: 'Faturas',
     priceList: 'Lista de preços',
     settings: 'Configurações',
   },

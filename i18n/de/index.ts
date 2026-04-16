@@ -23,10 +23,8 @@ const de = {
     unsavedChangesMessage: 'Sie haben nicht gespeicherte Änderungen. Möchten Sie sie verwerfen?',
   },
   tabs: {
-    home: 'Start',
     clients: 'Kunden',
     time: 'Zeit',
-    invoices: 'Rechnungen',
     priceList: 'Preisliste',
     settings: 'Einstellungen',
   },

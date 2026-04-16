@@ -1,4 +1,4 @@
-export function splitFileName(fileName: string) {
+function splitFileName(fileName: string) {
   const dotIndex = fileName.lastIndexOf('.');
   if (dotIndex <= 0) {
     return { baseName: fileName, extension: '' };
