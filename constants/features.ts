@@ -2,10 +2,14 @@ import { isAndroid, isIos } from '@/utils/platform';
 
 // Sync is available in this build.
 const SYNC_AVAILABLE = true;
-const DANGEROUS_APP_DATA_RESET_AVAILABLE = false;
 const INVOICE_HTML_EXPORT_AVAILABLE = false;
 const PDF_SAVE_AVAILABLE_ON = (process.env.EXPO_PUBLIC_PDF_SAVE_AVAILABLE_ON || 'android').trim();
 const PDF_OPEN_AVAILABLE_ON = (process.env.EXPO_PUBLIC_PDF_OPEN_AVAILABLE_ON || 'android').trim();
+const DANGEROUS_APP_DATA_RESET_FLAG = (
+  process.env.EXPO_PUBLIC_DANGEROUS_APP_DATA_RESET_AVAILABLE || ''
+).trim();
+const DANGEROUS_APP_DATA_RESET_AVAILABLE =
+  DANGEROUS_APP_DATA_RESET_FLAG === '1' || DANGEROUS_APP_DATA_RESET_FLAG.toLowerCase() === 'true';
 const RAW_ERROR_MESSAGES_FLAG = (process.env.EXPO_PUBLIC_SHOW_RAW_ERROR_MESSAGES || '').trim();
 const RAW_ERROR_MESSAGES_ENABLED =
   RAW_ERROR_MESSAGES_FLAG === '1' || RAW_ERROR_MESSAGES_FLAG.toLowerCase() === 'true';

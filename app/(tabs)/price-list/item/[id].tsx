@@ -15,6 +15,7 @@ import { PriceListItemModel, VatCodeModel, VatRateModel } from '@/model';
 import { normalizeCurrencyCode } from '@/utils/currency-utils';
 import { formatPrice } from '@/utils/price-utils';
 import { getLocalizedVatCodeName } from '@/utils/vat-code-utils';
+import { Q } from '@nozbe/watermelondb';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
 import { Animated, StyleSheet, View } from 'react-native';
