@@ -15,6 +15,7 @@ interface BottomSheetFormModalProps {
   onSave: () => void;
   title: string;
   children: ReactNode;
+  keyboardAvoidanceEnabled?: boolean;
 }
 
 export function BottomSheetFormModal({
@@ -23,6 +24,7 @@ export function BottomSheetFormModal({
   onSave,
   title,
   children,
+  keyboardAvoidanceEnabled = true,
 }: BottomSheetFormModalProps) {
   const colorScheme = useColorScheme();
   const palette = Colors[colorScheme === 'dark' ? 'dark' : 'light'];
@@ -31,6 +33,11 @@ export function BottomSheetFormModal({
   const [keyboardHeight, setKeyboardHeight] = useState(0);
 
   useEffect(() => {
+    if (!keyboardAvoidanceEnabled) {
+      setKeyboardHeight(0);
+      return;
+    }
+
     const show = Keyboard.addListener('keyboardDidShow', (e) =>
       setKeyboardHeight(e.endCoordinates.height),
     );
@@ -39,10 +46,12 @@ export function BottomSheetFormModal({
       show.remove();
       hide.remove();
     };
-  }, []);
+  }, [title, keyboardAvoidanceEnabled]);
 
   useEffect(() => {
-    if (!visible) setKeyboardHeight(0);
+    if (!visible) {
+      setKeyboardHeight(0);
+    }
   }, [visible]);
 
   return (
@@ -55,7 +64,10 @@ export function BottomSheetFormModal({
           onClose={onClose}
           onSave={onSave}
           LL={LL}
-          contentStyle={[styles.content, { marginBottom: keyboardHeight }]}
+          contentStyle={[
+            styles.content,
+            { marginBottom: keyboardAvoidanceEnabled ? keyboardHeight : 0 },
+          ]}
         >
           {children}
         </ModalContent>

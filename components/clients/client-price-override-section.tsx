@@ -44,6 +44,7 @@ export function ClientPriceOverrideSection({ client }: ClientPriceOverrideSectio
   const [showModal, setShowModal] = useState(false);
   const [formData, setFormData] = useState<OverrideFormData>(EMPTY_FORM);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [pickerOpen, setPickerOpen] = useState(false);
   const [customPriceSelection, setCustomPriceSelection] = useState<{
     start: number;
     end: number;
@@ -78,6 +79,7 @@ export function ClientPriceOverrideSection({ client }: ClientPriceOverrideSectio
 
   const handleCloseModal = () => {
     setShowModal(false);
+    setPickerOpen(false);
     setEditingId(null);
     setFormData(EMPTY_FORM);
     setCustomPriceSelection(undefined);
@@ -226,6 +228,7 @@ export function ClientPriceOverrideSection({ client }: ClientPriceOverrideSectio
         onClose={handleCloseModal}
         onSave={handleSubmit}
         title={LL.priceList.setOverride()}
+        keyboardAvoidanceEnabled={!pickerOpen}
       >
         {editingId && formData.priceListItemId && (
           <View
@@ -269,6 +272,7 @@ export function ClientPriceOverrideSection({ client }: ClientPriceOverrideSectio
             ) : (
               <EntityPickerField
                 value={formData.priceListItemId}
+                onOpenChange={setPickerOpen}
                 onValueChange={(priceListItemId) => {
                   const selectedItem = availableItems.find((item) => item.id === priceListItemId);
                   const nextCustomPrice =

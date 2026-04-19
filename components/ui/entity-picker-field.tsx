@@ -6,16 +6,8 @@ import { useBottomSafeAreaStyle } from '@/hooks/use-bottom-safe-area-style';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useI18nContext } from '@/i18n/i18n-react';
 import { isIos } from '@/utils/platform';
-import React, { useMemo, useState } from 'react';
-import {
-  FlatList,
-  KeyboardAvoidingView,
-  Modal,
-  Pressable,
-  StyleSheet,
-  TextInput,
-  View,
-} from 'react-native';
+import React, { useEffect, useMemo, useState } from 'react';
+import { FlatList, Keyboard, Modal, Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export type EntityPickerOption = {
@@ -28,6 +20,7 @@ export type EntityPickerOption = {
 type EntityPickerFieldProps = {
   value: string;
   onValueChange: (value: string) => void;
+  onOpenChange?: (open: boolean) => void;
   options: EntityPickerOption[];
   title: string;
   placeholder: string;
@@ -41,6 +34,7 @@ type EntityPickerFieldProps = {
 export function EntityPickerField({
   value,
   onValueChange,
+  onOpenChange,
   options,
   title,
   placeholder,
@@ -57,6 +51,7 @@ export function EntityPickerField({
   const modalContentStyle = useBottomSafeAreaStyle(styles.modalContent);
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
 
   const allOptions = useMemo(
     () => (noneOption ? [noneOption, ...options] : options),
@@ -79,10 +74,32 @@ export function EntityPickerField({
 
   const canOpen = !disabled && allOptions.length > 0;
 
+  useEffect(() => {
+    const show = Keyboard.addListener('keyboardDidShow', (e) => {
+      setKeyboardHeight(e.endCoordinates.height);
+    });
+    const hide = Keyboard.addListener('keyboardDidHide', () => {
+      setKeyboardHeight(0);
+    });
+
+    return () => {
+      show.remove();
+      hide.remove();
+    };
+  }, [title]);
+
   const closePicker = () => {
+    onOpenChange?.(false);
     setOpen(false);
     setSearchQuery('');
+    setKeyboardHeight(0);
   };
+
+  useEffect(() => {
+    if (!open) {
+      setKeyboardHeight(0);
+    }
+  }, [open]);
 
   return (
     <>
@@ -97,6 +114,7 @@ export function EntityPickerField({
         ]}
         onPress={() => {
           if (!canOpen) return;
+          onOpenChange?.(true);
           setOpen(true);
         }}
         accessibilityRole="button"
@@ -116,13 +134,11 @@ export function EntityPickerField({
       </Pressable>
 
       <Modal visible={open} animationType="slide" transparent={true} onRequestClose={closePicker}>
-        <KeyboardAvoidingView
+        <View
           style={[
             styles.modalOverlay,
             { backgroundColor: palette.overlayBackdrop, paddingTop: insets.top + 12 },
           ]}
-          behavior={isIos ? 'padding' : 'height'}
-          keyboardVerticalOffset={0}
         >
           <Pressable style={styles.modalBackdrop} onPress={closePicker} />
           <ThemedView
@@ -131,6 +147,7 @@ export function EntityPickerField({
               {
                 borderColor: palette.inputBorder,
                 backgroundColor: palette.cardBackgroundElevated,
+                marginBottom: isIos ? 0 : keyboardHeight,
               },
             ]}
           >
@@ -219,7 +236,7 @@ export function EntityPickerField({
               }
             />
           </ThemedView>
-        </KeyboardAvoidingView>
+        </View>
       </Modal>
     </>
   );

@@ -44,6 +44,7 @@ export function PriceListItemOverrideSection({ priceListItem }: PriceListItemOve
   const [clients, setClients] = useState<ClientModel[]>([]);
   const [modalVisible, setModalVisible] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [pickerOpen, setPickerOpen] = useState(false);
   const [formData, setFormData] = useState<OverrideFormData>(EMPTY_FORM);
   const [customPriceSelection, setCustomPriceSelection] = useState<{
     start: number;
@@ -147,6 +148,7 @@ export function PriceListItemOverrideSection({ priceListItem }: PriceListItemOve
 
   const handleCancel = () => {
     setModalVisible(false);
+    setPickerOpen(false);
     setCustomPriceSelection(undefined);
   };
 
@@ -206,6 +208,7 @@ export function PriceListItemOverrideSection({ priceListItem }: PriceListItemOve
         onClose={handleCancel}
         onSave={handleSubmit}
         title={editingId ? LL.priceList.editOverride() : LL.priceList.addOverride()}
+        keyboardAvoidanceEnabled={!pickerOpen}
       >
         {editingId ? (
           <View
@@ -223,6 +226,7 @@ export function PriceListItemOverrideSection({ priceListItem }: PriceListItemOve
             <ThemedText style={styles.label}>{LL.clients.title()} *</ThemedText>
             <EntityPickerField
               value={formData.clientId}
+              onOpenChange={setPickerOpen}
               onValueChange={(clientId) => {
                 const nextCustomPrice =
                   formData.customPrice || priceListItem.defaultPrice.toString();
