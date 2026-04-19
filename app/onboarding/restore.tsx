@@ -10,6 +10,7 @@ import {
   restoreOfflineBackupContent,
 } from '@/repositories/offline-backup-repository';
 import { setOnboardingCompleted } from '@/repositories/onboarding-repository';
+import { requestAppDataReload } from '@/utils/app-data-reload';
 import { showConfirm } from '@/utils/platform-alert';
 import { useRouter } from 'expo-router';
 import React, { useMemo, useState } from 'react';
@@ -101,7 +102,10 @@ export default function OnboardingRestoreScreen() {
       Alert.alert(LL.common.success(), LL.onboarding.restoreSuccess(), [
         {
           text: LL.common.ok(),
-          onPress: () => router.replace('/(tabs)/time-tracking'),
+          onPress: () => {
+            requestAppDataReload();
+            router.replace('/(tabs)/time-tracking');
+          },
         },
       ]);
     } catch (err) {

@@ -50,6 +50,7 @@ import {
 } from '@/repositories/onboarding-repository';
 import { getErrorMessage } from '@/utils/error-utils';
 import { getSettings } from '@/repositories/settings-repository';
+import { subscribeToAppDataReload } from '@/utils/app-data-reload';
 import { sanitizeAppLockGracePeriodSeconds } from '@/utils/app-lock-grace-period';
 import { handleTimerActionUrl } from '@/repositories/timer-deeplink-repository';
 import { normalizeAppLockPinInput } from '@/utils/app-lock-pin';
@@ -67,7 +68,14 @@ export const unstable_settings = {
 export default function RootLayout() {
   const colorScheme = useColorScheme();
   const [locale, setLocale] = useState<Locales>(baseLocale);
+  const [appDataEpoch, setAppDataEpoch] = useState(0);
   useAutoSync();
+
+  useEffect(() => {
+    return subscribeToAppDataReload(() => {
+      setAppDataEpoch((current) => current + 1);
+    });
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -101,7 +109,7 @@ export default function RootLayout() {
       isMounted = false;
       subscription?.unsubscribe();
     };
-  }, []);
+  }, [appDataEpoch]);
 
   useEffect(() => {
     let listenerSub: { remove: () => void } | null = null;
@@ -123,7 +131,7 @@ export default function RootLayout() {
       listenerSub?.remove();
       unsubscribe();
     };
-  }, []);
+  }, [appDataEpoch]);
 
   useEffect(() => {
     let cleanup: { remove: () => void } | undefined;
@@ -131,11 +139,11 @@ export default function RootLayout() {
       cleanup = subscription;
     });
     return () => cleanup?.remove();
-  }, []);
+  }, [appDataEpoch]);
 
   return (
     <TypesafeI18n locale={locale}>
-      <RootLayoutNav colorScheme={colorScheme} />
+      <RootLayoutNav key={`app-data-${appDataEpoch}`} colorScheme={colorScheme} />
     </TypesafeI18n>
   );
 }

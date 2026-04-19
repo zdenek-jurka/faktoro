@@ -10,6 +10,7 @@ import {
   inspectOfflineBackupContent,
   restoreOfflineBackupContent,
 } from '@/repositories/offline-backup-repository';
+import { requestAppDataReload } from '@/utils/app-data-reload';
 import { getOfflineBackupErrorMessage, getRawErrorMessage } from '@/utils/error-utils';
 import { buildCopyFileName } from '@/utils/file-name-utils';
 import { showConfirm } from '@/utils/platform-alert';
@@ -280,8 +281,15 @@ export default function SettingsOfflineBackupScreen() {
       await restoreOfflineBackupContent(selectedRestoreFile.content, {
         password: selectedRestoreFile.encrypted ? restorePassword : null,
       });
-      Alert.alert(LL.common.success(), LL.settings.offlineBackupRestoreSuccess());
-      router.replace('/settings');
+      Alert.alert(LL.common.success(), LL.settings.offlineBackupRestoreSuccess(), [
+        {
+          text: LL.common.ok(),
+          onPress: () => {
+            requestAppDataReload();
+            router.replace('/settings');
+          },
+        },
+      ]);
     } catch (error) {
       console.error('Error restoring offline backup:', error);
       Alert.alert(
