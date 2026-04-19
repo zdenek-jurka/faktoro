@@ -116,7 +116,7 @@ export function ClientTimeEntriesContent({ clientId, backToClientId }: Props) {
     const settingsSubscription = database
       .get<AppSettingsModel>(AppSettingsModel.table)
       .query()
-      .observe()
+      .observeWithColumns(['default_billing_interval'])
       .subscribe((allSettings) => {
         if (allSettings.length === 0) {
           setDefaultBillingInterval(undefined);

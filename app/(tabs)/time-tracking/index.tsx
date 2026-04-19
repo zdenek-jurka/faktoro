@@ -92,7 +92,7 @@ export default function TimeTrackingScreen() {
     const subscription = database
       .get<ClientModel>(ClientModel.table)
       .query(Q.where('is_archived', false), Q.sortBy('name', Q.asc))
-      .observe()
+      .observeWithColumns(['name', 'billing_interval_enabled', 'billing_interval_minutes'])
       .subscribe(setClients);
 
     return () => subscription.unsubscribe();
@@ -110,7 +110,7 @@ export default function TimeTrackingScreen() {
     const settingsSubscription = database
       .get<AppSettingsModel>(AppSettingsModel.table)
       .query()
-      .observe()
+      .observeWithColumns(['default_billing_interval'])
       .subscribe((allSettings) => {
         if (allSettings.length === 0) {
           setDefaultBillingInterval(undefined);

@@ -58,9 +58,11 @@ export function ClientListContainer(props: ClientListContainerProps) {
 
   useEffect(() => {
     const query = buildClientsQuery(props.database, props.searchQuery);
-    const subscription = query.observe().subscribe((newClients) => {
-      setClients(newClients);
-    });
+    const subscription = query
+      .observeWithColumns(['name', 'billing_interval_enabled', 'billing_interval_minutes'])
+      .subscribe((newClients) => {
+        setClients(newClients);
+      });
 
     return () => subscription.unsubscribe();
   }, [props.database, props.searchQuery]);
@@ -85,7 +87,7 @@ export function ClientListContainer(props: ClientListContainerProps) {
     const settingsSubscription = props.database
       .get<AppSettingsModel>(AppSettingsModel.table)
       .query()
-      .observe()
+      .observeWithColumns(['default_billing_interval'])
       .subscribe((allSettings) => {
         if (allSettings.length === 0) {
           setDefaultBillingInterval(null);
