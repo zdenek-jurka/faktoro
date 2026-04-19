@@ -21,7 +21,7 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useCurrencySettings } from '@/hooks/use-currency-settings';
 import { useI18nContext } from '@/i18n/i18n-react';
 import { normalizeIntlLocale } from '@/i18n/locale-options';
-import { ClientModel, InvoiceModel, PriceListItemModel } from '@/model';
+import { ClientModel, InvoiceModel, PriceListItemModel, VatRateModel } from '@/model';
 import { getEffectivePriceDetails } from '@/repositories/client-price-override-repository';
 import {
   DraftInvoiceItemInput,
@@ -34,6 +34,7 @@ import {
   updateIssuedInvoice,
 } from '@/repositories/invoice-repository';
 import { getSettings } from '@/repositories/settings-repository';
+import { getVatRates } from '@/repositories/vat-rate-repository';
 import {
   DEFAULT_CURRENCY_CODE,
   hasMatchingCurrency,
@@ -166,6 +167,16 @@ function calculateTotals(items: DraftInvoiceItemInput[], includeVat: boolean) {
   };
 }
 
+function resolveVatRateForDate(rates: VatRateModel[], taxableAt: number): number | undefined {
+  const matching = rates.filter(
+    (rate) => rate.validFrom <= taxableAt && (rate.validTo == null || rate.validTo >= taxableAt),
+  );
+  if (matching.length === 0) return undefined;
+
+  matching.sort((a, b) => b.validFrom - a.validFrom);
+  return matching[0].ratePercent;
+}
+
 function getPaymentMethodLabel(LL: ReturnType<typeof useI18nContext>['LL'], value: string): string {
   switch (value) {
     case 'cash':
@@ -245,6 +256,7 @@ export default function InvoiceDraftScreen() {
   const [headerNote, setHeaderNote] = useState('');
   const [footerNote, setFooterNote] = useState('');
   const [isVatPayer, setIsVatPayer] = useState(false);
+  const [vatRates, setVatRates] = useState<VatRateModel[]>([]);
   const [canUseTimesheets, setCanUseTimesheets] = useState(false);
   const [canUsePriceList, setCanUsePriceList] = useState(false);
   const [isReviewingClientChange, setIsReviewingClientChange] = useState(false);
@@ -303,6 +315,12 @@ export default function InvoiceDraftScreen() {
     const loadSettings = async () => {
       const settings = await getSettings();
       setIsVatPayer(!!settings.isVatPayer);
+      if (settings.isVatPayer) {
+        const rates = await getVatRates().fetch();
+        setVatRates(rates);
+      } else {
+        setVatRates([]);
+      }
       setSettingsDefaultPaymentMethod(
         normalizeInvoicePaymentMethod(settings.defaultInvoicePaymentMethod),
       );
@@ -426,13 +444,37 @@ export default function InvoiceDraftScreen() {
     [footerNote, headerNote],
   );
 
+  const effectiveTaxableAt = useMemo(
+    () =>
+      parseISODate(headerDraft.taxableDate) || parseISODate(headerDraft.issuedDate) || Date.now(),
+    [headerDraft.issuedDate, headerDraft.taxableDate],
+  );
+  const resolvedDraftVatRateByCodeId = useMemo(() => {
+    const vatCodeIds = Array.from(
+      new Set(items.map((item) => item.vatCodeId).filter((value): value is string => !!value)),
+    );
+    const resolved = new Map<string, number | undefined>();
+
+    for (const vatCodeId of vatCodeIds) {
+      const ratesForCode = vatRates.filter((rate) => rate.vatCodeId === vatCodeId);
+      resolved.set(vatCodeId, resolveVatRateForDate(ratesForCode, effectiveTaxableAt));
+    }
+
+    return resolved;
+  }, [effectiveTaxableAt, items, vatRates]);
+
   const totals = useMemo(
     () =>
       calculateTotals(
-        items.map(({ localId: _localId, ...item }) => item as DraftInvoiceItemInput),
+        items.map(({ localId: _localId, ...item }) => ({
+          ...(item as DraftInvoiceItemInput),
+          vatRate:
+            item.vatRate ??
+            (item.vatCodeId ? resolvedDraftVatRateByCodeId.get(item.vatCodeId) : undefined),
+        })),
         isVatPayer,
       ),
-    [isVatPayer, items],
+    [isVatPayer, items, resolvedDraftVatRateByCodeId],
   );
   const showIssuedDateTaxableWarning = useMemo(
     () =>

@@ -17,8 +17,8 @@ import {
 import { getClients } from '@/repositories/client-repository';
 import { normalizeCurrencyCode } from '@/utils/currency-utils';
 import { formatPrice } from '@/utils/price-utils';
-import React, { ReactNode, useEffect, useState } from 'react';
-import { Alert, StyleSheet, TextInput, View } from 'react-native';
+import React, { ReactNode, useEffect, useRef, useState } from 'react';
+import { Alert, InteractionManager, StyleSheet, TextInput, View } from 'react-native';
 import { BottomSheetFormModal } from '@/components/ui/bottom-sheet-form-modal';
 
 interface PriceListItemOverrideSectionProps {
@@ -45,6 +45,11 @@ export function PriceListItemOverrideSection({ priceListItem }: PriceListItemOve
   const [modalVisible, setModalVisible] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState<OverrideFormData>(EMPTY_FORM);
+  const [customPriceSelection, setCustomPriceSelection] = useState<{
+    start: number;
+    end: number;
+  }>();
+  const customPriceInputRef = useRef<TextInput>(null);
 
   useEffect(() => {
     const subscription = getPriceListItemOverrides(priceListItem.id)
@@ -142,6 +147,14 @@ export function PriceListItemOverrideSection({ priceListItem }: PriceListItemOve
 
   const handleCancel = () => {
     setModalVisible(false);
+    setCustomPriceSelection(undefined);
+  };
+
+  const focusCustomPriceInput = (priceValue: string) => {
+    InteractionManager.runAfterInteractions(() => {
+      customPriceInputRef.current?.focus();
+      setCustomPriceSelection({ start: 0, end: priceValue.length });
+    });
   };
 
   const renderOverrideItem = (override: ClientPriceOverrideModel, index: number): ReactNode => {
@@ -210,7 +223,16 @@ export function PriceListItemOverrideSection({ priceListItem }: PriceListItemOve
             <ThemedText style={styles.label}>{LL.clients.title()} *</ThemedText>
             <EntityPickerField
               value={formData.clientId}
-              onValueChange={(clientId) => setFormData({ ...formData, clientId })}
+              onValueChange={(clientId) => {
+                const nextCustomPrice =
+                  formData.customPrice || priceListItem.defaultPrice.toString();
+                setFormData({
+                  ...formData,
+                  clientId,
+                  customPrice: nextCustomPrice,
+                });
+                focusCustomPriceInput(nextCustomPrice);
+              }}
               title={LL.clients.title()}
               placeholder={LL.clients.selectClient()}
               searchPlaceholder={LL.clients.searchPlaceholder()}
@@ -226,6 +248,7 @@ export function PriceListItemOverrideSection({ priceListItem }: PriceListItemOve
 
         <ThemedText style={styles.label}>{LL.priceList.customPrice()} *</ThemedText>
         <TextInput
+          ref={customPriceInputRef}
           style={[
             styles.input,
             {
@@ -236,7 +259,13 @@ export function PriceListItemOverrideSection({ priceListItem }: PriceListItemOve
           placeholder="0.00"
           placeholderTextColor={Colors[colorScheme === 'dark' ? 'dark' : 'light'].placeholder}
           value={formData.customPrice}
-          onChangeText={(text) => setFormData({ ...formData, customPrice: text })}
+          onChangeText={(text) => {
+            setCustomPriceSelection(undefined);
+            setFormData({ ...formData, customPrice: text });
+          }}
+          onSelectionChange={(event) => setCustomPriceSelection(event.nativeEvent.selection)}
+          selection={customPriceSelection}
+          selectTextOnFocus
           keyboardType="decimal-pad"
         />
 

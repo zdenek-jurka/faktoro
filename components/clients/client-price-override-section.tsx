@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { Alert, StyleSheet, TextInput, View } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { Alert, InteractionManager, StyleSheet, TextInput, View } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
 import { BottomSheetFormModal } from '@/components/ui/bottom-sheet-form-modal';
 import { EntityPickerField } from '@/components/ui/entity-picker-field';
@@ -44,6 +44,11 @@ export function ClientPriceOverrideSection({ client }: ClientPriceOverrideSectio
   const [showModal, setShowModal] = useState(false);
   const [formData, setFormData] = useState<OverrideFormData>(EMPTY_FORM);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [customPriceSelection, setCustomPriceSelection] = useState<{
+    start: number;
+    end: number;
+  }>();
+  const customPriceInputRef = useRef<TextInput>(null);
 
   // Load price list items
   useEffect(() => {
@@ -75,6 +80,14 @@ export function ClientPriceOverrideSection({ client }: ClientPriceOverrideSectio
     setShowModal(false);
     setEditingId(null);
     setFormData(EMPTY_FORM);
+    setCustomPriceSelection(undefined);
+  };
+
+  const focusCustomPriceInput = (priceValue: string) => {
+    InteractionManager.runAfterInteractions(() => {
+      customPriceInputRef.current?.focus();
+      setCustomPriceSelection({ start: 0, end: priceValue.length });
+    });
   };
 
   const handleSubmit = async () => {
@@ -258,11 +271,14 @@ export function ClientPriceOverrideSection({ client }: ClientPriceOverrideSectio
                 value={formData.priceListItemId}
                 onValueChange={(priceListItemId) => {
                   const selectedItem = availableItems.find((item) => item.id === priceListItemId);
-                  setFormData((current) => ({
-                    ...current,
+                  const nextCustomPrice =
+                    formData.customPrice || selectedItem?.defaultPrice.toString() || '';
+                  setFormData({
+                    ...formData,
                     priceListItemId,
-                    customPrice: current.customPrice || selectedItem?.defaultPrice.toString() || '',
-                  }));
+                    customPrice: nextCustomPrice,
+                  });
+                  focusCustomPriceInput(nextCustomPrice);
                 }}
                 title={LL.priceList.title()}
                 placeholder={selectedAvailableItem?.name || requiredPriceListItemLabel}
@@ -280,6 +296,7 @@ export function ClientPriceOverrideSection({ client }: ClientPriceOverrideSectio
 
         <ThemedText style={styles.label}>{LL.priceList.customPrice()} *</ThemedText>
         <TextInput
+          ref={customPriceInputRef}
           style={[
             styles.input,
             {
@@ -290,19 +307,50 @@ export function ClientPriceOverrideSection({ client }: ClientPriceOverrideSectio
           placeholder="0.00"
           placeholderTextColor={Colors[colorScheme === 'dark' ? 'dark' : 'light'].placeholder}
           value={formData.customPrice}
-          onChangeText={(text) => setFormData({ ...formData, customPrice: text })}
+          onChangeText={(text) => {
+            setCustomPriceSelection(undefined);
+            setFormData({ ...formData, customPrice: text });
+          }}
+          onSelectionChange={(event) => setCustomPriceSelection(event.nativeEvent.selection)}
+          selection={customPriceSelection}
+          selectTextOnFocus
           keyboardType="decimal-pad"
         />
 
         {selectedAvailableItem && (
-          <ThemedText style={styles.helperText}>
-            {LL.priceList.currencyInherited({
-              currency: normalizeCurrencyCode(
-                selectedAvailableItem.defaultPriceCurrency,
-                defaultInvoiceCurrency,
-              ),
-            })}
-          </ThemedText>
+          <>
+            <View
+              style={[
+                styles.defaultPriceInfo,
+                {
+                  backgroundColor: Colors[colorScheme === 'dark' ? 'dark' : 'light'].cardBackground,
+                },
+              ]}
+            >
+              <ThemedText style={styles.defaultPriceLabel}>
+                {LL.priceList.defaultLabel()}
+              </ThemedText>
+              <ThemedText style={styles.defaultPriceValue}>
+                {formatPrice(
+                  selectedAvailableItem.defaultPrice,
+                  normalizeCurrencyCode(
+                    selectedAvailableItem.defaultPriceCurrency,
+                    defaultInvoiceCurrency,
+                  ),
+                  intlLocale,
+                )}
+              </ThemedText>
+            </View>
+
+            <ThemedText style={styles.defaultPriceLabel}>
+              {LL.priceList.currencyInherited({
+                currency: normalizeCurrencyCode(
+                  selectedAvailableItem.defaultPriceCurrency,
+                  defaultInvoiceCurrency,
+                ),
+              })}
+            </ThemedText>
+          </>
         )}
       </BottomSheetFormModal>
     </View>
@@ -391,10 +439,20 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     padding: 12,
   },
-  helperText: {
-    fontSize: 12,
+  defaultPriceInfo: {
+    padding: 12,
+    borderRadius: 8,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  defaultPriceLabel: {
+    fontSize: 14,
     opacity: 0.7,
-    marginTop: -4,
+  },
+  defaultPriceValue: {
+    fontSize: 16,
+    fontWeight: '600',
   },
   input: {
     borderWidth: 1,

@@ -692,7 +692,7 @@ export default function InvoiceNewItemScreen() {
     goBackWithItems(draftItems);
   };
 
-  const addPriceListItem = () => {
+  const addPriceListItem = async () => {
     const item = compatiblePriceListItems.find((entry) => entry.id === priceItemId);
     if (!item) {
       Alert.alert(LL.common.error(), LL.invoices.errorSelectPriceListItem());
@@ -704,18 +704,42 @@ export default function InvoiceNewItemScreen() {
       Alert.alert(LL.common.error(), LL.invoices.errorInvalidQuantity());
       return;
     }
-    const itemCurrency = normalizeCurrencyCode(item.defaultPriceCurrency, headerDraft?.currency);
     const invoiceCurrency = normalizeCurrencyCode(headerDraft?.currency);
-    if (!hasMatchingCurrency(itemCurrency, invoiceCurrency, invoiceCurrency)) {
+    let effectivePrice = {
+      price: item.defaultPrice,
+      currency: normalizeCurrencyCode(item.defaultPriceCurrency, headerDraft?.currency),
+    };
+    try {
+      effectivePrice = await getEffectivePriceDetails(headerDraft.clientId, item.id);
+    } catch {
+      effectivePrice = {
+        price: item.defaultPrice,
+        currency: normalizeCurrencyCode(item.defaultPriceCurrency, headerDraft?.currency),
+      };
+    }
+
+    const effectiveCurrency = normalizeCurrencyCode(effectivePrice.currency, invoiceCurrency);
+    if (!hasMatchingCurrency(effectiveCurrency, invoiceCurrency, invoiceCurrency)) {
       Alert.alert(
         LL.common.error(),
         LL.invoices.errorItemCurrencyMismatch({
           item: item.name,
-          itemCurrency,
+          itemCurrency: effectiveCurrency,
           invoiceCurrency,
         }),
       );
       return;
+    }
+
+    let vatRate: number | undefined;
+    if (isVatPayer && item.vatCodeId) {
+      const ratesForCode = vatRates.filter((rate) => rate.vatCodeId === item.vatCodeId);
+      const resolvedVatRate = resolveVatRateForDate(ratesForCode, effectiveTaxableAt);
+      if (resolvedVatRate == null) {
+        Alert.alert(LL.common.error(), LL.invoices.errorVatRateNotFoundForDate());
+        return;
+      }
+      vatRate = resolvedVatRate;
     }
 
     goBackWithItems([
@@ -725,9 +749,10 @@ export default function InvoiceNewItemScreen() {
         description: item.name,
         quantity,
         unit: item.unit,
-        unitPrice: item.defaultPrice,
-        totalPrice: quantity * item.defaultPrice,
+        unitPrice: effectivePrice.price,
+        totalPrice: quantity * effectivePrice.price,
         vatCodeId: item.vatCodeId,
+        vatRate,
       },
     ]);
   };

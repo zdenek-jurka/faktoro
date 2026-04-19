@@ -16,10 +16,10 @@ import database from '@/db';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useCurrencySettings } from '@/hooks/use-currency-settings';
 import { useI18nContext } from '@/i18n/i18n-react';
-import { PriceListItemModel, VatCodeModel } from '@/model';
+import { PriceListItemModel, VatCodeModel, VatRateModel } from '@/model';
 import { updatePriceListItem } from '@/repositories/price-list-repository';
 import { getSettings } from '@/repositories/settings-repository';
-import { getVatCodes } from '@/repositories/vat-rate-repository';
+import { getVatCodes, getVatRates } from '@/repositories/vat-rate-repository';
 import { DEFAULT_CURRENCY_CODE, normalizeCurrencyCode } from '@/utils/currency-utils';
 import { getLocalizedVatCodeName } from '@/utils/vat-code-utils';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
@@ -36,6 +36,22 @@ type PriceListFormData = {
   vatCodeId: string;
   isActive: boolean;
 };
+
+function resolveVatRateForDate(rates: VatRateModel[], taxableAt: number): number | null {
+  const matching = rates.filter(
+    (rate) => rate.validFrom <= taxableAt && (rate.validTo == null || rate.validTo >= taxableAt),
+  );
+  if (matching.length === 0) return null;
+  matching.sort((a, b) => b.validFrom - a.validFrom);
+  return matching[0].ratePercent;
+}
+
+function formatVatRatePercent(ratePercent: number): string {
+  return new Intl.NumberFormat(undefined, {
+    minimumFractionDigits: Number.isInteger(ratePercent) ? 0 : 1,
+    maximumFractionDigits: 2,
+  }).format(ratePercent);
+}
 
 export default function EditPriceListItemScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -58,6 +74,7 @@ export default function EditPriceListItemScreen() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isVatPayer, setIsVatPayer] = useState(false);
   const [vatCodes, setVatCodes] = useState<VatCodeModel[]>([]);
+  const [vatRates, setVatRates] = useState<VatRateModel[]>([]);
   const displayVatCodes = useMemo(
     () =>
       [...vatCodes].sort((a, b) =>
@@ -65,6 +82,38 @@ export default function EditPriceListItemScreen() {
       ),
     [LL, vatCodes],
   );
+  const effectiveVatAt = Date.now();
+  const resolvedVatRateByCodeId = useMemo(() => {
+    const ratesByCodeId = new Map<string, VatRateModel[]>();
+
+    for (const rate of vatRates) {
+      if (!rate.vatCodeId) continue;
+      const current = ratesByCodeId.get(rate.vatCodeId) || [];
+      current.push(rate);
+      ratesByCodeId.set(rate.vatCodeId, current);
+    }
+
+    const resolved = new Map<string, number | null>();
+    for (const vatCode of displayVatCodes) {
+      const ratesForCode = ratesByCodeId.get(vatCode.id) || [];
+      resolved.set(vatCode.id, resolveVatRateForDate(ratesForCode, effectiveVatAt));
+    }
+
+    return resolved;
+  }, [displayVatCodes, effectiveVatAt, vatRates]);
+  const vatCodeDisplayLabelById = useMemo(() => {
+    const labels = new Map<string, string>();
+
+    for (const vatCode of displayVatCodes) {
+      const baseLabel = getLocalizedVatCodeName(vatCode.name, LL);
+      const resolvedRate = resolvedVatRateByCodeId.get(vatCode.id);
+      const label =
+        resolvedRate == null ? baseLabel : `${formatVatRatePercent(resolvedRate)} % - ${baseLabel}`;
+      labels.set(vatCode.id, label);
+    }
+
+    return labels;
+  }, [LL, displayVatCodes, resolvedVatRateByCodeId]);
 
   useEffect(() => {
     if (!id) return;
@@ -77,7 +126,9 @@ export default function EditPriceListItemScreen() {
         let loadedVatCodes: VatCodeModel[] = [];
         if (vatPayer) {
           const codes = await getVatCodes().fetch();
+          const rates = await getVatRates().fetch();
           setVatCodes(codes);
+          setVatRates(rates);
           loadedVatCodes = codes;
         }
 
@@ -284,7 +335,11 @@ export default function EditPriceListItemScreen() {
                 onValueChange={(vatCodeId) => setFormData({ ...formData, vatCodeId })}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder={LL.priceList.vatRate()} />
+                  <SelectValue
+                    placeholder={
+                      vatCodeDisplayLabelById.get(formData.vatCodeId) || LL.priceList.vatRate()
+                    }
+                  />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectGroup>
@@ -293,9 +348,13 @@ export default function EditPriceListItemScreen() {
                       <SelectItem
                         key={vatCode.id}
                         value={vatCode.id}
-                        label={getLocalizedVatCodeName(vatCode.name, LL)}
+                        label={
+                          vatCodeDisplayLabelById.get(vatCode.id) ||
+                          getLocalizedVatCodeName(vatCode.name, LL)
+                        }
                       >
-                        {getLocalizedVatCodeName(vatCode.name, LL)}
+                        {vatCodeDisplayLabelById.get(vatCode.id) ||
+                          getLocalizedVatCodeName(vatCode.name, LL)}
                       </SelectItem>
                     ))}
                   </SelectGroup>

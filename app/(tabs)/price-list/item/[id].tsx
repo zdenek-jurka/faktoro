@@ -11,13 +11,29 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useDefaultInvoiceCurrency } from '@/hooks/use-default-invoice-currency';
 import { useI18nContext } from '@/i18n/i18n-react';
 import { normalizeIntlLocale } from '@/i18n/locale-options';
-import { PriceListItemModel, VatCodeModel } from '@/model';
+import { PriceListItemModel, VatCodeModel, VatRateModel } from '@/model';
 import { normalizeCurrencyCode } from '@/utils/currency-utils';
 import { formatPrice } from '@/utils/price-utils';
 import { getLocalizedVatCodeName } from '@/utils/vat-code-utils';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
 import { Animated, StyleSheet, View } from 'react-native';
+
+function resolveVatRateForDate(rates: VatRateModel[], taxableAt: number): number | null {
+  const matching = rates.filter(
+    (rate) => rate.validFrom <= taxableAt && (rate.validTo == null || rate.validTo >= taxableAt),
+  );
+  if (matching.length === 0) return null;
+  matching.sort((a, b) => b.validFrom - a.validFrom);
+  return matching[0].ratePercent;
+}
+
+function formatVatRatePercent(ratePercent: number): string {
+  return new Intl.NumberFormat(undefined, {
+    minimumFractionDigits: Number.isInteger(ratePercent) ? 0 : 1,
+    maximumFractionDigits: 2,
+  }).format(ratePercent);
+}
 
 export default function PriceListDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -28,6 +44,7 @@ export default function PriceListDetailScreen() {
   const defaultInvoiceCurrency = useDefaultInvoiceCurrency();
   const [item, setItem] = useState<PriceListItemModel | null>(null);
   const [vatCodeName, setVatCodeName] = useState<string | null>(null);
+  const [resolvedVatRate, setResolvedVatRate] = useState<number | null>(null);
   const contentStyle = useBottomSafeAreaStyle(styles.content);
   const displayVatCodeName = vatCodeName
     ? getLocalizedVatCodeName(vatCodeName, LL)
@@ -61,14 +78,23 @@ export default function PriceListDetailScreen() {
     const loadVatCodeName = async () => {
       if (!item?.vatCodeId) {
         setVatCodeName(null);
+        setResolvedVatRate(null);
         return;
       }
 
       try {
-        const vatCode = await database.get<VatCodeModel>(VatCodeModel.table).find(item.vatCodeId);
+        const [vatCode, vatRates] = await Promise.all([
+          database.get<VatCodeModel>(VatCodeModel.table).find(item.vatCodeId),
+          database
+            .get<VatRateModel>(VatRateModel.table)
+            .query(Q.where('vat_code_id', item.vatCodeId))
+            .fetch(),
+        ]);
         setVatCodeName(vatCode.name);
+        setResolvedVatRate(resolveVatRateForDate(vatRates, Date.now()));
       } catch {
         setVatCodeName(null);
+        setResolvedVatRate(null);
       }
     };
 
@@ -244,6 +270,13 @@ export default function PriceListDetailScreen() {
                   <ThemedText style={styles.detailValue}>{displayVatCodeName}</ThemedText>
                   <ThemedText style={styles.detailLabel}>{LL.priceList.vatName()}</ThemedText>
                 </View>
+                {resolvedVatRate != null && (
+                  <View style={styles.unitContainer}>
+                    <ThemedText style={styles.unitText}>
+                      {formatVatRatePercent(resolvedVatRate)} %
+                    </ThemedText>
+                  </View>
+                )}
               </View>
             </View>
           )}
