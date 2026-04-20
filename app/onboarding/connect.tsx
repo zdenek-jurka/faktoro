@@ -1,25 +1,31 @@
 import { ThemedText } from '@/components/themed-text';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { KeyboardAwareScroll } from '@/components/ui/keyboard-aware-scroll';
-import { isSyncEnabled } from '@/constants/features';
+import { SyncPayloadEntryModal } from '@/components/sync/sync-payload-entry-modal';
+import { isSyncEnabled, isSyncRecoveryPayloadEntryEnabled } from '@/constants/features';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useI18nContext } from '@/i18n/i18n-react';
 import { updateDeviceSyncSettings } from '@/repositories/device-sync-settings-repository';
+import { setOnboardingCompleted } from '@/repositories/onboarding-repository';
 import { getSettings } from '@/repositories/settings-repository';
+import { runOnlineSyncSafely } from '@/repositories/sync-repository';
+import { recoverSyncDeviceFromRawInput } from '@/repositories/sync-recovery-repository';
 import { isPlausibleEmail } from '@/utils/email-utils';
+import { getSyncErrorMessage } from '@/utils/error-utils';
 import { showAlert } from '@/utils/platform-alert';
 import {
   ADD_DEVICE_PAYLOAD_PEM_BEGIN,
   ADD_DEVICE_PAYLOAD_PEM_END,
   extractRecoveryPayload,
+  parseRecoveryPayloadFromRawOrPem,
   parseJsonFromRawOrPem,
 } from '@/utils/sync-pairing-utils';
 import { QrScannerModal, requestQrCameraPermission } from '@/components/sync/qr-scanner-modal';
 import Constants from 'expo-constants';
 import { useCameraPermissions } from 'expo-camera';
 import { Redirect, useRouter } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -43,7 +49,13 @@ function OnboardingConnectScreenContent() {
   const [recoveryEmail, setRecoveryEmail] = useState('');
   const [isConnecting, setIsConnecting] = useState(false);
   const [scannerOpen, setScannerOpen] = useState(false);
+  const [payloadEntryOpen, setPayloadEntryOpen] = useState(false);
   const [cameraPermission, requestCameraPermission] = useCameraPermissions();
+  const parsedRecoveryPayload = useMemo(
+    () => parseRecoveryPayloadFromRawOrPem(extractRecoveryPayload(payloadInput)),
+    [payloadInput],
+  );
+  const shouldShowAddDeviceFields = !parsedRecoveryPayload;
 
   function parsePayload(raw: string) {
     const candidate = extractRecoveryPayload(raw);
@@ -76,6 +88,10 @@ function OnboardingConnectScreenContent() {
   }
 
   async function handleOpenScanner() {
+    if (isSyncRecoveryPayloadEntryEnabled) {
+      setPayloadEntryOpen(true);
+      return;
+    }
     const granted = await requestQrCameraPermission(cameraPermission, requestCameraPermission);
     if (!granted) {
       showAlert(LL.common.error(), LL.settings.syncRecoveryCameraPermissionDenied());
@@ -85,8 +101,29 @@ function OnboardingConnectScreenContent() {
   }
 
   async function handleConnect() {
-    if (!isPlausibleEmail(recoveryEmail)) {
+    if (!parsedRecoveryPayload && !isPlausibleEmail(recoveryEmail)) {
       showAlert(LL.common.error(), LL.onboarding.connectEmailRequired());
+      return;
+    }
+
+    if (parsedRecoveryPayload) {
+      setIsConnecting(true);
+      try {
+        await recoverSyncDeviceFromRawInput(payloadInput);
+        await updateDeviceSyncSettings({ syncFeatureEnabled: true });
+        try {
+          const settings = await getSettings();
+          await runOnlineSyncSafely(settings);
+        } catch {
+          // best-effort on fresh install; recovery can still succeed before first sync
+        }
+        await setOnboardingCompleted();
+        router.replace('/(tabs)/time-tracking');
+      } catch (err) {
+        showAlert(LL.common.error(), getSyncErrorMessage(err, LL, LL.settings.syncGenericError()));
+      } finally {
+        setIsConnecting(false);
+      }
       return;
     }
 
@@ -186,50 +223,54 @@ function OnboardingConnectScreenContent() {
             />
           </View>
 
-          {/* Device name */}
-          <View style={styles.field}>
-            <ThemedText style={[styles.fieldLabel, { color: palette.textSecondary }]}>
-              {LL.onboarding.connectDeviceNameLabel()}
-            </ThemedText>
-            <TextInput
-              style={[
-                styles.input,
-                {
-                  backgroundColor: palette.inputBackground,
-                  borderColor: palette.inputBorder,
-                  color: palette.text,
-                },
-              ]}
-              value={deviceName}
-              onChangeText={setDeviceName}
-              placeholder={LL.onboarding.connectDeviceNameLabel()}
-              placeholderTextColor={palette.placeholder}
-            />
-          </View>
+          {shouldShowAddDeviceFields ? (
+            <>
+              {/* Device name */}
+              <View style={styles.field}>
+                <ThemedText style={[styles.fieldLabel, { color: palette.textSecondary }]}>
+                  {LL.onboarding.connectDeviceNameLabel()}
+                </ThemedText>
+                <TextInput
+                  style={[
+                    styles.input,
+                    {
+                      backgroundColor: palette.inputBackground,
+                      borderColor: palette.inputBorder,
+                      color: palette.text,
+                    },
+                  ]}
+                  value={deviceName}
+                  onChangeText={setDeviceName}
+                  placeholder={LL.onboarding.connectDeviceNameLabel()}
+                  placeholderTextColor={palette.placeholder}
+                />
+              </View>
 
-          {/* Recovery email */}
-          <View style={styles.field}>
-            <ThemedText style={[styles.fieldLabel, { color: palette.textSecondary }]}>
-              {LL.onboarding.connectEmailLabel()} *
-            </ThemedText>
-            <TextInput
-              style={[
-                styles.input,
-                {
-                  backgroundColor: palette.inputBackground,
-                  borderColor: palette.inputBorder,
-                  color: palette.text,
-                },
-              ]}
-              value={recoveryEmail}
-              onChangeText={setRecoveryEmail}
-              placeholder={LL.onboarding.connectEmailPlaceholder()}
-              placeholderTextColor={palette.placeholder}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              autoCorrect={false}
-            />
-          </View>
+              {/* Recovery email */}
+              <View style={styles.field}>
+                <ThemedText style={[styles.fieldLabel, { color: palette.textSecondary }]}>
+                  {LL.onboarding.connectEmailLabel()} *
+                </ThemedText>
+                <TextInput
+                  style={[
+                    styles.input,
+                    {
+                      backgroundColor: palette.inputBackground,
+                      borderColor: palette.inputBorder,
+                      color: palette.text,
+                    },
+                  ]}
+                  value={recoveryEmail}
+                  onChangeText={setRecoveryEmail}
+                  placeholder={LL.onboarding.connectEmailPlaceholder()}
+                  placeholderTextColor={palette.placeholder}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                />
+              </View>
+            </>
+          ) : null}
         </View>
 
         <Pressable
@@ -237,13 +278,17 @@ function OnboardingConnectScreenContent() {
             styles.primaryButton,
             {
               backgroundColor:
-                payloadInput.trim() && recoveryEmail.trim()
+                payloadInput.trim() && (parsedRecoveryPayload || recoveryEmail.trim())
                   ? palette.tint
                   : palette.buttonNeutralBackground,
             },
           ]}
           onPress={handleConnect}
-          disabled={isConnecting || !payloadInput.trim() || !recoveryEmail.trim()}
+          disabled={
+            isConnecting ||
+            !payloadInput.trim() ||
+            (!parsedRecoveryPayload && !recoveryEmail.trim())
+          }
           android_ripple={{ color: 'rgba(255,255,255,0.2)' }}
         >
           {isConnecting ? (
@@ -254,7 +299,7 @@ function OnboardingConnectScreenContent() {
                 styles.primaryButtonText,
                 {
                   color:
-                    payloadInput.trim() && recoveryEmail.trim()
+                    payloadInput.trim() && (parsedRecoveryPayload || recoveryEmail.trim())
                       ? palette.onTint
                       : palette.textMuted,
                 },
@@ -275,6 +320,15 @@ function OnboardingConnectScreenContent() {
           setPayloadInput(data);
         }}
         onClose={() => setScannerOpen(false)}
+      />
+      <SyncPayloadEntryModal
+        visible={payloadEntryOpen}
+        title={LL.onboarding.connectPayloadLabel()}
+        placeholder={LL.onboarding.connectPayloadPlaceholder()}
+        value={payloadInput}
+        onChangeText={setPayloadInput}
+        onClose={() => setPayloadEntryOpen(false)}
+        onSave={() => setPayloadEntryOpen(false)}
       />
     </SafeAreaView>
   );

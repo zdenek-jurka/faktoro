@@ -17,6 +17,7 @@ import {
 } from '@/repositories/settings-repository';
 import { setOnboardingCompleted } from '@/repositories/onboarding-repository';
 import { generateInstanceKey, isSecureCryptoAvailable } from '@/repositories/sync-crypto';
+import { upsertSyncRecoveryBootstrap } from '@/repositories/sync-recovery-repository';
 import {
   forgetServerRegistration,
   restoreSnapshotBackup,
@@ -322,6 +323,15 @@ function SyncPairingScreenContent() {
       const instanceKey = secureCryptoAvailable
         ? syncInstanceKey.trim() || generateInstanceKey()
         : '';
+      const nextAllowPlaintext = allowPlaintext || !secureCryptoAvailable;
+
+      await upsertSyncRecoveryBootstrap({
+        serverBaseUrl: effectiveServerUrl,
+        deviceId: registerResult.device_id,
+        authToken,
+        allowPlaintext: nextAllowPlaintext,
+        instanceKey: nextAllowPlaintext ? null : instanceKey || null,
+      });
 
       await updateDeviceSyncSettings(
         {
@@ -333,7 +343,8 @@ function SyncPairingScreenContent() {
           syncAuthToken: authToken,
           syncIsRegistered: true,
           syncInstanceKey: instanceKey || null,
-          syncAllowPlaintext: allowPlaintext || !secureCryptoAvailable,
+          syncAllowPlaintext: nextAllowPlaintext,
+          ...(isAddDeviceFlow || completeOnSuccess ? { syncFeatureEnabled: true } : {}),
         },
         settings ?? undefined,
       );

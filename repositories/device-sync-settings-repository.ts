@@ -244,7 +244,10 @@ export function observeDeviceSyncSettings(
   const collection = database.get<ConfigStorageModel>(ConfigStorageModel.table);
   const subscription = collection
     .query()
-    .observe()
+    // Re-emit when config values change on existing rows, not only when the
+    // result set membership changes. This keeps runtime feature toggles in sync
+    // without requiring an app restart.
+    .observeWithColumns(['config_key', 'config_value'])
     .subscribe((records) => {
       const values = records.reduce<Record<string, string>>((acc, record) => {
         if (!record.configKey.startsWith(KEY_PREFIX)) return acc;

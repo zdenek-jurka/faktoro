@@ -36,6 +36,7 @@ import {
   isSecureCryptoAvailable,
 } from '@/repositories/sync-crypto';
 import { buildSyncAuthHeaders } from '@/utils/sync-auth';
+import { requestAppDataReload } from '@/utils/app-data-reload';
 import { Model } from '@nozbe/watermelondb';
 import type { DirtyRaw, RawRecord as WMRawRecord } from '@nozbe/watermelondb/RawRecord';
 import type { SyncDatabaseChangeSet } from '@nozbe/watermelondb/sync';
@@ -49,7 +50,7 @@ interface ModelInternals {
   _setRaw: (key: string, value: unknown) => void;
 }
 
-const TABLES = [
+export const SYNC_TABLES = [
   'app_settings',
   'currency_setting',
   'client',
@@ -57,12 +58,19 @@ const TABLES = [
   'price_list_item',
   'client_price_override',
   'time_entry',
+  'timesheet',
+  'invoice',
+  'invoice_item',
   'vat_code',
   'vat_rate',
 ] as const;
 
+const SNAPSHOT_TABLES = [...SYNC_TABLES, 'config_storage'] as const;
+const SNAPSHOT_SYNCED_CONFIG_EXACT_KEYS = new Set(['export_integrations.list']);
+const SNAPSHOT_SYNCED_CONFIG_PREFIXES = ['registry.'] as const;
+
 type SnapshotPayload = {
-  [K in (typeof TABLES)[number]]: RawRecord[];
+  [K in (typeof SNAPSHOT_TABLES)[number]]: RawRecord[];
 };
 
 type SyncResponse = {
@@ -149,13 +157,29 @@ async function parseErrorResponse(response: Response): Promise<string> {
 export async function createFullSnapshot(): Promise<SnapshotPayload> {
   const snapshot: Partial<SnapshotPayload> = {};
 
-  for (const table of TABLES) {
+  for (const table of SNAPSHOT_TABLES) {
     const rows = await database.get(table).query().fetch();
     const rawRows = rows.map((row) => ({ ...(row as unknown as ModelInternals)._raw }));
+    if (table === 'config_storage') {
+      snapshot[table] = filterSnapshotConfigStorageRows(rawRows);
+      continue;
+    }
     snapshot[table] = table === 'app_settings' ? normalizeAppSettingsRecords(rawRows) : rawRows;
   }
 
   return snapshot as SnapshotPayload;
+}
+
+function isSnapshotSyncableConfigKey(key: unknown): boolean {
+  if (typeof key !== 'string') return false;
+  return (
+    SNAPSHOT_SYNCED_CONFIG_EXACT_KEYS.has(key) ||
+    SNAPSHOT_SYNCED_CONFIG_PREFIXES.some((prefix) => key.startsWith(prefix))
+  );
+}
+
+function filterSnapshotConfigStorageRows(rows: RawRecord[]): RawRecord[] {
+  return rows.filter((row) => isSnapshotSyncableConfigKey(row.config_key));
 }
 
 async function ensureInstanceKey(settings: AppSettingsModel): Promise<string> {
@@ -925,7 +949,7 @@ export async function createSnapshotBackup(settings: AppSettingsModel): Promise<
 }
 
 export async function touchAllSyncData(options?: {
-  excludeTables?: readonly (typeof TABLES)[number][];
+  excludeTables?: readonly (typeof SYNC_TABLES)[number][];
 }): Promise<number> {
   const timestamp = Date.now();
   let touched = 0;
@@ -934,7 +958,7 @@ export async function touchAllSyncData(options?: {
   await database.write(async () => {
     const operations: Model[] = [];
 
-    for (const table of TABLES) {
+    for (const table of SYNC_TABLES) {
       if (excludedTables.has(table)) {
         continue;
       }
@@ -1001,6 +1025,7 @@ export async function restoreSnapshotBackup(settings: AppSettingsModel): Promise
       : rawSnapshot;
   await applySnapshot(decryptedSnapshot as SnapshotPayload);
   await updateDeviceSyncSettings(preservedDeviceSettings);
+  requestAppDataReload();
 }
 
 export async function forgetServerRegistration(settings: AppSettingsModel): Promise<void> {
@@ -1024,12 +1049,13 @@ async function applySnapshot(snapshot: SnapshotPayload): Promise<void> {
   const normalizedSnapshot = {
     ...snapshot,
     app_settings: normalizeAppSettingsRecords(snapshot.app_settings || []),
+    config_storage: filterSnapshotConfigStorageRows(snapshot.config_storage || []),
   } as SnapshotPayload;
 
   await database.write(async () => {
     await database.unsafeResetDatabase();
 
-    const operations = TABLES.flatMap((table) => {
+    const operations = SNAPSHOT_TABLES.flatMap((table) => {
       const rows = normalizedSnapshot[table] || [];
       const collection = database.get(table);
       return rows.map((raw) => collection.prepareCreateFromDirtyRaw(raw as DirtyRaw));

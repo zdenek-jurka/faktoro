@@ -29,6 +29,12 @@ export default function OnboardingStartScreen() {
       description: LL.onboarding.startNewDesc(),
       onPress: () => router.push('/onboarding/language'),
     },
+    {
+      icon: 'archivebox',
+      title: LL.onboarding.startRestoreTitle(),
+      description: LL.onboarding.startRestoreDesc(),
+      onPress: () => router.push('/onboarding/restore'),
+    },
     ...(isSyncEnabled
       ? [
           {
@@ -39,12 +45,6 @@ export default function OnboardingStartScreen() {
           } satisfies ChoiceItem,
         ]
       : []),
-    {
-      icon: 'archivebox',
-      title: LL.onboarding.startRestoreTitle(),
-      description: LL.onboarding.startRestoreDesc(),
-      onPress: () => router.push('/onboarding/restore'),
-    },
   ];
 
   return (

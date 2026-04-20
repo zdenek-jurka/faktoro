@@ -11,7 +11,11 @@ import {
   observeDeviceSyncSettings,
 } from '@/repositories/device-sync-settings-repository';
 import { getSettings } from '@/repositories/settings-repository';
-import { runOnlineSyncSafely, subscribeToSyncEvents } from '@/repositories/sync-repository';
+import {
+  runOnlineSyncSafely,
+  subscribeToSyncEvents,
+  SYNC_TABLES,
+} from '@/repositories/sync-repository';
 import { getCurrentDeviceRunningTimeEntry } from '@/repositories/time-entry-repository';
 import { useEffect, useRef } from 'react';
 import { AppState } from 'react-native';
@@ -20,13 +24,10 @@ const AUTO_SYNC_INTERVAL_MS = 30000;
 const WS_SAFETY_SYNC_INTERVAL_MS = 180000;
 const HEALTH_TIMEOUT_MS = 4500;
 const LOCAL_PUSH_DEBOUNCE_MS = 1200;
-const LOCAL_SYNC_TABLES = [
-  'client',
-  'client_address',
-  'price_list_item',
-  'client_price_override',
-  'time_entry',
-] as const;
+// Remote WS events only tell peers to pull after another device has already pushed.
+// We therefore watch every syncable local table here so newly created records do not
+// sit on the originating device until the next poll/foreground/manual sync.
+const LOCAL_SYNC_TRIGGER_TABLES = SYNC_TABLES;
 
 function normalizeServerUrl(value?: string | null): string {
   return value?.trim().replace(/\/+$/, '') || '';
@@ -248,21 +249,23 @@ export function useAutoSync(): void {
     });
 
     const localDataSubscription = isAutoSyncLocalDbTriggerEnabled
-      ? database.withChangesForTables(LOCAL_SYNC_TABLES as unknown as string[]).subscribe(() => {
-          if (!localChangesInitializedRef.current) {
-            localChangesInitializedRef.current = true;
-            return;
-          }
+      ? database
+          .withChangesForTables(LOCAL_SYNC_TRIGGER_TABLES as unknown as string[])
+          .subscribe(() => {
+            if (!localChangesInitializedRef.current) {
+              localChangesInitializedRef.current = true;
+              return;
+            }
 
-          if (suppressLocalChangeSchedulingRef.current) {
-            return;
-          }
+            if (suppressLocalChangeSchedulingRef.current) {
+              return;
+            }
 
-          if (syncRunningRef.current) {
-            return;
-          }
-          scheduleLocalPush();
-        })
+            if (syncRunningRef.current) {
+              return;
+            }
+            scheduleLocalPush();
+          })
       : null;
 
     return () => {

@@ -8,7 +8,6 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 import { usePendingSyncConflictCount } from '@/hooks/use-pending-sync-conflict-count';
 import { useI18nContext } from '@/i18n/i18n-react';
 import {
-  getDeviceSyncSettings,
   observeDeviceSyncSettings,
   updateDeviceSyncSettings,
   type DeviceSyncSettings,
@@ -28,21 +27,25 @@ import {
 } from 'react-native';
 
 export default function SettingsOnlineSyncScreen() {
-  const [settings, setSettings] = useState<DeviceSyncSettings | null>(null);
+  const [deviceSyncSettings, setDeviceSyncSettings] = useState<DeviceSyncSettings | null>(null);
 
   useEffect(() => {
-    const unsub = observeDeviceSyncSettings(setSettings);
+    const unsub = observeDeviceSyncSettings(setDeviceSyncSettings);
     return unsub;
   }, []);
 
-  if (!isSyncEnabled || (settings !== null && !settings.syncFeatureEnabled)) {
+  if (!isSyncEnabled || (deviceSyncSettings !== null && !deviceSyncSettings.syncFeatureEnabled)) {
     return <Redirect href="/settings" />;
   }
 
-  return <SettingsOnlineSyncScreenContent />;
+  return <SettingsOnlineSyncScreenContent deviceSyncSettings={deviceSyncSettings} />;
 }
 
-function SettingsOnlineSyncScreenContent() {
+function SettingsOnlineSyncScreenContent({
+  deviceSyncSettings,
+}: {
+  deviceSyncSettings: DeviceSyncSettings | null;
+}) {
   const colorScheme = useColorScheme();
   const palette = Colors[colorScheme === 'dark' ? 'dark' : 'light'];
   const headerHeight = useHeaderHeight();
@@ -57,27 +60,10 @@ function SettingsOnlineSyncScreenContent() {
         : String(pendingConflictCount)
       : undefined;
 
-  const [syncIsRegistered, setSyncIsRegistered] = useState(false);
-  const [syncAutoEnabled, setSyncAutoEnabled] = useState(true);
   const [isServerReachable, setIsServerReachable] = useState(false);
-  const [syncServerUrl, setSyncServerUrl] = useState('');
-
-  useEffect(() => {
-    const loadInitial = async () => {
-      const s = await getDeviceSyncSettings();
-      setSyncServerUrl(s.syncServerUrl || '');
-      setSyncIsRegistered(s.syncIsRegistered || false);
-      setSyncAutoEnabled(s.syncAutoEnabled ?? true);
-    };
-    void loadInitial();
-
-    const unsub = observeDeviceSyncSettings((s) => {
-      setSyncServerUrl(s.syncServerUrl || '');
-      setSyncIsRegistered(s.syncIsRegistered || false);
-      setSyncAutoEnabled(s.syncAutoEnabled ?? true);
-    });
-    return unsub;
-  }, []);
+  const syncIsRegistered = deviceSyncSettings?.syncIsRegistered || false;
+  const syncAutoEnabled = deviceSyncSettings?.syncAutoEnabled ?? true;
+  const syncServerUrl = deviceSyncSettings?.syncServerUrl || '';
 
   const normalizedSyncServerUrl = useMemo(
     () => syncServerUrl.trim().replace(/\/+$/, ''),
@@ -116,7 +102,6 @@ function SettingsOnlineSyncScreenContent() {
   }, [normalizedSyncServerUrl, syncIsRegistered]);
 
   const handleAutoSyncToggle = async (value: boolean) => {
-    setSyncAutoEnabled(value);
     await updateDeviceSyncSettings({ syncAutoEnabled: value });
   };
 

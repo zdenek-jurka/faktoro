@@ -1,6 +1,17 @@
 export const ADD_DEVICE_PAYLOAD_PEM_BEGIN = '-----BEGIN FAKTORO ADD DEVICE PAYLOAD-----';
 export const ADD_DEVICE_PAYLOAD_PEM_END = '-----END FAKTORO ADD DEVICE PAYLOAD-----';
+export const RECOVERY_PAYLOAD_PEM_BEGIN = '-----BEGIN FAKTORO RECOVERY PAYLOAD-----';
+export const RECOVERY_PAYLOAD_PEM_END = '-----END FAKTORO RECOVERY PAYLOAD-----';
 export const PAYLOAD_PEM_LINE_WIDTH = 64;
+
+export type ParsedRecoveryPayload = {
+  deviceId: string;
+  recoveryToken: string;
+  serverBaseUrl: string;
+  instanceId?: string;
+  allowPlaintext?: boolean;
+  instanceKey?: string;
+};
 
 export async function fetchWithTimeout(
   input: RequestInfo | URL,
@@ -55,6 +66,32 @@ export function parseJsonFromRawOrPem(
   } catch {
     return null;
   }
+}
+
+export function parseRecoveryPayloadFromRawOrPem(raw: string): ParsedRecoveryPayload | null {
+  const parsed = parseJsonFromRawOrPem(raw, RECOVERY_PAYLOAD_PEM_BEGIN, RECOVERY_PAYLOAD_PEM_END);
+  if (!parsed) return null;
+
+  const deviceId = typeof parsed.deviceId === 'string' ? parsed.deviceId.trim() : '';
+  const recoveryToken = typeof parsed.recoveryToken === 'string' ? parsed.recoveryToken.trim() : '';
+  const serverBaseUrl = typeof parsed.serverBaseUrl === 'string' ? parsed.serverBaseUrl.trim() : '';
+  const instanceId = typeof parsed.instanceId === 'string' ? parsed.instanceId.trim() : '';
+  const instanceKey = typeof parsed.instanceKey === 'string' ? parsed.instanceKey.trim() : '';
+  const allowPlaintext =
+    typeof parsed.allowPlaintext === 'boolean' ? parsed.allowPlaintext : undefined;
+
+  if (!deviceId || !recoveryToken || !serverBaseUrl) {
+    return null;
+  }
+
+  return {
+    deviceId,
+    recoveryToken,
+    serverBaseUrl,
+    instanceId: instanceId || undefined,
+    allowPlaintext,
+    instanceKey: instanceKey || undefined,
+  };
 }
 
 function decodePayloadPem(input: string, pemBegin: string, pemEnd: string): string | null {

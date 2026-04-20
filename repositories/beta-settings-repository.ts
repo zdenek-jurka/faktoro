@@ -96,7 +96,9 @@ export function observeBetaSettings(listener: (settings: BetaSettings) => void):
   const collection = database.get<ConfigStorageModel>(ConfigStorageModel.table);
   const subscription = collection
     .query()
-    .observe()
+    // Re-emit when config values change on existing rows, not only on row
+    // additions/removals, so beta toggles propagate immediately in the UI.
+    .observeWithColumns(['config_key', 'config_value'])
     .subscribe((records) => {
       const values = records.reduce<Record<string, string>>((acc, record) => {
         if (!record.configKey.startsWith(KEY_PREFIX)) return acc;

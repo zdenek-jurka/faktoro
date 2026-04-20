@@ -1,8 +1,9 @@
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { SyncPayloadEntryModal } from '@/components/sync/sync-payload-entry-modal';
 import { QrScannerModal } from '@/components/sync/qr-scanner-modal';
 import { BorderRadius, BorderWidth, Colors, FontSizes, Spacing } from '@/constants/theme';
-import { isSyncEnabled } from '@/constants/features';
+import { isSyncEnabled, isSyncRecoveryPayloadEntryEnabled } from '@/constants/features';
 import { useBottomSafeAreaStyle } from '@/hooks/use-bottom-safe-area-style';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useI18nContext } from '@/i18n/i18n-react';
@@ -16,12 +17,15 @@ import {
   encodePayloadPem,
   extractRecoveryPayload,
   fetchWithTimeout,
+  parseRecoveryPayloadFromRawOrPem,
   parseJsonFromRawOrPem,
   syncDebugLog,
   ADD_DEVICE_PAYLOAD_PEM_BEGIN,
   ADD_DEVICE_PAYLOAD_PEM_END,
 } from '@/utils/sync-pairing-utils';
+import { getSyncErrorMessage } from '@/utils/error-utils';
 import { buildSyncAuthHeaders } from '@/utils/sync-auth';
+import { recoverSyncDeviceFromRawInput } from '@/repositories/sync-recovery-repository';
 import { stopRunningEntriesByDevice } from '@/repositories/time-entry-repository';
 import { showAlert, showConfirm } from '@/utils/platform-alert';
 import { isPlausibleEmail } from '@/utils/email-utils';
@@ -82,16 +86,14 @@ function SyncDevicesScreenContent() {
   );
   const [newRecoveryEmail, setNewRecoveryEmail] = useState('');
   const [scannerOpen, setScannerOpen] = useState(false);
+  const [payloadEntryOpen, setPayloadEntryOpen] = useState(false);
+  const [payloadEntryValue, setPayloadEntryValue] = useState('');
   const [cameraPermission, requestCameraPermission] = useCameraPermissions();
   const [settings, setSettings] = useState<Awaited<ReturnType<typeof getSettings>> | null>(null);
 
   const normalizedServerUrl = useMemo(
     () => syncServerUrl.trim().replace(/\/+$/, ''),
     [syncServerUrl],
-  );
-  const hasValidRecoveryEmail = useMemo(
-    () => isPlausibleEmail(newRecoveryEmail),
-    [newRecoveryEmail],
   );
   const qrSize = useMemo(() => {
     const maxWidth = windowWidth * 0.9;
@@ -268,11 +270,23 @@ function SyncDevicesScreenContent() {
   };
 
   const handleApplyAndPair = async (rawInput: string) => {
+    const candidate = extractRecoveryPayload(rawInput);
+    if (parseRecoveryPayloadFromRawOrPem(candidate)) {
+      try {
+        await recoverSyncDeviceFromRawInput(candidate, settings ?? undefined);
+        showAlert(LL.common.success(), LL.settings.syncRecoverySuccess());
+        router.replace('/settings/online-sync');
+      } catch (err) {
+        showAlert(LL.common.error(), getSyncErrorMessage(err, LL, LL.settings.syncGenericError()));
+      }
+      return;
+    }
+
     if (!isPlausibleEmail(newRecoveryEmail)) {
       showAlert(LL.common.error(), LL.settings.syncRecoveryEmailRequired());
       return;
     }
-    const candidate = extractRecoveryPayload(rawInput);
+
     const payload = applyAddDevicePayload(candidate);
     if (!payload) return;
 
@@ -319,6 +333,10 @@ function SyncDevicesScreenContent() {
   };
 
   const handleOpenScanner = async () => {
+    if (isSyncRecoveryPayloadEntryEnabled) {
+      setPayloadEntryOpen(true);
+      return;
+    }
     const granted = cameraPermission?.granted ? true : (await requestCameraPermission()).granted;
     if (!granted) {
       showAlert(LL.common.error(), LL.settings.syncRecoveryCameraPermissionDenied());
@@ -448,13 +466,12 @@ function SyncDevicesScreenContent() {
                 style={({ pressed }) => [
                   styles.primaryButton,
                   {
-                    backgroundColor: hasValidRecoveryEmail ? palette.tint : palette.inputBorder,
-                    opacity: hasValidRecoveryEmail ? 1 : 0.6,
+                    backgroundColor: palette.tint,
+                    opacity: 1,
                   },
-                  pressed && hasValidRecoveryEmail && styles.buttonPressed,
+                  pressed && styles.buttonPressed,
                 ]}
                 onPress={() => void handleOpenScanner()}
-                disabled={!hasValidRecoveryEmail}
               >
                 <ThemedText style={styles.primaryButtonText}>
                   {LL.settings.syncAddDeviceScanQr()}
@@ -542,6 +559,18 @@ function SyncDevicesScreenContent() {
         cancelLabel={LL.common.cancel()}
         onScanned={(data) => void handleScanned(data)}
         onClose={() => setScannerOpen(false)}
+      />
+      <SyncPayloadEntryModal
+        visible={payloadEntryOpen}
+        title={LL.onboarding.connectPayloadLabel()}
+        placeholder={LL.onboarding.connectPayloadPlaceholder()}
+        value={payloadEntryValue}
+        onChangeText={setPayloadEntryValue}
+        onClose={() => setPayloadEntryOpen(false)}
+        onSave={() => {
+          setPayloadEntryOpen(false);
+          void handleApplyAndPair(payloadEntryValue);
+        }}
       />
     </ThemedView>
   );

@@ -48,7 +48,7 @@ import {
 } from '@/repositories/export-integration-repository';
 import { getConfigValue, setConfigValue } from '@/repositories/config-storage-repository';
 import { buildTimesheetXml } from '@/templates/timesheet/xml';
-import { getBetaSettings } from '@/repositories/beta-settings-repository';
+import { observeBetaSettings } from '@/repositories/beta-settings-repository';
 import { Q } from '@nozbe/watermelondb';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useEffectEvent, useMemo, useState } from 'react';
@@ -123,7 +123,10 @@ export default function TimesheetDetailScreen() {
   const exportDateLocale = useMemo(() => getIntlLocale(exportLocale), [exportLocale]);
 
   useEffect(() => {
-    getBetaSettings().then((s) => setExportIntegrationsEnabled(s.exportIntegrationsEnabled));
+    const unsub = observeBetaSettings((settings) => {
+      setExportIntegrationsEnabled(settings.exportIntegrationsEnabled);
+    });
+    return unsub;
   }, []);
 
   useEffect(() => {

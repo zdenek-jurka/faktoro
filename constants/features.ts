@@ -13,6 +13,12 @@ const DANGEROUS_APP_DATA_RESET_AVAILABLE =
 const RAW_ERROR_MESSAGES_FLAG = (process.env.EXPO_PUBLIC_SHOW_RAW_ERROR_MESSAGES || '').trim();
 const RAW_ERROR_MESSAGES_ENABLED =
   RAW_ERROR_MESSAGES_FLAG === '1' || RAW_ERROR_MESSAGES_FLAG.toLowerCase() === 'true';
+const SYNC_RECOVERY_PAYLOAD_ENTRY_FLAG = (
+  process.env.EXPO_PUBLIC_SYNC_RECOVERY_PAYLOAD || ''
+).trim();
+const SYNC_RECOVERY_PAYLOAD_ENTRY_ENABLED =
+  SYNC_RECOVERY_PAYLOAD_ENTRY_FLAG === '1' ||
+  SYNC_RECOVERY_PAYLOAD_ENTRY_FLAG.toLowerCase() === 'true';
 
 // Temporary investigation flags so we can isolate sync-related regressions
 // without losing access to sync settings and manual sync flows.
@@ -52,3 +58,4 @@ export const isInvoiceHtmlExportEnabled = INVOICE_HTML_EXPORT_AVAILABLE;
 export const isPdfSaveEnabled = isPlatformFeatureEnabled(PDF_SAVE_AVAILABLE_ON);
 export const isPdfOpenEnabled = isPlatformFeatureEnabled(PDF_OPEN_AVAILABLE_ON);
 export const isRawErrorMessagesEnabled = RAW_ERROR_MESSAGES_ENABLED;
+export const isSyncRecoveryPayloadEntryEnabled = SYNC_RECOVERY_PAYLOAD_ENTRY_ENABLED;

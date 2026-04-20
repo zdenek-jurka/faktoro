@@ -1,9 +1,14 @@
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { QrScannerModal } from '@/components/sync/qr-scanner-modal';
+import { SyncPayloadEntryModal } from '@/components/sync/sync-payload-entry-modal';
 import { BottomSheetFormModal } from '@/components/ui/bottom-sheet-form-modal';
 import { Colors, FontSizes, Spacing } from '@/constants/theme';
-import { isDangerousSyncResetEnabled, isSyncEnabled } from '@/constants/features';
+import {
+  isDangerousSyncResetEnabled,
+  isSyncEnabled,
+  isSyncRecoveryPayloadEntryEnabled,
+} from '@/constants/features';
 import database from '@/db';
 import { useBottomSafeAreaStyle } from '@/hooks/use-bottom-safe-area-style';
 import { useColorScheme } from '@/hooks/use-color-scheme';
@@ -22,6 +27,10 @@ import {
   isSecureCryptoAvailable,
   parseInstanceKeyBackupPayload,
 } from '@/repositories/sync-crypto';
+import {
+  recoverSyncDeviceFromRawInput,
+  upsertSyncRecoveryBootstrap,
+} from '@/repositories/sync-recovery-repository';
 import { getSyncErrorMessage } from '@/utils/error-utils';
 import {
   resolveConflictWithMergedPayload,
@@ -39,7 +48,7 @@ import {
   runOnlineSyncSafely,
   touchAllSyncData,
 } from '@/repositories/sync-repository';
-import { extractRecoveryPayload, fetchWithTimeout, syncDebugLog } from '@/utils/sync-pairing-utils';
+import { extractRecoveryPayload, syncDebugLog } from '@/utils/sync-pairing-utils';
 import { showAlert, showConfirm } from '@/utils/platform-alert';
 import { isIos } from '@/utils/platform';
 import { Q } from '@nozbe/watermelondb';
@@ -72,7 +81,6 @@ function SyncMaintenanceScreenContent() {
   const contentStyle = useBottomSafeAreaStyle(styles.content);
   const supportsSecureCrypto = isSecureCryptoAvailable();
 
-  const [syncServerUrl, setSyncServerUrl] = useState('');
   const [syncInstanceId, setSyncInstanceId] = useState('');
   const [syncIsRegistered, setSyncIsRegistered] = useState(false);
   const [syncAllowPlaintext, setSyncAllowPlaintext] = useState(false);
@@ -82,6 +90,7 @@ function SyncMaintenanceScreenContent() {
   const [keyBackupPayload, setKeyBackupPayload] = useState('');
   const [keyRestorePayload, setKeyRestorePayload] = useState('');
   const [scannerOpen, setScannerOpen] = useState(false);
+  const [payloadEntryOpen, setPayloadEntryOpen] = useState(false);
   const [cameraPermission, requestCameraPermission] = useCameraPermissions();
   const [settings, setSettings] = useState<Awaited<ReturnType<typeof getSettings>> | null>(null);
   const [pendingOperations, setPendingOperations] = useState<SyncOperationModel[]>([]);
@@ -95,7 +104,6 @@ function SyncMaintenanceScreenContent() {
       const appSettings = await getSettings();
       setSettings(appSettings);
       const ds = await getDeviceSyncSettings(appSettings);
-      setSyncServerUrl(ds.syncServerUrl || '');
       setSyncInstanceId(ds.syncInstanceId || '');
       setSyncIsRegistered(ds.syncIsRegistered || false);
       setSyncAllowPlaintext(ds.syncAllowPlaintext || false);
@@ -104,7 +112,6 @@ function SyncMaintenanceScreenContent() {
     void load();
 
     const unsub = observeDeviceSyncSettings((ds) => {
-      setSyncServerUrl(ds.syncServerUrl || '');
       setSyncInstanceId(ds.syncInstanceId || '');
       setSyncIsRegistered(ds.syncIsRegistered || false);
       setSyncAllowPlaintext(ds.syncAllowPlaintext || false);
@@ -131,8 +138,6 @@ function SyncMaintenanceScreenContent() {
       conflictsSubscription.unsubscribe();
     };
   }, []);
-
-  const normalizedServerUrl = syncServerUrl.trim().replace(/\/+$/, '');
 
   const refreshPendingSyncState = async () => {
     const [operations, conflicts] = await Promise.all([
@@ -275,10 +280,6 @@ function SyncMaintenanceScreenContent() {
   };
 
   const handleRecoverFromEmail = async () => {
-    if (!normalizedServerUrl) {
-      showAlert(LL.common.error(), LL.settings.syncServerUrlRequired());
-      return;
-    }
     const rawCode = extractRecoveryPayload(recoveryCode);
     if (!rawCode) {
       showAlert(LL.common.error(), LL.settings.syncRecoveryCodeRequired());
@@ -287,37 +288,9 @@ function SyncMaintenanceScreenContent() {
 
     try {
       setSyncingNow(true);
-      const response = await fetchWithTimeout(
-        `${normalizedServerUrl}/api/devices/recover-from-code`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ raw_code: rawCode.trim() }),
-        },
-      );
-      if (!response.ok) throw new Error(await response.text());
-      const result = (await response.json()) as {
-        device_id: string;
-        device_name: string;
-        auth_token: string;
-      };
-      const instanceKey = supportsSecureCrypto
-        ? syncInstanceKey.trim() || generateInstanceKey()
-        : '';
-      await updateDeviceSyncSettings(
-        {
-          syncDeviceId: result.device_id,
-          syncDeviceName: result.device_name,
-          syncAuthToken: result.auth_token,
-          syncPairingToken: null,
-          syncIsRegistered: true,
-          syncInstanceKey: instanceKey || null,
-          syncAllowPlaintext: !supportsSecureCrypto,
-        },
-        settings ?? undefined,
-      );
+      await recoverSyncDeviceFromRawInput(rawCode, settings ?? undefined);
       setRecoveryCode('');
-      syncDebugLog('Recovery success', { device_id: result.device_id });
+      syncDebugLog('Recovery success');
       showAlert(LL.common.success(), LL.settings.syncRecoverySuccess());
     } catch (err) {
       syncDebugLog('Recovery failed', { error: err instanceof Error ? err.message : String(err) });
@@ -329,6 +302,10 @@ function SyncMaintenanceScreenContent() {
   };
 
   const handleOpenRecoveryScanner = async () => {
+    if (isSyncRecoveryPayloadEntryEnabled) {
+      setPayloadEntryOpen(true);
+      return;
+    }
     const granted = cameraPermission?.granted ? true : (await requestCameraPermission()).granted;
     if (!granted) {
       showAlert(LL.common.error(), LL.settings.syncRecoveryCameraPermissionDenied());
@@ -374,6 +351,14 @@ function SyncMaintenanceScreenContent() {
         update.syncInstanceId = parsed.instanceId;
       }
       await updateDeviceSyncSettings(update, settings ?? undefined);
+      const deviceSettings = await getDeviceSyncSettings(settings ?? undefined);
+      await upsertSyncRecoveryBootstrap({
+        serverBaseUrl: deviceSettings.syncServerUrl,
+        deviceId: deviceSettings.syncDeviceId,
+        authToken: deviceSettings.syncAuthToken,
+        allowPlaintext: deviceSettings.syncAllowPlaintext,
+        instanceKey: deviceSettings.syncAllowPlaintext ? null : parsed.key,
+      });
       setKeyRestorePayload('');
       showAlert(LL.common.success(), LL.settings.syncKeyRestoreSuccess());
     } catch (err) {
@@ -400,6 +385,14 @@ function SyncMaintenanceScreenContent() {
     if (!confirmed) return;
     try {
       const key = syncInstanceKey.trim() || generateInstanceKey();
+      const deviceSettings = await getDeviceSyncSettings(settings ?? undefined);
+      await upsertSyncRecoveryBootstrap({
+        serverBaseUrl: deviceSettings.syncServerUrl,
+        deviceId: deviceSettings.syncDeviceId,
+        authToken: deviceSettings.syncAuthToken,
+        allowPlaintext: false,
+        instanceKey: key,
+      });
       await updateDeviceSyncSettings(
         { syncAllowPlaintext: false, syncInstanceKey: key },
         settings ?? undefined,
@@ -1072,6 +1065,15 @@ function SyncMaintenanceScreenContent() {
         cancelLabel={LL.common.cancel()}
         onScanned={handleRecoveryScanned}
         onClose={() => setScannerOpen(false)}
+      />
+      <SyncPayloadEntryModal
+        visible={payloadEntryOpen}
+        title={LL.settings.syncRecoveryTitle()}
+        placeholder={LL.settings.syncRecoveryCode()}
+        value={recoveryCode}
+        onChangeText={setRecoveryCode}
+        onClose={() => setPayloadEntryOpen(false)}
+        onSave={() => setPayloadEntryOpen(false)}
       />
       <BottomSheetFormModal
         visible={detailConflict !== null}
