@@ -159,7 +159,14 @@ export default function ClientDetailScreen() {
     const subscription = database
       .get<TimeEntryModel>(TimeEntryModel.table)
       .query(Q.where('is_running', true))
-      .observe()
+      .observeWithColumns([
+        'client_id',
+        'is_paused',
+        'paused_at',
+        'total_paused_duration',
+        'running_device_id',
+        'running_device_name',
+      ])
       .subscribe((entries) => {
         const runningInOtherClient = entries.some((entry) => {
           const isLocal =
@@ -183,7 +190,13 @@ export default function ClientDetailScreen() {
     const subscription = database
       .get<TimeEntryModel>(TimeEntryModel.table)
       .query(Q.where('client_id', id), Q.where('is_running', true))
-      .observe()
+      .observeWithColumns([
+        'is_paused',
+        'paused_at',
+        'total_paused_duration',
+        'running_device_id',
+        'running_device_name',
+      ])
       .subscribe((entries) => {
         if (entries.length === 0) {
           setRunningEntry(null);

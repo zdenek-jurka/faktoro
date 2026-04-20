@@ -19,6 +19,12 @@ const SYNC_RECOVERY_PAYLOAD_ENTRY_FLAG = (
 const SYNC_RECOVERY_PAYLOAD_ENTRY_ENABLED =
   SYNC_RECOVERY_PAYLOAD_ENTRY_FLAG === '1' ||
   SYNC_RECOVERY_PAYLOAD_ENTRY_FLAG.toLowerCase() === 'true';
+const AUTO_SYNC_BLOCK_DURING_LOCAL_TIMER_FLAG = (
+  process.env.EXPO_PUBLIC_AUTO_SYNC_BLOCK_DURING_LOCAL_TIMER || ''
+).trim();
+const AUTO_SYNC_BLOCK_DURING_LOCAL_TIMER_ENABLED =
+  AUTO_SYNC_BLOCK_DURING_LOCAL_TIMER_FLAG === '1' ||
+  AUTO_SYNC_BLOCK_DURING_LOCAL_TIMER_FLAG.toLowerCase() === 'true';
 
 // Temporary investigation flags so we can isolate sync-related regressions
 // without losing access to sync settings and manual sync flows.
@@ -48,6 +54,8 @@ export const isAutoSyncEventsEnabled = isAutoSyncEnabled && !FORCE_DISABLE_AUTO_
 export const isAutoSyncLocalDbTriggerEnabled =
   isAutoSyncEnabled && !FORCE_DISABLE_AUTO_SYNC_LOCAL_DB_TRIGGER;
 export const isAutoSyncRunEnabled = isAutoSyncEnabled && !FORCE_DISABLE_AUTO_SYNC_RUN;
+export const isAutoSyncBlockedDuringLocalTimerEnabled =
+  isAutoSyncEnabled && AUTO_SYNC_BLOCK_DURING_LOCAL_TIMER_ENABLED;
 export const isSyncPushEnabled = isSyncEnabled && !FORCE_DISABLE_SYNC_PUSH;
 export const isSyncPullEnabled = isSyncEnabled && !FORCE_DISABLE_SYNC_PULL;
 export const isSyncSynchronizeEnabled = isSyncEnabled && !FORCE_DISABLE_SYNC_SYNCHRONIZE;

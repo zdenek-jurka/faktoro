@@ -140,7 +140,18 @@ export function ClientTimeEntriesContent({ clientId, backToClientId }: Props) {
     const subscription = database
       .get<TimeEntryModel>(TimeEntryModel.table)
       .query(Q.where('is_running', true))
-      .observe()
+      .observeWithColumns([
+        'client_id',
+        'description',
+        'price_list_item_id',
+        'rate',
+        'rate_currency',
+        'is_paused',
+        'paused_at',
+        'total_paused_duration',
+        'running_device_id',
+        'running_device_name',
+      ])
       .subscribe((allRunningEntries) => {
         const runningInOtherClient = allRunningEntries.some((entry) => {
           const isLocal =

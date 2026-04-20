@@ -1,5 +1,6 @@
 import {
   isAutoSyncEnabled,
+  isAutoSyncBlockedDuringLocalTimerEnabled,
   isAutoSyncEventsEnabled,
   isAutoSyncLocalDbTriggerEnabled,
   isAutoSyncRunEnabled,
@@ -116,11 +117,15 @@ export function useAutoSync(): void {
         return;
       }
 
-      // A running local timer is updated through local UI state and widget/live-activity
-      // surfaces. Syncing during that active interval has proven fragile on iOS and can
-      // make timer controls unresponsive. We still observe time_entry changes, but defer
-      // the actual sync until the timer is stopped so the final non-running record syncs.
-      if (reason !== 'settings' && (await hasCurrentDeviceRunningTimer())) {
+      // This guard used to be always-on because syncing during an active local timer
+      // had caused iOS timer controls to become unresponsive in earlier builds.
+      // The heavy duration churn has since been removed, so we now keep the guard
+      // opt-in via ENV for easier validation and rollback if the old issue returns.
+      if (
+        isAutoSyncBlockedDuringLocalTimerEnabled &&
+        reason !== 'settings' &&
+        (await hasCurrentDeviceRunningTimer())
+      ) {
         return;
       }
 
