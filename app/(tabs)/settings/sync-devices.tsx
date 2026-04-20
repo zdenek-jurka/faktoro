@@ -21,6 +21,7 @@ import {
   ADD_DEVICE_PAYLOAD_PEM_BEGIN,
   ADD_DEVICE_PAYLOAD_PEM_END,
 } from '@/utils/sync-pairing-utils';
+import { buildSyncAuthHeaders } from '@/utils/sync-auth';
 import { stopRunningEntriesByDevice } from '@/repositories/time-entry-repository';
 import { showAlert, showConfirm } from '@/utils/platform-alert';
 import { isPlausibleEmail } from '@/utils/email-utils';
@@ -133,10 +134,10 @@ function SyncDevicesScreenContent() {
       }
       setDevicesLoading(true);
       try {
-        const response = await fetchWithTimeout(
-          `${normalizedServerUrl}/api/devices?device_id=${encodeURIComponent(syncDeviceId)}&auth_token=${encodeURIComponent(syncAuthToken)}`,
-          { method: 'GET' },
-        );
+        const response = await fetchWithTimeout(`${normalizedServerUrl}/api/devices`, {
+          method: 'GET',
+          headers: buildSyncAuthHeaders(syncAuthToken, syncDeviceId),
+        });
         if (!response.ok) throw new Error(await response.text());
         const result = (await response.json()) as { devices: ManagedDevice[] };
         setManagedDevices(result.devices || []);
@@ -155,10 +156,10 @@ function SyncDevicesScreenContent() {
     if (!syncIsRegistered || !normalizedServerUrl || !syncDeviceId || !syncAuthToken) return;
     setDevicesLoading(true);
     try {
-      const response = await fetchWithTimeout(
-        `${normalizedServerUrl}/api/devices?device_id=${encodeURIComponent(syncDeviceId)}&auth_token=${encodeURIComponent(syncAuthToken)}`,
-        { method: 'GET' },
-      );
+      const response = await fetchWithTimeout(`${normalizedServerUrl}/api/devices`, {
+        method: 'GET',
+        headers: buildSyncAuthHeaders(syncAuthToken, syncDeviceId),
+      });
       if (!response.ok) throw new Error(await response.text());
       const result = (await response.json()) as { devices: ManagedDevice[] };
       setManagedDevices(result.devices || []);

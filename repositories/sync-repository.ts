@@ -35,6 +35,7 @@ import {
   isEncryptedSnapshot,
   isSecureCryptoAvailable,
 } from '@/repositories/sync-crypto';
+import { buildSyncAuthHeaders } from '@/utils/sync-auth';
 import { Model } from '@nozbe/watermelondb';
 import type { DirtyRaw, RawRecord as WMRawRecord } from '@nozbe/watermelondb/RawRecord';
 import type { SyncDatabaseChangeSet } from '@nozbe/watermelondb/sync';
@@ -771,10 +772,12 @@ export function subscribeToSyncEvents(
     clearHandshakeTimer();
 
     const wsUrl = toWsUrl(serverUrl);
-    const endpoint = `${wsUrl}/api/sync/events/ws?device_id=${encodeURIComponent(deviceId)}&auth_token=${encodeURIComponent(authToken)}`;
+    const endpoint = `${wsUrl}/api/sync/events/ws`;
 
     try {
-      ws = new WebSocket(endpoint);
+      ws = new WebSocket(endpoint, null, {
+        headers: buildSyncAuthHeaders(authToken, deviceId),
+      });
     } catch (error) {
       handlers.onError?.(error);
       startPollingFallback();
