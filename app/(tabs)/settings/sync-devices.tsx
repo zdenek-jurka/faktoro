@@ -1,5 +1,6 @@
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { IconSymbol } from '@/components/ui/icon-symbol';
 import { SyncPayloadEntryModal } from '@/components/sync/sync-payload-entry-modal';
 import { QrScannerModal } from '@/components/sync/qr-scanner-modal';
 import { BorderRadius, BorderWidth, Colors, FontSizes, Spacing } from '@/constants/theme';
@@ -36,6 +37,7 @@ import Constants from 'expo-constants';
 import { Redirect, Stack, useRouter } from 'expo-router';
 import React, { useEffect, useMemo, useState } from 'react';
 import {
+  ActivityIndicator,
   KeyboardAvoidingView,
   Pressable,
   ScrollView,
@@ -81,15 +83,21 @@ function SyncDevicesScreenContent() {
   const [managedDevices, setManagedDevices] = useState<ManagedDevice[]>([]);
   const [devicesLoading, setDevicesLoading] = useState(false);
   const [addDeviceQrUrl, setAddDeviceQrUrl] = useState('');
+  const [payloadInput, setPayloadInput] = useState('');
   const [newDeviceName, setNewDeviceName] = useState(
     () => (Constants.deviceName as string | undefined) ?? '',
   );
   const [newRecoveryEmail, setNewRecoveryEmail] = useState('');
+  const [isApplyingPayload, setIsApplyingPayload] = useState(false);
   const [scannerOpen, setScannerOpen] = useState(false);
   const [payloadEntryOpen, setPayloadEntryOpen] = useState(false);
-  const [payloadEntryValue, setPayloadEntryValue] = useState('');
   const [cameraPermission, requestCameraPermission] = useCameraPermissions();
   const [settings, setSettings] = useState<Awaited<ReturnType<typeof getSettings>> | null>(null);
+  const parsedRecoveryPayload = useMemo(
+    () => parseRecoveryPayloadFromRawOrPem(extractRecoveryPayload(payloadInput)),
+    [payloadInput],
+  );
+  const shouldShowAddDeviceFields = !parsedRecoveryPayload;
 
   const normalizedServerUrl = useMemo(
     () => syncServerUrl.trim().replace(/\/+$/, ''),
@@ -273,11 +281,15 @@ function SyncDevicesScreenContent() {
     const candidate = extractRecoveryPayload(rawInput);
     if (parseRecoveryPayloadFromRawOrPem(candidate)) {
       try {
+        setIsApplyingPayload(true);
         await recoverSyncDeviceFromRawInput(candidate, settings ?? undefined);
+        await updateDeviceSyncSettings({ syncFeatureEnabled: true }, settings ?? undefined);
         showAlert(LL.common.success(), LL.settings.syncRecoverySuccess());
         router.replace('/settings/online-sync');
       } catch (err) {
         showAlert(LL.common.error(), getSyncErrorMessage(err, LL, LL.settings.syncGenericError()));
+      } finally {
+        setIsApplyingPayload(false);
       }
       return;
     }
@@ -321,15 +333,20 @@ function SyncDevicesScreenContent() {
       await updateDeviceSyncSettings(settingsUpdate, settings ?? undefined);
     }
 
-    router.push({
-      pathname: '/settings/sync-pairing',
-      params: {
-        addDeviceServerUrl: payload.serverUrl,
-        addDeviceInstanceId: payload.instanceId,
-        addDeviceRecoveryEmail: newRecoveryEmail.trim().toLowerCase(),
-        addDeviceDeviceName: newDeviceName.trim(),
-      },
-    });
+    try {
+      setIsApplyingPayload(true);
+      router.push({
+        pathname: '/settings/sync-pairing',
+        params: {
+          addDeviceServerUrl: payload.serverUrl,
+          addDeviceInstanceId: payload.instanceId,
+          addDeviceRecoveryEmail: newRecoveryEmail.trim().toLowerCase(),
+          addDeviceDeviceName: newDeviceName.trim(),
+        },
+      });
+    } finally {
+      setIsApplyingPayload(false);
+    }
   };
 
   const handleOpenScanner = async () => {
@@ -347,7 +364,7 @@ function SyncDevicesScreenContent() {
 
   const handleScanned = async (data: string) => {
     setScannerOpen(false);
-    await handleApplyAndPair(data);
+    setPayloadInput(data);
   };
 
   return (
@@ -432,50 +449,117 @@ function SyncDevicesScreenContent() {
                   </ThemedText>
                 </View>
                 <View style={styles.inputsWrapper}>
-                  <TextInput
-                    style={[
-                      styles.input,
-                      { color: palette.text, borderColor: palette.inputBorder },
-                    ]}
-                    placeholder={LL.settings.syncDeviceName()}
-                    placeholderTextColor={palette.placeholder}
-                    value={newDeviceName}
-                    onChangeText={setNewDeviceName}
-                  />
-                  <TextInput
-                    style={[
-                      styles.input,
-                      { color: palette.text, borderColor: palette.inputBorder },
-                    ]}
-                    placeholder={LL.settings.syncRecoveryEmail()}
-                    placeholderTextColor={palette.placeholder}
-                    value={newRecoveryEmail}
-                    onChangeText={setNewRecoveryEmail}
-                    keyboardType="email-address"
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                    textContentType="emailAddress"
-                    autoComplete="email"
-                  />
-                  <ThemedText style={[styles.helperText, { color: palette.textSecondary }]}>
-                    {LL.settings.syncAddDeviceRecoveryEmailHint()}
-                  </ThemedText>
+                  <View style={styles.field}>
+                    <View style={styles.fieldLabelRow}>
+                      <ThemedText style={[styles.fieldLabel, { color: palette.textSecondary }]}>
+                        {LL.onboarding.connectPayloadLabel()} *
+                      </ThemedText>
+                      <Pressable
+                        style={[styles.scanButton, { backgroundColor: palette.tint }]}
+                        onPress={() => void handleOpenScanner()}
+                        hitSlop={8}
+                      >
+                        <IconSymbol name="qrcode.viewfinder" size={16} color={palette.onTint} />
+                        <ThemedText style={[styles.scanButtonText, { color: palette.onTint }]}>
+                          {LL.onboarding.connectScanQr()}
+                        </ThemedText>
+                      </Pressable>
+                    </View>
+                    <TextInput
+                      style={[
+                        styles.payloadInput,
+                        {
+                          backgroundColor: palette.inputBackground,
+                          borderColor: palette.inputBorder,
+                          color: palette.text,
+                        },
+                      ]}
+                      value={payloadInput}
+                      onChangeText={setPayloadInput}
+                      placeholder={LL.onboarding.connectPayloadPlaceholder()}
+                      placeholderTextColor={palette.placeholder}
+                      multiline
+                      autoCapitalize="none"
+                      autoCorrect={false}
+                    />
+                  </View>
+                  {shouldShowAddDeviceFields ? (
+                    <>
+                      <TextInput
+                        style={[
+                          styles.input,
+                          {
+                            backgroundColor: palette.inputBackground,
+                            color: palette.text,
+                            borderColor: palette.inputBorder,
+                          },
+                        ]}
+                        placeholder={LL.settings.syncDeviceName()}
+                        placeholderTextColor={palette.placeholder}
+                        value={newDeviceName}
+                        onChangeText={setNewDeviceName}
+                      />
+                      <TextInput
+                        style={[
+                          styles.input,
+                          {
+                            backgroundColor: palette.inputBackground,
+                            color: palette.text,
+                            borderColor: palette.inputBorder,
+                          },
+                        ]}
+                        placeholder={LL.settings.syncRecoveryEmail()}
+                        placeholderTextColor={palette.placeholder}
+                        value={newRecoveryEmail}
+                        onChangeText={setNewRecoveryEmail}
+                        keyboardType="email-address"
+                        autoCapitalize="none"
+                        autoCorrect={false}
+                        textContentType="emailAddress"
+                        autoComplete="email"
+                      />
+                      <ThemedText style={[styles.helperText, { color: palette.textSecondary }]}>
+                        {LL.settings.syncAddDeviceRecoveryEmailHint()}
+                      </ThemedText>
+                    </>
+                  ) : null}
                 </View>
               </View>
               <Pressable
                 style={({ pressed }) => [
                   styles.primaryButton,
                   {
-                    backgroundColor: palette.tint,
-                    opacity: 1,
+                    backgroundColor:
+                      payloadInput.trim() && (parsedRecoveryPayload || newRecoveryEmail.trim())
+                        ? palette.tint
+                        : palette.buttonNeutralBackground,
                   },
                   pressed && styles.buttonPressed,
                 ]}
-                onPress={() => void handleOpenScanner()}
+                onPress={() => void handleApplyAndPair(payloadInput)}
+                disabled={
+                  isApplyingPayload ||
+                  !payloadInput.trim() ||
+                  (!parsedRecoveryPayload && !newRecoveryEmail.trim())
+                }
               >
-                <ThemedText style={styles.primaryButtonText}>
-                  {LL.settings.syncAddDeviceScanQr()}
-                </ThemedText>
+                {isApplyingPayload ? (
+                  <ActivityIndicator size="small" color={palette.onTint} />
+                ) : (
+                  <ThemedText
+                    style={[
+                      styles.primaryButtonText,
+                      {
+                        color:
+                          payloadInput.trim() && (parsedRecoveryPayload || newRecoveryEmail.trim())
+                            ? palette.onTint
+                            : palette.textMuted,
+                      },
+                    ]}
+                  >
+                    {LL.onboarding.connectButton()}
+                  </ThemedText>
+                )}
               </Pressable>
             </>
           )}
@@ -564,13 +648,10 @@ function SyncDevicesScreenContent() {
         visible={payloadEntryOpen}
         title={LL.onboarding.connectPayloadLabel()}
         placeholder={LL.onboarding.connectPayloadPlaceholder()}
-        value={payloadEntryValue}
-        onChangeText={setPayloadEntryValue}
+        value={payloadInput}
+        onChangeText={setPayloadInput}
         onClose={() => setPayloadEntryOpen(false)}
-        onSave={() => {
-          setPayloadEntryOpen(false);
-          void handleApplyAndPair(payloadEntryValue);
-        }}
+        onSave={() => setPayloadEntryOpen(false)}
       />
     </ThemedView>
   );
@@ -622,12 +703,38 @@ const styles = StyleSheet.create({
     fontSize: FontSizes.sm,
     lineHeight: 19,
   },
+  field: { gap: 6 },
+  fieldLabelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  fieldLabel: { fontSize: 13 },
+  scanButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  scanButtonText: { fontSize: 13, fontWeight: '600' },
   input: {
     borderWidth: 1,
     borderRadius: 10,
     paddingHorizontal: 12,
     paddingVertical: 10,
     fontSize: FontSizes.md,
+  },
+  payloadInput: {
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: FontSizes.sm,
+    minHeight: 100,
+    textAlignVertical: 'top',
+    fontFamily: 'monospace',
   },
   helperText: {
     fontSize: FontSizes.xs,

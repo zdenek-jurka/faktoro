@@ -7,7 +7,7 @@ export enum AddressType {
 }
 
 export default appSchema({
-  version: 54,
+  version: 55,
   tables: [
     tableSchema({
       name: 'app_settings',
@@ -36,6 +36,8 @@ export default appSchema({
         { name: 'invoice_iban', type: 'string', isOptional: true },
         { name: 'invoice_swift', type: 'string', isOptional: true },
         { name: 'invoice_logo_uri', type: 'string', isOptional: true },
+        { name: 'invoice_logo_base64', type: 'string', isOptional: true },
+        { name: 'invoice_logo_mime_type', type: 'string', isOptional: true },
         { name: 'default_invoice_currency', type: 'string', isOptional: true },
         { name: 'default_invoice_vat_code_id', type: 'string', isOptional: true },
         { name: 'default_invoice_payment_method', type: 'string', isOptional: true },

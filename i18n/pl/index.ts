@@ -839,7 +839,8 @@ const pl = {
     swift: 'SWIFT/BIC',
     logoUri: 'Adres URL obrazu logo',
     invoiceLogo: 'Logo faktury',
-    invoiceLogoHelp: 'Wybierz obraz logo, który będzie widoczny na fakturach.',
+    invoiceLogoHelp:
+      'Wybierz obraz logo, który będzie widoczny na fakturach i synchronizowany między urządzeniami. Maksymalny rozmiar: {maxSize}.',
     defaultInvoiceCurrency: 'Domyślna waluta faktur',
     defaultInvoiceCurrencyHelp:
       'Wybierz, która skonfigurowana waluta ma być domyślnie używana na nowych fakturach.',
@@ -879,6 +880,8 @@ const pl = {
     invoiceLogoRemove: 'Usuń logo',
     invoiceLogoPermissionDenied: 'Aby wybrać logo, potrzebne jest uprawnienie do zdjęć.',
     invoiceLogoPickError: 'Nie udało się wybrać logo.',
+    invoiceLogoTooLarge:
+      'Wybrane logo jest zbyt duże do synchronizacji. Maksymalny rozmiar to {maxSize}.',
     invoiceQrType: 'Płatność za fakturę QR',
     invoiceQrTypeNone: 'Nic',
     invoiceQrTypeSpayd: 'Czeski SPAYD',

@@ -37,6 +37,8 @@ export type UpdateSettingsInput = {
   invoiceIban?: string | null;
   invoiceSwift?: string | null;
   invoiceLogoUri?: string | null;
+  invoiceLogoBase64?: string | null;
+  invoiceLogoMimeType?: string | null;
   defaultInvoiceCurrency?: string | null;
   defaultInvoiceVatCodeId?: string | null;
   defaultInvoicePaymentMethod?: string | null;
@@ -204,6 +206,12 @@ export async function updateSettings(input: UpdateSettingsInput): Promise<void> 
       }
       if (input.invoiceLogoUri !== undefined) {
         s.invoiceLogoUri = input.invoiceLogoUri || undefined;
+      }
+      if (input.invoiceLogoBase64 !== undefined) {
+        s.invoiceLogoBase64 = input.invoiceLogoBase64 || undefined;
+      }
+      if (input.invoiceLogoMimeType !== undefined) {
+        s.invoiceLogoMimeType = input.invoiceLogoMimeType || undefined;
       }
       if (input.defaultInvoiceCurrency !== undefined) {
         s.defaultInvoiceCurrency = input.defaultInvoiceCurrency || undefined;

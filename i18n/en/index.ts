@@ -830,7 +830,8 @@ const en = {
     swift: 'SWIFT/BIC',
     logoUri: 'Logo image URL',
     invoiceLogo: 'Invoice logo',
-    invoiceLogoHelp: 'Choose an image logo that will be shown on invoices.',
+    invoiceLogoHelp:
+      'Choose an image logo that will be shown on invoices and synced across devices. Maximum size: {maxSize}.',
     defaultInvoiceCurrency: 'Default invoice currency',
     defaultInvoiceCurrencyHelp:
       'Choose which configured currency is used by default on new invoices.',
@@ -868,6 +869,7 @@ const en = {
     invoiceLogoRemove: 'Remove logo',
     invoiceLogoPermissionDenied: 'Photo library permission is required to select a logo.',
     invoiceLogoPickError: 'Failed to select logo image.',
+    invoiceLogoTooLarge: 'The selected logo is too large for sync. Maximum size is {maxSize}.',
     invoiceQrType: 'Invoice payment QR',
     invoiceQrTypeNone: 'None',
     invoiceQrTypeSpayd: 'Czech SPAYD',

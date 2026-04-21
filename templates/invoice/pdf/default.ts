@@ -179,7 +179,7 @@ export function buildDefaultInvoicePdfHtml(input: BuildDefaultInvoicePdfHtmlInpu
           .title-wrap { flex:1; min-width:0; text-align:right; padding-left: 16px; }
           .title { font-size: 30px; font-weight: 800; letter-spacing: .4px; margin: 0; }
           .title-sub { font-size: 12px; color: #1f2937; margin-top: 4px; }
-          .logo-box { text-align:left; min-width: 180px; max-width: 220px; }
+          .logo-box { text-align:left; flex: 0 0 5cm; max-width: 5cm; min-width: 0; }
           .meta-grid { display:flex; gap: 10px; margin-bottom: 16px; }
           .meta-card { flex: 1; border:1px solid #444444; border-radius: 10px; padding: 10px 12px; }
           .meta-label { font-size: 10px; text-transform: uppercase; color:#1f2937; margin-bottom: 4px; }

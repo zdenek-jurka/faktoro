@@ -3001,9 +3001,10 @@ type RootTranslation = {
 		 */
 		invoiceLogo: string
 		/**
-		 * C​h​o​o​s​e​ ​a​n​ ​i​m​a​g​e​ ​l​o​g​o​ ​t​h​a​t​ ​w​i​l​l​ ​b​e​ ​s​h​o​w​n​ ​o​n​ ​i​n​v​o​i​c​e​s​.
+		 * C​h​o​o​s​e​ ​a​n​ ​i​m​a​g​e​ ​l​o​g​o​ ​t​h​a​t​ ​w​i​l​l​ ​b​e​ ​s​h​o​w​n​ ​o​n​ ​i​n​v​o​i​c​e​s​ ​a​n​d​ ​s​y​n​c​e​d​ ​a​c​r​o​s​s​ ​d​e​v​i​c​e​s​.​ ​M​a​x​i​m​u​m​ ​s​i​z​e​:​ ​{​m​a​x​S​i​z​e​}​.
+		 * @param {unknown} maxSize
 		 */
-		invoiceLogoHelp: string
+		invoiceLogoHelp: RequiredParams<'maxSize'>
 		/**
 		 * D​e​f​a​u​l​t​ ​i​n​v​o​i​c​e​ ​c​u​r​r​e​n​c​y
 		 */
@@ -3137,6 +3138,11 @@ type RootTranslation = {
 		 * F​a​i​l​e​d​ ​t​o​ ​s​e​l​e​c​t​ ​l​o​g​o​ ​i​m​a​g​e​.
 		 */
 		invoiceLogoPickError: string
+		/**
+		 * T​h​e​ ​s​e​l​e​c​t​e​d​ ​l​o​g​o​ ​i​s​ ​t​o​o​ ​l​a​r​g​e​ ​f​o​r​ ​s​y​n​c​.​ ​M​a​x​i​m​u​m​ ​s​i​z​e​ ​i​s​ ​{​m​a​x​S​i​z​e​}​.
+		 * @param {unknown} maxSize
+		 */
+		invoiceLogoTooLarge: RequiredParams<'maxSize'>
 		/**
 		 * I​n​v​o​i​c​e​ ​p​a​y​m​e​n​t​ ​Q​R
 		 */
@@ -4328,11 +4334,11 @@ type RootTranslation = {
 		 */
 		startNewDesc: string
 		/**
-		 * A​d​d​ ​t​h​i​s​ ​d​e​v​i​c​e
+		 * A​d​d​ ​o​r​ ​r​e​c​o​v​e​r​ ​t​h​i​s​ ​d​e​v​i​c​e
 		 */
 		startDeviceTitle: string
 		/**
-		 * C​o​n​n​e​c​t​ ​t​o​ ​a​n​ ​e​x​i​s​t​i​n​g​ ​F​a​k​t​o​r​o​ ​s​y​n​c​ ​s​e​r​v​e​r​.
+		 * F​o​r​ ​a​n​ ​e​x​i​s​t​i​n​g​ ​F​a​k​t​o​r​o​ ​s​y​n​c​ ​o​n​ ​y​o​u​r​ ​o​w​n​ ​s​e​r​v​e​r​.​ ​P​a​s​t​e​ ​a​n​ ​a​d​d​-​d​e​v​i​c​e​ ​o​r​ ​r​e​c​o​v​e​r​y​ ​p​a​y​l​o​a​d​.
 		 */
 		startDeviceDesc: string
 		/**
@@ -4482,19 +4488,19 @@ type RootTranslation = {
 		 */
 		doneGoToApp: string
 		/**
-		 * A​d​d​ ​t​h​i​s​ ​d​e​v​i​c​e
+		 * A​d​d​ ​o​r​ ​r​e​c​o​v​e​r​ ​t​h​i​s​ ​d​e​v​i​c​e
 		 */
 		connectTitle: string
 		/**
-		 * O​n​ ​y​o​u​r​ ​e​x​i​s​t​i​n​g​ ​d​e​v​i​c​e​:​ ​S​e​t​t​i​n​g​s​ ​→​ ​S​y​n​c​ ​→​ ​A​d​d​ ​d​e​v​i​c​e​,​ ​t​h​e​n​ ​c​o​p​y​ ​o​r​ ​s​c​a​n​ ​t​h​e​ ​p​a​y​l​o​a​d​ ​h​e​r​e​.
+		 * U​s​e​ ​t​h​i​s​ ​o​n​l​y​ ​w​i​t​h​ ​a​n​ ​e​x​i​s​t​i​n​g​ ​F​a​k​t​o​r​o​ ​s​y​n​c​ ​o​n​ ​y​o​u​r​ ​o​w​n​ ​s​e​r​v​e​r​.​ ​P​a​s​t​e​ ​a​n​ ​a​d​d​-​d​e​v​i​c​e​ ​p​a​y​l​o​a​d​ ​f​r​o​m​ ​a​n​o​t​h​e​r​ ​d​e​v​i​c​e​,​ ​o​r​ ​a​ ​r​e​c​o​v​e​r​y​ ​p​a​y​l​o​a​d​ ​f​r​o​m​ ​e​m​a​i​l​.
 		 */
 		connectSubtitle: string
 		/**
-		 * A​d​d​-​d​e​v​i​c​e​ ​p​a​y​l​o​a​d
+		 * S​y​n​c​ ​p​a​y​l​o​a​d
 		 */
 		connectPayloadLabel: string
 		/**
-		 * -​-​-​-​-​B​E​G​I​N​ ​F​A​K​T​O​R​O​ ​A​D​D​ ​D​E​V​I​C​E​ ​P​A​Y​L​O​A​D​-​-​-​-​-
+		 * P​a​s​t​e​ ​a​n​ ​a​d​d​-​d​e​v​i​c​e​ ​o​r​ ​r​e​c​o​v​e​r​y​ ​p​a​y​l​o​a​d
 		 */
 		connectPayloadPlaceholder: string
 		/**
@@ -4514,7 +4520,7 @@ type RootTranslation = {
 		 */
 		connectScanQr: string
 		/**
-		 * C​o​n​n​e​c​t
+		 * C​o​n​t​i​n​u​e
 		 */
 		connectButton: string
 		/**
@@ -7607,9 +7613,9 @@ export type TranslationFunctions = {
 		 */
 		invoiceLogo: () => LocalizedString
 		/**
-		 * Choose an image logo that will be shown on invoices.
+		 * Choose an image logo that will be shown on invoices and synced across devices. Maximum size: {maxSize}.
 		 */
-		invoiceLogoHelp: () => LocalizedString
+		invoiceLogoHelp: (arg: { maxSize: unknown }) => LocalizedString
 		/**
 		 * Default invoice currency
 		 */
@@ -7742,6 +7748,10 @@ export type TranslationFunctions = {
 		 * Failed to select logo image.
 		 */
 		invoiceLogoPickError: () => LocalizedString
+		/**
+		 * The selected logo is too large for sync. Maximum size is {maxSize}.
+		 */
+		invoiceLogoTooLarge: (arg: { maxSize: unknown }) => LocalizedString
 		/**
 		 * Invoice payment QR
 		 */
@@ -8925,11 +8935,11 @@ export type TranslationFunctions = {
 		 */
 		startNewDesc: () => LocalizedString
 		/**
-		 * Add this device
+		 * Add or recover this device
 		 */
 		startDeviceTitle: () => LocalizedString
 		/**
-		 * Connect to an existing Faktoro sync server.
+		 * For an existing Faktoro sync on your own server. Paste an add-device or recovery payload.
 		 */
 		startDeviceDesc: () => LocalizedString
 		/**
@@ -9077,19 +9087,19 @@ export type TranslationFunctions = {
 		 */
 		doneGoToApp: () => LocalizedString
 		/**
-		 * Add this device
+		 * Add or recover this device
 		 */
 		connectTitle: () => LocalizedString
 		/**
-		 * On your existing device: Settings → Sync → Add device, then copy or scan the payload here.
+		 * Use this only with an existing Faktoro sync on your own server. Paste an add-device payload from another device, or a recovery payload from email.
 		 */
 		connectSubtitle: () => LocalizedString
 		/**
-		 * Add-device payload
+		 * Sync payload
 		 */
 		connectPayloadLabel: () => LocalizedString
 		/**
-		 * -----BEGIN FAKTORO ADD DEVICE PAYLOAD-----
+		 * Paste an add-device or recovery payload
 		 */
 		connectPayloadPlaceholder: () => LocalizedString
 		/**
@@ -9109,7 +9119,7 @@ export type TranslationFunctions = {
 		 */
 		connectScanQr: () => LocalizedString
 		/**
-		 * Connect
+		 * Continue
 		 */
 		connectButton: () => LocalizedString
 		/**

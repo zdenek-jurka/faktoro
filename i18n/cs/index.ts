@@ -834,7 +834,8 @@ const cs = {
     swift: 'SWIFT/BIC',
     logoUri: 'URL loga',
     invoiceLogo: 'Logo na faktuře',
-    invoiceLogoHelp: 'Vyber obrázek loga, který se bude zobrazovat na faktuře.',
+    invoiceLogoHelp:
+      'Vyber obrázek loga, který se bude zobrazovat na fakturách a synchronizovat mezi zařízeními. Maximální velikost: {maxSize}.',
     defaultInvoiceCurrency: 'Výchozí měna faktur',
     defaultInvoiceCurrencyHelp:
       'Vyber, která z nakonfigurovaných měn se má výchozí použít na nové faktuře.',
@@ -874,6 +875,8 @@ const cs = {
     invoiceLogoRemove: 'Odstranit logo',
     invoiceLogoPermissionDenied: 'Pro výběr loga je potřeba povolit přístup k fotkám.',
     invoiceLogoPickError: 'Nepodařilo se vybrat obrázek loga.',
+    invoiceLogoTooLarge:
+      'Vybrané logo je pro synchronizaci příliš velké. Maximální velikost je {maxSize}.',
     invoiceQrType: 'QR platba na faktuře',
     invoiceQrTypeNone: 'Žádný',
     invoiceQrTypeSpayd: 'Český SPAYD',

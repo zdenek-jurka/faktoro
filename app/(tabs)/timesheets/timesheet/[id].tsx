@@ -513,7 +513,11 @@ export default function TimesheetDetailScreen() {
     const exportTitle = getTimesheetTitle(timesheet, LLExport);
     const exportSubtitle = getTimesheetSubtitle(timesheet, LLExport);
     const settings = await getSettings();
-    const logoHtml = await buildPdfLogoHtml(settings.invoiceLogoUri);
+    const logoHtml = await buildPdfLogoHtml({
+      logoUri: settings.invoiceLogoUri,
+      logoBase64: settings.invoiceLogoBase64,
+      logoMimeType: settings.invoiceLogoMimeType,
+    });
 
     const html = `
       <html>

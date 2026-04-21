@@ -1081,5 +1081,17 @@ export default schemaMigrations({
         `),
       ],
     },
+    {
+      toVersion: 55,
+      steps: [
+        addColumns({
+          table: 'app_settings',
+          columns: [
+            { name: 'invoice_logo_base64', type: 'string', isOptional: true },
+            { name: 'invoice_logo_mime_type', type: 'string', isOptional: true },
+          ],
+        }),
+      ],
+    },
   ],
 });

@@ -799,7 +799,18 @@ export default function InvoiceDetailScreen() {
       throw new Error(LLExport.invoices.exportError());
     }
 
-    const logoHtml = await buildPdfLogoHtml(seller.logoUri);
+    const settings = await getSettings();
+    const logoHtml = await buildPdfLogoHtml(
+      {
+        logoUri: seller.logoUri || settings.invoiceLogoUri,
+        logoBase64: settings.invoiceLogoBase64,
+        logoMimeType: settings.invoiceLogoMimeType,
+      },
+      {
+        maxWidth: '5cm',
+        maxHeight: null,
+      },
+    );
     const qrType = (seller.qrType || 'none') as PaymentQrType;
     const paymentQrLabels: PaymentQrLabels = {
       receiverFallback: LLExport.invoices.exportReceiverFallback(),

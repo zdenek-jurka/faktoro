@@ -860,7 +860,8 @@ const de = {
     swift: 'SWIFT/BIC',
     logoUri: 'Logo-Bild-URL',
     invoiceLogo: 'Rechnungslogo',
-    invoiceLogoHelp: 'Wähle ein Bildlogo aus, das auf Rechnungen angezeigt wird.',
+    invoiceLogoHelp:
+      'Wähle ein Bildlogo aus, das auf Rechnungen angezeigt und zwischen Geräten synchronisiert wird. Maximale Größe: {maxSize}.',
     defaultInvoiceCurrency: 'Standardwährung für Rechnungen',
     defaultInvoiceCurrencyHelp:
       'Wählen Sie, welche konfigurierte Währung standardmäßig für neue Rechnungen verwendet wird.',
@@ -902,6 +903,8 @@ const de = {
     invoiceLogoPermissionDenied:
       'Für die Auswahl eines Logos ist Zugriff auf die Fotomediathek erforderlich.',
     invoiceLogoPickError: 'Das Logo konnte nicht ausgewählt werden.',
+    invoiceLogoTooLarge:
+      'Das ausgewählte Logo ist für die Synchronisierung zu groß. Die maximale Größe ist {maxSize}.',
     invoiceQrType: 'Rechnungszahlungs-QR',
     invoiceQrTypeNone: 'Keiner',
     invoiceQrTypeSpayd: 'Tschechisches SPAYD',

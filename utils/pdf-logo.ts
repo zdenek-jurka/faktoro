@@ -1,25 +1,63 @@
-function detectMimeType(uri: string): string {
-  const lowered = uri.toLowerCase();
-  if (lowered.endsWith('.jpg') || lowered.endsWith('.jpeg')) return 'image/jpeg';
-  if (lowered.endsWith('.webp')) return 'image/webp';
-  if (lowered.endsWith('.gif')) return 'image/gif';
-  if (lowered.endsWith('.bmp')) return 'image/bmp';
-  if (lowered.endsWith('.tif') || lowered.endsWith('.tiff')) return 'image/tiff';
-  if (lowered.endsWith('.heif')) return 'image/heif';
-  if (lowered.endsWith('.heic')) return 'image/heic';
-  if (lowered.endsWith('.svg')) return 'image/svg+xml';
-  return 'image/png';
+import { buildInvoiceLogoDataUri, detectInvoiceLogoMimeType } from '@/utils/invoice-logo';
+
+type PdfLogoSource =
+  | string
+  | {
+      logoUri?: string | null;
+      logoBase64?: string | null;
+      logoMimeType?: string | null;
+    };
+
+type PdfLogoHtmlOptions = {
+  maxHeight?: number | string | null;
+  maxWidth?: number | string | null;
+};
+
+function toCssLength(value: number | string | null | undefined, fallbackPx?: number): string {
+  if (typeof value === 'string') {
+    return value.trim();
+  }
+
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return `${value}px`;
+  }
+
+  if (fallbackPx == null) {
+    return '';
+  }
+
+  return `${fallbackPx}px`;
+}
+
+function buildImageStyle(options?: PdfLogoHtmlOptions): string {
+  const maxWidth = toCssLength(options?.maxWidth, 180);
+  const maxHeight = toCssLength(options?.maxHeight, options?.maxHeight === null ? undefined : 72);
+
+  return [
+    'display:block',
+    'width:auto',
+    'height:auto',
+    maxWidth ? `max-width:${maxWidth}` : '',
+    maxHeight ? `max-height:${maxHeight}` : '',
+  ]
+    .filter(Boolean)
+    .join(';');
 }
 
 export async function buildPdfLogoHtml(
-  logoUri?: string,
-  options?: { maxHeight?: number; maxWidth?: number },
+  logoSource?: PdfLogoSource,
+  options?: PdfLogoHtmlOptions,
 ): Promise<string> {
-  if (!logoUri?.trim()) return '';
+  const logoUri = typeof logoSource === 'string' ? logoSource : logoSource?.logoUri;
+  const logoBase64 = typeof logoSource === 'string' ? '' : logoSource?.logoBase64?.trim() || '';
+  const logoMimeType = typeof logoSource === 'string' ? '' : logoSource?.logoMimeType?.trim() || '';
+  const imageStyle = buildImageStyle(options);
 
-  const maxHeight = options?.maxHeight ?? 72;
-  const maxWidth = options?.maxWidth ?? 180;
-  const imageStyle = `max-height:${maxHeight}px; max-width:${maxWidth}px; object-fit:contain; display:block;`;
+  if (logoBase64) {
+    return `<img src="${buildInvoiceLogoDataUri(logoBase64, logoMimeType)}" style="${imageStyle}" />`;
+  }
+
+  if (!logoUri?.trim()) return '';
 
   if (logoUri.startsWith('file://')) {
     try {
@@ -28,7 +66,7 @@ export async function buildPdfLogoHtml(
       const base64 = await FileSystemLegacy.readAsStringAsync(logoUri, {
         encoding: FileSystemLegacy.EncodingType?.Base64 ?? 'base64',
       });
-      const mimeType = detectMimeType(logoUri);
+      const mimeType = detectInvoiceLogoMimeType(logoUri);
       return `<img src="data:${mimeType};base64,${base64}" style="${imageStyle}" />`;
     } catch {
       return '';

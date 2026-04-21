@@ -28,6 +28,8 @@ export default class AppSettingsModel extends Model {
   @text('invoice_iban') invoiceIban?: string;
   @text('invoice_swift') invoiceSwift?: string;
   @text('invoice_logo_uri') invoiceLogoUri?: string;
+  @text('invoice_logo_base64') invoiceLogoBase64?: string;
+  @text('invoice_logo_mime_type') invoiceLogoMimeType?: string;
   @text('default_invoice_currency') defaultInvoiceCurrency?: string;
   @text('default_invoice_vat_code_id') defaultInvoiceVatCodeId?: string;
   @text('default_invoice_payment_method') defaultInvoicePaymentMethod?: string;

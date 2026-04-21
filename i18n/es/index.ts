@@ -854,7 +854,8 @@ const es = {
     swift: 'SWIFT/BIC',
     logoUri: 'URL de la imagen del logotipo',
     invoiceLogo: 'Logotipo de factura',
-    invoiceLogoHelp: 'Elige un logotipo de imagen que se mostrará en las facturas.',
+    invoiceLogoHelp:
+      'Elige un logotipo de imagen que se mostrará en las facturas y se sincronizará entre dispositivos. Tamaño máximo: {maxSize}.',
     defaultInvoiceCurrency: 'Moneda predeterminada de las facturas',
     defaultInvoiceCurrencyHelp:
       'Elige qué moneda configurada se usará por defecto en las nuevas facturas.',
@@ -896,6 +897,8 @@ const es = {
     invoiceLogoPermissionDenied:
       'Se requiere permiso para acceder a la fototeca y seleccionar un logotipo.',
     invoiceLogoPickError: 'No se pudo seleccionar el logotipo.',
+    invoiceLogoTooLarge:
+      'El logotipo seleccionado es demasiado grande para la sincronización. El tamaño máximo es {maxSize}.',
     invoiceQrType: 'Pago de factura QR',
     invoiceQrTypeNone: 'Ninguno',
     invoiceQrTypeSpayd: 'SPAYD checo',

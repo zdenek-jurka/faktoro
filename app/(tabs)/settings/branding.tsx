@@ -10,6 +10,13 @@ import { useBottomSafeAreaStyle } from '@/hooks/use-bottom-safe-area-style';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useI18nContext } from '@/i18n/i18n-react';
 import { getSettings, updateSettings } from '@/repositories/settings-repository';
+import {
+  buildInvoiceLogoDataUri,
+  formatInvoiceLogoSizeLimit,
+  INVOICE_LOGO_TOO_LARGE_ERROR,
+  MAX_SYNCED_INVOICE_LOGO_BYTES,
+  readInvoiceLogoPayloadFromUri,
+} from '@/utils/invoice-logo';
 import { isIos } from '@/utils/platform';
 import { useHeaderHeight } from '@react-navigation/elements';
 import { Image } from 'expo-image';
@@ -24,15 +31,26 @@ export default function SettingsBrandingScreen() {
   const headerHeight = useHeaderHeight();
   const contentStyle = useBottomSafeAreaStyle(styles.content);
   const [invoiceLogoUri, setInvoiceLogoUri] = useState('');
+  const [invoiceLogoBase64, setInvoiceLogoBase64] = useState('');
+  const [invoiceLogoMimeType, setInvoiceLogoMimeType] = useState('');
+  const maxLogoSize = formatInvoiceLogoSizeLimit(MAX_SYNCED_INVOICE_LOGO_BYTES);
+  const logoPreviewUri =
+    buildInvoiceLogoDataUri(invoiceLogoBase64, invoiceLogoMimeType) || invoiceLogoUri;
 
   useEffect(() => {
     const loadSettings = async () => {
       const settings = await getSettings();
       setInvoiceLogoUri(settings.invoiceLogoUri || '');
+      setInvoiceLogoBase64(settings.invoiceLogoBase64 || '');
+      setInvoiceLogoMimeType(settings.invoiceLogoMimeType || '');
     };
 
     void loadSettings();
   }, []);
+
+  const showInvoiceLogoTooLargeAlert = () => {
+    Alert.alert(LL.common.error(), LL.settings.invoiceLogoTooLarge({ maxSize: maxLogoSize }));
+  };
 
   const handlePickInvoiceLogo = async () => {
     try {
@@ -52,9 +70,22 @@ export default function SettingsBrandingScreen() {
 
       if (result.canceled || !result.assets?.length) return;
 
-      const persistedLogoUri = await persistPickedLogoOffline(result.assets[0]);
+      const asset = result.assets[0];
+      const payload = await readInvoiceLogoPayloadFromUri(asset.uri, {
+        maxBytes: MAX_SYNCED_INVOICE_LOGO_BYTES,
+        sourceMimeType: asset.mimeType,
+      });
+      const persistedLogoUri = await persistPickedLogoOffline(asset);
+
       setInvoiceLogoUri(persistedLogoUri);
+      setInvoiceLogoBase64(payload.base64);
+      setInvoiceLogoMimeType(payload.mimeType);
     } catch (error) {
+      if (error instanceof Error && error.message === INVOICE_LOGO_TOO_LARGE_ERROR) {
+        showInvoiceLogoTooLargeAlert();
+        return;
+      }
+
       console.error('Error picking invoice logo:', error);
       Alert.alert(LL.common.error(), LL.settings.invoiceLogoPickError());
     }
@@ -67,19 +98,47 @@ export default function SettingsBrandingScreen() {
       console.error('Error removing invoice logo:', error);
     }
     setInvoiceLogoUri('');
+    setInvoiceLogoBase64('');
+    setInvoiceLogoMimeType('');
   };
 
   const handleSave = async () => {
     try {
-      const localLogoUri = await persistLogoUriOffline(invoiceLogoUri);
+      let resolvedLogoBase64 = invoiceLogoBase64.trim();
+      let resolvedLogoMimeType = invoiceLogoMimeType.trim();
+      const trimmedLogoUri = invoiceLogoUri.trim();
+      let localLogoUri = trimmedLogoUri;
+
+      if (trimmedLogoUri && !resolvedLogoBase64) {
+        localLogoUri = await persistLogoUriOffline(trimmedLogoUri);
+      }
+
+      if (localLogoUri && !resolvedLogoBase64) {
+        const payload = await readInvoiceLogoPayloadFromUri(localLogoUri, {
+          maxBytes: MAX_SYNCED_INVOICE_LOGO_BYTES,
+          sourceMimeType: resolvedLogoMimeType,
+        });
+        resolvedLogoBase64 = payload.base64;
+        resolvedLogoMimeType = payload.mimeType;
+      }
+
       await updateSettings({
         invoiceLogoUri: localLogoUri || null,
+        invoiceLogoBase64: resolvedLogoBase64 || null,
+        invoiceLogoMimeType: resolvedLogoMimeType || null,
       });
       if (localLogoUri && localLogoUri !== invoiceLogoUri) {
         setInvoiceLogoUri(localLogoUri);
       }
+      setInvoiceLogoBase64(resolvedLogoBase64);
+      setInvoiceLogoMimeType(resolvedLogoMimeType);
       Alert.alert(LL.common.success(), LL.settings.saveSuccess());
     } catch (error) {
+      if (error instanceof Error && error.message === INVOICE_LOGO_TOO_LARGE_ERROR) {
+        showInvoiceLogoTooLargeAlert();
+        return;
+      }
+
       console.error('Error saving branding settings:', error);
       Alert.alert(LL.common.error(), LL.settings.saveError());
     }
@@ -104,8 +163,10 @@ export default function SettingsBrandingScreen() {
               {LL.settings.brandingSubtitle()}
             </ThemedText>
             <ThemedText style={styles.label}>{LL.settings.invoiceLogo()}</ThemedText>
-            <ThemedText style={styles.hintText}>{LL.settings.invoiceLogoHelp()}</ThemedText>
-            {invoiceLogoUri ? (
+            <ThemedText style={styles.hintText}>
+              {LL.settings.invoiceLogoHelp({ maxSize: maxLogoSize })}
+            </ThemedText>
+            {logoPreviewUri ? (
               <>
                 <View
                   style={[
@@ -117,7 +178,7 @@ export default function SettingsBrandingScreen() {
                   ]}
                 >
                   <Image
-                    source={{ uri: invoiceLogoUri }}
+                    source={{ uri: logoPreviewUri }}
                     style={styles.logoPreviewImage}
                     contentFit="contain"
                     transition={120}
