@@ -20,6 +20,7 @@ import TimesheetModel from '@/model/TimesheetModel';
 import TimeEntryModel from '@/model/TimeEntryModel';
 import { getSettings } from '@/repositories/settings-repository';
 import { normalizeCurrencyCode } from '@/utils/currency-utils';
+import { getBuyerDisplayName, parseBuyerSnapshotJson } from '@/utils/invoice-buyer';
 import { formatPrice } from '@/utils/price-utils';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -27,7 +28,8 @@ import { formatPrice } from '@/utils/price-utils';
 type Period = 'this_month' | 'last_month' | 'this_year' | 'all';
 
 interface ClientStat {
-  clientId: string;
+  id: string;
+  clientId?: string;
   name: string;
   value: number;
   currency?: string;
@@ -86,6 +88,7 @@ export default function ReportsScreen() {
   const palette = usePalette();
   const { LL, locale } = useI18nContext();
   const intlLocale = normalizeIntlLocale(locale, 'en');
+  const oneOffBuyerLabel = LL.invoices.exportBuyer();
   const [period, setPeriod] = useState<Period>('this_month');
   const [data, setData] = useState<ReportData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -201,32 +204,43 @@ export default function ReportsScreen() {
         hoursByClientMap.set(e.clientId, (hoursByClientMap.get(e.clientId) ?? 0) + h);
       });
       const hoursByClient: ClientStat[] = [...hoursByClientMap.entries()]
-        .map(([id, value]) => ({ clientId: id, name: clientMap.get(id)?.name ?? '?', value }))
+        .map(([id, value]) => ({
+          id,
+          clientId: id,
+          name: clientMap.get(id)?.name ?? '?',
+          value,
+        }))
         .sort((a, b) => b.value - a.value);
 
       // Revenue by client
       const revenueByClientMap = new Map<
         string,
-        { clientId: string; currency: string; total: number }
+        { id: string; clientId?: string; currency: string; total: number; name: string }
       >();
       invoices.forEach((inv) => {
         const currency = normalizeCurrencyCode(inv.currency, defaultCurrency);
-        const key = `${inv.clientId}::${currency}`;
+        const buyerName =
+          clientMap.get(inv.clientId)?.name ||
+          getBuyerDisplayName(parseBuyerSnapshotJson(inv.buyerSnapshotJson)) ||
+          oneOffBuyerLabel;
+        const groupId = inv.clientId || `one_off:${buyerName}`;
+        const key = `${groupId}::${currency}`;
         const current = revenueByClientMap.get(key) ?? {
-          clientId: inv.clientId,
+          id: key,
+          clientId: inv.clientId || undefined,
           currency,
           total: 0,
+          name: buyerName,
         };
         current.total += inv.total;
         revenueByClientMap.set(key, current);
       });
       const revenueByClient: ClientStat[] = [...revenueByClientMap.values()]
-        .map(({ clientId, currency, total }) => ({
+        .map(({ id, clientId, currency, name, total }) => ({
+          id,
           clientId,
           currency,
-          name: hasMultipleInvoiceCurrencies
-            ? `${clientMap.get(clientId)?.name ?? '?'} • ${currency}`
-            : (clientMap.get(clientId)?.name ?? '?'),
+          name: hasMultipleInvoiceCurrencies ? `${name} • ${currency}` : name,
           value: total,
         }))
         .sort((a, b) => b.value - a.value);
@@ -246,7 +260,7 @@ export default function ReportsScreen() {
     } finally {
       setLoading(false);
     }
-  }, [period]);
+  }, [oneOffBuyerLabel, period]);
 
   useEffect(() => {
     loadData();
@@ -483,7 +497,12 @@ export default function ReportsScreen() {
                 items={data!.hoursByClient}
                 formatValue={(item) => `${item.value.toFixed(1)} ${LL.reports.hoursUnit()}`}
                 palette={palette}
-                onItemPress={(item) => router.push(`/clients/detail/${item.clientId}`)}
+                onItemPress={(item) => {
+                  if (item.clientId) {
+                    router.push(`/clients/detail/${item.clientId}`);
+                  }
+                }}
+                isItemPressable={(item) => !!item.clientId}
               />
             </Section>
           )}
@@ -497,7 +516,12 @@ export default function ReportsScreen() {
                   formatPrice(item.value, item.currency ?? data!.defaultCurrency, intlLocale)
                 }
                 palette={palette}
-                onItemPress={(item) => router.push(`/clients/detail/${item.clientId}`)}
+                onItemPress={(item) => {
+                  if (item.clientId) {
+                    router.push(`/clients/detail/${item.clientId}`);
+                  }
+                }}
+                isItemPressable={(item) => !!item.clientId}
               />
             </Section>
           )}
@@ -654,31 +678,34 @@ function BarList({
   formatValue,
   palette,
   onItemPress,
+  isItemPressable,
 }: {
   items: ClientStat[];
   formatValue: (item: ClientStat) => string;
   palette: Palette;
   onItemPress?: (item: ClientStat) => void;
+  isItemPressable?: (item: ClientStat) => boolean;
 }) {
   const max = items[0]?.value ?? 1;
   return (
     <>
       {items.map((item, idx) => {
         const pct = Math.max(4, (item.value / max) * 100);
+        const canPress = !!onItemPress && (isItemPressable ? isItemPressable(item) : true);
         return (
           <Pressable
-            key={item.clientId}
+            key={item.id}
             style={({ pressed }) => [
               styles.barRow,
               idx < items.length - 1 && {
                 borderBottomWidth: 1,
                 borderBottomColor: palette.border,
               },
-              onItemPress && pressed ? styles.barRowPressed : null,
+              canPress && pressed ? styles.barRowPressed : null,
             ]}
-            onPress={onItemPress ? () => onItemPress(item) : undefined}
-            disabled={!onItemPress}
-            accessibilityRole={onItemPress ? 'button' : undefined}
+            onPress={canPress ? () => onItemPress(item) : undefined}
+            disabled={!canPress}
+            accessibilityRole={canPress ? 'button' : undefined}
           >
             <View style={styles.barRowLeft}>
               <InitialsAvatar name={item.name} size={30} fontSize={FontSizes.xs} />
@@ -698,7 +725,7 @@ function BarList({
               <ThemedText style={[styles.barValue, { color: palette.textSecondary }]}>
                 {formatValue(item)}
               </ThemedText>
-              {onItemPress ? (
+              {canPress ? (
                 <ThemedText style={[styles.barChevron, { color: palette.textSecondary }]}>
                   ›
                 </ThemedText>

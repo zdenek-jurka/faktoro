@@ -370,6 +370,8 @@ const fr = {
     newItemsTitle: 'Nouvelle facture : articles',
     newFooterTitle: 'Nouvelle facture : Pied de page',
     invoiceNumber: 'Numéro de facture',
+    buyerModeSavedClient: 'Client enregistré',
+    buyerModeOneOff: 'Acheteur ponctuel',
     invoiceNumberPlaceholder: 'par ex. 2026-001',
     issueDate: "Date d'émission",
     taxableSupplyDate: 'Date de fourniture taxable',
@@ -405,7 +407,7 @@ const fr = {
     backWithoutChanges: 'Retour sans modifier',
     headerNote: "Note d'en-tête (facultatif)",
     footerNote: 'Note de bas de page (facultatif)',
-    errorHeaderRequired: 'Le numéro de client et de facture sont requis.',
+    errorHeaderRequired: "L'acheteur et le numéro de facture sont requis.",
     errorTaxableDateRequired:
       'La date de livraison imposable est requise pour le contribuable TVA.',
     errorInvalidDateFormat: 'Utilisez le format de date AAAA-MM-JJ.',

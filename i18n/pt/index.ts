@@ -367,6 +367,8 @@ const pt = {
     newItemsTitle: 'Nova fatura: Itens',
     newFooterTitle: 'Nova fatura: Rodapé',
     invoiceNumber: 'Número da fatura',
+    buyerModeSavedClient: 'Cliente guardado',
+    buyerModeOneOff: 'Comprador avulso',
     invoiceNumberPlaceholder: 'por exemplo 2026-001',
     issueDate: 'Data de emissão',
     taxableSupplyDate: 'Data de fornecimento tributável',
@@ -402,7 +404,7 @@ const pt = {
     backWithoutChanges: 'Voltar sem alterações',
     headerNote: 'Nota de cabeçalho (opcional)',
     footerNote: 'Nota de rodapé (opcional)',
-    errorHeaderRequired: 'O número do cliente e da fatura são obrigatórios.',
+    errorHeaderRequired: 'Comprador e número da fatura são obrigatórios.',
     errorTaxableDateRequired:
       'A data de fornecimento tributável é necessária para o contribuinte do IVA.',
     errorInvalidDateFormat: 'Use o formato de data AAAA-MM-DD.',

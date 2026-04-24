@@ -1348,6 +1348,14 @@ type RootTranslation = {
 		 */
 		invoiceNumber: string
 		/**
+		 * S​a​v​e​d​ ​c​l​i​e​n​t
+		 */
+		buyerModeSavedClient: string
+		/**
+		 * O​n​e​-​o​f​f​ ​b​u​y​e​r
+		 */
+		buyerModeOneOff: string
+		/**
 		 * e​.​g​.​ ​2​0​2​6​-​0​0​1
 		 */
 		invoiceNumberPlaceholder: string
@@ -1480,7 +1488,7 @@ type RootTranslation = {
 		 */
 		footerNote: string
 		/**
-		 * C​l​i​e​n​t​ ​a​n​d​ ​i​n​v​o​i​c​e​ ​n​u​m​b​e​r​ ​a​r​e​ ​r​e​q​u​i​r​e​d​.
+		 * B​u​y​e​r​ ​a​n​d​ ​i​n​v​o​i​c​e​ ​n​u​m​b​e​r​ ​a​r​e​ ​r​e​q​u​i​r​e​d​.
 		 */
 		errorHeaderRequired: string
 		/**
@@ -5987,6 +5995,14 @@ export type TranslationFunctions = {
 		 */
 		invoiceNumber: () => LocalizedString
 		/**
+		 * Saved client
+		 */
+		buyerModeSavedClient: () => LocalizedString
+		/**
+		 * One-off buyer
+		 */
+		buyerModeOneOff: () => LocalizedString
+		/**
 		 * e.g. 2026-001
 		 */
 		invoiceNumberPlaceholder: () => LocalizedString
@@ -6119,7 +6135,7 @@ export type TranslationFunctions = {
 		 */
 		footerNote: () => LocalizedString
 		/**
-		 * Client and invoice number are required.
+		 * Buyer and invoice number are required.
 		 */
 		errorHeaderRequired: () => LocalizedString
 		/**

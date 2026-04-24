@@ -13,7 +13,9 @@ import {
 import { getPreferredInvoiceAddress } from '@/repositories/address-repository';
 import { getDeviceSyncSettings } from '@/repositories/device-sync-settings-repository';
 import { getSettings } from '@/repositories/settings-repository';
+import type { BuyerSnapshot, SellerSnapshot } from '@/templates/invoice/xml';
 import { DEFAULT_CURRENCY_CODE, normalizeCurrencyCode } from '@/utils/currency-utils';
+import { normalizeBuyerSnapshot } from '@/utils/invoice-buyer';
 import { isInvoiceVatPayer, type InvoiceCancellationMode } from '@/utils/invoice-status';
 import { buildSeriesIdentifier } from '@/utils/series-utils';
 import { Q } from '@nozbe/watermelondb';
@@ -33,6 +35,7 @@ export type DraftInvoiceItemInput = {
 
 export type CreateInvoiceInput = {
   clientId: string;
+  buyerSnapshot?: BuyerSnapshot;
   invoiceNumber: string;
   issuedAt: number;
   taxableAt?: number;
@@ -60,39 +63,6 @@ export const INVOICE_CANCELLATION_REASON_REQUIRED_ERROR = 'invoice.cancellation_
 export const INVOICE_CANCELLATION_INVALID_STATE_ERROR = 'invoice.cancellation_invalid_state';
 export const INVOICE_CANCELLATION_ALREADY_EXISTS_ERROR = 'invoice.cancellation_already_exists';
 export const INVOICE_DELETE_INVALID_STATE_ERROR = 'invoice.delete_invalid_state';
-
-type SellerSnapshot = {
-  companyName?: string;
-  address?: string;
-  street2?: string;
-  city?: string;
-  postalCode?: string;
-  country?: string;
-  companyId?: string;
-  vatNumber?: string;
-  registrationNote?: string;
-  email?: string;
-  phone?: string;
-  website?: string;
-  bankAccount?: string;
-  iban?: string;
-  swift?: string;
-  logoUri?: string;
-  qrType?: string;
-};
-
-type BuyerSnapshot = {
-  name?: string;
-  companyId?: string;
-  vatNumber?: string;
-  email?: string;
-  phone?: string;
-  address?: string;
-  street2?: string;
-  city?: string;
-  postalCode?: string;
-  country?: string;
-};
 
 type ResolvedInvoiceWriteData = {
   buyerSnapshot: BuyerSnapshot;
@@ -245,13 +215,18 @@ async function resolveInvoiceWriteData(
   input: CreateInvoiceInput,
   settings?: AppSettingsModel,
 ): Promise<ResolvedInvoiceWriteData> {
-  const client = await database.get<ClientModel>(ClientModel.table).find(input.clientId);
-  const buyerAddress = await getPreferredInvoiceAddress(input.clientId);
+  const normalizedClientId = input.clientId.trim();
+  const client = normalizedClientId
+    ? await database.get<ClientModel>(ClientModel.table).find(normalizedClientId)
+    : null;
+  const buyerAddress = normalizedClientId
+    ? await getPreferredInvoiceAddress(normalizedClientId)
+    : null;
   if (settings?.isVatPayer && !input.taxableAt) {
     throw new Error(INVOICE_TAXABLE_DATE_REQUIRED_ERROR);
   }
 
-  const effectiveQrType = client.invoiceQrType || settings?.invoiceQrType || 'none';
+  const effectiveQrType = client?.invoiceQrType || settings?.invoiceQrType || 'none';
   const isVatPayer = !!settings?.isVatPayer;
   const sellerSnapshot: SellerSnapshot = {
     companyName: settings?.invoiceCompanyName,
@@ -272,18 +247,20 @@ async function resolveInvoiceWriteData(
     logoUri: settings?.invoiceLogoUri,
     qrType: effectiveQrType,
   };
-  const buyerSnapshot: BuyerSnapshot = {
-    name: client.name,
-    companyId: client.companyId,
-    vatNumber: client.vatNumber,
-    email: client.email,
-    phone: client.phone,
-    address: buyerAddress?.street,
-    street2: buyerAddress?.street2,
-    city: buyerAddress?.city,
-    postalCode: buyerAddress?.postalCode,
-    country: buyerAddress?.country,
-  };
+  const buyerSnapshot: BuyerSnapshot = client
+    ? {
+        name: client.name,
+        companyId: client.companyId,
+        vatNumber: client.vatNumber,
+        email: client.email,
+        phone: client.phone,
+        address: buyerAddress?.street,
+        street2: buyerAddress?.street2,
+        city: buyerAddress?.city,
+        postalCode: buyerAddress?.postalCode,
+        country: buyerAddress?.country,
+      }
+    : normalizeBuyerSnapshot(input.buyerSnapshot);
 
   const taxableAt = input.taxableAt || input.issuedAt;
   const priceListItemIds = Array.from(
@@ -428,7 +405,7 @@ export async function createInvoice(input: CreateInvoiceInput): Promise<InvoiceM
     await assertInvoiceNumberAvailable(invoiceCollection, invoiceNumber);
 
     const invoice = await invoiceCollection.create((item: InvoiceModel) => {
-      item.clientId = input.clientId;
+      item.clientId = input.clientId.trim();
       item.invoiceNumber = invoiceNumber;
       item.issuedAt = input.issuedAt;
       item.taxableAt = input.taxableAt;
@@ -474,7 +451,9 @@ export async function updateIssuedInvoice(input: UpdateIssuedInvoiceInput): Prom
     await assertInvoiceNumberAvailable(invoiceCollection, invoiceNumber, invoice.id);
 
     await invoice.update((item: InvoiceModel) => {
-      item.clientId = input.clientId;
+      const normalizedClientId = input.clientId.trim();
+
+      item.clientId = normalizedClientId;
       item.invoiceNumber = invoiceNumber;
       item.issuedAt = input.issuedAt;
       item.taxableAt = input.taxableAt;
@@ -487,7 +466,7 @@ export async function updateIssuedInvoice(input: UpdateIssuedInvoiceInput): Prom
       item.sellerSnapshotJson =
         invoice.sellerSnapshotJson || JSON.stringify(resolved.sellerSnapshot);
       item.buyerSnapshotJson =
-        invoice.clientId === input.clientId && invoice.buyerSnapshotJson
+        normalizedClientId && invoice.clientId === normalizedClientId && invoice.buyerSnapshotJson
           ? invoice.buyerSnapshotJson
           : JSON.stringify(resolved.buyerSnapshot);
       item.lastExportedAt = undefined;

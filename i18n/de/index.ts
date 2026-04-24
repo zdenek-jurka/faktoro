@@ -374,6 +374,8 @@ const de = {
     newItemsTitle: 'Neue Rechnung: Artikel',
     newFooterTitle: 'Neue Rechnung: Fußzeile',
     invoiceNumber: 'Rechnungsnummer',
+    buyerModeSavedClient: 'Gespeicherter Kunde',
+    buyerModeOneOff: 'Einmaliger Käufer',
     invoiceNumberPlaceholder: 'z.B. 2026-001',
     issueDate: 'Ausgabedatum',
     taxableSupplyDate: 'Steuerpflichtiges Lieferdatum',
@@ -409,7 +411,7 @@ const de = {
     backWithoutChanges: 'Ohne Änderungen zurück',
     headerNote: 'Kopfnotiz (optional)',
     footerNote: 'Fußnotiz (optional)',
-    errorHeaderRequired: 'Kunden- und Rechnungsnummer sind erforderlich.',
+    errorHeaderRequired: 'Käufer und Rechnungsnummer sind erforderlich.',
     errorTaxableDateRequired:
       'Für den Mehrwertsteuerzahler ist das steuerpflichtige Lieferdatum erforderlich.',
     errorInvalidDateFormat: 'Verwenden Sie das Datumsformat JJJJ-MM-TT.',

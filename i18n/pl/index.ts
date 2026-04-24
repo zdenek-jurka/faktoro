@@ -362,6 +362,8 @@ const pl = {
     newItemsTitle: 'Nowa faktura: Pozycje',
     newFooterTitle: 'Nowa faktura: Stopka',
     invoiceNumber: 'Numer faktury',
+    buyerModeSavedClient: 'Zapisany klient',
+    buyerModeOneOff: 'Jednorazowy odbiorca',
     invoiceNumberPlaceholder: 'np. 2026-001',
     issueDate: 'Data wydania',
     taxableSupplyDate: 'Data dostawy podlegająca opodatkowaniu',
@@ -397,7 +399,7 @@ const pl = {
     backWithoutChanges: 'Wróć bez zmian',
     headerNote: 'Notatka nagłówka (opcjonalnie)',
     footerNote: 'Notatka w stopce (opcjonalnie)',
-    errorHeaderRequired: 'Wymagany jest numer klienta i faktury.',
+    errorHeaderRequired: 'Kupujący i numer faktury są wymagane.',
     errorTaxableDateRequired:
       'Dla podatnika VAT wymagana jest data dostawy podlegającej opodatkowaniu.',
     errorInvalidDateFormat: 'Użyj formatu daty RRRR-MM-DD.',

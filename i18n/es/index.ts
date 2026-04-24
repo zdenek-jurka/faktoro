@@ -369,6 +369,8 @@ const es = {
     newItemsTitle: 'Nueva factura: Artículos',
     newFooterTitle: 'Nueva factura: pie de página',
     invoiceNumber: 'Número de factura',
+    buyerModeSavedClient: 'Cliente guardado',
+    buyerModeOneOff: 'Comprador puntual',
     invoiceNumberPlaceholder: 'p.ej. 2026-001',
     issueDate: 'Fecha de asunto',
     taxableSupplyDate: 'Fecha de suministro imponible',
@@ -404,7 +406,7 @@ const es = {
     backWithoutChanges: 'Volver sin cambios',
     headerNote: 'Nota de encabezado (opcional)',
     footerNote: 'Nota al pie de página (opcional)',
-    errorHeaderRequired: 'Se requiere cliente y número de factura.',
+    errorHeaderRequired: 'Se requiere comprador y número de factura.',
     errorTaxableDateRequired:
       'Se requiere la fecha de suministro imponible para el pagador del IVA.',
     errorInvalidDateFormat: 'Utilice el formato de fecha AAAA-MM-DD.',

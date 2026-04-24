@@ -1,9 +1,16 @@
+import { CompanyRegistryPickerModal } from '@/components/clients/company-registry-picker-modal';
+import {
+  loadRegistrySettingsForLookup,
+  requestMissingRegistryConfiguration,
+} from '@/components/clients/company-registry-lookup';
 import { NoClientsRequiredNotice } from '@/components/clients/no-clients-required-notice';
 import { getPriceListUnitLabel } from '@/components/price-list/unit-options';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { CrossPlatformDatePicker } from '@/components/ui/cross-platform-date-picker';
 import { EntityPickerField } from '@/components/ui/entity-picker-field';
+import { IconSymbol } from '@/components/ui/icon-symbol';
+import { OptionSheetModal } from '@/components/ui/option-sheet-modal';
 import { SwipeableList } from '@/components/ui/swipeable-list';
 import {
   Select,
@@ -22,6 +29,14 @@ import { useCurrencySettings } from '@/hooks/use-currency-settings';
 import { useI18nContext } from '@/i18n/i18n-react';
 import { normalizeIntlLocale } from '@/i18n/locale-options';
 import { ClientModel, InvoiceModel, PriceListItemModel, VatRateModel } from '@/model';
+import {
+  type CompanyRegistryCompany,
+  type CompanyRegistryImportAddress,
+  type CompanyRegistryKey,
+  CompanyRegistryLookupError,
+  getCompanyRegistryService,
+  normalizeCompanyRegistryKey,
+} from '@/repositories/company-registry';
 import { getEffectivePriceDetails } from '@/repositories/client-price-override-repository';
 import {
   DraftInvoiceItemInput,
@@ -35,12 +50,19 @@ import {
 } from '@/repositories/invoice-repository';
 import { getSettings } from '@/repositories/settings-repository';
 import { getVatRates } from '@/repositories/vat-rate-repository';
+import type { BuyerSnapshot } from '@/templates/invoice/xml';
 import {
   DEFAULT_CURRENCY_CODE,
   hasMatchingCurrency,
   normalizeCurrencyCode,
 } from '@/utils/currency-utils';
 import { getErrorMessage } from '@/utils/error-utils';
+import {
+  type InvoiceBuyerDraft,
+  type InvoiceDraftBuyerMode,
+  toInvoiceBuyerDraft,
+  toInvoiceBuyerSnapshot,
+} from '@/utils/invoice-buyer';
 import {
   DEFAULT_INVOICE_DUE_DAYS,
   DEFAULT_INVOICE_PAYMENT_METHOD,
@@ -54,6 +76,7 @@ import { formatPrice } from '@/utils/price-utils';
 import { isIos } from '@/utils/platform';
 import { Q } from '@nozbe/watermelondb';
 import { useHeaderHeight } from '@react-navigation/elements';
+import SegmentedControl from '@react-native-segmented-control/segmented-control';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -69,6 +92,8 @@ import {
 
 type HeaderDraft = {
   clientId: string;
+  buyerMode?: InvoiceDraftBuyerMode;
+  buyerSnapshot?: BuyerSnapshot;
   invoiceNumber: string;
   invoiceNumberManuallyEdited?: boolean;
   issuedDate: string;
@@ -86,6 +111,8 @@ type FooterDraft = {
 type DraftListItem = DraftInvoiceItemInput & {
   localId: string;
 };
+
+type BuyerDraftField = keyof InvoiceBuyerDraft;
 
 type ClientChangeReview = {
   manualCount: number;
@@ -191,6 +218,20 @@ function getPaymentMethodLabel(LL: ReturnType<typeof useI18nContext>['LL'], valu
   }
 }
 
+function pickRegistryImportAddress(
+  company: CompanyRegistryCompany,
+): CompanyRegistryImportAddress | null {
+  const importAddresses =
+    company.importAddresses || (company.importAddress ? [company.importAddress] : []);
+  if (!importAddresses.length) return null;
+
+  return (
+    importAddresses.find((address) => address.type === 'billing') ||
+    importAddresses.find((address) => !!address.street?.trim()) ||
+    null
+  );
+}
+
 export default function InvoiceDraftScreen() {
   const router = useRouter();
   const headerHeight = useHeaderHeight();
@@ -241,6 +282,8 @@ export default function InvoiceDraftScreen() {
 
   const [clients, setClients] = useState<ClientModel[]>([]);
   const [clientId, setClientId] = useState('');
+  const [buyerMode, setBuyerMode] = useState<InvoiceDraftBuyerMode>('client');
+  const [buyerDraft, setBuyerDraft] = useState<InvoiceBuyerDraft>(() => toInvoiceBuyerDraft());
   const [invoiceNumber, setInvoiceNumber] = useState('');
   const [isInvoiceNumberManuallyEdited, setIsInvoiceNumberManuallyEdited] =
     useState(isEditingInvoice);
@@ -253,6 +296,7 @@ export default function InvoiceDraftScreen() {
     DEFAULT_INVOICE_PAYMENT_METHOD,
   );
   const [settingsDefaultDueDays, setSettingsDefaultDueDays] = useState(DEFAULT_INVOICE_DUE_DAYS);
+  const [defaultRegistry, setDefaultRegistry] = useState<CompanyRegistryKey>('none');
   const [headerNote, setHeaderNote] = useState('');
   const [footerNote, setFooterNote] = useState('');
   const [isVatPayer, setIsVatPayer] = useState(false);
@@ -260,6 +304,12 @@ export default function InvoiceDraftScreen() {
   const [canUseTimesheets, setCanUseTimesheets] = useState(false);
   const [canUsePriceList, setCanUsePriceList] = useState(false);
   const [isReviewingClientChange, setIsReviewingClientChange] = useState(false);
+  const [isLookupLoading, setIsLookupLoading] = useState(false);
+  const [isRegistryPickerVisible, setIsRegistryPickerVisible] = useState(false);
+  const [pendingLookupCompanyId, setPendingLookupCompanyId] = useState('');
+  const [lookupWizardCompany, setLookupWizardCompany] = useState<CompanyRegistryCompany | null>(
+    null,
+  );
   const [invoiceNumberExists, setInvoiceNumberExists] = useState(false);
   const [activeDateField, setActiveDateField] = useState<'issued' | 'taxable' | 'due' | null>(null);
   const [pickerDate, setPickerDate] = useState<Date>(new Date());
@@ -286,6 +336,15 @@ export default function InvoiceDraftScreen() {
   useEffect(() => {
     if (!restoredHeaderDraft) return;
     setClientId(restoredHeaderDraft.clientId || '');
+    setBuyerMode(
+      restoredHeaderDraft.buyerMode ||
+        (restoredHeaderDraft.clientId
+          ? 'client'
+          : restoredHeaderDraft.buyerSnapshot
+            ? 'one_off'
+            : 'client'),
+    );
+    setBuyerDraft(toInvoiceBuyerDraft(restoredHeaderDraft.buyerSnapshot));
     setInvoiceNumber(restoredHeaderDraft.invoiceNumber || '');
     setIsInvoiceNumberManuallyEdited(
       isEditingInvoice || !!restoredHeaderDraft.invoiceNumberManuallyEdited,
@@ -325,6 +384,7 @@ export default function InvoiceDraftScreen() {
         normalizeInvoicePaymentMethod(settings.defaultInvoicePaymentMethod),
       );
       setSettingsDefaultDueDays(settings.defaultInvoiceDueDays ?? DEFAULT_INVOICE_DUE_DAYS);
+      setDefaultRegistry(normalizeCompanyRegistryKey(settings.defaultCompanyRegistry));
       if (!restoredHeaderDraft?.currency) {
         setCurrency(normalizeCurrencyCode(settings.defaultInvoiceCurrency));
       }
@@ -365,16 +425,14 @@ export default function InvoiceDraftScreen() {
     void checkInvoiceNumber();
   }, [editingInvoiceId, invoiceNumber]);
 
-  useEffect(() => {
-    if (!clientId) {
-      setCanUseTimesheets(false);
-      setCanUsePriceList(false);
-      return;
-    }
+  const effectiveClientId = buyerMode === 'client' ? clientId : '';
+  const normalizedBuyerSnapshot = useMemo(() => toInvoiceBuyerSnapshot(buyerDraft), [buyerDraft]);
+  const hasBuyerName = !!normalizedBuyerSnapshot.name;
 
+  useEffect(() => {
     const loadSources = async () => {
       const [timesheets, priceItems] = await Promise.all([
-        getTimesheetCandidates(clientId),
+        effectiveClientId ? getTimesheetCandidates(effectiveClientId) : Promise.resolve([]),
         getActivePriceListForInvoicing(),
       ]);
       setCanUseTimesheets(timesheets.length > 0);
@@ -382,11 +440,11 @@ export default function InvoiceDraftScreen() {
     };
 
     void loadSources();
-  }, [clientId]);
+  }, [effectiveClientId]);
 
   const selectedClient = useMemo(
-    () => clients.find((client) => client.id === clientId) ?? null,
-    [clientId, clients],
+    () => clients.find((client) => client.id === effectiveClientId) ?? null,
+    [clients, effectiveClientId],
   );
   const selectedClientName = selectedClient?.name?.trim();
   const hasClients = clients.length > 0;
@@ -414,7 +472,9 @@ export default function InvoiceDraftScreen() {
 
   const headerDraft: HeaderDraft = useMemo(
     () => ({
-      clientId,
+      clientId: effectiveClientId,
+      buyerMode,
+      buyerSnapshot: buyerMode === 'one_off' ? normalizedBuyerSnapshot : undefined,
       invoiceNumber: invoiceNumber.trim(),
       invoiceNumberManuallyEdited: isInvoiceNumberManuallyEdited,
       issuedDate: issuedDate.trim(),
@@ -424,12 +484,14 @@ export default function InvoiceDraftScreen() {
       paymentMethod: normalizeInvoicePaymentMethod(paymentMethod),
     }),
     [
-      clientId,
+      buyerMode,
       currency,
       dueDate,
+      effectiveClientId,
       invoiceNumber,
       isInvoiceNumberManuallyEdited,
       isVatPayer,
+      normalizedBuyerSnapshot,
       issuedDate,
       paymentMethod,
       taxableDate,
@@ -487,8 +549,16 @@ export default function InvoiceDraftScreen() {
     [headerDraft.dueDate],
   );
 
-  const canCreate = hasClients && !!clientId.trim() && !!invoiceNumber.trim() && items.length > 0;
+  const canCreate =
+    !!invoiceNumber.trim() &&
+    items.length > 0 &&
+    (buyerMode === 'client' ? !!effectiveClientId.trim() : hasBuyerName);
   const normalizedInvoiceCurrency = normalizeCurrencyCode(headerDraft.currency);
+  const buyerModeOptions = useMemo(
+    () => [LL.invoices.buyerModeSavedClient(), LL.invoices.buyerModeOneOff()],
+    [LL.invoices],
+  );
+  const buyerModeSelectedIndex = buyerMode === 'one_off' ? 1 : 0;
 
   const buildClientChangeReview = useCallback(
     async (nextClientId: string): Promise<ClientChangeReview> => {
@@ -827,6 +897,138 @@ export default function InvoiceDraftScreen() {
     );
   };
 
+  const updateBuyerDraftField = useCallback((field: BuyerDraftField, value: string) => {
+    setBuyerDraft((current) => ({
+      ...current,
+      [field]: value,
+    }));
+  }, []);
+  const applyLookupCompany = useCallback(
+    (company: CompanyRegistryCompany, options?: { includeAddress?: boolean }) => {
+      setBuyerDraft((current) => {
+        const nextDraft: InvoiceBuyerDraft = {
+          ...current,
+          name: company.legalName || current.name,
+          companyId: company.companyId || current.companyId,
+          vatNumber: company.vatNumber || current.vatNumber,
+        };
+
+        if (!options?.includeAddress) {
+          return nextDraft;
+        }
+
+        const importAddress = pickRegistryImportAddress(company);
+        if (!importAddress) {
+          Alert.alert(LL.common.error(), LL.clients.errorCompanyLookupAddressUnavailable());
+          return nextDraft;
+        }
+
+        return {
+          ...nextDraft,
+          address: importAddress.street || current.address,
+          city: importAddress.city || current.city,
+          postalCode: importAddress.postalCode || current.postalCode,
+          country: importAddress.country || company.countryCode || current.country,
+        };
+      });
+    },
+    [LL.common, LL.clients],
+  );
+  const handleLookupByCompanyId = useCallback(
+    async (companyId: string, registryKey: CompanyRegistryKey) => {
+      const normalizedCompanyId = companyId.trim();
+      if (!normalizedCompanyId) {
+        Alert.alert(LL.common.error(), LL.clients.errorCompanyIdRequiredForLookup());
+        return;
+      }
+
+      setIsLookupLoading(true);
+      try {
+        const registrySettings = await loadRegistrySettingsForLookup(registryKey);
+        const selectedRegistryService = getCompanyRegistryService(registryKey, registrySettings);
+        if (!selectedRegistryService) {
+          Alert.alert(LL.common.error(), LL.clients.errorCompanyRegistryNotSelected());
+          return;
+        }
+
+        const company = await selectedRegistryService.lookupCompanyById(normalizedCompanyId);
+        setLookupWizardCompany(company);
+      } catch (error) {
+        console.error('Error looking up company for one-off buyer:', error);
+        if (error instanceof CompanyRegistryLookupError) {
+          if (error.code === 'invalid_company_id') {
+            Alert.alert(LL.common.error(), LL.clients.errorInvalidCompanyIdForLookup());
+            return;
+          }
+          if (error.code === 'company_not_found') {
+            Alert.alert(LL.common.error(), LL.clients.errorCompanyNotFoundInRegistry());
+            return;
+          }
+          if (error.code === 'service_unavailable') {
+            Alert.alert(LL.common.error(), LL.clients.errorCompanyRegistryUnavailable());
+            return;
+          }
+          if (error.code === 'configuration_required') {
+            requestMissingRegistryConfiguration(
+              LL,
+              registryKey,
+              (route) => router.push(route),
+              error.message,
+            );
+            return;
+          }
+        }
+
+        Alert.alert(LL.common.error(), LL.clients.errorCompanyLookupFailed());
+      } finally {
+        setIsLookupLoading(false);
+      }
+    },
+    [LL, router],
+  );
+  const handleLookupByDefaultRegistry = useCallback(
+    (companyId: string) => {
+      const normalizedCompanyId = companyId.trim();
+      if (!normalizedCompanyId) {
+        Alert.alert(LL.common.error(), LL.clients.errorCompanyIdRequiredForLookup());
+        return;
+      }
+
+      void (async () => {
+        let registryToUse = defaultRegistry;
+        try {
+          const settings = await getSettings();
+          registryToUse = normalizeCompanyRegistryKey(settings.defaultCompanyRegistry);
+          setDefaultRegistry(registryToUse);
+        } catch (error) {
+          console.error('Error loading default company registry for one-off buyer:', error);
+        }
+
+        if (registryToUse === 'none') {
+          setPendingLookupCompanyId(normalizedCompanyId);
+          setIsRegistryPickerVisible(true);
+          return;
+        }
+
+        await handleLookupByCompanyId(normalizedCompanyId, registryToUse);
+      })();
+    },
+    [LL.common, LL.clients, defaultRegistry, handleLookupByCompanyId],
+  );
+  const handleLookupWithRegistryPicker = useCallback(
+    (companyId: string) => {
+      const normalizedCompanyId = companyId.trim();
+      if (!normalizedCompanyId) {
+        Alert.alert(LL.common.error(), LL.clients.errorCompanyIdRequiredForLookup());
+        return;
+      }
+
+      setPendingLookupCompanyId(normalizedCompanyId);
+      setIsRegistryPickerVisible(true);
+    },
+    [LL.common, LL.clients],
+  );
+
   const openAddScreen = useCallback(
     (source: 'timesheet' | 'price_list' | 'manual') => {
       router.push({
@@ -923,6 +1125,7 @@ export default function InvoiceDraftScreen() {
   const buildInvoiceInput = useCallback(
     (invoiceNumberOverride?: string) => ({
       clientId: headerDraft.clientId,
+      buyerSnapshot: buyerMode === 'one_off' ? normalizedBuyerSnapshot : undefined,
       invoiceNumber: invoiceNumberOverride ?? headerDraft.invoiceNumber,
       issuedAt: parseISODate(headerDraft.issuedDate) || Date.now(),
       taxableAt: parseISODate(headerDraft.taxableDate),
@@ -933,7 +1136,7 @@ export default function InvoiceDraftScreen() {
       footerNote: footerNote.trim() || undefined,
       items: items.map(({ localId: _localId, ...item }) => item as DraftInvoiceItemInput),
     }),
-    [footerNote, headerDraft, headerNote, items],
+    [buyerMode, footerNote, headerDraft, headerNote, items, normalizedBuyerSnapshot],
   );
 
   const createInvoiceWithConflictResolution =
@@ -971,7 +1174,8 @@ export default function InvoiceDraftScreen() {
     ]);
 
   const handleCreate = async () => {
-    if (!headerDraft.clientId || !headerDraft.invoiceNumber.trim()) {
+    const hasBuyer = headerDraft.clientId || normalizedBuyerSnapshot.name;
+    if (!hasBuyer || !headerDraft.invoiceNumber.trim()) {
       Alert.alert(LL.common.error(), LL.invoices.errorHeaderRequired());
       return;
     }
@@ -1048,7 +1252,7 @@ export default function InvoiceDraftScreen() {
         keyboardVerticalOffset={isIos ? headerHeight : 0}
       >
         <ScrollView contentContainerStyle={contentStyle} keyboardShouldPersistTaps="handled">
-          {!hasClients && (
+          {!hasClients && buyerMode === 'client' && (
             <NoClientsRequiredNotice
               message={LL.timeTracking.addClientFirst()}
               style={styles.notice}
@@ -1060,29 +1264,189 @@ export default function InvoiceDraftScreen() {
               {LL.invoices.draftDetailsSection()}
             </ThemedText>
 
-            <ThemedText style={styles.label}>{LL.timeTracking.client()}</ThemedText>
-            <EntityPickerField
-              value={clientId}
-              onValueChange={handleClientChange}
-              title={LL.timeTracking.client()}
-              placeholder={selectedClientName || LL.clients.selectClient()}
-              searchPlaceholder={LL.clients.searchPlaceholder()}
-              emptyText={LL.clients.noClients()}
-              emptySearchText={LL.clients.noClientsSearch()}
-              disabled={isReviewingClientChange}
-              options={clients.map((client) => ({
-                value: client.id,
-                label: client.name,
-              }))}
+            <ThemedText style={styles.label}>{LL.invoices.exportBuyer()}</ThemedText>
+            <SegmentedControl
+              style={styles.segmented}
+              values={buyerModeOptions}
+              selectedIndex={buyerModeSelectedIndex}
+              onChange={(event) => {
+                const nextBuyerMode =
+                  event.nativeEvent.selectedSegmentIndex === 1 ? 'one_off' : 'client';
+                setBuyerMode(nextBuyerMode);
+              }}
             />
-            {isReviewingClientChange ? (
-              <View style={styles.inlineLoadingRow}>
-                <ActivityIndicator size="small" color={palette.tint} />
-                <ThemedText style={[styles.inlineLoadingText, { color: palette.textSecondary }]}>
-                  {LL.common.loading()}
-                </ThemedText>
-              </View>
-            ) : null}
+
+            {buyerMode === 'client' ? (
+              <>
+                <ThemedText style={styles.label}>{LL.timeTracking.client()}</ThemedText>
+                <EntityPickerField
+                  value={clientId}
+                  onValueChange={handleClientChange}
+                  title={LL.timeTracking.client()}
+                  placeholder={selectedClientName || LL.clients.selectClient()}
+                  searchPlaceholder={LL.clients.searchPlaceholder()}
+                  emptyText={LL.clients.noClients()}
+                  emptySearchText={LL.clients.noClientsSearch()}
+                  disabled={isReviewingClientChange}
+                  options={clients.map((client) => ({
+                    value: client.id,
+                    label: client.name,
+                  }))}
+                />
+                {isReviewingClientChange ? (
+                  <View style={styles.inlineLoadingRow}>
+                    <ActivityIndicator size="small" color={palette.tint} />
+                    <ThemedText
+                      style={[styles.inlineLoadingText, { color: palette.textSecondary }]}
+                    >
+                      {LL.common.loading()}
+                    </ThemedText>
+                  </View>
+                ) : null}
+              </>
+            ) : (
+              <>
+                <ThemedText style={styles.label}>{LL.clients.clientName()}</ThemedText>
+                <TextInput
+                  style={[styles.input, stylesField(palette)]}
+                  value={buyerDraft.name}
+                  onChangeText={(value) => updateBuyerDraftField('name', value)}
+                  placeholder={LL.clients.clientName()}
+                  placeholderTextColor={placeholder(palette)}
+                />
+
+                <ThemedText style={styles.label}>{LL.clients.companyIdLabel()}</ThemedText>
+                <TextInput
+                  style={[styles.input, stylesField(palette)]}
+                  value={buyerDraft.companyId}
+                  onChangeText={(value) => updateBuyerDraftField('companyId', value)}
+                  placeholder={LL.clients.companyIdLabel()}
+                  placeholderTextColor={placeholder(palette)}
+                />
+                <View
+                  style={[
+                    styles.lookupSplitButton,
+                    {
+                      borderColor: palette.tint,
+                      opacity: isLookupLoading ? 0.7 : 1,
+                    },
+                  ]}
+                >
+                  <Pressable
+                    style={styles.lookupPrimaryButton}
+                    onPress={() => handleLookupByDefaultRegistry(buyerDraft.companyId)}
+                    disabled={isLookupLoading || isSaving}
+                  >
+                    {isLookupLoading ? (
+                      <ActivityIndicator size="small" color={palette.tint} />
+                    ) : (
+                      <ThemedText style={[styles.lookupButtonText, { color: palette.tint }]}>
+                        {LL.clients.lookupCompanyById()}
+                      </ThemedText>
+                    )}
+                  </Pressable>
+                  <Pressable
+                    style={[
+                      styles.lookupArrowButton,
+                      {
+                        borderLeftColor: palette.tint,
+                      },
+                    ]}
+                    onPress={() => handleLookupWithRegistryPicker(buyerDraft.companyId)}
+                    disabled={isLookupLoading || isSaving}
+                    accessibilityRole="button"
+                    accessibilityLabel={LL.clients.lookupCompanyById()}
+                  >
+                    <IconSymbol name="chevron.down" size={16} color={palette.tint} />
+                  </Pressable>
+                </View>
+
+                <ThemedText style={styles.label}>{LL.clients.vatNumberLabel()}</ThemedText>
+                <TextInput
+                  style={[styles.input, stylesField(palette)]}
+                  value={buyerDraft.vatNumber}
+                  onChangeText={(value) => updateBuyerDraftField('vatNumber', value)}
+                  placeholder={LL.clients.vatNumberLabel()}
+                  placeholderTextColor={placeholder(palette)}
+                />
+
+                <View style={styles.fieldRow}>
+                  <View style={styles.fieldColumn}>
+                    <ThemedText style={styles.label}>{LL.clients.emailLabel()}</ThemedText>
+                    <TextInput
+                      style={[styles.input, stylesField(palette)]}
+                      value={buyerDraft.email}
+                      onChangeText={(value) => updateBuyerDraftField('email', value)}
+                      placeholder={LL.clients.emailLabel()}
+                      placeholderTextColor={placeholder(palette)}
+                      keyboardType="email-address"
+                      autoCapitalize="none"
+                    />
+                  </View>
+                  <View style={styles.fieldColumn}>
+                    <ThemedText style={styles.label}>{LL.clients.phoneLabel()}</ThemedText>
+                    <TextInput
+                      style={[styles.input, stylesField(palette)]}
+                      value={buyerDraft.phone}
+                      onChangeText={(value) => updateBuyerDraftField('phone', value)}
+                      placeholder={LL.clients.phoneLabel()}
+                      placeholderTextColor={placeholder(palette)}
+                      keyboardType="phone-pad"
+                    />
+                  </View>
+                </View>
+
+                <ThemedText style={styles.label}>{LL.clients.street()}</ThemedText>
+                <TextInput
+                  style={[styles.input, stylesField(palette)]}
+                  value={buyerDraft.address}
+                  onChangeText={(value) => updateBuyerDraftField('address', value)}
+                  placeholder={LL.clients.street()}
+                  placeholderTextColor={placeholder(palette)}
+                />
+
+                <ThemedText style={styles.label}>{LL.clients.street2()}</ThemedText>
+                <TextInput
+                  style={[styles.input, stylesField(palette)]}
+                  value={buyerDraft.street2}
+                  onChangeText={(value) => updateBuyerDraftField('street2', value)}
+                  placeholder={LL.clients.street2()}
+                  placeholderTextColor={placeholder(palette)}
+                />
+
+                <View style={styles.fieldRow}>
+                  <View style={styles.fieldColumn}>
+                    <ThemedText style={styles.label}>{LL.clients.city()}</ThemedText>
+                    <TextInput
+                      style={[styles.input, stylesField(palette)]}
+                      value={buyerDraft.city}
+                      onChangeText={(value) => updateBuyerDraftField('city', value)}
+                      placeholder={LL.clients.city()}
+                      placeholderTextColor={placeholder(palette)}
+                    />
+                  </View>
+                  <View style={styles.fieldColumn}>
+                    <ThemedText style={styles.label}>{LL.clients.postalCode()}</ThemedText>
+                    <TextInput
+                      style={[styles.input, stylesField(palette)]}
+                      value={buyerDraft.postalCode}
+                      onChangeText={(value) => updateBuyerDraftField('postalCode', value)}
+                      placeholder={LL.clients.postalCode()}
+                      placeholderTextColor={placeholder(palette)}
+                    />
+                  </View>
+                </View>
+
+                <ThemedText style={styles.label}>{LL.clients.country()}</ThemedText>
+                <TextInput
+                  style={[styles.input, stylesField(palette)]}
+                  value={buyerDraft.country}
+                  onChangeText={(value) => updateBuyerDraftField('country', value)}
+                  placeholder={LL.clients.country()}
+                  placeholderTextColor={placeholder(palette)}
+                />
+              </>
+            )}
 
             <ThemedText style={styles.label}>{LL.invoices.invoiceNumber()}</ThemedText>
             <TextInput
@@ -1404,6 +1768,40 @@ export default function InvoiceDraftScreen() {
             onConfirm={confirmDatePicker}
             onValueChange={setPickerDate}
           />
+          <CompanyRegistryPickerModal
+            visible={isRegistryPickerVisible}
+            LL={LL}
+            onClose={() => setIsRegistryPickerVisible(false)}
+            onSelect={(registryKey) => {
+              setIsRegistryPickerVisible(false);
+              if (!pendingLookupCompanyId) return;
+              void handleLookupByCompanyId(pendingLookupCompanyId, registryKey);
+            }}
+          />
+          <OptionSheetModal
+            visible={!!lookupWizardCompany}
+            title={LL.clients.lookupWizardTitle()}
+            message={LL.clients.lookupWizardMessage()}
+            cancelLabel={LL.common.cancel()}
+            onClose={() => setLookupWizardCompany(null)}
+            options={
+              lookupWizardCompany
+                ? [
+                    {
+                      key: 'basic',
+                      label: LL.clients.lookupWizardBasic(),
+                      onPress: () => applyLookupCompany(lookupWizardCompany),
+                    },
+                    {
+                      key: 'with_address',
+                      label: LL.clients.lookupWizardWithAddress(),
+                      onPress: () =>
+                        applyLookupCompany(lookupWizardCompany, { includeAddress: true }),
+                    },
+                  ]
+                : []
+            }
+          />
         </ScrollView>
       </KeyboardAvoidingView>
     </ThemedView>
@@ -1426,6 +1824,9 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   content: { padding: 16, paddingBottom: 24, gap: 12 },
   notice: { marginBottom: 4 },
+  segmented: {
+    marginBottom: 4,
+  },
   sectionCard: {
     borderRadius: 14,
     borderWidth: 1,
@@ -1477,6 +1878,31 @@ const styles = StyleSheet.create({
   fieldColumn: {
     flex: 1,
     gap: 8,
+  },
+  lookupSplitButton: {
+    flexDirection: 'row',
+    borderWidth: 1,
+    borderRadius: 10,
+    overflow: 'hidden',
+  },
+  lookupButtonText: {
+    fontWeight: '600',
+  },
+  lookupPrimaryButton: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    minHeight: 48,
+  },
+  lookupArrowButton: {
+    width: 48,
+    minHeight: 48,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderLeftWidth: 1,
+    paddingHorizontal: 0,
   },
   multiline: {
     minHeight: 96,

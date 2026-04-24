@@ -2,6 +2,7 @@ import database from '@/db';
 import { ActionEmptyState } from '@/components/ui/action-empty-state';
 import { ClientModel, InvoiceModel } from '@/model';
 import { getInvoices } from '@/repositories/invoice-repository';
+import { getBuyerDisplayName, parseBuyerSnapshotJson } from '@/utils/invoice-buyer';
 import { Q } from '@nozbe/watermelondb';
 import { useI18nContext } from '@/i18n/i18n-react';
 import { useRouter } from 'expo-router';
@@ -65,6 +66,16 @@ export function InvoicesListContainer({
     for (const client of clients) map.set(client.id, client.name);
     return map;
   }, [clients]);
+  const invoiceBuyerNameById = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const invoice of invoices) {
+      const buyerName = getBuyerDisplayName(parseBuyerSnapshotJson(invoice.buyerSnapshotJson));
+      if (buyerName) {
+        map.set(invoice.id, buyerName);
+      }
+    }
+    return map;
+  }, [invoices]);
 
   const filteredInvoices = useMemo(() => {
     const query = searchQuery.trim().toLocaleLowerCase();
@@ -72,15 +83,20 @@ export function InvoicesListContainer({
 
     return invoices.filter((invoice) => {
       const invoiceNumber = invoice.invoiceNumber?.toLocaleLowerCase() || '';
-      const clientName = (clientNameById.get(invoice.clientId) || '').toLocaleLowerCase();
-      return invoiceNumber.includes(query) || clientName.includes(query);
+      const buyerName = (
+        clientNameById.get(invoice.clientId) ||
+        invoiceBuyerNameById.get(invoice.id) ||
+        ''
+      ).toLocaleLowerCase();
+      return invoiceNumber.includes(query) || buyerName.includes(query);
     });
-  }, [clientNameById, invoices, searchQuery]);
+  }, [clientNameById, invoiceBuyerNameById, invoices, searchQuery]);
 
   return (
     <InvoicesList
       invoices={filteredInvoices}
       clientNameById={clientNameById}
+      invoiceBuyerNameById={invoiceBuyerNameById}
       onInvoicePress={onInvoicePress}
       emptyState={
         <ActionEmptyState

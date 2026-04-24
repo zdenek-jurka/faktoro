@@ -16,6 +16,7 @@ import { FlatList, Pressable, StyleSheet, View } from 'react-native';
 type InvoicesListProps = {
   invoices: InvoiceModel[];
   clientNameById: Map<string, string>;
+  invoiceBuyerNameById: Map<string, string>;
   onInvoicePress: (id: string) => void;
   emptyState?: ReactNode;
 };
@@ -23,6 +24,7 @@ type InvoicesListProps = {
 export function InvoicesList({
   invoices,
   clientNameById,
+  invoiceBuyerNameById,
   onInvoicePress,
   emptyState,
 }: InvoicesListProps) {
@@ -61,7 +63,7 @@ export function InvoicesList({
               <View style={styles.rowMain}>
                 <ThemedText type="defaultSemiBold">{item.invoiceNumber}</ThemedText>
                 <ThemedText style={styles.metaText}>
-                  {clientNameById.get(item.clientId) || '-'}
+                  {clientNameById.get(item.clientId) || invoiceBuyerNameById.get(item.id) || '-'}
                 </ThemedText>
                 {statusLabel ? (
                   <View

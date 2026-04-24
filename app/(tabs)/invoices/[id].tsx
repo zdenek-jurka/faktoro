@@ -53,6 +53,7 @@ import {
 } from '@/utils/error-utils';
 import { openLocalFile } from '@/utils/open-local-file';
 import { buildCopyFileName } from '@/utils/file-name-utils';
+import type { InvoiceDraftBuyerMode } from '@/utils/invoice-buyer';
 import {
   canCancelIssuedInvoice,
   canCopyInvoice,
@@ -111,6 +112,8 @@ type InvoiceCopyTimesheetMode = 'convert' | 'omit';
 
 type HeaderDraft = {
   clientId: string;
+  buyerMode?: InvoiceDraftBuyerMode;
+  buyerSnapshot?: BuyerSnapshot;
   invoiceNumber: string;
   issuedDate: string;
   taxableDate?: string;
@@ -601,9 +604,25 @@ export default function InvoiceDetailScreen() {
     invoice?.buyerSnapshotJson,
   ]);
 
-  const rememberLastExportAction = async (action: LastInvoiceExportAction) => {
+  const rememberLastExportAction = useEffectEvent(async (action: LastInvoiceExportAction) => {
     setLastExportAction(action);
-    await setConfigValue(LAST_INVOICE_EXPORT_ACTION_KEY, action);
+    try {
+      await setConfigValue(LAST_INVOICE_EXPORT_ACTION_KEY, action);
+    } catch (error) {
+      console.warn('Failed to persist invoice export action', error);
+    }
+  });
+
+  const persistInvoiceExported = useEffectEvent(async (invoiceId: string) => {
+    try {
+      await markInvoiceExported(invoiceId);
+    } catch (error) {
+      console.warn('Failed to persist invoice export timestamp', error);
+    }
+  });
+
+  const completeSuccessfulExport = (invoiceId: string) => {
+    void persistInvoiceExported(invoiceId);
   };
 
   const openEditInvoiceDraft = () => {
@@ -611,6 +630,8 @@ export default function InvoiceDetailScreen() {
 
     const headerDraft: HeaderDraft = {
       clientId: invoice.clientId,
+      buyerMode: invoice.clientId ? 'client' : 'one_off',
+      buyerSnapshot: buyer,
       invoiceNumber: invoice.invoiceNumber,
       issuedDate: toLocalISODate(invoice.issuedAt),
       taxableDate: invoice.taxableAt ? toLocalISODate(invoice.taxableAt) : undefined,
@@ -696,6 +717,8 @@ export default function InvoiceDetailScreen() {
     const includeTaxableDate = isInvoiceVatPayer(invoice);
     const headerDraft: HeaderDraft = {
       clientId: invoice.clientId,
+      buyerMode: invoice.clientId ? 'client' : 'one_off',
+      buyerSnapshot: buyer,
       invoiceNumber: nextInvoiceNumber,
       issuedDate: today,
       taxableDate: includeTaxableDate ? today : undefined,
@@ -1015,6 +1038,7 @@ export default function InvoiceDetailScreen() {
 
     try {
       setExportingTarget('pdf');
+      await rememberLastExportAction('pdf');
       // eslint-disable-next-line @typescript-eslint/no-require-imports
       const Sharing = require('expo-sharing');
       const pdfFile = prebuiltPdfFile ?? (await buildInvoicePdfFile());
@@ -1024,12 +1048,13 @@ export default function InvoiceDetailScreen() {
         return;
       }
 
+      // iOS share sheets can keep the promise unresolved longer than the UI should stay blocked.
+      setExportingTarget(null);
       await Sharing.shareAsync(pdfFile.uri, {
         mimeType: 'application/pdf',
         dialogTitle: LLExport.invoices.shareInvoice(),
       });
-      await rememberLastExportAction('pdf');
-      await markInvoiceExported(invoice.id);
+      completeSuccessfulExport(invoice.id);
     } catch (error) {
       const message = getErrorMessage(error, LLExport.invoices.exportError());
       Alert.alert(LLExport.common.error(), message);
@@ -1076,10 +1101,10 @@ export default function InvoiceDetailScreen() {
     let pdfFile: InvoicePdfExportResult | null = null;
     try {
       setExportingTarget('open_pdf');
+      await rememberLastExportAction('open_pdf');
       pdfFile = await buildInvoicePdfFile();
       await openLocalFile(pdfFile.uri);
-      await rememberLastExportAction('open_pdf');
-      await markInvoiceExported(invoice.id);
+      completeSuccessfulExport(invoice.id);
     } catch (error) {
       if (pdfFile) {
         showOpenPdfFallback(pdfFile);
@@ -1097,6 +1122,7 @@ export default function InvoiceDetailScreen() {
 
     try {
       setExportingTarget('html');
+      await rememberLastExportAction('html');
       // eslint-disable-next-line @typescript-eslint/no-require-imports
       const Sharing = require('expo-sharing');
       const htmlFile = await buildInvoiceHtmlFile();
@@ -1106,12 +1132,13 @@ export default function InvoiceDetailScreen() {
         return;
       }
 
+      // Release the export UI before handing control to the system share sheet.
+      setExportingTarget(null);
       await Sharing.shareAsync(htmlFile.uri, {
         mimeType: 'text/html',
         dialogTitle: LLExport.invoices.shareInvoice(),
       });
-      await rememberLastExportAction('html');
-      await markInvoiceExported(invoice.id);
+      completeSuccessfulExport(invoice.id);
     } catch (error) {
       const message = getErrorMessage(error, LLExport.invoices.exportError());
       Alert.alert(LLExport.common.error(), message);
@@ -1125,6 +1152,7 @@ export default function InvoiceDetailScreen() {
 
     try {
       setExportingTarget('save_pdf');
+      await rememberLastExportAction('save_pdf');
       // eslint-disable-next-line @typescript-eslint/no-require-imports
       const FileSystem = require('expo-file-system') as typeof import('expo-file-system');
       const initialPdfFile = prebuiltPdfFile ?? (isIos ? await buildInvoicePdfFile() : null);
@@ -1191,8 +1219,7 @@ export default function InvoiceDetailScreen() {
         LLExport.common.success(),
         LLExport.invoices.savePdfSuccess({ fileName: targetFileName }),
       );
-      await rememberLastExportAction('save_pdf');
-      await markInvoiceExported(invoice.id);
+      completeSuccessfulExport(invoice.id);
     } catch (error) {
       const rawMessage = getRawErrorMessage(error);
       if (rawMessage && /cancel(?:ed|led)/i.test(rawMessage)) {
@@ -1215,6 +1242,7 @@ export default function InvoiceDetailScreen() {
     if (!invoice) return;
     try {
       setExportingTarget('xml');
+      await rememberLastExportAction(`structured:${format}`);
       // eslint-disable-next-line @typescript-eslint/no-require-imports
       const FileSystemLegacy = require('expo-file-system/legacy');
       // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -1239,12 +1267,13 @@ export default function InvoiceDetailScreen() {
         return;
       }
 
+      // Keep the app responsive even if the native share promise resolves late on iOS.
+      setExportingTarget(null);
       await Sharing.shareAsync(targetUri, {
         mimeType: 'application/xml',
         dialogTitle: LLExport.invoices.shareInvoice(),
       });
-      await rememberLastExportAction(`structured:${format}`);
-      await markInvoiceExported(invoice.id);
+      completeSuccessfulExport(invoice.id);
     } catch (error) {
       const message = getErrorMessage(error, LLExport.invoices.exportError());
       Alert.alert(LLExport.common.error(), message);
@@ -1278,6 +1307,7 @@ export default function InvoiceDetailScreen() {
         if (!integration) {
           throw new Error('Integration not found');
         }
+        await rememberLastExportAction(`integration:${integration.id}`);
         const transformedXml = await transformExportXml('invoice', baseXml, integration.xslt);
         const result = await deliverIntegrationResult(
           integration,
@@ -1292,11 +1322,11 @@ export default function InvoiceDetailScreen() {
             LLExport.invoices.exportWebhookSuccess({ status: result.status }),
           );
         }
-        await rememberLastExportAction(`integration:${integration.id}`);
-        await markInvoiceExported(invoice.id);
+        completeSuccessfulExport(invoice.id);
         return;
       }
 
+      await rememberLastExportAction('xml_base');
       const targetUri = `${cacheDirectory}invoice-${safeNumber}-invoice.xml`;
       await FileSystemLegacy.writeAsStringAsync(targetUri, baseXml, {
         encoding: FileSystemLegacy.EncodingType?.UTF8 ?? 'utf8',
@@ -1308,12 +1338,13 @@ export default function InvoiceDetailScreen() {
         return;
       }
 
+      // Release the export button before entering the native share sheet flow.
+      setExportingTarget(null);
       await Sharing.shareAsync(targetUri, {
         mimeType: 'application/xml',
         dialogTitle: LLExport.invoices.shareInvoice(),
       });
-      await rememberLastExportAction('xml_base');
-      await markInvoiceExported(invoice.id);
+      completeSuccessfulExport(invoice.id);
     } catch (error) {
       const message = isHttpError(error)
         ? LLExport.invoices.exportWebhookError({
@@ -1537,7 +1568,7 @@ export default function InvoiceDetailScreen() {
         <>
           <View style={styles.summaryCard}>
             <ThemedText type="defaultSemiBold">{invoice.invoiceNumber}</ThemedText>
-            <ThemedText type="defaultSemiBold">{client?.name || '-'}</ThemedText>
+            <ThemedText type="defaultSemiBold">{buyer.name || client?.name || '-'}</ThemedText>
             {statusLabel ? (
               <ThemedText
                 style={[styles.metaText, styles.statusText, { color: palette.destructive }]}
