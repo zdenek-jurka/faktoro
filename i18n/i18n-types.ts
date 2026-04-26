@@ -2065,6 +2065,103 @@ type RootTranslation = {
 		 * R​e​s​u​l​t​ ​c​o​p​i​e​d​ ​t​o​ ​c​l​i​p​b​o​a​r​d​.
 		 */
 		exportClipboardSuccess: string
+		/**
+		 * S​t​r​u​c​t​u​r​e​d​ ​e​x​p​o​r​t​ ​w​a​r​n​i​n​g
+		 */
+		structuredExportWarningTitle: string
+		/**
+		 * {​f​o​r​m​a​t​}​ ​e​x​p​o​r​t​ ​c​a​n​ ​c​o​n​t​i​n​u​e​,​ ​b​u​t​ ​t​h​e​ ​d​o​c​u​m​e​n​t​ ​m​a​y​ ​b​e​ ​r​e​j​e​c​t​e​d​ ​u​n​t​i​l​ ​t​h​e​s​e​ ​i​s​s​u​e​s​ ​a​r​e​ ​f​i​x​e​d​:
+		 * @param {unknown} format
+		 */
+		structuredExportWarningIntro: RequiredParams<'format'>
+		/**
+		 * E​x​p​o​r​t​ ​a​n​y​w​a​y
+		 */
+		structuredExportWarningContinue: string
+		/**
+		 * F​i​x
+		 */
+		structuredExportWarningFix: string
+		/**
+		 * S​e​l​l​e​r​:​ ​m​i​s​s​i​n​g​ ​{​f​i​e​l​d​}​.
+		 * @param {unknown} field
+		 */
+		structuredExportIssueMissingSellerField: RequiredParams<'field'>
+		/**
+		 * B​u​y​e​r​:​ ​m​i​s​s​i​n​g​ ​{​f​i​e​l​d​}​.
+		 * @param {unknown} field
+		 */
+		structuredExportIssueMissingBuyerField: RequiredParams<'field'>
+		/**
+		 * I​n​v​o​i​c​e​:​ ​m​i​s​s​i​n​g​ ​{​f​i​e​l​d​}​.
+		 * @param {unknown} field
+		 */
+		structuredExportIssueMissingInvoiceField: RequiredParams<'field'>
+		/**
+		 * L​i​n​e​ ​{​l​i​n​e​}​:​ ​m​i​s​s​i​n​g​ ​{​f​i​e​l​d​}​.
+		 * @param {unknown} field
+		 * @param {unknown} line
+		 */
+		structuredExportIssueMissingLineField: RequiredParams<'field' | 'line'>
+		/**
+		 * I​n​v​o​i​c​e​:​ ​i​n​v​a​l​i​d​ ​{​f​i​e​l​d​}​.
+		 * @param {unknown} field
+		 */
+		structuredExportIssueInvalidInvoiceField: RequiredParams<'field'>
+		/**
+		 * L​i​n​e​ ​{​l​i​n​e​}​:​ ​i​n​v​a​l​i​d​ ​{​f​i​e​l​d​}​.
+		 * @param {unknown} field
+		 * @param {unknown} line
+		 */
+		structuredExportIssueInvalidLineField: RequiredParams<'field' | 'line'>
+		/**
+		 * {​p​a​r​t​y​}​:​ ​b​u​i​l​d​i​n​g​ ​n​u​m​b​e​r​ ​c​o​u​l​d​ ​n​o​t​ ​b​e​ ​i​n​f​e​r​r​e​d​ ​f​r​o​m​ ​t​h​e​ ​a​d​d​r​e​s​s​.
+		 * @param {unknown} party
+		 */
+		structuredExportIssueBuildingNumberNotInferred: RequiredParams<'party'>
+		/**
+		 * {​f​o​r​m​a​t​}​:​ ​{​r​e​q​u​i​r​e​m​e​n​t​}​.
+		 * @param {unknown} format
+		 * @param {unknown} requirement
+		 */
+		structuredExportIssueUnsupportedRequirement: RequiredParams<'format' | 'requirement'>
+		/**
+		 * b​u​y​e​r​ ​r​e​f​e​r​e​n​c​e​ ​/​ ​L​e​i​t​w​e​g​-​I​D​ ​i​s​ ​n​o​t​ ​s​t​o​r​e​d​ ​o​n​ ​t​h​i​s​ ​i​n​v​o​i​c​e
+		 */
+		structuredExportRequirementBuyerReference: string
+		/**
+		 * e​l​e​c​t​r​o​n​i​c​ ​a​d​d​r​e​s​s​ ​e​n​d​p​o​i​n​t​ ​I​D​ ​a​n​d​ ​s​c​h​e​m​e​ ​a​r​e​ ​n​o​t​ ​s​t​o​r​e​d​ ​s​e​p​a​r​a​t​e​l​y
+		 */
+		structuredExportRequirementElectronicAddress: string
+		/**
+		 * b​a​n​k​ ​t​r​a​n​s​f​e​r​ ​e​x​p​o​r​t​ ​n​e​e​d​s​ ​a​n​ ​I​B​A​N​ ​o​r​ ​b​a​n​k​ ​a​c​c​o​u​n​t
+		 */
+		structuredExportRequirementPaymentInstructions: string
+		/**
+		 * s​e​l​l​e​r​ ​p​o​s​t​a​l​ ​a​d​d​r​e​s​s​ ​i​s​ ​n​o​t​ ​e​x​p​o​r​t​e​d​ ​i​n​ ​X​R​e​c​h​n​u​n​g
+		 */
+		structuredExportRequirementSellerPostalAddress: string
+		/**
+		 * t​a​x​ ​t​o​t​a​l​s​ ​a​n​d​ ​t​a​x​ ​c​a​t​e​g​o​r​i​e​s​ ​a​r​e​ ​n​o​t​ ​e​x​p​o​r​t​e​d​ ​c​o​m​p​l​e​t​e​l​y
+		 */
+		structuredExportRequirementTaxBreakdown: string
+		/**
+		 * p​a​r​t​y​ ​t​a​x​ ​s​c​h​e​m​e​ ​i​d​e​n​t​i​f​i​e​r​s​ ​a​r​e​ ​m​i​s​s​i​n​g​ ​r​e​q​u​i​r​e​d​ ​s​c​h​e​m​e​ ​m​e​t​a​d​a​t​a
+		 */
+		structuredExportRequirementTaxScheme: string
+		/**
+		 * l​i​n​e​ ​{​l​i​n​e​}​ ​q​u​a​n​t​i​t​y​ ​i​s​ ​e​x​p​o​r​t​e​d​ ​w​i​t​h​o​u​t​ ​a​ ​r​e​q​u​i​r​e​d​ ​e​-​i​n​v​o​i​c​i​n​g​ ​u​n​i​t​ ​c​o​d​e
+		 * @param {unknown} line
+		 */
+		structuredExportRequirementUnitCode: RequiredParams<'line'>
+		/**
+		 * S​e​l​l​e​r
+		 */
+		structuredExportPartySeller: string
+		/**
+		 * B​u​y​e​r
+		 */
+		structuredExportPartyBuyer: string
 	}
 	settings: {
 		/**
@@ -6690,6 +6787,90 @@ export type TranslationFunctions = {
 		 * Result copied to clipboard.
 		 */
 		exportClipboardSuccess: () => LocalizedString
+		/**
+		 * Structured export warning
+		 */
+		structuredExportWarningTitle: () => LocalizedString
+		/**
+		 * {format} export can continue, but the document may be rejected until these issues are fixed:
+		 */
+		structuredExportWarningIntro: (arg: { format: unknown }) => LocalizedString
+		/**
+		 * Export anyway
+		 */
+		structuredExportWarningContinue: () => LocalizedString
+		/**
+		 * Fix
+		 */
+		structuredExportWarningFix: () => LocalizedString
+		/**
+		 * Seller: missing {field}.
+		 */
+		structuredExportIssueMissingSellerField: (arg: { field: unknown }) => LocalizedString
+		/**
+		 * Buyer: missing {field}.
+		 */
+		structuredExportIssueMissingBuyerField: (arg: { field: unknown }) => LocalizedString
+		/**
+		 * Invoice: missing {field}.
+		 */
+		structuredExportIssueMissingInvoiceField: (arg: { field: unknown }) => LocalizedString
+		/**
+		 * Line {line}: missing {field}.
+		 */
+		structuredExportIssueMissingLineField: (arg: { field: unknown, line: unknown }) => LocalizedString
+		/**
+		 * Invoice: invalid {field}.
+		 */
+		structuredExportIssueInvalidInvoiceField: (arg: { field: unknown }) => LocalizedString
+		/**
+		 * Line {line}: invalid {field}.
+		 */
+		structuredExportIssueInvalidLineField: (arg: { field: unknown, line: unknown }) => LocalizedString
+		/**
+		 * {party}: building number could not be inferred from the address.
+		 */
+		structuredExportIssueBuildingNumberNotInferred: (arg: { party: unknown }) => LocalizedString
+		/**
+		 * {format}: {requirement}.
+		 */
+		structuredExportIssueUnsupportedRequirement: (arg: { format: unknown, requirement: unknown }) => LocalizedString
+		/**
+		 * buyer reference / Leitweg-ID is not stored on this invoice
+		 */
+		structuredExportRequirementBuyerReference: () => LocalizedString
+		/**
+		 * electronic address endpoint ID and scheme are not stored separately
+		 */
+		structuredExportRequirementElectronicAddress: () => LocalizedString
+		/**
+		 * bank transfer export needs an IBAN or bank account
+		 */
+		structuredExportRequirementPaymentInstructions: () => LocalizedString
+		/**
+		 * seller postal address is not exported in XRechnung
+		 */
+		structuredExportRequirementSellerPostalAddress: () => LocalizedString
+		/**
+		 * tax totals and tax categories are not exported completely
+		 */
+		structuredExportRequirementTaxBreakdown: () => LocalizedString
+		/**
+		 * party tax scheme identifiers are missing required scheme metadata
+		 */
+		structuredExportRequirementTaxScheme: () => LocalizedString
+		/**
+		 * line {line} quantity is exported without a required e-invoicing unit code
+		 */
+		structuredExportRequirementUnitCode: (arg: { line: unknown }) => LocalizedString
+		/**
+		 * Seller
+		 */
+		structuredExportPartySeller: () => LocalizedString
+		/**
+		 * Buyer
+		 */
+		structuredExportPartyBuyer: () => LocalizedString
 	}
 	settings: {
 		/**

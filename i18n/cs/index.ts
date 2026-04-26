@@ -560,6 +560,35 @@ const cs = {
     exportWebhookNetworkError:
       'Endpoint není dostupný nebo se nepodařilo ověřit jeho TLS certifikát. Zkontrolujte URL, certifikát a připojení.',
     exportClipboardSuccess: 'Výsledek zkopírován do schránky.',
+    structuredExportWarningTitle: 'Varování strukturovaného exportu',
+    structuredExportWarningIntro:
+      'Export {format} může pokračovat, ale příjemce může dokument odmítnout, dokud se neopraví tyto nedostatky:',
+    structuredExportWarningContinue: 'Exportovat i tak',
+    structuredExportWarningFix: 'Opravit',
+    structuredExportIssueMissingSellerField: 'Dodavatel: chybí {field}.',
+    structuredExportIssueMissingBuyerField: 'Odběratel: chybí {field}.',
+    structuredExportIssueMissingInvoiceField: 'Faktura: chybí {field}.',
+    structuredExportIssueMissingLineField: 'Řádek {line}: chybí {field}.',
+    structuredExportIssueInvalidInvoiceField: 'Faktura: neplatná hodnota {field}.',
+    structuredExportIssueInvalidLineField: 'Řádek {line}: neplatná hodnota {field}.',
+    structuredExportIssueBuildingNumberNotInferred:
+      '{party}: z adresy se nepodařilo odhadnout číslo domu.',
+    structuredExportIssueUnsupportedRequirement: '{format}: {requirement}.',
+    structuredExportRequirementBuyerReference:
+      'buyer reference / Leitweg-ID není u faktury evidované',
+    structuredExportRequirementElectronicAddress:
+      'elektronická adresa endpoint ID a schemeID nejsou evidované samostatně',
+    structuredExportRequirementPaymentInstructions:
+      'bankovní export potřebuje IBAN nebo bankovní účet',
+    structuredExportRequirementSellerPostalAddress: 'adresa dodavatele se v XRechnung neexportuje',
+    structuredExportRequirementTaxBreakdown:
+      'souhrny DPH a daňové kategorie se neexportují kompletně',
+    structuredExportRequirementTaxScheme:
+      'daňové identifikace stran nemají vyplněná povinná scheme metadata',
+    structuredExportRequirementUnitCode:
+      'množství na řádku {line} se exportuje bez povinného e-invoicing kódu jednotky',
+    structuredExportPartySeller: 'Dodavatel',
+    structuredExportPartyBuyer: 'Odběratel',
   },
   settings: {
     title: 'Nastavení',

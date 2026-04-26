@@ -45,6 +45,12 @@ import {
 } from '@/templates/invoice/xml';
 import { normalizeCurrencyCode } from '@/utils/currency-utils';
 import {
+  getStructuredInvoiceExportIssues,
+  type StructuredInvoiceExportField,
+  type StructuredInvoiceExportFixTarget,
+  type StructuredInvoiceExportIssue,
+} from '@/utils/structured-invoice-export-validation';
+import {
   getErrorMessage,
   getExportIntegrationErrorMessage,
   getRawErrorMessage,
@@ -70,7 +76,7 @@ import { isIos } from '@/utils/platform';
 import { Q } from '@nozbe/watermelondb';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useEffectEvent, useMemo, useState } from 'react';
-import { Alert, FlatList, StyleSheet, Pressable, View } from 'react-native';
+import { Alert, FlatList, StyleSheet, Pressable, View, type AlertButton } from 'react-native';
 
 const LAST_INVOICE_EXPORT_ACTION_KEY = 'invoice_export.last_action';
 
@@ -110,6 +116,8 @@ type InvoiceHtmlExportResult = {
 };
 
 type InvoiceCopyTimesheetMode = 'convert' | 'omit';
+type StructuredExportWarningDecision = 'cancel' | 'continue' | 'fix';
+type TranslationFunctions = ReturnType<typeof useI18nContext>['LL'];
 
 type HeaderDraft = {
   clientId: string;
@@ -127,6 +135,131 @@ type FooterDraft = {
   headerNote: string;
   footerNote: string;
 };
+
+function getStructuredExportFieldLabel(
+  LL: TranslationFunctions,
+  field: StructuredInvoiceExportField,
+): string {
+  switch (field) {
+    case 'address':
+      return LL.settings.address();
+    case 'bankAccount':
+      return LL.settings.bankAccount();
+    case 'city':
+      return LL.clients.city();
+    case 'companyId':
+      return LL.clients.companyId();
+    case 'companyName':
+      return LL.settings.companyName();
+    case 'country':
+      return LL.clients.country();
+    case 'currency':
+      return LL.invoices.currency();
+    case 'description':
+      return LL.invoices.itemDescription();
+    case 'dueDate':
+      return LL.invoices.dueDate();
+    case 'email':
+      return LL.clients.email();
+    case 'invoiceNumber':
+      return LL.invoices.invoiceNumber();
+    case 'name':
+      return LL.clients.clientName();
+    case 'phone':
+      return LL.clients.phone();
+    case 'postalCode':
+      return LL.clients.postalCode();
+    case 'quantity':
+      return LL.invoices.quantity();
+    case 'totalPrice':
+      return LL.invoices.lineTotal();
+    case 'unit':
+      return LL.priceList.unit();
+    case 'unitPrice':
+      return LL.invoices.unitPrice();
+    case 'vatNumber':
+      return LL.clients.vatNumber();
+    case 'vatRate':
+      return LL.settings.vatRatePercentLabel();
+  }
+}
+
+function getStructuredExportRequirementLabel(
+  LL: TranslationFunctions,
+  issue: Extract<StructuredInvoiceExportIssue, { kind: 'unsupportedRequirement' }>,
+): string {
+  switch (issue.requirement) {
+    case 'buyerReference':
+      return LL.invoices.structuredExportRequirementBuyerReference();
+    case 'electronicAddressScheme':
+      return LL.invoices.structuredExportRequirementElectronicAddress();
+    case 'paymentInstructions':
+      return LL.invoices.structuredExportRequirementPaymentInstructions();
+    case 'sellerPostalAddress':
+      return LL.invoices.structuredExportRequirementSellerPostalAddress();
+    case 'taxBreakdown':
+      return LL.invoices.structuredExportRequirementTaxBreakdown();
+    case 'taxScheme':
+      return LL.invoices.structuredExportRequirementTaxScheme();
+    case 'unitCode':
+      return LL.invoices.structuredExportRequirementUnitCode({
+        line: (issue.lineIndex ?? 0) + 1,
+      });
+  }
+}
+
+function formatStructuredExportIssue(
+  LL: TranslationFunctions,
+  formatLabel: string,
+  issue: StructuredInvoiceExportIssue,
+): string {
+  if (issue.kind === 'buildingNumberNotInferred') {
+    return LL.invoices.structuredExportIssueBuildingNumberNotInferred({
+      party:
+        issue.party === 'seller'
+          ? LL.invoices.structuredExportPartySeller()
+          : LL.invoices.structuredExportPartyBuyer(),
+    });
+  }
+
+  if (issue.kind === 'unsupportedRequirement') {
+    return LL.invoices.structuredExportIssueUnsupportedRequirement({
+      format: formatLabel,
+      requirement: getStructuredExportRequirementLabel(LL, issue),
+    });
+  }
+
+  const field = getStructuredExportFieldLabel(LL, issue.field);
+  if (issue.kind === 'missingField') {
+    if (issue.scope === 'seller') {
+      return LL.invoices.structuredExportIssueMissingSellerField({ field });
+    }
+    if (issue.scope === 'buyer') {
+      return LL.invoices.structuredExportIssueMissingBuyerField({ field });
+    }
+    if (issue.scope === 'line') {
+      return LL.invoices.structuredExportIssueMissingLineField({
+        field,
+        line: (issue.lineIndex ?? 0) + 1,
+      });
+    }
+    return LL.invoices.structuredExportIssueMissingInvoiceField({ field });
+  }
+
+  if (issue.scope === 'line') {
+    return LL.invoices.structuredExportIssueInvalidLineField({
+      field,
+      line: (issue.lineIndex ?? 0) + 1,
+    });
+  }
+  return LL.invoices.structuredExportIssueInvalidInvoiceField({ field });
+}
+
+function getFirstStructuredExportFixTarget(
+  issues: StructuredInvoiceExportIssue[],
+): StructuredInvoiceExportFixTarget | null {
+  return issues.find((issue) => issue.fixTarget)?.fixTarget ?? null;
+}
 
 function addDaysToLocalISODate(baseDate: string, days: number): string {
   const normalizedDays = Math.max(0, Math.floor(days));
@@ -673,6 +806,26 @@ export default function InvoiceDetailScreen() {
         footerDraft: JSON.stringify(footerDraft),
       },
     });
+  };
+
+  const openStructuredExportFixTarget = (target: StructuredInvoiceExportFixTarget) => {
+    if (target === 'seller') {
+      router.push('/settings/business-profile');
+      return;
+    }
+    if (target === 'invoiceDefaults') {
+      router.push('/settings/invoice-defaults');
+      return;
+    }
+    if (target === 'buyer') {
+      const clientId = client?.id || invoice?.clientId;
+      if (clientId) {
+        router.push(`/clients/edit/${clientId}`);
+        return;
+      }
+    }
+
+    openEditInvoiceDraft();
   };
 
   const buildCopyItemsDraft = (
@@ -1250,6 +1403,57 @@ export default function InvoiceDetailScreen() {
     await saveInvoicePdf();
   };
 
+  const getXmlExportFormatLabel = (format: StructuredExportFormat): string => {
+    if (format === 'none') return LL.settings.invoiceDefaultExportFormatNone();
+    if (format === 'isdoc') return LL.invoices.exportIsdoc();
+    if (format === 'peppol') return LL.invoices.exportPeppol();
+    return LL.invoices.exportXrechnung();
+  };
+
+  const showStructuredExportIssuesWarning = (
+    format: InvoiceXmlFormat,
+    issues: StructuredInvoiceExportIssue[],
+  ): Promise<StructuredExportWarningDecision> => {
+    const formatLabel = getXmlExportFormatLabel(format);
+    const fixTarget = getFirstStructuredExportFixTarget(issues);
+    const issueLines = issues.map(
+      (issue) => `- ${formatStructuredExportIssue(LL, formatLabel, issue)}`,
+    );
+
+    return new Promise((resolve) => {
+      const buttons: AlertButton[] = [
+        {
+          text: LL.common.cancel(),
+          style: 'cancel',
+          onPress: () => resolve('cancel'),
+        },
+        {
+          text: LL.invoices.structuredExportWarningContinue(),
+          onPress: () => resolve('continue'),
+        },
+      ];
+
+      if (fixTarget) {
+        buttons.push({
+          text: LL.invoices.structuredExportWarningFix(),
+          onPress: () => resolve('fix'),
+        });
+      }
+
+      Alert.alert(
+        LL.invoices.structuredExportWarningTitle(),
+        `${LL.invoices.structuredExportWarningIntro({ format: formatLabel })}\n\n${issueLines.join(
+          '\n',
+        )}`,
+        buttons,
+        {
+          cancelable: true,
+          onDismiss: () => resolve('cancel'),
+        },
+      );
+    });
+  };
+
   const handleExportXml = async (format: InvoiceXmlFormat) => {
     if (!invoice) return;
     try {
@@ -1266,11 +1470,35 @@ export default function InvoiceDetailScreen() {
         return;
       }
 
+      const issues = getStructuredInvoiceExportIssues(format, {
+        invoice,
+        items,
+        client,
+        seller,
+        buyer,
+      });
+      if (issues.length > 0) {
+        const decision = await showStructuredExportIssuesWarning(format, issues);
+        if (decision === 'fix') {
+          const target = getFirstStructuredExportFixTarget(issues);
+          if (target) {
+            openStructuredExportFixTarget(target);
+          }
+          return;
+        }
+        if (decision !== 'continue') {
+          return;
+        }
+      }
+
       const xml = buildInvoiceXml(format, { invoice, items, client, seller, buyer });
       const suffix = getInvoiceXmlFileSuffix(format);
 
       const safeNumber = invoice.invoiceNumber.replace(/[^a-zA-Z0-9_-]+/g, '-');
-      const targetUri = `${cacheDirectory}invoice-${safeNumber}-${suffix}.xml`;
+      const targetUri =
+        format === 'isdoc'
+          ? `${cacheDirectory}invoice-${safeNumber}.isdoc`
+          : `${cacheDirectory}invoice-${safeNumber}-${suffix}.xml`;
       await FileSystemLegacy.writeAsStringAsync(targetUri, xml);
 
       const canShare = await Sharing.isAvailableAsync();
@@ -1373,13 +1601,6 @@ export default function InvoiceDetailScreen() {
     } finally {
       setExportingTarget(null);
     }
-  };
-
-  const getXmlExportFormatLabel = (format: StructuredExportFormat): string => {
-    if (format === 'none') return LL.settings.invoiceDefaultExportFormatNone();
-    if (format === 'isdoc') return LL.invoices.exportIsdoc();
-    if (format === 'peppol') return LL.invoices.exportPeppol();
-    return LL.invoices.exportXrechnung();
   };
 
   const getXmlExportFormatIcon = (format: InvoiceXmlFormat): IconSymbolName => {

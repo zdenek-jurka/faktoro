@@ -1,5 +1,6 @@
 import { escapeXml, isoDateFromMs } from './shared';
 import type { BuyerSnapshot, InvoiceXmlBuildInput, SellerSnapshot } from './types';
+import { splitStreetAndBuildingNumber } from '@/utils/address-building-number';
 
 function roundCurrency(value: number): number {
   return Math.round(value * 100) / 100;
@@ -25,6 +26,35 @@ function compactDigits(value?: string): string {
 function compactText(value?: string): string {
   return (value || '').trim().replace(/\s+/g, ' ');
 }
+
+const COUNTRY_NAME_BY_CODE: Record<string, string> = {
+  AT: 'Austria',
+  BE: 'Belgium',
+  BG: 'Bulgaria',
+  CH: 'Switzerland',
+  CZ: 'Czech Republic',
+  DE: 'Germany',
+  DK: 'Denmark',
+  ES: 'Spain',
+  FI: 'Finland',
+  FR: 'France',
+  GB: 'United Kingdom',
+  HR: 'Croatia',
+  HU: 'Hungary',
+  IE: 'Ireland',
+  IT: 'Italy',
+  LT: 'Lithuania',
+  LU: 'Luxembourg',
+  NL: 'Netherlands',
+  NO: 'Norway',
+  PL: 'Poland',
+  PT: 'Portugal',
+  RO: 'Romania',
+  SE: 'Sweden',
+  SI: 'Slovenia',
+  SK: 'Slovakia',
+  US: 'United States',
+};
 
 function deterministicUuid(seed: string): string {
   const bytes = Array.from(seed || 'faktoro-isdoc');
@@ -64,6 +94,13 @@ function resolveCountryCode(country?: string): string {
   return 'CZ';
 }
 
+function resolveCountryName(country?: string): string {
+  const trimmed = compactText(country);
+  const countryCode = resolveCountryCode(country);
+  if (trimmed && trimmed.length > 2) return trimmed;
+  return COUNTRY_NAME_BY_CODE[countryCode] || countryCode;
+}
+
 function buildPartyXml(
   party: BuyerSnapshot | SellerSnapshot,
   fallbackIdSeed: string,
@@ -73,10 +110,11 @@ function buildPartyXml(
   const partyName = compactText(
     'name' in party ? party.name : (party as SellerSnapshot).companyName || fallbackName,
   );
-  const street = compactText(party.address);
+  const { streetName, buildingNumber } = splitStreetAndBuildingNumber(party.address);
   const city = compactText(party.city);
   const postalCode = compactText(party.postalCode);
   const country = resolveCountryCode(party.country);
+  const countryName = resolveCountryName(party.country);
   const hasVatNumber = compactText(party.vatNumber).length > 0;
 
   return `<Party>
@@ -85,14 +123,15 @@ function buildPartyXml(
       </PartyIdentification>
       <PartyName><Name>${escapeXml(partyName || fallbackName)}</Name></PartyName>
       <PostalAddress>
-        <StreetName>${escapeXml(street)}</StreetName>
+        <StreetName>${escapeXml(streetName)}</StreetName>
+        <BuildingNumber>${escapeXml(buildingNumber)}</BuildingNumber>
         <CityName>${escapeXml(city)}</CityName>
         <PostalZone>${escapeXml(postalCode)}</PostalZone>
-        <Country><IdentificationCode>${escapeXml(country)}</IdentificationCode></Country>
+        <Country><IdentificationCode>${escapeXml(country)}</IdentificationCode><Name>${escapeXml(countryName)}</Name></Country>
       </PostalAddress>
       ${
         hasVatNumber
-          ? `<PartyTaxScheme><CompanyID>${escapeXml(compactText(party.vatNumber))}</CompanyID></PartyTaxScheme>`
+          ? `<PartyTaxScheme><CompanyID>${escapeXml(compactText(party.vatNumber))}</CompanyID><TaxScheme>VAT</TaxScheme></PartyTaxScheme>`
           : ''
       }
     </Party>`;
@@ -162,9 +201,6 @@ export function buildIsdocXml({ invoice, items, buyer, seller }: InvoiceXmlBuild
         </ClassifiedTaxCategory>
         <Item>
           <Description>${escapeXml(item.description)}</Description>
-          <SellersItemIdentification>
-            <ID>${escapeXml(item.sourceId || item.id || String(index + 1))}</ID>
-          </SellersItemIdentification>
         </Item>
       </InvoiceLine>`;
     })

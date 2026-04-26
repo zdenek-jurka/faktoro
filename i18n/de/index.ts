@@ -579,6 +579,36 @@ const de = {
     exportWebhookNetworkError:
       'Der Endpunkt konnte nicht erreicht oder sein TLS-Zertifikat nicht geprüft werden. Prüfen Sie URL, Zertifikat und Verbindung.',
     exportClipboardSuccess: 'Ergebnis wurde in die Zwischenablage kopiert.',
+    structuredExportWarningTitle: 'Structured export warning',
+    structuredExportWarningIntro:
+      '{format} export can continue, but the document may be rejected until these issues are fixed:',
+    structuredExportWarningContinue: 'Export anyway',
+    structuredExportWarningFix: 'Fix',
+    structuredExportIssueMissingSellerField: 'Seller: missing {field}.',
+    structuredExportIssueMissingBuyerField: 'Buyer: missing {field}.',
+    structuredExportIssueMissingInvoiceField: 'Invoice: missing {field}.',
+    structuredExportIssueMissingLineField: 'Line {line}: missing {field}.',
+    structuredExportIssueInvalidInvoiceField: 'Invoice: invalid {field}.',
+    structuredExportIssueInvalidLineField: 'Line {line}: invalid {field}.',
+    structuredExportIssueBuildingNumberNotInferred:
+      '{party}: building number could not be inferred from the address.',
+    structuredExportIssueUnsupportedRequirement: '{format}: {requirement}.',
+    structuredExportRequirementBuyerReference:
+      'buyer reference / Leitweg-ID is not stored on this invoice',
+    structuredExportRequirementElectronicAddress:
+      'electronic address endpoint ID and scheme are not stored separately',
+    structuredExportRequirementPaymentInstructions:
+      'bank transfer export needs an IBAN or bank account',
+    structuredExportRequirementSellerPostalAddress:
+      'seller postal address is not exported in XRechnung',
+    structuredExportRequirementTaxBreakdown:
+      'tax totals and tax categories are not exported completely',
+    structuredExportRequirementTaxScheme:
+      'party tax scheme identifiers are missing required scheme metadata',
+    structuredExportRequirementUnitCode:
+      'line {line} quantity is exported without a required e-invoicing unit code',
+    structuredExportPartySeller: 'Seller',
+    structuredExportPartyBuyer: 'Buyer',
   },
   settings: {
     title: 'Einstellungen',
