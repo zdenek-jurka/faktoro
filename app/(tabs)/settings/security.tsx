@@ -9,9 +9,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Colors, getSwitchColors } from '@/constants/theme';
+import { getSwitchColors } from '@/constants/theme';
 import { useBottomSafeAreaStyle } from '@/hooks/use-bottom-safe-area-style';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { usePalette } from '@/hooks/use-palette';
 import { useI18nContext } from '@/i18n/i18n-react';
 import {
   clearPinHash,
@@ -93,10 +93,9 @@ async function getBiometricState(labels: BiometricLabels): Promise<BiometricStat
 }
 
 export default function SettingsSecurityScreen() {
-  const colorScheme = useColorScheme();
+  const palette = usePalette();
   const headerHeight = useHeaderHeight();
   const { LL, locale } = useI18nContext();
-  const palette = Colors[colorScheme ?? 'light'];
   const contentStyle = useBottomSafeAreaStyle(styles.content);
   const [appLockEnabled, setAppLockEnabled] = useState(false);
   const [hasStoredPin, setHasStoredPin] = useState(false);
@@ -318,9 +317,9 @@ export default function SettingsSecurityScreen() {
             </ThemedText>
 
             <TextInput
-              style={[styles.input, inputStyle(colorScheme)]}
+              style={[styles.input, inputStyle(palette)]}
               placeholder={LL.settings.unlockPinPlaceholder()}
-              placeholderTextColor={placeholder(colorScheme)}
+              placeholderTextColor={placeholder(palette)}
               value={accessPin}
               onChangeText={(value) => {
                 setAccessPin(normalizeAppLockPinInput(value));
@@ -409,9 +408,9 @@ export default function SettingsSecurityScreen() {
               <>
                 <TextInput
                   ref={pinInputRef}
-                  style={[styles.input, inputStyle(colorScheme)]}
+                  style={[styles.input, inputStyle(palette)]}
                   placeholder={LL.settings.securityPin()}
-                  placeholderTextColor={placeholder(colorScheme)}
+                  placeholderTextColor={placeholder(palette)}
                   value={appLockPin}
                   onChangeText={(value) => setAppLockPin(normalizeAppLockPinInput(value))}
                   secureTextEntry
@@ -419,9 +418,9 @@ export default function SettingsSecurityScreen() {
                   maxLength={10}
                 />
                 <TextInput
-                  style={[styles.input, inputStyle(colorScheme)]}
+                  style={[styles.input, inputStyle(palette)]}
                   placeholder={LL.settings.securityConfirmPin()}
-                  placeholderTextColor={placeholder(colorScheme)}
+                  placeholderTextColor={placeholder(palette)}
                   value={confirmPin}
                   onChangeText={(value) => setConfirmPin(normalizeAppLockPinInput(value))}
                   secureTextEntry
@@ -500,16 +499,16 @@ export default function SettingsSecurityScreen() {
   );
 }
 
-function inputStyle(colorScheme: ReturnType<typeof useColorScheme>) {
+function inputStyle(palette: ReturnType<typeof usePalette>) {
   return {
-    color: Colors[colorScheme ?? 'light'].text,
-    borderColor: Colors[colorScheme ?? 'light'].inputBorder,
-    backgroundColor: Colors[colorScheme ?? 'light'].inputBackground,
+    color: palette.text,
+    borderColor: palette.inputBorder,
+    backgroundColor: palette.inputBackground,
   };
 }
 
-function placeholder(colorScheme: ReturnType<typeof useColorScheme>) {
-  return Colors[colorScheme ?? 'light'].placeholder;
+function placeholder(palette: ReturnType<typeof usePalette>) {
+  return palette.placeholder;
 }
 
 function getGracePeriodLabel(LL: ReturnType<typeof useI18nContext>['LL'], value: number): string {

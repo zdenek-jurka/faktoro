@@ -3,7 +3,7 @@ import { ThemedView } from '@/components/themed-view';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Colors, FontSizes, Spacing } from '@/constants/theme';
 import { useBottomSafeAreaStyle } from '@/hooks/use-bottom-safe-area-style';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { usePalette } from '@/hooks/use-palette';
 import { useI18nContext } from '@/i18n/i18n-react';
 import { isIos } from '@/utils/platform';
 import React, { ReactNode, useEffect, useState } from 'react';
@@ -26,8 +26,7 @@ export function BottomSheetFormModal({
   children,
   keyboardAvoidanceEnabled = true,
 }: BottomSheetFormModalProps) {
-  const colorScheme = useColorScheme();
-  const palette = Colors[colorScheme === 'dark' ? 'dark' : 'light'];
+  const palette = usePalette();
   const { LL } = useI18nContext();
   const modalInnerStyle = useBottomSafeAreaStyle(styles.modalInner);
   const [keyboardHeight, setKeyboardHeight] = useState(0);

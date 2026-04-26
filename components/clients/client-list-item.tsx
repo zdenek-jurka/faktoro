@@ -2,8 +2,8 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { InitialsAvatar } from '@/components/ui/initials-avatar';
-import { Colors, FontSizes } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { FontSizes } from '@/constants/theme';
+import { usePalette } from '@/hooks/use-palette';
 import { useI18nContext } from '@/i18n/i18n-react';
 import { ClientModel } from '@/model';
 import React from 'react';
@@ -23,8 +23,7 @@ interface ClientListItemProps {
 }
 
 export function ClientListItem({ client, onPress, runningTimer }: ClientListItemProps) {
-  const colorScheme = useColorScheme();
-  const palette = Colors[colorScheme ?? 'light'];
+  const palette = usePalette();
   const { LL } = useI18nContext();
 
   const formatTime = (seconds: number): string => {

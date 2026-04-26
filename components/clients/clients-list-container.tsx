@@ -5,15 +5,15 @@ import React, { useEffect, useState } from 'react';
 
 import { ClientList } from '@/components/clients';
 import { useI18nContext } from '@/i18n/i18n-react';
-import AppSettingsModel from '@/model/AppSettingsModel';
 import ClientModel from '@/model/ClientModel';
 import TimeEntryModel from '@/model/TimeEntryModel';
 import {
   getDeviceSyncSettings,
   observeDeviceSyncSettings,
 } from '@/repositories/device-sync-settings-repository';
+import { observeSettings } from '@/repositories/settings-repository';
 import { escapeLike } from '@/utils/escape-like';
-import { usePathname, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
 
 type ClientListContainerProps = {
   database: Database;
@@ -49,7 +49,6 @@ function buildClientsQuery(database: Database, searchQuery: string) {
 
 export function ClientListContainer(props: ClientListContainerProps) {
   const router = useRouter();
-  const pathname = usePathname();
   const { LL } = useI18nContext();
   const [clients, setClients] = useState<ClientModel[]>([]);
   const [runningEntries, setRunningEntries] = useState<TimeEntryModel[]>([]);
@@ -71,7 +70,17 @@ export function ClientListContainer(props: ClientListContainerProps) {
     const subscription = props.database
       .get<TimeEntryModel>(TimeEntryModel.table)
       .query(Q.where('is_running', true))
-      .observe()
+      .observeWithColumns([
+        'client_id',
+        'start_time',
+        'duration',
+        'is_running',
+        'is_paused',
+        'paused_at',
+        'total_paused_duration',
+        'running_device_id',
+        'running_device_name',
+      ])
       .subscribe(setRunningEntries);
 
     return () => subscription.unsubscribe();
@@ -84,27 +93,21 @@ export function ClientListContainer(props: ClientListContainerProps) {
     };
     void loadDeviceSettings();
 
-    const settingsSubscription = props.database
-      .get<AppSettingsModel>(AppSettingsModel.table)
-      .query()
-      .observeWithColumns(['default_billing_interval'])
-      .subscribe((allSettings) => {
-        if (allSettings.length === 0) {
-          setDefaultBillingInterval(null);
-          return;
-        }
-        setDefaultBillingInterval(allSettings[0].defaultBillingInterval ?? null);
-      });
-
+    const unsubscribeSettings = observeSettings(
+      (settings) => {
+        setDefaultBillingInterval(settings?.defaultBillingInterval ?? null);
+      },
+      ['default_billing_interval'],
+    );
     const deviceSubscription = observeDeviceSyncSettings((deviceSettings) => {
       setLocalDeviceId(deviceSettings.syncDeviceId || null);
     });
 
     return () => {
-      settingsSubscription.unsubscribe();
+      unsubscribeSettings();
       deviceSubscription();
     };
-  }, [props.database]);
+  }, []);
 
   return (
     <ClientList
@@ -134,7 +137,6 @@ export function ClientListContainer(props: ClientListContainerProps) {
               ? () =>
                   router.push({
                     pathname: '/clients/add',
-                    params: { returnTo: pathname },
                   })
               : undefined
           }

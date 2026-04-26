@@ -26,17 +26,17 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppBrand } from '@/components/ui/app-brand';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Colors, Fonts, Shadows, withOpacity } from '@/constants/theme';
+import { Fonts, Shadows, withOpacity } from '@/constants/theme';
 import database from '@/db';
 import { useAutoSync } from '@/hooks/use-auto-sync';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { usePalette } from '@/hooks/use-palette';
 import { usePendingSyncConflictCount } from '@/hooks/use-pending-sync-conflict-count';
 import { useTimerLimitGuard } from '@/hooks/use-timer-limit-guard';
 import { TypesafeI18n, useI18nContext } from '@/i18n/i18n-react';
 import type { Locales } from '@/i18n/i18n-types';
 import { baseLocale } from '@/i18n/i18n-util';
 import { getMoreSectionTitle, resolveAppLanguageSetting } from '@/i18n/locale-options';
-import AppSettingsModel from '@/model/AppSettingsModel';
 import ClientModel from '@/model/ClientModel';
 import InvoiceModel from '@/model/InvoiceModel';
 import PriceListItemModel from '@/model/PriceListItemModel';
@@ -49,7 +49,7 @@ import {
   setOnboardingCompleted,
 } from '@/repositories/onboarding-repository';
 import { getErrorMessage } from '@/utils/error-utils';
-import { getSettings } from '@/repositories/settings-repository';
+import { getSettings, observeSettings } from '@/repositories/settings-repository';
 import { subscribeToAppDataReload } from '@/utils/app-data-reload';
 import { sanitizeAppLockGracePeriodSeconds } from '@/utils/app-lock-grace-period';
 import { handleTimerActionUrl } from '@/repositories/timer-deeplink-repository';
@@ -78,37 +78,13 @@ export default function RootLayout() {
   }, []);
 
   useEffect(() => {
-    let isMounted = true;
-    let subscription: { unsubscribe: () => void } | undefined;
-    const settingsCollection = database.get<AppSettingsModel>(AppSettingsModel.table);
-
-    const syncLocaleFromSettings = async () => {
-      try {
-        const settings = await getSettings();
-        if (!isMounted) return;
-        const nextLocale = resolveAppLanguageSetting(settings.language, baseLocale);
+    return observeSettings(
+      (settings) => {
+        const nextLocale = resolveAppLanguageSetting(settings?.language, baseLocale);
         setLocale((currentLocale) => (currentLocale === nextLocale ? currentLocale : nextLocale));
-      } catch (error) {
-        console.error('Error loading locale settings:', error);
-      }
-
-      if (!isMounted) return;
-
-      subscription = settingsCollection
-        .query()
-        .observe()
-        .subscribe((settingsRows) => {
-          const nextLocale = resolveAppLanguageSetting(settingsRows[0]?.language, baseLocale);
-          setLocale((currentLocale) => (currentLocale === nextLocale ? currentLocale : nextLocale));
-        });
-    };
-
-    void syncLocaleFromSettings();
-
-    return () => {
-      isMounted = false;
-      subscription?.unsubscribe();
-    };
+      },
+      ['language'],
+    );
   }, [appDataEpoch]);
 
   useEffect(() => {
@@ -149,7 +125,7 @@ export default function RootLayout() {
 }
 
 function RootLayoutNav({ colorScheme }: { colorScheme: ReturnType<typeof useColorScheme> }) {
-  const palette = Colors[colorScheme ?? 'light'];
+  const palette = usePalette();
   const { LL, locale } = useI18nContext();
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -601,7 +577,7 @@ function RootLayoutNav({ colorScheme }: { colorScheme: ReturnType<typeof useColo
 
 function AppDrawerContent({ navigation }: DrawerContentComponentProps) {
   const colorScheme = useColorScheme();
-  const palette = Colors[colorScheme ?? 'light'];
+  const palette = usePalette();
   const pathname = usePathname();
   const router = useRouter();
   const { LL } = useI18nContext();

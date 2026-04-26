@@ -266,8 +266,8 @@ const es = {
     exportErrorXml: 'No se pudo exportar el XML.',
     exportSelectIntegration: 'Seleccionar integración de exportación',
     exportBaseXmlOption: 'XML base (sin transformación)',
-    exportWebhookSuccess: 'Enviado: el servidor respondió con {status:number}.',
-    exportWebhookError: 'El webhook falló: el servidor respondió con {status:number}.',
+    exportWebhookSuccess: 'Enviado: el servidor respondió con {status}.',
+    exportWebhookError: 'El webhook falló: el servidor respondió con {status}.',
     exportWebhookNetworkError:
       'No se pudo alcanzar el endpoint o validar su certificado TLS. Comprueba la URL, el certificado y la conexión.',
     exportClipboardSuccess: 'El resultado se copió al portapapeles.',
@@ -428,10 +428,10 @@ const es = {
       'Ya existe un documento con este número. No será posible guardar hasta que cambie el número.',
     invoiceNumberConflictTitle: '¿Usar un nuevo número de factura?',
     invoiceNumberConflictAutoMessage:
-      'El número de factura {current:string} ya se ha usado mientras tanto. ¿Quieres usar en su lugar el siguiente número disponible {suggested:string}?',
+      'El número de factura {current} ya se ha usado mientras tanto. ¿Quieres usar en su lugar el siguiente número disponible {suggested}?',
     invoiceNumberConflictManualMessage:
-      'El número de factura {current:string} ya lo usa otro documento. Puedes cambiarlo manualmente o usar en su lugar el siguiente número disponible {suggested:string}.',
-    invoiceNumberConflictUseSuggested: 'Usar {suggested:string}',
+      'El número de factura {current} ya lo usa otro documento. Puedes cambiarlo manualmente o usar en su lugar el siguiente número disponible {suggested}.',
+    invoiceNumberConflictUseSuggested: 'Usar {suggested}',
     noCompatiblePriceListItems: 'No hay artículos de lista de precios en {currency}.',
     errorCreate: 'No se pudo crear la factura.',
     errorUpdate: 'No se pudieron guardar los cambios de la factura.',
@@ -569,8 +569,8 @@ const es = {
     shareInvoice: 'Compartir factura',
     shareUnavailable: 'Compartir no está disponible en este dispositivo.',
     exportError: 'No se pudo exportar el PDF de la factura.',
-    exportWebhookSuccess: 'Enviado: el servidor respondió con {status:number}.',
-    exportWebhookError: 'El webhook falló: el servidor respondió con {status:number}.',
+    exportWebhookSuccess: 'Enviado: el servidor respondió con {status}.',
+    exportWebhookError: 'El webhook falló: el servidor respondió con {status}.',
     exportWebhookNetworkError:
       'No se pudo alcanzar el endpoint o validar su certificado TLS. Comprueba la URL, el certificado y la conexión.',
     exportClipboardSuccess: 'El resultado se copió al portapapeles.',
@@ -806,9 +806,9 @@ const es = {
     exportIntegrationTestDeliveryShareSuccess: 'El XML de prueba se preparó para compartir.',
     exportIntegrationTestDeliveryClipboardSuccess: 'El XML de prueba se copió al portapapeles.',
     exportIntegrationTestDeliveryWebhookSuccess:
-      'El XML de prueba se envió: el servidor respondió con {status:number}.',
+      'El XML de prueba se envió: el servidor respondió con {status}.',
     exportIntegrationTestDeliveryWebhookError:
-      'La entrega de prueba falló: el servidor respondió con {status:number}.',
+      'La entrega de prueba falló: el servidor respondió con {status}.',
     exportIntegrationTestDeliveryNetworkError:
       'No se pudo alcanzar el endpoint de entrega o validar su certificado TLS. Comprueba la URL, el certificado y la conexión.',
     exportIntegrationTestDeliveryError: 'La entrega de prueba falló.',
@@ -930,7 +930,7 @@ const es = {
     syncDescription:
       'Conecta este dispositivo al servidor de sincronización de Faktoro que se ejecuta en Docker.',
     syncDescriptionConnected:
-      'Este dispositivo está conectado al servidor de sincronización en {serverUrl:string}.',
+      'Este dispositivo está conectado al servidor de sincronización en {serverUrl}.',
     syncServerUrl: 'URL del servidor de sincronización (por ejemplo, http://192.168.1.10:8080)',
     syncServerSourceCode: 'Código fuente del servidor disponible en',
     syncDeviceName: 'Nombre del dispositivo',

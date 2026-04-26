@@ -1,9 +1,8 @@
 import { InvoicesListContainer } from '@/components/invoices';
 import { ThemedView } from '@/components/themed-view';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Colors } from '@/constants/theme';
 import database from '@/db';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { usePalette } from '@/hooks/use-palette';
 import { useI18nContext } from '@/i18n/i18n-react';
 import { ClientModel } from '@/model';
 import { isAndroid } from '@/utils/platform';
@@ -14,8 +13,7 @@ import { Pressable, StyleSheet, Text } from 'react-native';
 export default function ClientInvoicesScreen() {
   const router = useRouter();
   const { id, backToClientId } = useLocalSearchParams<{ id: string; backToClientId?: string }>();
-  const colorScheme = useColorScheme();
-  const palette = Colors[colorScheme === 'dark' ? 'dark' : 'light'];
+  const palette = usePalette();
   const { LL } = useI18nContext();
 
   const [client, setClient] = useState<ClientModel | null>(null);

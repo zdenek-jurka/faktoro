@@ -6,7 +6,9 @@ import { ComponentProps } from 'react';
 import { OpaqueColorValue, type StyleProp, type TextStyle, type ViewStyle } from 'react-native';
 import { isIos } from '@/utils/platform';
 
-type IconMapping = Record<SymbolViewProps['name'], ComponentProps<typeof MaterialIcons>['name']>;
+type SFSymbolName = Extract<SymbolViewProps['name'], string>;
+type MaterialIconName = ComponentProps<typeof MaterialIcons>['name'];
+type IconMapping = Partial<Record<SFSymbolName, MaterialIconName>>;
 export type IconSymbolName = keyof typeof MAPPING;
 
 /**
@@ -18,6 +20,7 @@ const MAPPING = {
   'house.fill': 'home',
   'line.3.horizontal': 'menu',
   'paperplane.fill': 'send',
+  'arrow.down.doc': 'file-download',
   'arrow.down.doc.fill': 'file-download',
   'chevron.left.forwardslash.chevron.right': 'code',
   'chevron.left': 'chevron-left',
@@ -28,10 +31,15 @@ const MAPPING = {
   'person.2.fill': 'groups',
   magnifyingglass: 'search',
   'person.3.fill': 'person',
+  trash: 'delete',
   'trash.fill': 'delete-forever',
   pencil: 'edit',
   xmark: 'close',
   'xmark.circle.fill': 'cancel',
+  'exclamationmark.circle.fill': 'error',
+  'exclamationmark.triangle': 'warning',
+  'exclamationmark.triangle.fill': 'warning',
+  'minus.circle': 'remove-circle-outline',
   plus: 'add',
   'plus.circle.fill': 'add-circle',
   'checkmark.circle.fill': 'check-circle',
@@ -40,6 +48,7 @@ const MAPPING = {
   'doc.fill': 'description',
   'doc.text': 'description',
   'doc.text.fill': 'description',
+  'doc.richtext': 'article',
   'doc.richtext.fill': 'article',
   archivebox: 'archive',
   folder: 'folder',
@@ -55,6 +64,7 @@ const MAPPING = {
   'chart.bar.fill': 'bar-chart',
   'play.fill': 'play-arrow',
   'pause.fill': 'pause',
+  'pause.circle.fill': 'pause-circle-filled',
   'stop.fill': 'stop',
   'lock.fill': 'lock',
   'receipt.fill': 'receipt-long',
@@ -62,6 +72,7 @@ const MAPPING = {
   'gearshape.fill': 'settings',
   network: 'public',
   'building.columns.fill': 'account-balance',
+  'dollarsign.circle.fill': 'attach-money',
   checkmark: 'check',
   'checkmark.square.fill': 'check-box',
   square: 'check-box-outline-blank',
@@ -69,7 +80,7 @@ const MAPPING = {
   'chevron.down': 'keyboard-arrow-down',
   tag: 'local-offer',
   'tag.fill': 'local-offer',
-} as IconMapping;
+} as const satisfies IconMapping;
 
 /**
  * An icon component that uses native SF Symbols on iOS, and Material Icons on Android and web.

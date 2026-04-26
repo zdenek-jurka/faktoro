@@ -269,8 +269,8 @@ const de = {
     exportErrorXml: 'XML-Export fehlgeschlagen.',
     exportSelectIntegration: 'Exportintegration auswählen',
     exportBaseXmlOption: 'Basis-XML (ohne Transformation)',
-    exportWebhookSuccess: 'Gesendet — der Server antwortete mit {status:number}.',
-    exportWebhookError: 'Webhook fehlgeschlagen — der Server antwortete mit {status:number}.',
+    exportWebhookSuccess: 'Gesendet — der Server antwortete mit {status}.',
+    exportWebhookError: 'Webhook fehlgeschlagen — der Server antwortete mit {status}.',
     exportWebhookNetworkError:
       'Der Endpunkt konnte nicht erreicht oder sein TLS-Zertifikat nicht geprüft werden. Prüfen Sie URL, Zertifikat und Verbindung.',
     exportClipboardSuccess: 'Ergebnis wurde in die Zwischenablage kopiert.',
@@ -433,10 +433,10 @@ const de = {
       'Ein Beleg mit dieser Nummer existiert bereits. Speichern ist erst möglich, wenn Sie die Nummer ändern.',
     invoiceNumberConflictTitle: 'Neue Rechnungsnummer verwenden?',
     invoiceNumberConflictAutoMessage:
-      'Die Rechnungsnummer {current:string} wurde inzwischen bereits verwendet. Möchten Sie stattdessen die nächste freie Nummer {suggested:string} verwenden?',
+      'Die Rechnungsnummer {current} wurde inzwischen bereits verwendet. Möchten Sie stattdessen die nächste freie Nummer {suggested} verwenden?',
     invoiceNumberConflictManualMessage:
-      'Die Rechnungsnummer {current:string} wird bereits von einem anderen Beleg verwendet. Sie können sie manuell ändern oder stattdessen die nächste freie Nummer {suggested:string} verwenden.',
-    invoiceNumberConflictUseSuggested: '{suggested:string} verwenden',
+      'Die Rechnungsnummer {current} wird bereits von einem anderen Beleg verwendet. Sie können sie manuell ändern oder stattdessen die nächste freie Nummer {suggested} verwenden.',
+    invoiceNumberConflictUseSuggested: '{suggested} verwenden',
     noCompatiblePriceListItems: 'Keine Preislisteneinträge in {currency}.',
     errorCreate: 'Rechnung konnte nicht erstellt werden.',
     errorUpdate: 'Rechnungsänderungen konnten nicht gespeichert werden.',
@@ -574,8 +574,8 @@ const de = {
     shareInvoice: 'Rechnung teilen',
     shareUnavailable: 'Die Freigabe ist auf diesem Gerät nicht verfügbar.',
     exportError: 'Rechnungs-PDF konnte nicht exportiert werden.',
-    exportWebhookSuccess: 'Gesendet — der Server antwortete mit {status:number}.',
-    exportWebhookError: 'Webhook fehlgeschlagen — der Server antwortete mit {status:number}.',
+    exportWebhookSuccess: 'Gesendet — der Server antwortete mit {status}.',
+    exportWebhookError: 'Webhook fehlgeschlagen — der Server antwortete mit {status}.',
     exportWebhookNetworkError:
       'Der Endpunkt konnte nicht erreicht oder sein TLS-Zertifikat nicht geprüft werden. Prüfen Sie URL, Zertifikat und Verbindung.',
     exportClipboardSuccess: 'Ergebnis wurde in die Zwischenablage kopiert.',
@@ -811,9 +811,9 @@ const de = {
     exportIntegrationTestDeliveryClipboardSuccess:
       'Die Test-XML wurde in die Zwischenablage kopiert.',
     exportIntegrationTestDeliveryWebhookSuccess:
-      'Die Test-XML wurde gesendet — der Server antwortete mit {status:number}.',
+      'Die Test-XML wurde gesendet — der Server antwortete mit {status}.',
     exportIntegrationTestDeliveryWebhookError:
-      'Die Testzustellung ist fehlgeschlagen — der Server antwortete mit {status:number}.',
+      'Die Testzustellung ist fehlgeschlagen — der Server antwortete mit {status}.',
     exportIntegrationTestDeliveryNetworkError:
       'Der Zustellungsendpunkt konnte nicht erreicht oder sein TLS-Zertifikat nicht geprüft werden. Prüfen Sie URL, Zertifikat und Verbindung.',
     exportIntegrationTestDeliveryError: 'Die Testzustellung ist fehlgeschlagen.',
@@ -935,8 +935,7 @@ const de = {
     invoiceSeriesDeviceCode: 'Gerätecode (optional)',
     syncTitle: 'Gerätesynchronisierung',
     syncDescription: 'Dieses Gerät mit dem Faktoro-Sync-Server in Docker verbinden.',
-    syncDescriptionConnected:
-      'Dieses Gerät ist mit dem Sync-Server unter {serverUrl:string} verbunden.',
+    syncDescriptionConnected: 'Dieses Gerät ist mit dem Sync-Server unter {serverUrl} verbunden.',
     syncServerUrl: 'URL des Synchronisierungsservers (z. B. http://192.168.1.10:8080)',
     syncServerSourceCode: 'Quellcode des Servers verfügbar unter',
     syncDeviceName: 'Gerätename',

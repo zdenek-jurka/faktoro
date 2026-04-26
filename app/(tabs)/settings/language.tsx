@@ -9,9 +9,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Colors } from '@/constants/theme';
 import { useBottomSafeAreaStyle } from '@/hooks/use-bottom-safe-area-style';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { usePalette } from '@/hooks/use-palette';
 import { useI18nContext } from '@/i18n/i18n-react';
 import {
   getLanguageSettingOptions,
@@ -27,7 +26,7 @@ import React, { useEffect, useState } from 'react';
 import { Alert, KeyboardAvoidingView, Pressable, ScrollView, StyleSheet } from 'react-native';
 
 export default function SettingsLanguageScreen() {
-  const colorScheme = useColorScheme();
+  const palette = usePalette();
   const headerHeight = useHeaderHeight();
   const { LL, setLocale } = useI18nContext();
   const contentStyle = useBottomSafeAreaStyle(styles.content);
@@ -70,7 +69,7 @@ export default function SettingsLanguageScreen() {
           keyboardDismissMode="on-drag"
           keyboardShouldPersistTaps="handled"
         >
-          <ThemedView style={[styles.section, sectionCard(colorScheme)]}>
+          <ThemedView style={[styles.section, sectionCard(palette)]}>
             <ThemedText type="subtitle" style={styles.sectionTitle}>
               {LL.settings.language()}
             </ThemedText>
@@ -106,14 +105,12 @@ export default function SettingsLanguageScreen() {
           <Pressable
             style={({ pressed }) => [
               styles.saveButton,
-              { backgroundColor: Colors[colorScheme ?? 'light'].tint },
+              { backgroundColor: palette.tint },
               pressed && styles.pressed,
             ]}
             onPress={handleSave}
           >
-            <ThemedText
-              style={[styles.saveButtonText, { color: Colors[colorScheme ?? 'light'].onTint }]}
-            >
+            <ThemedText style={[styles.saveButtonText, { color: palette.onTint }]}>
               {LL.common.save()}
             </ThemedText>
           </Pressable>
@@ -123,9 +120,9 @@ export default function SettingsLanguageScreen() {
   );
 }
 
-function sectionCard(colorScheme: ReturnType<typeof useColorScheme>) {
+function sectionCard(palette: ReturnType<typeof usePalette>) {
   return {
-    backgroundColor: Colors[colorScheme ?? 'light'].cardBackground,
+    backgroundColor: palette.cardBackground,
   };
 }
 

@@ -8,13 +8,13 @@ import { PauseStopTimerControl } from '@/components/time-tracking/pause-stop-tim
 import { StartTimerModal } from '@/components/time-tracking/start-timer-modal';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { IconButton } from '@/components/ui/icon-button';
-import { BorderRadius, Colors, FontSizes, Opacity, Spacing } from '@/constants/theme';
+import { BorderRadius, FontSizes, Opacity, Spacing } from '@/constants/theme';
 import database from '@/db';
 import { useBottomSafeAreaStyle } from '@/hooks/use-bottom-safe-area-style';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { usePalette } from '@/hooks/use-palette';
 import { useI18nContext } from '@/i18n/i18n-react';
 import {
-  AppSettingsModel,
   ClientModel,
   InvoiceModel,
   PriceListItemModel,
@@ -26,7 +26,7 @@ import {
   observeDeviceSyncSettings,
 } from '@/repositories/device-sync-settings-repository';
 import { getPriceListItems } from '@/repositories/price-list-repository';
-import { getSettings } from '@/repositories/settings-repository';
+import { getSettings, observeSettings } from '@/repositories/settings-repository';
 import {
   pauseTimeEntry,
   resumeTimeEntry,
@@ -41,7 +41,7 @@ export default function ClientDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const colorScheme = useColorScheme();
-  const palette = Colors[colorScheme ?? 'light'];
+  const palette = usePalette();
   const { LL } = useI18nContext();
   const [client, setClient] = useState<ClientModel | null>(null);
   const [showStartModal, setShowStartModal] = useState(false);
@@ -131,24 +131,18 @@ export default function ClientDetailScreen() {
     };
     void loadDevice();
 
-    const settingsSubscription = database
-      .get<AppSettingsModel>(AppSettingsModel.table)
-      .query()
-      .observeWithColumns(['default_billing_interval'])
-      .subscribe((allSettings) => {
-        if (allSettings.length === 0) {
-          setDefaultBillingInterval(undefined);
-          return;
-        }
-        setDefaultBillingInterval(allSettings[0].defaultBillingInterval);
-      });
-
+    const unsubscribeSettings = observeSettings(
+      (settings) => {
+        setDefaultBillingInterval(settings?.defaultBillingInterval);
+      },
+      ['default_billing_interval'],
+    );
     const deviceSubscription = observeDeviceSyncSettings((deviceSettings) => {
       setLocalDeviceId(deviceSettings.syncDeviceId || null);
     });
 
     return () => {
-      settingsSubscription.unsubscribe();
+      unsubscribeSettings();
       deviceSubscription();
     };
   }, []);
@@ -180,7 +174,9 @@ export default function ClientDetailScreen() {
   }, [id, localDeviceId]);
 
   useEffect(() => {
-    const subscription = getPriceListItems(false).observe().subscribe(setPriceListItems);
+    const subscription = getPriceListItems(false)
+      .observeWithColumns(['name', 'default_price', 'default_price_currency', 'unit', 'is_active'])
+      .subscribe(setPriceListItems);
     return () => subscription.unsubscribe();
   }, []);
 

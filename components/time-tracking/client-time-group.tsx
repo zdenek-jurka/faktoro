@@ -2,8 +2,8 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { InitialsAvatar } from '@/components/ui/initials-avatar';
-import { Colors, FontSizes } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { FontSizes } from '@/constants/theme';
+import { usePalette } from '@/hooks/use-palette';
 import { useI18nContext } from '@/i18n/i18n-react';
 import { ClientModel, TimeEntryModel } from '@/model';
 import { hasEffectiveBillingInterval, roundTimeByInterval } from '@/utils/time-utils';
@@ -26,8 +26,7 @@ export function ClientTimeGroup({
   formatTime,
   onPress,
 }: ClientTimeGroupProps) {
-  const colorScheme = useColorScheme();
-  const palette = Colors[colorScheme ?? 'light'];
+  const palette = usePalette();
   const { LL } = useI18nContext();
   const [nowMs, setNowMs] = useState(Date.now());
   const hasRunningEntry = entries.some((entry) => entry.isRunning);

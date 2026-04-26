@@ -178,7 +178,7 @@ async function applyPayloadToRecord(
 
   const record = (await database.get(tableName).find(recordId)) as unknown as ModelInternals;
   const currentRaw = { ...(record._raw as Record<string, unknown>) };
-  const payloadWithTimestamps = {
+  const payloadWithTimestamps: RawRecord = {
     ...payload,
     updated_at:
       options?.overrideUpdatedAt ?? payload.updated_at ?? currentRaw.updated_at ?? Date.now(),

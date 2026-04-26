@@ -2,9 +2,8 @@ import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/dat
 import React from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import { Colors } from '@/constants/theme';
 import { useBottomSafeAreaStyle } from '@/hooks/use-bottom-safe-area-style';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { usePalette } from '@/hooks/use-palette';
 import { isAndroid } from '@/utils/platform';
 
 import { ThemedText } from '../themed-text';
@@ -35,8 +34,7 @@ export function CrossPlatformDatePicker({
   minimumDate,
   maximumDate,
 }: CrossPlatformDatePickerProps) {
-  const colorScheme = useColorScheme();
-  const palette = Colors[colorScheme ?? 'light'];
+  const palette = usePalette();
   const cardStyle = useBottomSafeAreaStyle(styles.card);
 
   if (!visible) return null;

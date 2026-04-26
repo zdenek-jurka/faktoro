@@ -2,9 +2,9 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { isSyncEnabled } from '@/constants/features';
-import { Colors, FontSizes, getSwitchColors, Spacing } from '@/constants/theme';
+import { FontSizes, getSwitchColors, Spacing } from '@/constants/theme';
 import { useBottomSafeAreaStyle } from '@/hooks/use-bottom-safe-area-style';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { usePalette } from '@/hooks/use-palette';
 import { usePendingSyncConflictCount } from '@/hooks/use-pending-sync-conflict-count';
 import { useI18nContext } from '@/i18n/i18n-react';
 import {
@@ -46,8 +46,7 @@ function SettingsOnlineSyncScreenContent({
 }: {
   deviceSyncSettings: DeviceSyncSettings | null;
 }) {
-  const colorScheme = useColorScheme();
-  const palette = Colors[colorScheme === 'dark' ? 'dark' : 'light'];
+  const palette = usePalette();
   const headerHeight = useHeaderHeight();
   const { LL } = useI18nContext();
   const router = useRouter();

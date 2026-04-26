@@ -5,9 +5,9 @@ import {
 } from '@/components/settings/invoice-settings-shared';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { Colors, withOpacity } from '@/constants/theme';
+import { withOpacity } from '@/constants/theme';
 import { useBottomSafeAreaStyle } from '@/hooks/use-bottom-safe-area-style';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { usePalette } from '@/hooks/use-palette';
 import { useI18nContext } from '@/i18n/i18n-react';
 import { getSettings, updateSettings } from '@/repositories/settings-repository';
 import {
@@ -26,7 +26,7 @@ import React, { useEffect, useState } from 'react';
 import { Alert, KeyboardAvoidingView, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 export default function SettingsBrandingScreen() {
-  const colorScheme = useColorScheme();
+  const palette = usePalette();
   const { LL } = useI18nContext();
   const headerHeight = useHeaderHeight();
   const contentStyle = useBottomSafeAreaStyle(styles.content);
@@ -158,7 +158,7 @@ export default function SettingsBrandingScreen() {
           keyboardDismissMode="on-drag"
           keyboardShouldPersistTaps="handled"
         >
-          <ThemedView style={[styles.section, sectionCard(colorScheme)]}>
+          <ThemedView style={[styles.section, sectionCard(palette)]}>
             <ThemedText style={styles.sectionDescription}>
               {LL.settings.brandingSubtitle()}
             </ThemedText>
@@ -172,8 +172,8 @@ export default function SettingsBrandingScreen() {
                   style={[
                     styles.logoPreviewFrame,
                     {
-                      borderColor: Colors[colorScheme ?? 'light'].inputBorder,
-                      backgroundColor: withOpacity(Colors[colorScheme ?? 'light'].tint, 0.06),
+                      borderColor: palette.inputBorder,
+                      backgroundColor: withOpacity(palette.tint, 0.06),
                     },
                   ]}
                 >
@@ -188,17 +188,12 @@ export default function SettingsBrandingScreen() {
                   <Pressable
                     style={({ pressed }) => [
                       styles.logoActionButton,
-                      { backgroundColor: Colors[colorScheme ?? 'light'].tint },
+                      { backgroundColor: palette.tint },
                       pressed && styles.pressed,
                     ]}
                     onPress={handlePickInvoiceLogo}
                   >
-                    <ThemedText
-                      style={[
-                        styles.logoActionButtonText,
-                        { color: Colors[colorScheme ?? 'light'].onTint },
-                      ]}
-                    >
+                    <ThemedText style={[styles.logoActionButtonText, { color: palette.onTint }]}>
                       {LL.settings.invoiceLogoReplace()}
                     </ThemedText>
                   </Pressable>
@@ -206,20 +201,15 @@ export default function SettingsBrandingScreen() {
                     style={({ pressed }) => [
                       styles.logoActionButton,
                       {
-                        borderColor: Colors[colorScheme ?? 'light'].inputBorder,
-                        backgroundColor: Colors[colorScheme ?? 'light'].inputBackground,
+                        borderColor: palette.inputBorder,
+                        backgroundColor: palette.inputBackground,
                         borderWidth: 1,
                       },
                       pressed && styles.pressed,
                     ]}
                     onPress={handleRemoveInvoiceLogo}
                   >
-                    <ThemedText
-                      style={[
-                        styles.logoActionButtonText,
-                        { color: Colors[colorScheme ?? 'light'].text },
-                      ]}
-                    >
+                    <ThemedText style={[styles.logoActionButtonText, { color: palette.text }]}>
                       {LL.settings.invoiceLogoRemove()}
                     </ThemedText>
                   </Pressable>
@@ -230,17 +220,14 @@ export default function SettingsBrandingScreen() {
                 style={({ pressed }) => [
                   styles.logoPickerButton,
                   {
-                    borderColor: Colors[colorScheme ?? 'light'].inputBorder,
-                    backgroundColor: Colors[colorScheme ?? 'light'].inputBackground,
+                    borderColor: palette.inputBorder,
+                    backgroundColor: palette.inputBackground,
                   },
                   pressed && styles.pressed,
                 ]}
                 onPress={handlePickInvoiceLogo}
               >
-                <ThemedText
-                  type="defaultSemiBold"
-                  style={{ color: Colors[colorScheme ?? 'light'].tint }}
-                >
+                <ThemedText type="defaultSemiBold" style={{ color: palette.tint }}>
                   {LL.settings.invoiceLogoChoose()}
                 </ThemedText>
               </Pressable>
@@ -250,14 +237,12 @@ export default function SettingsBrandingScreen() {
           <Pressable
             style={({ pressed }) => [
               styles.saveButton,
-              { backgroundColor: Colors[colorScheme ?? 'light'].tint },
+              { backgroundColor: palette.tint },
               pressed && styles.pressed,
             ]}
             onPress={handleSave}
           >
-            <ThemedText
-              style={[styles.saveButtonText, { color: Colors[colorScheme ?? 'light'].onTint }]}
-            >
+            <ThemedText style={[styles.saveButtonText, { color: palette.onTint }]}>
               {LL.common.save()}
             </ThemedText>
           </Pressable>
@@ -267,9 +252,9 @@ export default function SettingsBrandingScreen() {
   );
 }
 
-function sectionCard(colorScheme: ReturnType<typeof useColorScheme>) {
+function sectionCard(palette: ReturnType<typeof usePalette>) {
   return {
-    backgroundColor: Colors[colorScheme ?? 'light'].cardBackground,
+    backgroundColor: palette.cardBackground,
   };
 }
 

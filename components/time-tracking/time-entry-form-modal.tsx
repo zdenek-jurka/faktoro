@@ -3,15 +3,17 @@ import { NoClientsRequiredNotice } from '@/components/clients/no-clients-require
 import { EntityPickerField } from '@/components/ui/entity-picker-field';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { Colors, withOpacity } from '@/constants/theme';
+import { withOpacity } from '@/constants/theme';
 import { useBottomSafeAreaStyle } from '@/hooks/use-bottom-safe-area-style';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { usePalette } from '@/hooks/use-palette';
 import { useDefaultInvoiceCurrency } from '@/hooks/use-default-invoice-currency';
 import { useI18nContext } from '@/i18n/i18n-react';
 import { normalizeIntlLocale } from '@/i18n/locale-options';
 import { ClientModel, PriceListItemModel } from '@/model';
 import { getEffectivePriceDetails } from '@/repositories/client-price-override-repository';
 import { normalizeCurrencyCode } from '@/utils/currency-utils';
+import type { ClientAddReturnTarget } from '@/utils/client-add-navigation';
 import { formatPrice } from '@/utils/price-utils';
 import { isIos } from '@/utils/platform';
 import React, { useEffect, useMemo, useState } from 'react';
@@ -35,6 +37,8 @@ type TimeEntryFormModalProps = {
   priceListItems: PriceListItemModel[];
   selectedPriceListItemId: string;
   onPriceListItemChange: (priceListItemId: string) => void;
+  addClientReturnTo?: ClientAddReturnTarget;
+  addClientReturnToId?: string;
   disableSubmit?: boolean;
 };
 
@@ -54,10 +58,12 @@ export function TimeEntryFormModal({
   priceListItems,
   selectedPriceListItemId,
   onPriceListItemChange,
+  addClientReturnTo,
+  addClientReturnToId,
   disableSubmit = false,
 }: TimeEntryFormModalProps) {
   const colorScheme = useColorScheme();
-  const palette = Colors[colorScheme ?? 'light'];
+  const palette = usePalette();
   const { LL, locale } = useI18nContext();
   const modalContentStyle = useBottomSafeAreaStyle(styles.modalContent);
   const defaultInvoiceCurrency = useDefaultInvoiceCurrency();
@@ -159,6 +165,8 @@ export function TimeEntryFormModal({
                 ) : clients.length === 0 ? (
                   <NoClientsRequiredNotice
                     message={LL.timeTracking.addClientFirst()}
+                    returnTo={addClientReturnTo}
+                    returnToId={addClientReturnToId}
                     style={styles.notice}
                   />
                 ) : (

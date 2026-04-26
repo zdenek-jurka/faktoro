@@ -4,8 +4,7 @@ import ReanimatedSwipeable, {
   SwipeDirection,
   type SwipeableMethods,
 } from 'react-native-gesture-handler/ReanimatedSwipeable';
-import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { usePalette } from '@/hooks/use-palette';
 import { useI18nContext } from '@/i18n/i18n-react';
 import { IconSymbol } from './icon-symbol';
 
@@ -19,8 +18,7 @@ interface SwipeableRowProps {
 }
 
 export function SwipeableRow({ onDelete, onEdit, borderRadius = 0, children }: SwipeableRowProps) {
-  const colorScheme = useColorScheme();
-  const palette = Colors[colorScheme ?? 'light'];
+  const palette = usePalette();
   const { LL } = useI18nContext();
   const swipeableRef = useRef<SwipeableMethods | null>(null);
   const canSwipe = !!onDelete || !!onEdit;

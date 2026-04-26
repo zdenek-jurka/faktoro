@@ -1,6 +1,5 @@
 import { BottomSheetFormModal } from '@/components/ui/bottom-sheet-form-modal';
-import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { usePalette } from '@/hooks/use-palette';
 import React from 'react';
 import { StyleSheet, TextInput } from 'react-native';
 
@@ -23,8 +22,7 @@ export function SyncPayloadEntryModal({
   onClose,
   onSave,
 }: SyncPayloadEntryModalProps) {
-  const colorScheme = useColorScheme();
-  const palette = Colors[colorScheme === 'dark' ? 'dark' : 'light'];
+  const palette = usePalette();
 
   return (
     <BottomSheetFormModal visible={visible} onClose={onClose} onSave={onSave} title={title}>

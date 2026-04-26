@@ -1,9 +1,9 @@
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { isDangerousAppDataResetEnabled, isSyncEnabled } from '@/constants/features';
-import { Colors, getSwitchColors } from '@/constants/theme';
+import { getSwitchColors } from '@/constants/theme';
 import { useBottomSafeAreaStyle } from '@/hooks/use-bottom-safe-area-style';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { usePalette } from '@/hooks/use-palette';
 import { useI18nContext } from '@/i18n/i18n-react';
 import {
   observeDeviceSyncSettings,
@@ -24,8 +24,7 @@ export default function SettingsAdvancedScreen() {
 
 function SettingsAdvancedScreenContent() {
   const router = useRouter();
-  const colorScheme = useColorScheme();
-  const palette = Colors[colorScheme === 'dark' ? 'dark' : 'light'];
+  const palette = usePalette();
   const { LL } = useI18nContext();
   const contentStyle = useBottomSafeAreaStyle(styles.content);
 

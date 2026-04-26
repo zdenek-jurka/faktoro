@@ -2,9 +2,8 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { SwipeableRow } from '@/components/ui/swipeable-row';
-import { Colors } from '@/constants/theme';
 import { useBottomSafeAreaStyle } from '@/hooks/use-bottom-safe-area-style';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { usePalette } from '@/hooks/use-palette';
 import { useI18nContext } from '@/i18n/i18n-react';
 import React from 'react';
 import type { ReactNode } from 'react';
@@ -31,7 +30,7 @@ export function TimesheetsClientList({
   onClientPress,
   emptyState,
 }: TimesheetsClientListProps) {
-  const colorScheme = useColorScheme();
+  const palette = usePalette();
   const { LL } = useI18nContext();
   const listContentStyle = useBottomSafeAreaStyle(styles.listContent);
 
@@ -52,13 +51,13 @@ export function TimesheetsClientList({
             <Pressable
               style={({ pressed }) => [
                 styles.row,
-                { backgroundColor: Colors[colorScheme ?? 'light'].cardBackground },
+                { backgroundColor: palette.cardBackground },
                 index === 0 && styles.rowFirst,
                 isLast && styles.rowLast,
                 pressed && styles.rowPressed,
               ]}
               onPress={() => onClientPress(item.client.id)}
-              android_ripple={{ color: Colors[colorScheme ?? 'light'].border }}
+              android_ripple={{ color: palette.border }}
               accessibilityRole="button"
               accessibilityLabel={item.client.name}
             >
@@ -72,17 +71,12 @@ export function TimesheetsClientList({
                       style={[
                         styles.companyBadge,
                         {
-                          backgroundColor: Colors[colorScheme ?? 'light'].cardBackground,
-                          borderColor: Colors[colorScheme ?? 'light'].border,
+                          backgroundColor: palette.cardBackground,
+                          borderColor: palette.border,
                         },
                       ]}
                     >
-                      <ThemedText
-                        style={[
-                          styles.companyBadgeText,
-                          { color: Colors[colorScheme ?? 'light'].tint },
-                        ]}
-                      >
+                      <ThemedText style={[styles.companyBadgeText, { color: palette.tint }]}>
                         {LL.clients.company()}
                       </ThemedText>
                     </ThemedView>
@@ -100,39 +94,18 @@ export function TimesheetsClientList({
               </View>
 
               <View style={styles.rowRight}>
-                <View
-                  style={[
-                    styles.timeBadge,
-                    { backgroundColor: Colors[colorScheme ?? 'light'].timeHighlight },
-                  ]}
-                >
-                  <ThemedText
-                    style={[
-                      styles.timeBadgeText,
-                      { color: Colors[colorScheme ?? 'light'].onHighlight },
-                    ]}
-                  >
+                <View style={[styles.timeBadge, { backgroundColor: palette.timeHighlight }]}>
+                  <ThemedText style={[styles.timeBadgeText, { color: palette.onHighlight }]}>
                     {formatDuration(item.remainingDuration)}
                   </ThemedText>
                 </View>
                 <ThemedText style={styles.timeBadgeLabel}>
                   {LL.timesheets.remainingToInvoiceLabel()}
                 </ThemedText>
-                <IconSymbol
-                  name="chevron.right"
-                  size={20}
-                  color={Colors[colorScheme ?? 'light'].icon}
-                />
+                <IconSymbol name="chevron.right" size={20} color={palette.icon} />
               </View>
 
-              {!isLast && (
-                <View
-                  style={[
-                    styles.divider,
-                    { backgroundColor: Colors[colorScheme ?? 'light'].border },
-                  ]}
-                />
-              )}
+              {!isLast && <View style={[styles.divider, { backgroundColor: palette.border }]} />}
             </Pressable>
           </SwipeableRow>
         );

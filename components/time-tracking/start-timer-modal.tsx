@@ -5,6 +5,7 @@ import {
   createTimeEntry,
   TIME_ENTRY_LOCAL_RUNNING_EXISTS,
 } from '@/repositories/time-entry-repository';
+import type { ClientAddReturnTarget } from '@/utils/client-add-navigation';
 import React, { useEffect, useMemo, useState } from 'react';
 import { Alert } from 'react-native';
 import { TimeEntryFormModal } from './time-entry-form-modal';
@@ -16,6 +17,8 @@ type StartTimerModalProps = {
   priceListItems: PriceListItemModel[];
   fixedClientId?: string;
   fixedClientName?: string;
+  addClientReturnTo?: ClientAddReturnTarget;
+  addClientReturnToId?: string;
   onStarted?: (entry: TimeEntryModel) => void;
 };
 
@@ -26,6 +29,8 @@ export function StartTimerModal({
   priceListItems,
   fixedClientId,
   fixedClientName,
+  addClientReturnTo,
+  addClientReturnToId,
   onStarted,
 }: StartTimerModalProps) {
   const { LL } = useI18nContext();
@@ -118,6 +123,8 @@ export function StartTimerModal({
       priceListItems={priceListItems}
       selectedPriceListItemId={selectedPriceListItemId}
       onPriceListItemChange={setSelectedPriceListItemId}
+      addClientReturnTo={addClientReturnTo}
+      addClientReturnToId={addClientReturnToId}
       disableSubmit={!selectedClientId && clients.length > 0}
     />
   );

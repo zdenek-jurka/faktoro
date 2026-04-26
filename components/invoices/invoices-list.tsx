@@ -1,9 +1,9 @@
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { SwipeableRow } from '@/components/ui/swipeable-row';
-import { Colors, withOpacity } from '@/constants/theme';
+import { withOpacity } from '@/constants/theme';
 import { useBottomSafeAreaStyle } from '@/hooks/use-bottom-safe-area-style';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { usePalette } from '@/hooks/use-palette';
 import { useI18nContext } from '@/i18n/i18n-react';
 import { normalizeIntlLocale } from '@/i18n/locale-options';
 import { InvoiceModel } from '@/model';
@@ -28,7 +28,7 @@ export function InvoicesList({
   onInvoicePress,
   emptyState,
 }: InvoicesListProps) {
-  const colorScheme = useColorScheme();
+  const palette = usePalette();
   const { LL, locale } = useI18nContext();
   const intlLocale = normalizeIntlLocale(locale, 'en');
   const listContentStyle = useBottomSafeAreaStyle(styles.listContent);
@@ -50,13 +50,13 @@ export function InvoicesList({
             <Pressable
               style={({ pressed }) => [
                 styles.row,
-                { backgroundColor: Colors[colorScheme ?? 'light'].cardBackground },
+                { backgroundColor: palette.cardBackground },
                 index === 0 && styles.rowFirst,
                 isLast && styles.rowLast,
                 pressed && styles.rowPressed,
               ]}
               onPress={() => onInvoicePress(item.id)}
-              android_ripple={{ color: Colors[colorScheme ?? 'light'].border }}
+              android_ripple={{ color: palette.border }}
               accessibilityRole="button"
               accessibilityLabel={item.invoiceNumber}
             >
@@ -70,10 +70,7 @@ export function InvoicesList({
                     style={[
                       styles.statusBadge,
                       {
-                        backgroundColor: withOpacity(
-                          Colors[colorScheme ?? 'light'].destructive,
-                          0.14,
-                        ),
+                        backgroundColor: withOpacity(palette.destructive, 0.14),
                       },
                     ]}
                   >
@@ -81,7 +78,7 @@ export function InvoicesList({
                       style={[
                         styles.statusText,
                         {
-                          color: Colors[colorScheme ?? 'light'].destructive,
+                          color: palette.destructive,
                         },
                       ]}
                     >
@@ -91,12 +88,7 @@ export function InvoicesList({
                 ) : null}
               </View>
               <View style={styles.rowAside}>
-                <ThemedText
-                  style={[
-                    styles.totalText,
-                    { color: Colors[colorScheme ?? 'light'].timeHighlight },
-                  ]}
-                >
+                <ThemedText style={[styles.totalText, { color: palette.timeHighlight }]}>
                   {formatPriceValue(item.total, intlLocale)}
                 </ThemedText>
                 <ThemedText style={styles.metaAsideText}>
@@ -108,7 +100,7 @@ export function InvoicesList({
                   style={[
                     styles.divider,
                     {
-                      backgroundColor: Colors[colorScheme ?? 'light'].border,
+                      backgroundColor: palette.border,
                     },
                   ]}
                 />

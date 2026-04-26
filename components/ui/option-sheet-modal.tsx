@@ -2,9 +2,8 @@ import React from 'react';
 import { InteractionManager, Modal, Pressable, StyleSheet, View } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { Colors } from '@/constants/theme';
 import { useBottomSafeAreaStyle } from '@/hooks/use-bottom-safe-area-style';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { usePalette } from '@/hooks/use-palette';
 
 export type OptionSheetItem = {
   key: string;
@@ -31,8 +30,7 @@ export function OptionSheetModal({
   options,
   onClose,
 }: OptionSheetModalProps) {
-  const colorScheme = useColorScheme() ?? 'light';
-  const palette = Colors[colorScheme];
+  const palette = usePalette();
   const sheetStyle = useBottomSafeAreaStyle(styles.sheet);
 
   return (

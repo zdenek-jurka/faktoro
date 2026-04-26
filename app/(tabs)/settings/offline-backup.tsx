@@ -1,8 +1,8 @@
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { Colors, getSwitchColors } from '@/constants/theme';
+import { getSwitchColors } from '@/constants/theme';
 import { useBottomSafeAreaStyle } from '@/hooks/use-bottom-safe-area-style';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { usePalette } from '@/hooks/use-palette';
 import { useI18nContext } from '@/i18n/i18n-react';
 import { normalizeIntlLocale } from '@/i18n/locale-options';
 import {
@@ -39,13 +39,12 @@ type SelectedBackupFile = {
 };
 
 export default function SettingsOfflineBackupScreen() {
-  const colorScheme = useColorScheme();
+  const palette = usePalette();
   const headerHeight = useHeaderHeight();
   const router = useRouter();
   const { LL, locale } = useI18nContext();
   const intlLocale = normalizeIntlLocale(locale, 'en');
   const contentStyle = useBottomSafeAreaStyle(styles.content);
-  const palette = Colors[(colorScheme ?? 'light') as 'light' | 'dark'];
 
   const [isPasswordEnabled, setIsPasswordEnabled] = useState(false);
   const [backupPassword, setBackupPassword] = useState('');
@@ -159,7 +158,7 @@ export default function SettingsOfflineBackupScreen() {
 
         const existingNames = new Set(existingEntries.map((entry) => entry.name));
         const copyFileName = buildCopyFileName(backupFile.fileName, existingNames);
-        targetFileName = await new Promise<string | null>((resolve) => {
+        const selectedFileName = await new Promise<string | null>((resolve) => {
           Alert.alert(
             LL.settings.offlineBackupSaveExistsTitle(),
             LL.settings.offlineBackupSaveExistsMessage({ fileName: backupFile.fileName }),
@@ -186,9 +185,11 @@ export default function SettingsOfflineBackupScreen() {
           );
         });
 
-        if (!targetFileName) {
+        if (!selectedFileName) {
           return;
         }
+
+        targetFileName = selectedFileName;
 
         if (targetFileName === backupFile.fileName) {
           existingEntry.delete();

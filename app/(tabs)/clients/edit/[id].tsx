@@ -8,10 +8,9 @@ import {
   requestMissingRegistryConfiguration,
 } from '@/components/clients/company-registry-lookup';
 import { ClientForm } from '@/components/clients/client-form';
-import { Colors } from '@/constants/theme';
 import { AddressType } from '@/db/schema';
 import database from '@/db';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { usePalette } from '@/hooks/use-palette';
 import { useI18nContext } from '@/i18n/i18n-react';
 import { ClientModel } from '@/model';
 import {
@@ -89,7 +88,7 @@ function toImportedAddressDrafts(
 export default function EditClientScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const colorScheme = useColorScheme();
+  const palette = usePalette();
   const { LL } = useI18nContext();
   const routerRef = useRef(router);
   const llRef = useRef(LL);
@@ -487,13 +486,13 @@ export default function EditClientScreen() {
           options={{
             title: LL.clients.editClient(),
             headerStyle: {
-              backgroundColor: Colors[colorScheme ?? 'light'].background,
+              backgroundColor: palette.background,
             },
-            headerTintColor: Colors[colorScheme ?? 'light'].text,
+            headerTintColor: palette.text,
           }}
         />
         <ThemedView style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={Colors[colorScheme ?? 'light'].tint} />
+          <ActivityIndicator size="large" color={palette.tint} />
         </ThemedView>
       </ThemedView>
     );
@@ -505,9 +504,9 @@ export default function EditClientScreen() {
         options={{
           title: LL.clients.editClient(),
           headerStyle: {
-            backgroundColor: Colors[colorScheme ?? 'light'].background,
+            backgroundColor: palette.background,
           },
-          headerTintColor: Colors[colorScheme ?? 'light'].text,
+          headerTintColor: palette.text,
         }}
       />
       <KeyboardAwareScroll contentContainerStyle={styles.content}>

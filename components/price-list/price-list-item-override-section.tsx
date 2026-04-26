@@ -2,8 +2,7 @@ import { ThemedText } from '@/components/themed-text';
 import { NoClientsRequiredNotice } from '@/components/clients/no-clients-required-notice';
 import { EntityPickerField } from '@/components/ui/entity-picker-field';
 import { SwipeableList } from '@/components/ui/swipeable-list';
-import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { usePalette } from '@/hooks/use-palette';
 import { useDefaultInvoiceCurrency } from '@/hooks/use-default-invoice-currency';
 import { useI18nContext } from '@/i18n/i18n-react';
 import { normalizeIntlLocale } from '@/i18n/locale-options';
@@ -16,7 +15,7 @@ import {
 } from '@/repositories/client-price-override-repository';
 import { getClients } from '@/repositories/client-repository';
 import { normalizeCurrencyCode } from '@/utils/currency-utils';
-import { formatPrice } from '@/utils/price-utils';
+import { formatPrice, isValidPrice, parsePrice } from '@/utils/price-utils';
 import React, { ReactNode, useEffect, useRef, useState } from 'react';
 import { Alert, InteractionManager, StyleSheet, TextInput, View } from 'react-native';
 import { BottomSheetFormModal } from '@/components/ui/bottom-sheet-form-modal';
@@ -36,7 +35,7 @@ const EMPTY_FORM: OverrideFormData = {
 };
 
 export function PriceListItemOverrideSection({ priceListItem }: PriceListItemOverrideSectionProps) {
-  const colorScheme = useColorScheme();
+  const palette = usePalette();
   const { LL, locale } = useI18nContext();
   const defaultInvoiceCurrency = useDefaultInvoiceCurrency();
   const intlLocale = normalizeIntlLocale(locale, 'en');
@@ -54,13 +53,13 @@ export function PriceListItemOverrideSection({ priceListItem }: PriceListItemOve
 
   useEffect(() => {
     const subscription = getPriceListItemOverrides(priceListItem.id)
-      .observe()
+      .observeWithColumns(['client_id', 'custom_price', 'custom_price_currency'])
       .subscribe(setOverrides);
     return () => subscription.unsubscribe();
   }, [priceListItem.id]);
 
   useEffect(() => {
-    const subscription = getClients(false).observe().subscribe(setClients);
+    const subscription = getClients(false).observeWithColumns(['name']).subscribe(setClients);
     return () => subscription.unsubscribe();
   }, []);
 
@@ -112,11 +111,11 @@ export function PriceListItemOverrideSection({ priceListItem }: PriceListItemOve
       return;
     }
 
-    const price = parseFloat(formData.customPrice);
-    if (isNaN(price) || price <= 0) {
+    if (!isValidPrice(formData.customPrice)) {
       Alert.alert(LL.common.error(), LL.priceList.errorInvalidPrice());
       return;
     }
+    const price = parsePrice(formData.customPrice);
 
     try {
       if (editingId) {
@@ -196,11 +195,16 @@ export function PriceListItemOverrideSection({ priceListItem }: PriceListItemOve
         emptyText={
           clients.length > 0 ? LL.priceList.noClientOverrides() : LL.timeTracking.addClientFirst()
         }
-        itemBackgroundColor={Colors[colorScheme === 'dark' ? 'dark' : 'light'].cardBackground}
+        itemBackgroundColor={palette.cardBackground}
         showAddButton={clients.length > 0 && availableClients.length > 0}
       />
       {clients.length === 0 && (
-        <NoClientsRequiredNotice message={LL.timeTracking.addClientFirst()} style={styles.notice} />
+        <NoClientsRequiredNotice
+          message={LL.timeTracking.addClientFirst()}
+          returnTo="priceListItem"
+          returnToId={priceListItem.id}
+          style={styles.notice}
+        />
       )}
 
       <BottomSheetFormModal
@@ -211,12 +215,7 @@ export function PriceListItemOverrideSection({ priceListItem }: PriceListItemOve
         keyboardAvoidanceEnabled={!pickerOpen}
       >
         {editingId ? (
-          <View
-            style={[
-              styles.editingClientInfo,
-              { backgroundColor: Colors[colorScheme === 'dark' ? 'dark' : 'light'].cardBackground },
-            ]}
-          >
+          <View style={[styles.editingClientInfo, { backgroundColor: palette.cardBackground }]}>
             <ThemedText style={styles.editingClientName}>
               {getClientName(formData.clientId)}
             </ThemedText>
@@ -256,12 +255,12 @@ export function PriceListItemOverrideSection({ priceListItem }: PriceListItemOve
           style={[
             styles.input,
             {
-              color: Colors[colorScheme === 'dark' ? 'dark' : 'light'].text,
-              borderColor: Colors[colorScheme === 'dark' ? 'dark' : 'light'].inputBorder,
+              color: palette.text,
+              borderColor: palette.inputBorder,
             },
           ]}
           placeholder="0.00"
-          placeholderTextColor={Colors[colorScheme === 'dark' ? 'dark' : 'light'].placeholder}
+          placeholderTextColor={palette.placeholder}
           value={formData.customPrice}
           onChangeText={(text) => {
             setCustomPriceSelection(undefined);
@@ -273,12 +272,7 @@ export function PriceListItemOverrideSection({ priceListItem }: PriceListItemOve
           keyboardType="decimal-pad"
         />
 
-        <View
-          style={[
-            styles.defaultPriceInfo,
-            { backgroundColor: Colors[colorScheme === 'dark' ? 'dark' : 'light'].cardBackground },
-          ]}
-        >
+        <View style={[styles.defaultPriceInfo, { backgroundColor: palette.cardBackground }]}>
           <ThemedText style={styles.defaultPriceLabel}>{LL.priceList.defaultLabel()}</ThemedText>
           <ThemedText style={styles.defaultPriceValue}>
             {formatPrice(

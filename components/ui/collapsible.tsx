@@ -4,8 +4,7 @@ import { StyleSheet, Pressable, ViewStyle } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { usePalette } from '@/hooks/use-palette';
 
 interface CollapsibleProps extends PropsWithChildren {
   title?: string;
@@ -28,14 +27,14 @@ export function Collapsible({
   contentStyle,
 }: CollapsibleProps) {
   const [isOpen, setIsOpen] = useState(defaultOpen);
-  const theme = useColorScheme() ?? 'light';
+  const palette = usePalette();
 
   const chevronIcon = (
     <IconSymbol
       name={chevronPosition === 'left' ? 'chevron.right' : isOpen ? 'chevron.up' : 'chevron.down'}
       size={18}
       weight="medium"
-      color={theme === 'light' ? Colors.light.icon : Colors.dark.icon}
+      color={palette.icon}
       style={
         chevronPosition === 'left'
           ? { transform: [{ rotate: isOpen ? '90deg' : '0deg' }] }

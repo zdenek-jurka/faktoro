@@ -5,7 +5,7 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Colors } from '@/constants/theme';
 import database from '@/db';
 import { useBottomSafeAreaStyle } from '@/hooks/use-bottom-safe-area-style';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { usePalette } from '@/hooks/use-palette';
 import { useI18nContext } from '@/i18n/i18n-react';
 import { normalizeIntlLocale } from '@/i18n/locale-options';
 import {
@@ -43,8 +43,7 @@ type Props = {
 
 export function ClientTimesheetsList({ clientId, backToClientId, onTimesheetPress }: Props) {
   const router = useRouter();
-  const colorScheme = useColorScheme();
-  const palette = Colors[colorScheme === 'dark' ? 'dark' : 'light'];
+  const palette = usePalette();
   const { LL, locale } = useI18nContext();
   const listContentStyle = useBottomSafeAreaStyle(styles.listContent);
   const intlLocale = normalizeIntlLocale(locale, 'en');
@@ -66,7 +65,14 @@ export function ClientTimesheetsList({ clientId, backToClientId, onTimesheetPres
     const timesheetsSubscription = database
       .get<TimesheetModel>(TimesheetModel.table)
       .query(Q.where('client_id', clientId), Q.sortBy('period_from', Q.desc))
-      .observe()
+      .observeWithColumns([
+        'client_id',
+        'timesheet_number',
+        'label',
+        'period_type',
+        'period_from',
+        'period_to',
+      ])
       .subscribe(setTimesheets);
 
     return () => {
@@ -96,7 +102,7 @@ export function ClientTimesheetsList({ clientId, backToClientId, onTimesheetPres
     const sub = database
       .get<TimeEntryModel>(TimeEntryModel.table)
       .query(Q.where('timesheet_id', Q.oneOf(timesheetIds)))
-      .observe()
+      .observeWithColumns(['timesheet_id', 'duration', 'timesheet_duration'])
       .subscribe(setTimesheetEntries);
     return () => sub.unsubscribe();
   }, [timesheetIds]);
@@ -109,7 +115,7 @@ export function ClientTimesheetsList({ clientId, backToClientId, onTimesheetPres
     const sub = database
       .get<InvoiceItemModel>(InvoiceItemModel.table)
       .query(Q.where('source_kind', 'timesheet'), Q.where('source_id', Q.oneOf(timesheetIds)))
-      .observe()
+      .observeWithColumns(['source_kind', 'source_id', 'invoice_id'])
       .subscribe(setInvoiceItems);
     return () => sub.unsubscribe();
   }, [timesheetIds]);
@@ -122,7 +128,7 @@ export function ClientTimesheetsList({ clientId, backToClientId, onTimesheetPres
     const sub = database
       .get<InvoiceModel>(InvoiceModel.table)
       .query(Q.where('id', Q.oneOf(invoiceIds)))
-      .observe()
+      .observeWithColumns(['invoice_number'])
       .subscribe(setInvoices);
     return () => sub.unsubscribe();
   }, [invoiceIds]);

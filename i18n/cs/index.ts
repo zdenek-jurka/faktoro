@@ -259,8 +259,8 @@ const cs = {
     exportErrorXml: 'Export XML selhal.',
     exportSelectIntegration: 'Vybrat exportní integraci',
     exportBaseXmlOption: 'Základní XML (bez transformace)',
-    exportWebhookSuccess: 'Odesláno — server odpověděl {status:number}.',
-    exportWebhookError: 'Webhook selhal — server odpověděl {status:number}.',
+    exportWebhookSuccess: 'Odesláno — server odpověděl {status}.',
+    exportWebhookError: 'Webhook selhal — server odpověděl {status}.',
     exportWebhookNetworkError:
       'Endpoint není dostupný nebo se nepodařilo ověřit jeho TLS certifikát. Zkontrolujte URL, certifikát a připojení.',
     exportClipboardSuccess: 'Výsledek zkopírován do schránky.',
@@ -415,10 +415,10 @@ const cs = {
       'Doklad s tímto číslem už existuje. Uložení nebude možné, dokud číslo nezměníte.',
     invoiceNumberConflictTitle: 'Použít nové číslo faktury?',
     invoiceNumberConflictAutoMessage:
-      'Číslo {current:string} už bylo mezitím použito. Chcete místo něj použít nové volné číslo {suggested:string}?',
+      'Číslo {current} už bylo mezitím použito. Chcete místo něj použít nové volné číslo {suggested}?',
     invoiceNumberConflictManualMessage:
-      'Číslo {current:string} už používá jiný doklad. Můžete ho upravit ručně, nebo místo něj použít nové volné číslo {suggested:string}.',
-    invoiceNumberConflictUseSuggested: 'Použít {suggested:string}',
+      'Číslo {current} už používá jiný doklad. Můžete ho upravit ručně, nebo místo něj použít nové volné číslo {suggested}.',
+    invoiceNumberConflictUseSuggested: 'Použít {suggested}',
     noCompatiblePriceListItems: 'Žádné položky ceníku nejsou v měně {currency}.',
     errorCreate: 'Nepodařilo se vytvořit fakturu.',
     errorUpdate: 'Nepodařilo se uložit změny faktury.',
@@ -555,8 +555,8 @@ const cs = {
     shareInvoice: 'Sdílet fakturu',
     shareUnavailable: 'Sdílení na tomto zařízení není dostupné.',
     exportError: 'Nepodařilo se vyexportovat PDF faktury.',
-    exportWebhookSuccess: 'Odesláno — server odpověděl {status:number}.',
-    exportWebhookError: 'Webhook selhal — server odpověděl {status:number}.',
+    exportWebhookSuccess: 'Odesláno — server odpověděl {status}.',
+    exportWebhookError: 'Webhook selhal — server odpověděl {status}.',
     exportWebhookNetworkError:
       'Endpoint není dostupný nebo se nepodařilo ověřit jeho TLS certifikát. Zkontrolujte URL, certifikát a připojení.',
     exportClipboardSuccess: 'Výsledek zkopírován do schránky.',
@@ -786,9 +786,9 @@ const cs = {
     exportIntegrationTestDeliveryShareSuccess: 'Testovací XML je připravené ke sdílení.',
     exportIntegrationTestDeliveryClipboardSuccess: 'Testovací XML bylo zkopírováno do schránky.',
     exportIntegrationTestDeliveryWebhookSuccess:
-      'Testovací XML bylo odesláno — server odpověděl {status:number}.',
+      'Testovací XML bylo odesláno — server odpověděl {status}.',
     exportIntegrationTestDeliveryWebhookError:
-      'Testovací doručení selhalo — server odpověděl {status:number}.',
+      'Testovací doručení selhalo — server odpověděl {status}.',
     exportIntegrationTestDeliveryNetworkError:
       'Endpoint není dostupný nebo se nepodařilo ověřit jeho TLS certifikát. Zkontrolujte URL, certifikát a připojení.',
     exportIntegrationTestDeliveryError: 'Testovací doručení selhalo.',
@@ -906,8 +906,7 @@ const cs = {
     invoiceSeriesDeviceCode: 'Kód zařízení (volitelně)',
     syncTitle: 'Synchronizace zařízení',
     syncDescription: 'Připojte toto zařízení k Faktoro sync serveru běžícímu v Dockeru.',
-    syncDescriptionConnected:
-      'Toto zařízení je připojeno k sync serveru na adrese {serverUrl:string}.',
+    syncDescriptionConnected: 'Toto zařízení je připojeno k sync serveru na adrese {serverUrl}.',
     syncServerSourceCode: 'Zdrojové kódy serveru jsou dostupné na',
     syncStatusActive: 'Synchronizace aktivní',
     syncStatusPaused: 'Automatická synchronizace pozastavena',
@@ -1242,8 +1241,8 @@ const cs = {
     vatRetryAction: 'Zkusit znovu',
     vatImportFailedPrompt:
       'Faktoro teď nedokázalo sazby DPH uložit. Můžete to zkusit znovu, nebo tento krok přeskočit a nastavit je později.',
-    vatLoadedFor: 'Sazby pro {country:string}',
-    vatLoadedOn: 'Načteno {date:string}',
+    vatLoadedFor: 'Sazby pro {country}',
+    vatLoadedOn: 'Načteno {date}',
     vatUseRates: 'Použít tyto sazby',
     vatRatesConfigured: 'Sazby DPH jsou nastaveny.',
     vatRatesConfiguredDesc: 'Spravovat je můžete v Nastavení → DPH.',

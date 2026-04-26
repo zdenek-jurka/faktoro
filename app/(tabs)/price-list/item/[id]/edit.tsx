@@ -11,9 +11,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Colors, getSwitchColors } from '@/constants/theme';
+import { getSwitchColors } from '@/constants/theme';
 import database from '@/db';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { usePalette } from '@/hooks/use-palette';
 import { useCurrencySettings } from '@/hooks/use-currency-settings';
 import { useI18nContext } from '@/i18n/i18n-react';
 import { PriceListItemModel, VatCodeModel, VatRateModel } from '@/model';
@@ -21,7 +21,9 @@ import { updatePriceListItem } from '@/repositories/price-list-repository';
 import { getSettings } from '@/repositories/settings-repository';
 import { getVatCodes, getVatRates } from '@/repositories/vat-rate-repository';
 import { DEFAULT_CURRENCY_CODE, normalizeCurrencyCode } from '@/utils/currency-utils';
+import { isValidPrice, parsePrice } from '@/utils/price-utils';
 import { getLocalizedVatCodeName } from '@/utils/vat-code-utils';
+import { formatVatRatePercent, resolveVatRateForDate } from '@/utils/vat-rate-utils';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useMemo, useState } from 'react';
 import { Alert, StyleSheet, Switch, TextInput, Pressable, View } from 'react-native';
@@ -37,27 +39,10 @@ type PriceListFormData = {
   isActive: boolean;
 };
 
-function resolveVatRateForDate(rates: VatRateModel[], taxableAt: number): number | null {
-  const matching = rates.filter(
-    (rate) => rate.validFrom <= taxableAt && (rate.validTo == null || rate.validTo >= taxableAt),
-  );
-  if (matching.length === 0) return null;
-  matching.sort((a, b) => b.validFrom - a.validFrom);
-  return matching[0].ratePercent;
-}
-
-function formatVatRatePercent(ratePercent: number): string {
-  return new Intl.NumberFormat(undefined, {
-    minimumFractionDigits: Number.isInteger(ratePercent) ? 0 : 1,
-    maximumFractionDigits: 2,
-  }).format(ratePercent);
-}
-
 export default function EditPriceListItemScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const colorScheme = useColorScheme();
-  const palette = Colors[colorScheme ?? 'light'];
+  const palette = usePalette();
   const { LL } = useI18nContext();
   const currencies = useCurrencySettings();
   const [item, setItem] = useState<PriceListItemModel | null>(null);
@@ -177,11 +162,11 @@ export default function EditPriceListItemScreen() {
       return;
     }
 
-    const price = parseFloat(formData.defaultPrice);
-    if (isNaN(price) || price <= 0) {
+    if (!isValidPrice(formData.defaultPrice)) {
       Alert.alert(LL.common.error(), LL.priceList.errorInvalidPrice());
       return;
     }
+    const price = parsePrice(formData.defaultPrice);
 
     if (formData.unit === 'custom' && !formData.customUnit.trim()) {
       Alert.alert(LL.common.error(), LL.priceList.errorRequiredFields());
@@ -243,12 +228,12 @@ export default function EditPriceListItemScreen() {
             style={[
               styles.input,
               {
-                color: Colors[colorScheme ?? 'light'].text,
-                borderColor: Colors[colorScheme ?? 'light'].inputBorder,
+                color: palette.text,
+                borderColor: palette.inputBorder,
               },
             ]}
             placeholder={LL.priceList.itemName()}
-            placeholderTextColor={Colors[colorScheme ?? 'light'].placeholder}
+            placeholderTextColor={palette.placeholder}
             value={formData.name}
             onChangeText={(text) => setFormData({ ...formData, name: text })}
           />
@@ -259,12 +244,12 @@ export default function EditPriceListItemScreen() {
               styles.input,
               styles.textArea,
               {
-                color: Colors[colorScheme ?? 'light'].text,
-                borderColor: Colors[colorScheme ?? 'light'].inputBorder,
+                color: palette.text,
+                borderColor: palette.inputBorder,
               },
             ]}
             placeholder={LL.priceList.description()}
-            placeholderTextColor={Colors[colorScheme ?? 'light'].placeholder}
+            placeholderTextColor={palette.placeholder}
             value={formData.description}
             onChangeText={(text) => setFormData({ ...formData, description: text })}
             multiline
@@ -276,12 +261,12 @@ export default function EditPriceListItemScreen() {
             style={[
               styles.input,
               {
-                color: Colors[colorScheme ?? 'light'].text,
-                borderColor: Colors[colorScheme ?? 'light'].inputBorder,
+                color: palette.text,
+                borderColor: palette.inputBorder,
               },
             ]}
             placeholder="0.00"
-            placeholderTextColor={Colors[colorScheme ?? 'light'].placeholder}
+            placeholderTextColor={palette.placeholder}
             value={formData.defaultPrice}
             onChangeText={(text) => setFormData({ ...formData, defaultPrice: text })}
             keyboardType="decimal-pad"

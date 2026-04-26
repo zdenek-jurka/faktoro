@@ -264,8 +264,8 @@ const pt = {
     exportErrorXml: 'Falha ao exportar XML.',
     exportSelectIntegration: 'Selecionar integração de exportação',
     exportBaseXmlOption: 'XML base (sem transformação)',
-    exportWebhookSuccess: 'Enviado — o servidor respondeu {status:number}.',
-    exportWebhookError: 'O webhook falhou — o servidor respondeu {status:number}.',
+    exportWebhookSuccess: 'Enviado — o servidor respondeu {status}.',
+    exportWebhookError: 'O webhook falhou — o servidor respondeu {status}.',
     exportWebhookNetworkError:
       'Não foi possível alcançar o endpoint ou validar o respetivo certificado TLS. Verifique a URL, o certificado e a ligação.',
     exportClipboardSuccess: 'O resultado foi copiado para a área de transferência.',
@@ -426,10 +426,10 @@ const pt = {
       'Já existe um documento com este número. Não será possível salvar até que você altere o número.',
     invoiceNumberConflictTitle: 'Usar um novo número de fatura?',
     invoiceNumberConflictAutoMessage:
-      'O número de fatura {current:string} já foi usado entretanto. Quer usar em vez disso o próximo número disponível {suggested:string}?',
+      'O número de fatura {current} já foi usado entretanto. Quer usar em vez disso o próximo número disponível {suggested}?',
     invoiceNumberConflictManualMessage:
-      'O número de fatura {current:string} já está a ser usado por outro documento. Pode alterá-lo manualmente ou usar em vez disso o próximo número disponível {suggested:string}.',
-    invoiceNumberConflictUseSuggested: 'Usar {suggested:string}',
+      'O número de fatura {current} já está a ser usado por outro documento. Pode alterá-lo manualmente ou usar em vez disso o próximo número disponível {suggested}.',
+    invoiceNumberConflictUseSuggested: 'Usar {suggested}',
     noCompatiblePriceListItems: 'Nenhum item da lista de preços usa {currency}.',
     errorCreate: 'Falha ao criar fatura.',
     errorUpdate: 'Falha ao guardar as alterações da fatura.',
@@ -567,8 +567,8 @@ const pt = {
     shareInvoice: 'Compartilhar fatura',
     shareUnavailable: 'O compartilhamento não está disponível neste dispositivo.',
     exportError: 'Falha ao exportar o PDF da fatura.',
-    exportWebhookSuccess: 'Enviado — o servidor respondeu {status:number}.',
-    exportWebhookError: 'O webhook falhou — o servidor respondeu {status:number}.',
+    exportWebhookSuccess: 'Enviado — o servidor respondeu {status}.',
+    exportWebhookError: 'O webhook falhou — o servidor respondeu {status}.',
     exportWebhookNetworkError:
       'Não foi possível alcançar o endpoint ou validar o respetivo certificado TLS. Verifique a URL, o certificado e a ligação.',
     exportClipboardSuccess: 'O resultado foi copiado para a área de transferência.',
@@ -802,9 +802,9 @@ const pt = {
     exportIntegrationTestDeliveryClipboardSuccess:
       'O XML de teste foi copiado para a área de transferência.',
     exportIntegrationTestDeliveryWebhookSuccess:
-      'O XML de teste foi enviado — o servidor respondeu {status:number}.',
+      'O XML de teste foi enviado — o servidor respondeu {status}.',
     exportIntegrationTestDeliveryWebhookError:
-      'A entrega de teste falhou — o servidor respondeu {status:number}.',
+      'A entrega de teste falhou — o servidor respondeu {status}.',
     exportIntegrationTestDeliveryNetworkError:
       'Não foi possível alcançar o endpoint de entrega ou validar o respetivo certificado TLS. Verifique a URL, o certificado e a ligação.',
     exportIntegrationTestDeliveryError: 'A entrega de teste falhou.',
@@ -927,7 +927,7 @@ const pt = {
     syncDescription:
       'Conecte este dispositivo ao servidor de sincronização do Faktoro em execução no Docker.',
     syncDescriptionConnected:
-      'Este dispositivo está conectado ao servidor de sincronização em {serverUrl:string}.',
+      'Este dispositivo está conectado ao servidor de sincronização em {serverUrl}.',
     syncServerUrl: 'URL do servidor de sincronização (por exemplo, http://192.168.1.10:8080)',
     syncServerSourceCode: 'Código-fonte do servidor disponível em',
     syncDeviceName: 'Nome do dispositivo',

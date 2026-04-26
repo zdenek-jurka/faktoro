@@ -2,9 +2,8 @@ import React from 'react';
 import { Modal, StyleSheet, Pressable, View } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { Colors } from '@/constants/theme';
 import { useBottomSafeAreaStyle } from '@/hooks/use-bottom-safe-area-style';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { usePalette } from '@/hooks/use-palette';
 import { getLocaleOptions, type LocaleLabelLocalization } from '@/i18n/locale-options';
 import type { Locales } from '@/i18n/i18n-types';
 
@@ -26,8 +25,7 @@ type Props = {
 };
 
 export function LanguagePickerModal({ visible, LL, currentLanguage, onClose, onSelect }: Props) {
-  const colorScheme = useColorScheme() ?? 'light';
-  const palette = Colors[colorScheme];
+  const palette = usePalette();
   const sheetStyle = useBottomSafeAreaStyle(styles.sheet);
 
   const options: { value: Locales; label: string }[] = getLocaleOptions(LL);

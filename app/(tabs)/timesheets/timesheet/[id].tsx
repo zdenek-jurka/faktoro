@@ -7,7 +7,7 @@ import { isPdfOpenEnabled, isPdfSaveEnabled } from '@/constants/features';
 import { Colors } from '@/constants/theme';
 import database from '@/db';
 import { useBottomSafeAreaStyle } from '@/hooks/use-bottom-safe-area-style';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { usePalette } from '@/hooks/use-palette';
 import { useI18nContext } from '@/i18n/i18n-react';
 import { getIntlLocale, normalizeIntlLocale, normalizeLocale } from '@/i18n/locale-options';
 import type { Locales } from '@/i18n/i18n-types';
@@ -88,8 +88,7 @@ function formatDuration(seconds: number): string {
 export default function TimesheetDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const colorScheme = useColorScheme();
-  const palette = Colors[colorScheme === 'dark' ? 'dark' : 'light'];
+  const palette = usePalette();
   const { LL, locale } = useI18nContext();
   const intlLocale = normalizeIntlLocale(locale, 'en');
   const entriesContentStyle = useBottomSafeAreaStyle(styles.entriesContent);
@@ -170,7 +169,22 @@ export default function TimesheetDetailScreen() {
     const entriesSubscription = database
       .get<TimeEntryModel>(TimeEntryModel.table)
       .query(Q.where('timesheet_id', id), Q.sortBy('start_time', Q.desc))
-      .observe()
+      .observeWithColumns([
+        'timesheet_id',
+        'client_id',
+        'description',
+        'start_time',
+        'end_time',
+        'duration',
+        'timesheet_duration',
+        'is_running',
+        'is_paused',
+        'paused_at',
+        'total_paused_duration',
+        'price_list_item_id',
+        'rate',
+        'rate_currency',
+      ])
       .subscribe(setEntries);
 
     return () => {
@@ -202,7 +216,7 @@ export default function TimesheetDetailScreen() {
     const subscription = database
       .get<InvoiceItemModel>(InvoiceItemModel.table)
       .query(Q.where('source_kind', 'timesheet'), Q.where('source_id', timesheet.id))
-      .observe()
+      .observeWithColumns(['source_kind', 'source_id', 'invoice_id'])
       .subscribe((items) => {
         const first = items[0];
         const invoiceId = first?.invoiceId || null;
@@ -230,37 +244,42 @@ export default function TimesheetDetailScreen() {
   }, [linkedInvoiceId]);
 
   const runPendingExportSheetAction = useEffectEvent(() => {
-    if (pendingExportSheetAction === 'pdf') {
+    const action = pendingExportSheetAction;
+    if (action === null) {
+      return;
+    }
+
+    if (action === 'pdf') {
       setPendingExportSheetAction(null);
       void handleExportPdf();
       return;
     }
-    if (pendingExportSheetAction === 'open_pdf') {
+    if (action === 'open_pdf') {
       setPendingExportSheetAction(null);
       if (isPdfOpenEnabled) {
         void handleOpenPdf();
       }
       return;
     }
-    if (pendingExportSheetAction === 'save_pdf') {
+    if (action === 'save_pdf') {
       setPendingExportSheetAction(null);
       if (isPdfSaveEnabled) {
         void handleSavePdf();
       }
       return;
     }
-    if (pendingExportSheetAction === 'xlsx') {
+    if (action === 'xlsx') {
       setPendingExportSheetAction(null);
       void handleExportXlsx();
       return;
     }
-    if (pendingExportSheetAction === 'xml_base') {
+    if (action === 'xml_base') {
       setPendingExportSheetAction(null);
       void doExportXml(null);
       return;
     }
-    if (pendingExportSheetAction.startsWith('integration:')) {
-      const integrationId = pendingExportSheetAction.slice('integration:'.length);
+    if (action.startsWith('integration:')) {
+      const integrationId = action.slice('integration:'.length);
       setPendingExportSheetAction(null);
       void doExportXml(integrationId);
     }
@@ -607,7 +626,7 @@ export default function TimesheetDetailScreen() {
 
         const existingNames = new Set(existingEntries.map((entry) => entry.name));
         const copyFileName = buildCopyFileName(pdfFile.fileName, existingNames);
-        targetFileName = await new Promise<string | null>((resolve) => {
+        const selectedFileName = await new Promise<string | null>((resolve) => {
           Alert.alert(
             LLExport.timesheets.savePdfExistsTitle(),
             LLExport.timesheets.savePdfExistsMessage({ fileName: pdfFile.fileName }),
@@ -634,9 +653,11 @@ export default function TimesheetDetailScreen() {
           );
         });
 
-        if (!targetFileName) {
+        if (!selectedFileName) {
           return;
         }
+
+        targetFileName = selectedFileName;
 
         if (targetFileName === pdfFile.fileName) {
           existingEntry.delete();

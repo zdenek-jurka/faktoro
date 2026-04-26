@@ -1,11 +1,13 @@
+import database from '@/db';
 import { ActionEmptyState } from '@/components/ui/action-empty-state';
 import { useDefaultInvoiceCurrency } from '@/hooks/use-default-invoice-currency';
 import { PriceListItemModel } from '@/model';
 import { deletePriceListItem, getPriceListItems } from '@/repositories/price-list-repository';
+import { escapeLike } from '@/utils/escape-like';
 import { useI18nContext } from '@/i18n/i18n-react';
+import { Q } from '@nozbe/watermelondb';
 import { useRouter } from 'expo-router';
-import { normalizeCurrencyCode } from '@/utils/currency-utils';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Alert } from 'react-native';
 import { PriceListList } from './price-list-list';
 
@@ -14,6 +16,38 @@ type PriceListListContainerProps = {
   visibilityFilter: 'active' | 'all' | 'inactive';
   onItemPress: (id: string) => void;
 };
+
+function buildPriceListItemsQuery(
+  searchQuery: string,
+  visibilityFilter: PriceListListContainerProps['visibilityFilter'],
+) {
+  const collection = database.get<PriceListItemModel>(PriceListItemModel.table);
+  const query = searchQuery.trim();
+  const searchClause = query
+    ? Q.or(
+        Q.where('name', Q.like(`%${escapeLike(query)}%`)),
+        Q.where('description', Q.like(`%${escapeLike(query)}%`)),
+        Q.where('unit', Q.like(`%${escapeLike(query)}%`)),
+        Q.where('default_price_currency', Q.like(`%${escapeLike(query)}%`)),
+      )
+    : null;
+
+  if (visibilityFilter === 'active') {
+    return searchClause
+      ? collection.query(Q.where('is_active', true), searchClause, Q.sortBy('name', Q.asc))
+      : getPriceListItems(false);
+  }
+
+  if (visibilityFilter === 'inactive') {
+    return searchClause
+      ? collection.query(Q.where('is_active', false), searchClause, Q.sortBy('name', Q.asc))
+      : collection.query(Q.where('is_active', false), Q.sortBy('name', Q.asc));
+  }
+
+  return searchClause
+    ? collection.query(searchClause, Q.sortBy('name', Q.asc))
+    : getPriceListItems(true);
+}
 
 export function PriceListListContainer({
   searchQuery,
@@ -26,32 +60,18 @@ export function PriceListListContainer({
   const defaultInvoiceCurrency = useDefaultInvoiceCurrency();
 
   useEffect(() => {
-    const subscription = getPriceListItems(true).observe().subscribe(setItems);
+    const subscription = buildPriceListItemsQuery(searchQuery, visibilityFilter)
+      .observeWithColumns([
+        'name',
+        'description',
+        'unit',
+        'default_price',
+        'default_price_currency',
+        'is_active',
+      ])
+      .subscribe(setItems);
     return () => subscription.unsubscribe();
-  }, []);
-
-  const filteredItems = useMemo(() => {
-    const query = searchQuery.trim().toLowerCase();
-    const visibilityItems =
-      visibilityFilter === 'active'
-        ? items.filter((item) => item.isActive)
-        : visibilityFilter === 'inactive'
-          ? items.filter((item) => !item.isActive)
-          : items;
-
-    if (!query) return visibilityItems;
-
-    return visibilityItems.filter((item) => {
-      return (
-        item.name.toLowerCase().includes(query) ||
-        (item.description && item.description.toLowerCase().includes(query)) ||
-        item.unit.toLowerCase().includes(query) ||
-        normalizeCurrencyCode(item.defaultPriceCurrency, defaultInvoiceCurrency)
-          .toLowerCase()
-          .includes(query)
-      );
-    });
-  }, [defaultInvoiceCurrency, items, searchQuery, visibilityFilter]);
+  }, [searchQuery, visibilityFilter]);
 
   const handleItemDelete = (id: string) => {
     Alert.alert(LL.priceList.deleteConfirm(), LL.priceList.deleteMessage(), [
@@ -73,7 +93,7 @@ export function PriceListListContainer({
 
   return (
     <PriceListList
-      items={filteredItems}
+      items={items}
       fallbackCurrency={defaultInvoiceCurrency}
       searchQuery={searchQuery}
       onItemPress={onItemPress}

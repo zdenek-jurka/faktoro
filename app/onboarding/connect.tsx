@@ -3,8 +3,7 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { KeyboardAwareScroll } from '@/components/ui/keyboard-aware-scroll';
 import { SyncPayloadEntryModal } from '@/components/sync/sync-payload-entry-modal';
 import { isSyncEnabled, isSyncRecoveryPayloadEntryEnabled } from '@/constants/features';
-import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { usePalette } from '@/hooks/use-palette';
 import { useI18nContext } from '@/i18n/i18n-react';
 import { updateDeviceSyncSettings } from '@/repositories/device-sync-settings-repository';
 import { setOnboardingCompleted } from '@/repositories/onboarding-repository';
@@ -37,8 +36,7 @@ export default function OnboardingConnectScreen() {
 }
 
 function OnboardingConnectScreenContent() {
-  const colorScheme = useColorScheme();
-  const palette = Colors[colorScheme ?? 'light'];
+  const palette = usePalette();
   const { LL } = useI18nContext();
   const router = useRouter();
 

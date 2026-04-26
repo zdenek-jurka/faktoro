@@ -1,8 +1,7 @@
 import { ThemedText } from '@/components/themed-text';
 import { IconSymbol, type IconSymbolName } from '@/components/ui/icon-symbol';
 import { isSyncEnabled } from '@/constants/features';
-import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { usePalette } from '@/hooks/use-palette';
 import { useI18nContext } from '@/i18n/i18n-react';
 import { useRouter } from 'expo-router';
 import React from 'react';
@@ -17,8 +16,7 @@ type ChoiceItem = {
 };
 
 export default function OnboardingStartScreen() {
-  const colorScheme = useColorScheme();
-  const palette = Colors[colorScheme ?? 'light'];
+  const palette = usePalette();
   const { LL } = useI18nContext();
   const router = useRouter();
 

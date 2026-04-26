@@ -2,8 +2,7 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { SwipeableRow } from '@/components/ui/swipeable-row';
-import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { usePalette } from '@/hooks/use-palette';
 import { useI18nContext } from '@/i18n/i18n-react';
 import { ClientModel, TimeEntryModel } from '@/model';
 import { roundTimeByInterval } from '@/utils/time-utils';
@@ -33,7 +32,7 @@ export function ClientList({
   headerComponent,
   emptyState,
 }: ClientListProps) {
-  const colorScheme = useColorScheme();
+  const palette = usePalette();
   const { LL } = useI18nContext();
   const [now, setNow] = useState(Date.now());
 
@@ -96,7 +95,7 @@ export function ClientList({
             emptyState
           ) : (
             <>
-              <IconSymbol name="person.3" size={48} color={Colors[colorScheme ?? 'light'].icon} />
+              <IconSymbol name="person.3" size={48} color={palette.icon} />
               <ThemedText style={styles.emptyText}>
                 {searchQuery.trim().length === 0
                   ? LL.clients.noClients()

@@ -3,6 +3,7 @@ import {
   getCurrencyFormatDefinition,
   normalizeCurrencyCode,
 } from '@/utils/currency-utils';
+import { parsePositiveDecimalInput } from '@/utils/number-input';
 
 /**
  * Format a price value for display
@@ -41,9 +42,7 @@ export function formatPriceValue(price: number, locale: string = 'cs-CZ'): strin
  * @returns The parsed number or NaN if invalid
  */
 export function parsePrice(input: string): number {
-  // Remove spaces and replace comma with dot
-  const normalized = input.trim().replace(/\s/g, '').replace(',', '.');
-  return parseFloat(normalized);
+  return parsePositiveDecimalInput(input);
 }
 
 /**
@@ -53,5 +52,5 @@ export function parsePrice(input: string): number {
  */
 export function isValidPrice(input: string): boolean {
   const price = parsePrice(input);
-  return !isNaN(price) && price > 0;
+  return Number.isFinite(price);
 }

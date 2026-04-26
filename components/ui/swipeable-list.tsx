@@ -1,7 +1,7 @@
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { BorderRadius, Colors, FontSizes, Spacing } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { BorderRadius, FontSizes, Spacing } from '@/constants/theme';
+import { usePalette } from '@/hooks/use-palette';
 import React, { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { IconButton } from './icon-button';
@@ -49,8 +49,7 @@ export function SwipeableList<T>({
   itemBackgroundColor,
   showAddButton = true,
 }: SwipeableListProps<T>) {
-  const colorScheme = useColorScheme();
-  const palette = Colors[colorScheme ?? 'light'];
+  const palette = usePalette();
   const backgroundColor = itemBackgroundColor || palette.cardBackground;
 
   return (

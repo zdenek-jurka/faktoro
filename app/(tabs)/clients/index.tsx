@@ -34,7 +34,6 @@ export default function ClientsScreen() {
                 onPress={() =>
                   router.push({
                     pathname: '/clients/add',
-                    params: { returnTo: '/clients' },
                   })
                 }
                 accessibilityLabel={LL.clients.addNew()}

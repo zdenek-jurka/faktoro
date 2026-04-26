@@ -10,22 +10,21 @@ import { HeaderActions } from '@/components/ui/header-actions';
 import { IconButton } from '@/components/ui/icon-button';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { SwipeableRow } from '@/components/ui/swipeable-row';
-import { Colors } from '@/constants/theme';
 import database from '@/db';
 import { useBottomSafeAreaStyle } from '@/hooks/use-bottom-safe-area-style';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { usePalette } from '@/hooks/use-palette';
 import { useDefaultInvoiceCurrency } from '@/hooks/use-default-invoice-currency';
 import { useHeaderSearch } from '@/hooks/use-header-search';
 import { useI18nContext } from '@/i18n/i18n-react';
 import { normalizeIntlLocale } from '@/i18n/locale-options';
-import { AppSettingsModel, ClientModel, PriceListItemModel, TimeEntryModel } from '@/model';
+import { ClientModel, PriceListItemModel, TimeEntryModel } from '@/model';
 import { getEffectivePriceDetails } from '@/repositories/client-price-override-repository';
 import {
   getDeviceSyncSettings,
   observeDeviceSyncSettings,
 } from '@/repositories/device-sync-settings-repository';
 import { getPriceListItems } from '@/repositories/price-list-repository';
-import { getSettings } from '@/repositories/settings-repository';
+import { getSettings, observeSettings } from '@/repositories/settings-repository';
 import {
   deleteTimeEntry,
   pauseTimeEntry,
@@ -33,6 +32,7 @@ import {
   stopTimeEntry,
   updateTimeEntry,
 } from '@/repositories/time-entry-repository';
+import { buildClientIdentitySearchClause } from '@/utils/client-search';
 import { isAndroid, isIos } from '@/utils/platform';
 import { normalizeCurrencyCode } from '@/utils/currency-utils';
 import { formatPrice } from '@/utils/price-utils';
@@ -44,7 +44,7 @@ import { Alert, FlatList, KeyboardAvoidingView, Pressable, StyleSheet, View } fr
 
 export default function TimeTrackingScreen() {
   const router = useRouter();
-  const colorScheme = useColorScheme();
+  const palette = usePalette();
   const { LL, locale } = useI18nContext();
   const intlLocale = normalizeIntlLocale(locale, 'en');
   const defaultInvoiceCurrency = useDefaultInvoiceCurrency();
@@ -53,6 +53,7 @@ export default function TimeTrackingScreen() {
   const [runningEntries, setRunningEntries] = useState<TimeEntryModel[]>([]);
   const [timeEntries, setTimeEntries] = useState<TimeEntryModel[]>([]);
   const [clients, setClients] = useState<ClientModel[]>([]);
+  const [matchingClientIds, setMatchingClientIds] = useState<Set<string> | null>(null);
   const [priceListItems, setPriceListItems] = useState<PriceListItemModel[]>([]);
   const [localDeviceId, setLocalDeviceId] = useState<string | null>(null);
   const [defaultBillingInterval, setDefaultBillingInterval] = useState<number | undefined>();
@@ -66,10 +67,6 @@ export default function TimeTrackingScreen() {
   const [editingEntry, setEditingEntry] = useState<TimeEntryModel | null>(null);
   const [editDescription, setEditDescription] = useState('');
   const [editPriceListItemId, setEditPriceListItemId] = useState<string>('');
-  const localRunningClient = useMemo(() => {
-    if (!localRunningEntry) return undefined;
-    return clients.find((client) => client.id === localRunningEntry.clientId);
-  }, [localRunningEntry, clients]);
 
   const getControlErrorMessage = (fallback: string, error: unknown) => {
     if (error instanceof Error && error.message === 'TIME_ENTRY_REMOTE_CONTROL_FORBIDDEN') {
@@ -99,6 +96,24 @@ export default function TimeTrackingScreen() {
   }, []);
 
   useEffect(() => {
+    const searchClause = buildClientIdentitySearchClause(searchQuery);
+    if (!searchClause) {
+      setMatchingClientIds(null);
+      return;
+    }
+
+    const subscription = database
+      .get<ClientModel>(ClientModel.table)
+      .query(Q.where('is_archived', false), searchClause)
+      .observeWithColumns(['name', 'company_id', 'email'])
+      .subscribe((matchingClients) => {
+        setMatchingClientIds(new Set(matchingClients.map((client) => client.id)));
+      });
+
+    return () => subscription.unsubscribe();
+  }, [searchQuery]);
+
+  useEffect(() => {
     const loadDevice = async () => {
       const settings = await getSettings();
       setDefaultBillingInterval(settings.defaultBillingInterval);
@@ -107,31 +122,27 @@ export default function TimeTrackingScreen() {
     };
     void loadDevice();
 
-    const settingsSubscription = database
-      .get<AppSettingsModel>(AppSettingsModel.table)
-      .query()
-      .observeWithColumns(['default_billing_interval'])
-      .subscribe((allSettings) => {
-        if (allSettings.length === 0) {
-          setDefaultBillingInterval(undefined);
-          return;
-        }
-        setDefaultBillingInterval(allSettings[0].defaultBillingInterval);
-      });
-
+    const unsubscribeSettings = observeSettings(
+      (settings) => {
+        setDefaultBillingInterval(settings?.defaultBillingInterval);
+      },
+      ['default_billing_interval'],
+    );
     const deviceSubscription = observeDeviceSyncSettings((deviceSettings) => {
       setLocalDeviceId(deviceSettings.syncDeviceId || null);
     });
 
     return () => {
-      settingsSubscription.unsubscribe();
+      unsubscribeSettings();
       deviceSubscription();
     };
   }, []);
 
   // Load price list items
   useEffect(() => {
-    const subscription = getPriceListItems(false).observe().subscribe(setPriceListItems);
+    const subscription = getPriceListItems(false)
+      .observeWithColumns(['name', 'default_price', 'default_price_currency', 'unit', 'is_active'])
+      .subscribe(setPriceListItems);
     return () => subscription.unsubscribe();
   }, []);
 
@@ -140,7 +151,16 @@ export default function TimeTrackingScreen() {
     const subscription = database
       .get<TimeEntryModel>(TimeEntryModel.table)
       .query(Q.where('timesheet_id', null), Q.sortBy('start_time', Q.desc))
-      .observe()
+      .observeWithColumns([
+        'timesheet_id',
+        'client_id',
+        'start_time',
+        'duration',
+        'is_running',
+        'is_paused',
+        'paused_at',
+        'total_paused_duration',
+      ])
       .subscribe(setTimeEntries);
 
     return () => subscription.unsubscribe();
@@ -174,6 +194,11 @@ export default function TimeTrackingScreen() {
     }
     return runningEntries.find((entry) => entry.runningDeviceId === localDeviceId) ?? null;
   }, [localDeviceId, runningEntries]);
+
+  const localRunningClient = useMemo(() => {
+    if (!localRunningEntry) return undefined;
+    return clients.find((client) => client.id === localRunningEntry.clientId);
+  }, [localRunningEntry, clients]);
 
   const currentEntry = useMemo(
     () => localRunningEntry ?? (runningEntries.length > 0 ? runningEntries[0] : null),
@@ -330,16 +355,9 @@ export default function TimeTrackingScreen() {
   }, [clients, intlLocale, timeEntries]);
 
   const filteredGroupedEntries = useMemo(() => {
-    const query = searchQuery.trim().toLowerCase();
-    if (!query) return groupedEntries;
-
-    return groupedEntries.filter(({ client }) => {
-      const name = client.name.toLowerCase();
-      const companyId = (client.companyId ?? '').toLowerCase();
-      const email = (client.email ?? '').toLowerCase();
-      return name.includes(query) || companyId.includes(query) || email.includes(query);
-    });
-  }, [groupedEntries, searchQuery]);
+    if (!matchingClientIds) return groupedEntries;
+    return groupedEntries.filter(({ client }) => matchingClientIds.has(client.id));
+  }, [groupedEntries, matchingClientIds]);
 
   const currentClient = useMemo(() => {
     if (!currentEntry) return undefined;
@@ -419,9 +437,8 @@ export default function TimeTrackingScreen() {
                 style={[
                   styles.currentInfoCard,
                   {
-                    backgroundColor:
-                      Colors[(colorScheme ?? 'light') as 'light' | 'dark'].cardBackground,
-                    borderColor: Colors[(colorScheme ?? 'light') as 'light' | 'dark'].border,
+                    backgroundColor: palette.cardBackground,
+                    borderColor: palette.border,
                   },
                 ]}
               >
@@ -442,11 +459,7 @@ export default function TimeTrackingScreen() {
                       {!!currentEntry.description && (
                         <ThemedText style={styles.currentInfoSeparator}>·</ThemedText>
                       )}
-                      <IconSymbol
-                        name="tag.fill"
-                        size={11}
-                        color={Colors[(colorScheme ?? 'light') as 'light' | 'dark'].timeHighlight}
-                      />
+                      <IconSymbol name="tag.fill" size={11} color={palette.timeHighlight} />
                       <ThemedText style={styles.currentInfoMeta} numberOfLines={1}>
                         {currentPriceListItem.name}
                         {currentEntry.rate !== undefined
@@ -484,28 +497,20 @@ export default function TimeTrackingScreen() {
                   style={({ pressed }) => [
                     styles.button,
                     styles.startButton,
-                    { backgroundColor: Colors[(colorScheme ?? 'light') as 'light' | 'dark'].tint },
+                    { backgroundColor: palette.tint },
                     pressed && styles.buttonPressed,
                   ]}
                   onPress={() => setShowStartModal(true)}
                 >
-                  <IconSymbol
-                    name="play.fill"
-                    size={22}
-                    color={Colors[(colorScheme ?? 'light') as 'light' | 'dark'].onTint}
-                  />
-                  <ThemedText
-                    style={[
-                      styles.buttonText,
-                      { color: Colors[(colorScheme ?? 'light') as 'light' | 'dark'].onTint },
-                    ]}
-                  >
+                  <IconSymbol name="play.fill" size={22} color={palette.onTint} />
+                  <ThemedText style={[styles.buttonText, { color: palette.onTint }]}>
                     {LL.timeTracking.start()}
                   </ThemedText>
                 </Pressable>
               ) : (
                 <NoClientsRequiredNotice
                   message={LL.timeTracking.addClientFirst()}
+                  returnTo="timeTracking"
                   style={styles.noClientsNotice}
                 />
               )
@@ -556,6 +561,7 @@ export default function TimeTrackingScreen() {
         onClose={() => setShowStartModal(false)}
         clients={clients}
         priceListItems={priceListItems}
+        addClientReturnTo="timeTracking"
       />
 
       <TimeEntryFormModal

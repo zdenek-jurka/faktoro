@@ -260,8 +260,8 @@ const pl = {
     exportErrorXml: 'Nie udało się wyeksportować XML.',
     exportSelectIntegration: 'Wybierz integrację eksportu',
     exportBaseXmlOption: 'Bazowy XML (bez transformacji)',
-    exportWebhookSuccess: 'Wysłano — serwer odpowiedział {status:number}.',
-    exportWebhookError: 'Webhook nie powiódł się — serwer odpowiedział {status:number}.',
+    exportWebhookSuccess: 'Wysłano — serwer odpowiedział {status}.',
+    exportWebhookError: 'Webhook nie powiódł się — serwer odpowiedział {status}.',
     exportWebhookNetworkError:
       'Nie można połączyć się z endpointem albo zweryfikować jego certyfikatu TLS. Sprawdź URL, certyfikat i połączenie.',
     exportClipboardSuccess: 'Wynik został skopiowany do schowka.',
@@ -421,10 +421,10 @@ const pl = {
       'Dokument o tym numerze już istnieje. Zapis nie będzie możliwy, dopóki nie zmienisz numeru.',
     invoiceNumberConflictTitle: 'Użyć nowego numeru faktury?',
     invoiceNumberConflictAutoMessage:
-      'Numer faktury {current:string} został już w międzyczasie użyty. Czy chcesz zamiast niego użyć kolejnego wolnego numeru {suggested:string}?',
+      'Numer faktury {current} został już w międzyczasie użyty. Czy chcesz zamiast niego użyć kolejnego wolnego numeru {suggested}?',
     invoiceNumberConflictManualMessage:
-      'Numer faktury {current:string} jest już używany przez inny dokument. Możesz zmienić go ręcznie albo użyć zamiast niego kolejnego wolnego numeru {suggested:string}.',
-    invoiceNumberConflictUseSuggested: 'Użyj {suggested:string}',
+      'Numer faktury {current} jest już używany przez inny dokument. Możesz zmienić go ręcznie albo użyć zamiast niego kolejnego wolnego numeru {suggested}.',
+    invoiceNumberConflictUseSuggested: 'Użyj {suggested}',
     noCompatiblePriceListItems: 'Brak pozycji cennika w walucie {currency}.',
     errorCreate: 'Nie udało się utworzyć faktury.',
     errorUpdate: 'Nie udało się zapisać zmian faktury.',
@@ -562,8 +562,8 @@ const pl = {
     shareInvoice: 'Udostępnij fakturę',
     shareUnavailable: 'Udostępnianie nie jest dostępne na tym urządzeniu.',
     exportError: 'Nie udało się wyeksportować faktury w formacie PDF.',
-    exportWebhookSuccess: 'Wysłano — serwer odpowiedział {status:number}.',
-    exportWebhookError: 'Webhook nie powiódł się — serwer odpowiedział {status:number}.',
+    exportWebhookSuccess: 'Wysłano — serwer odpowiedział {status}.',
+    exportWebhookError: 'Webhook nie powiódł się — serwer odpowiedział {status}.',
     exportWebhookNetworkError:
       'Nie można połączyć się z endpointem albo zweryfikować jego certyfikatu TLS. Sprawdź URL, certyfikat i połączenie.',
     exportClipboardSuccess: 'Wynik został skopiowany do schowka.',
@@ -791,9 +791,9 @@ const pl = {
     exportIntegrationTestDeliveryShareSuccess: 'Testowy XML został przygotowany do udostępnienia.',
     exportIntegrationTestDeliveryClipboardSuccess: 'Testowy XML został skopiowany do schowka.',
     exportIntegrationTestDeliveryWebhookSuccess:
-      'Testowy XML został wysłany — serwer odpowiedział {status:number}.',
+      'Testowy XML został wysłany — serwer odpowiedział {status}.',
     exportIntegrationTestDeliveryWebhookError:
-      'Testowe dostarczenie nie powiodło się — serwer odpowiedział {status:number}.',
+      'Testowe dostarczenie nie powiodło się — serwer odpowiedział {status}.',
     exportIntegrationTestDeliveryNetworkError:
       'Nie można połączyć się z endpointem dostarczenia albo zweryfikować jego certyfikatu TLS. Sprawdź URL, certyfikat i połączenie.',
     exportIntegrationTestDeliveryError: 'Testowe dostarczenie nie powiodło się.',
@@ -913,7 +913,7 @@ const pl = {
     syncDescription:
       'Połącz to urządzenie z serwerem synchronizacji Faktoro uruchomionym w Dockerze.',
     syncDescriptionConnected:
-      'To urządzenie jest połączone z serwerem synchronizacji pod adresem {serverUrl:string}.',
+      'To urządzenie jest połączone z serwerem synchronizacji pod adresem {serverUrl}.',
     syncServerUrl: 'Adres URL serwera synchronizacji (np. http://192.168.1.10:8080)',
     syncServerSourceCode: 'Kod źródłowy serwera dostępny pod adresem',
     syncDeviceName: 'Nazwa urządzenia',

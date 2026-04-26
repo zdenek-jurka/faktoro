@@ -3,7 +3,7 @@ import { ThemedView } from '@/components/themed-view';
 import { QrScannerModal } from '@/components/sync/qr-scanner-modal';
 import { SyncPayloadEntryModal } from '@/components/sync/sync-payload-entry-modal';
 import { BottomSheetFormModal } from '@/components/ui/bottom-sheet-form-modal';
-import { Colors, FontSizes, Spacing } from '@/constants/theme';
+import { FontSizes, Spacing } from '@/constants/theme';
 import {
   isDangerousSyncResetEnabled,
   isSyncEnabled,
@@ -11,7 +11,7 @@ import {
 } from '@/constants/features';
 import database from '@/db';
 import { useBottomSafeAreaStyle } from '@/hooks/use-bottom-safe-area-style';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { usePalette } from '@/hooks/use-palette';
 import { useI18nContext } from '@/i18n/i18n-react';
 import SyncConflictModel from '@/model/SyncConflictModel';
 import SyncOperationModel from '@/model/SyncOperationModel';
@@ -73,8 +73,7 @@ export default function SyncMaintenanceScreen() {
 }
 
 function SyncMaintenanceScreenContent() {
-  const colorScheme = useColorScheme();
-  const palette = Colors[colorScheme === 'dark' ? 'dark' : 'light'];
+  const palette = usePalette();
   const { LL } = useI18nContext();
   const router = useRouter();
   const headerHeight = useHeaderHeight();
@@ -124,13 +123,19 @@ function SyncMaintenanceScreenContent() {
     const operationsSubscription = database
       .get<SyncOperationModel>(SyncOperationModel.table)
       .query(Q.where('is_synced', false), Q.sortBy('created_at', Q.desc), Q.take(10))
-      .observe()
+      .observeWithColumns(['operation_type', 'table_name', 'record_id', 'retry_count', 'is_synced'])
       .subscribe(setPendingOperations);
 
     const conflictsSubscription = database
       .get<SyncConflictModel>(SyncConflictModel.table)
       .query(Q.where('status', 'pending'), Q.sortBy('created_at', Q.desc), Q.take(10))
-      .observe()
+      .observeWithColumns([
+        'conflict_type',
+        'table_name',
+        'record_id',
+        'conflicting_fields_json',
+        'status',
+      ])
       .subscribe(setPendingConflicts);
 
     return () => {
@@ -593,13 +598,13 @@ function SyncMaintenanceScreenContent() {
       case 'client.vat_number':
         return LL.clients.vatNumber();
       case 'price_list_item.name':
-        return LL.priceList.name();
+        return LL.priceList.itemName();
       case 'price_list_item.description':
         return LL.priceList.description();
       case 'price_list_item.default_price':
         return LL.priceList.defaultPrice();
       case 'time_entry.description':
-        return LL.timeTracking.description();
+        return LL.timeTracking.activity();
       case 'invoice.invoice_number':
         return LL.invoices.invoiceNumber();
       case 'invoice.currency':

@@ -266,8 +266,8 @@ const fr = {
     exportErrorXml: "Échec de l'export XML.",
     exportSelectIntegration: "Sélectionner l'intégration d'export",
     exportBaseXmlOption: 'XML de base (sans transformation)',
-    exportWebhookSuccess: 'Envoyé — le serveur a répondu {status:number}.',
-    exportWebhookError: 'Le webhook a échoué — le serveur a répondu {status:number}.',
+    exportWebhookSuccess: 'Envoyé — le serveur a répondu {status}.',
+    exportWebhookError: 'Le webhook a échoué — le serveur a répondu {status}.',
     exportWebhookNetworkError:
       'Impossible de joindre le point de terminaison ou de valider son certificat TLS. Vérifiez l’URL, le certificat et la connexion.',
     exportClipboardSuccess: 'Le résultat a été copié dans le presse-papiers.',
@@ -429,10 +429,10 @@ const fr = {
       "Un document avec ce numéro existe déjà. L'enregistrement ne sera pas possible tant que vous n'aurez pas modifié le numéro.",
     invoiceNumberConflictTitle: 'Utiliser un nouveau numéro de facture ?',
     invoiceNumberConflictAutoMessage:
-      'Le numéro de facture {current:string} a déjà été utilisé entre-temps. Voulez-vous utiliser à la place le prochain numéro disponible {suggested:string} ?',
+      'Le numéro de facture {current} a déjà été utilisé entre-temps. Voulez-vous utiliser à la place le prochain numéro disponible {suggested} ?',
     invoiceNumberConflictManualMessage:
-      'Le numéro de facture {current:string} est déjà utilisé par un autre document. Vous pouvez le modifier manuellement ou utiliser à la place le prochain numéro disponible {suggested:string}.',
-    invoiceNumberConflictUseSuggested: 'Utiliser {suggested:string}',
+      'Le numéro de facture {current} est déjà utilisé par un autre document. Vous pouvez le modifier manuellement ou utiliser à la place le prochain numéro disponible {suggested}.',
+    invoiceNumberConflictUseSuggested: 'Utiliser {suggested}',
     noCompatiblePriceListItems: "Aucun article de liste de prix n'utilise {currency}.",
     errorCreate: 'Échec de la création de la facture.',
     errorUpdate: "Échec de l'enregistrement des modifications de la facture.",
@@ -570,8 +570,8 @@ const fr = {
     shareInvoice: 'Partager la facture',
     shareUnavailable: "Le partage n'est pas disponible sur cet appareil.",
     exportError: "Échec de l'exportation du PDF de la facture.",
-    exportWebhookSuccess: 'Envoyé — le serveur a répondu {status:number}.',
-    exportWebhookError: 'Le webhook a échoué — le serveur a répondu {status:number}.',
+    exportWebhookSuccess: 'Envoyé — le serveur a répondu {status}.',
+    exportWebhookError: 'Le webhook a échoué — le serveur a répondu {status}.',
     exportWebhookNetworkError:
       'Impossible de joindre le point de terminaison ou de valider son certificat TLS. Vérifiez l’URL, le certificat et la connexion.',
     exportClipboardSuccess: 'Le résultat a été copié dans le presse-papiers.',
@@ -809,9 +809,9 @@ const fr = {
     exportIntegrationTestDeliveryClipboardSuccess:
       'Le XML de test a été copié dans le presse-papiers.',
     exportIntegrationTestDeliveryWebhookSuccess:
-      'Le XML de test a été envoyé — le serveur a répondu {status:number}.',
+      'Le XML de test a été envoyé — le serveur a répondu {status}.',
     exportIntegrationTestDeliveryWebhookError:
-      'La livraison de test a échoué — le serveur a répondu {status:number}.',
+      'La livraison de test a échoué — le serveur a répondu {status}.',
     exportIntegrationTestDeliveryNetworkError:
       'Impossible de joindre le point de terminaison de livraison ou de valider son certificat TLS. Vérifiez l’URL, le certificat et la connexion.',
     exportIntegrationTestDeliveryError: 'La livraison de test a échoué.',
@@ -933,7 +933,7 @@ const fr = {
     syncDescription:
       'Connecter cet appareil au serveur de synchronisation Faktoro exécuté dans Docker.',
     syncDescriptionConnected:
-      'Cet appareil est connecté au serveur de synchronisation à {serverUrl:string}.',
+      'Cet appareil est connecté au serveur de synchronisation à {serverUrl}.',
     syncServerUrl: 'URL du serveur de synchronisation (par exemple http://192.168.1.10:8080)',
     syncServerSourceCode: 'Code source du serveur disponible sur',
     syncDeviceName: "Nom de l'appareil",

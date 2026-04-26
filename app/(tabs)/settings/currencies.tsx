@@ -4,9 +4,8 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { SwipeableRow } from '@/components/ui/swipeable-row';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { Colors } from '@/constants/theme';
 import { useBottomSafeAreaStyle } from '@/hooks/use-bottom-safe-area-style';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { usePalette } from '@/hooks/use-palette';
 import { useCurrencySettings } from '@/hooks/use-currency-settings';
 import { useI18nContext } from '@/i18n/i18n-react';
 import { normalizeIntlLocale } from '@/i18n/locale-options';
@@ -31,8 +30,7 @@ function CurrencyListItem({
   locale: string;
   onPress: () => void;
 }) {
-  const colorScheme = useColorScheme();
-  const palette = Colors[colorScheme ?? 'light'];
+  const palette = usePalette();
 
   return (
     <Pressable
@@ -71,8 +69,7 @@ function CurrencyListItem({
 
 export default function SettingsCurrenciesScreen() {
   const router = useRouter();
-  const colorScheme = useColorScheme();
-  const palette = Colors[colorScheme ?? 'light'];
+  const palette = usePalette();
   const { LL, locale } = useI18nContext();
   const intlLocale = normalizeIntlLocale(locale, 'en');
   const contentStyle = useBottomSafeAreaStyle(styles.content);

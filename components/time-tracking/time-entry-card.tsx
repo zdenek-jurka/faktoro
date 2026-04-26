@@ -1,8 +1,9 @@
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Colors, Shadows, withOpacity } from '@/constants/theme';
+import { Shadows, withOpacity } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { usePalette } from '@/hooks/use-palette';
 import { useDefaultInvoiceCurrency } from '@/hooks/use-default-invoice-currency';
 import { useI18nContext } from '@/i18n/i18n-react';
 import { normalizeIntlLocale } from '@/i18n/locale-options';
@@ -14,6 +15,7 @@ import { getDisplayedTimeEntryDuration } from '@/utils/time-entry-duration-utils
 import React, { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import database from '@/db';
+import { Q } from '@nozbe/watermelondb';
 
 type TimeEntryCardProps = {
   item: TimeEntryModel;
@@ -35,7 +37,7 @@ export function TimeEntryCard({
   hideClient = false,
 }: TimeEntryCardProps) {
   const colorScheme = useColorScheme();
-  const palette = Colors[colorScheme ?? 'light'];
+  const palette = usePalette();
   const { LL, locale } = useI18nContext();
   const intlLocale = normalizeIntlLocale(locale, 'en');
   const defaultInvoiceCurrency = useDefaultInvoiceCurrency();
@@ -51,22 +53,20 @@ export function TimeEntryCard({
 
   // Load price list item if associated
   useEffect(() => {
-    if (item.priceListItemId) {
-      const loadPriceListItem = async () => {
-        try {
-          const priceListItems = database.get<PriceListItemModel>(PriceListItemModel.table);
-          const priceItem = await priceListItems.find(item.priceListItemId!);
-          setPriceListItem(priceItem);
-        } catch (error) {
-          console.error('Error loading price list item:', error);
-          setPriceListItem(null);
-        }
-      };
-      loadPriceListItem();
-    } else {
-      // Clear price list item when it's removed
+    if (!item.priceListItemId) {
       setPriceListItem(null);
+      return;
     }
+
+    const subscription = database
+      .get<PriceListItemModel>(PriceListItemModel.table)
+      .query(Q.where('id', item.priceListItemId))
+      .observeWithColumns(['name', 'default_price_currency', 'unit'])
+      .subscribe((items) => {
+        setPriceListItem(items[0] ?? null);
+      });
+
+    return () => subscription.unsubscribe();
   }, [item.priceListItemId]);
 
   useEffect(() => {

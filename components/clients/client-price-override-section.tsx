@@ -4,8 +4,8 @@ import { ThemedText } from '@/components/themed-text';
 import { BottomSheetFormModal } from '@/components/ui/bottom-sheet-form-modal';
 import { EntityPickerField } from '@/components/ui/entity-picker-field';
 import { SwipeableList } from '@/components/ui/swipeable-list';
-import { Colors, FontSizes, Opacity, Spacing } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { FontSizes, Opacity, Spacing } from '@/constants/theme';
+import { usePalette } from '@/hooks/use-palette';
 import { useDefaultInvoiceCurrency } from '@/hooks/use-default-invoice-currency';
 import { useI18nContext } from '@/i18n/i18n-react';
 import { normalizeIntlLocale } from '@/i18n/locale-options';
@@ -35,7 +35,7 @@ const EMPTY_FORM: OverrideFormData = {
 };
 
 export function ClientPriceOverrideSection({ client }: ClientPriceOverrideSectionProps) {
-  const colorScheme = useColorScheme();
+  const palette = usePalette();
   const { LL, locale } = useI18nContext();
   const defaultInvoiceCurrency = useDefaultInvoiceCurrency();
   const intlLocale = normalizeIntlLocale(locale, 'en');
@@ -53,13 +53,17 @@ export function ClientPriceOverrideSection({ client }: ClientPriceOverrideSectio
 
   // Load price list items
   useEffect(() => {
-    const subscription = getPriceListItems(false).observe().subscribe(setPriceListItems);
+    const subscription = getPriceListItems(false)
+      .observeWithColumns(['name', 'default_price', 'default_price_currency', 'unit', 'is_active'])
+      .subscribe(setPriceListItems);
     return () => subscription.unsubscribe();
   }, []);
 
   // Load client price overrides
   useEffect(() => {
-    const subscription = getClientPriceOverrides(client.id).observe().subscribe(setOverrides);
+    const subscription = getClientPriceOverrides(client.id)
+      .observeWithColumns(['price_list_item_id', 'custom_price', 'custom_price_currency'])
+      .subscribe(setOverrides);
     return () => subscription.unsubscribe();
   }, [client.id]);
 
@@ -201,7 +205,7 @@ export function ClientPriceOverrideSection({ client }: ClientPriceOverrideSectio
                         styles.detailValue,
                         styles.textRight,
                         styles.customPriceValue,
-                        { color: Colors[colorScheme === 'dark' ? 'dark' : 'light'].timeHighlight },
+                        { color: palette.timeHighlight },
                       ]}
                     >
                       {formatPrice(
@@ -220,7 +224,7 @@ export function ClientPriceOverrideSection({ client }: ClientPriceOverrideSectio
           );
         }}
         emptyText={LL.priceList.noOverride()}
-        itemBackgroundColor={Colors[colorScheme === 'dark' ? 'dark' : 'light'].cardBackground}
+        itemBackgroundColor={palette.cardBackground}
       />
 
       <BottomSheetFormModal
@@ -235,8 +239,7 @@ export function ClientPriceOverrideSection({ client }: ClientPriceOverrideSectio
             style={[
               styles.editingItemInfo,
               {
-                backgroundColor:
-                  Colors[colorScheme === 'dark' ? 'dark' : 'light'].buttonNeutralBackground,
+                backgroundColor: palette.buttonNeutralBackground,
               },
             ]}
           >
@@ -304,12 +307,12 @@ export function ClientPriceOverrideSection({ client }: ClientPriceOverrideSectio
           style={[
             styles.input,
             {
-              color: Colors[colorScheme === 'dark' ? 'dark' : 'light'].text,
-              borderColor: Colors[colorScheme === 'dark' ? 'dark' : 'light'].inputBorder,
+              color: palette.text,
+              borderColor: palette.inputBorder,
             },
           ]}
           placeholder="0.00"
-          placeholderTextColor={Colors[colorScheme === 'dark' ? 'dark' : 'light'].placeholder}
+          placeholderTextColor={palette.placeholder}
           value={formData.customPrice}
           onChangeText={(text) => {
             setCustomPriceSelection(undefined);
@@ -327,7 +330,7 @@ export function ClientPriceOverrideSection({ client }: ClientPriceOverrideSectio
               style={[
                 styles.defaultPriceInfo,
                 {
-                  backgroundColor: Colors[colorScheme === 'dark' ? 'dark' : 'light'].cardBackground,
+                  backgroundColor: palette.cardBackground,
                 },
               ]}
             >

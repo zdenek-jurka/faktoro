@@ -32,7 +32,19 @@ export function InvoicesListContainer({
           .query(Q.where('client_id', clientId), Q.sortBy('issued_at', Q.desc))
       : getInvoices();
 
-    const invoicesSubscription = invoicesQuery.observe().subscribe(setInvoices);
+    const invoicesSubscription = invoicesQuery
+      .observeWithColumns([
+        'client_id',
+        'invoice_number',
+        'buyer_snapshot_json',
+        'issued_at',
+        'currency',
+        'total',
+        'status',
+        'correction_kind',
+        'seller_snapshot_json',
+      ])
+      .subscribe(setInvoices);
 
     return () => {
       invoicesSubscription.unsubscribe();
@@ -53,7 +65,7 @@ export function InvoicesListContainer({
     const clientsSubscription = database
       .get<ClientModel>(ClientModel.table)
       .query(Q.where('id', Q.oneOf(invoiceClientIds)))
-      .observe()
+      .observeWithColumns(['name'])
       .subscribe(setClients);
 
     return () => {

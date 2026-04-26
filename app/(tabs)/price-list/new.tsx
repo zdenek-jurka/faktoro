@@ -11,8 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { usePalette } from '@/hooks/use-palette';
 import { useCurrencySettings } from '@/hooks/use-currency-settings';
 import { useI18nContext } from '@/i18n/i18n-react';
 import { VatCodeModel, VatRateModel } from '@/model';
@@ -20,6 +19,8 @@ import { createPriceListItem } from '@/repositories/price-list-repository';
 import { getSettings } from '@/repositories/settings-repository';
 import { DEFAULT_CURRENCY_CODE, normalizeCurrencyCode } from '@/utils/currency-utils';
 import { getVatCodes, getVatRates } from '@/repositories/vat-rate-repository';
+import { isValidPrice, parsePrice } from '@/utils/price-utils';
+import { formatVatRatePercent, resolveVatRateForDate } from '@/utils/vat-rate-utils';
 import { Stack, useRouter } from 'expo-router';
 import React, { useEffect, useMemo, useState } from 'react';
 import { Alert, Pressable, StyleSheet, TextInput, View } from 'react-native';
@@ -45,25 +46,9 @@ const EMPTY_FORM: PriceListFormData = {
   vatCodeId: '',
 };
 
-function resolveVatRateForDate(rates: VatRateModel[], taxableAt: number): number | null {
-  const matching = rates.filter(
-    (rate) => rate.validFrom <= taxableAt && (rate.validTo == null || rate.validTo >= taxableAt),
-  );
-  if (matching.length === 0) return null;
-  matching.sort((a, b) => b.validFrom - a.validFrom);
-  return matching[0].ratePercent;
-}
-
-function formatVatRatePercent(ratePercent: number): string {
-  return new Intl.NumberFormat(undefined, {
-    minimumFractionDigits: Number.isInteger(ratePercent) ? 0 : 1,
-    maximumFractionDigits: 2,
-  }).format(ratePercent);
-}
-
 export default function AddPriceListItemScreen() {
   const router = useRouter();
-  const colorScheme = useColorScheme();
+  const palette = usePalette();
   const { LL } = useI18nContext();
   const currencies = useCurrencySettings();
   const [formData, setFormData] = useState<PriceListFormData>(EMPTY_FORM);
@@ -151,11 +136,11 @@ export default function AddPriceListItemScreen() {
       return;
     }
 
-    const price = parseFloat(formData.defaultPrice);
-    if (isNaN(price) || price <= 0) {
+    if (!isValidPrice(formData.defaultPrice)) {
       Alert.alert(LL.common.error(), LL.priceList.errorInvalidPrice());
       return;
     }
+    const price = parsePrice(formData.defaultPrice);
 
     if (formData.unit === 'custom' && !formData.customUnit.trim()) {
       Alert.alert(LL.common.error(), LL.priceList.errorRequiredFields());
@@ -206,12 +191,12 @@ export default function AddPriceListItemScreen() {
             style={[
               styles.input,
               {
-                color: Colors[colorScheme ?? 'light'].text,
-                borderColor: Colors[colorScheme ?? 'light'].inputBorder,
+                color: palette.text,
+                borderColor: palette.inputBorder,
               },
             ]}
             placeholder={LL.priceList.itemName()}
-            placeholderTextColor={Colors[colorScheme ?? 'light'].placeholder}
+            placeholderTextColor={palette.placeholder}
             value={formData.name}
             onChangeText={(text) => setFormData({ ...formData, name: text })}
           />
@@ -222,12 +207,12 @@ export default function AddPriceListItemScreen() {
               styles.input,
               styles.textArea,
               {
-                color: Colors[colorScheme ?? 'light'].text,
-                borderColor: Colors[colorScheme ?? 'light'].inputBorder,
+                color: palette.text,
+                borderColor: palette.inputBorder,
               },
             ]}
             placeholder={LL.priceList.description()}
-            placeholderTextColor={Colors[colorScheme ?? 'light'].placeholder}
+            placeholderTextColor={palette.placeholder}
             value={formData.description}
             onChangeText={(text) => setFormData({ ...formData, description: text })}
             multiline
@@ -239,12 +224,12 @@ export default function AddPriceListItemScreen() {
             style={[
               styles.input,
               {
-                color: Colors[colorScheme ?? 'light'].text,
-                borderColor: Colors[colorScheme ?? 'light'].inputBorder,
+                color: palette.text,
+                borderColor: palette.inputBorder,
               },
             ]}
             placeholder="0.00"
-            placeholderTextColor={Colors[colorScheme ?? 'light'].placeholder}
+            placeholderTextColor={palette.placeholder}
             value={formData.defaultPrice}
             onChangeText={(text) => setFormData({ ...formData, defaultPrice: text })}
             keyboardType="decimal-pad"
@@ -337,12 +322,12 @@ export default function AddPriceListItemScreen() {
                 style={[
                   styles.input,
                   {
-                    color: Colors[colorScheme ?? 'light'].text,
-                    borderColor: Colors[colorScheme ?? 'light'].inputBorder,
+                    color: palette.text,
+                    borderColor: palette.inputBorder,
                   },
                 ]}
                 placeholder={LL.priceList.units.custom()}
-                placeholderTextColor={Colors[colorScheme ?? 'light'].placeholder}
+                placeholderTextColor={palette.placeholder}
                 value={formData.customUnit}
                 onChangeText={(text) => setFormData({ ...formData, customUnit: text })}
               />
@@ -353,32 +338,25 @@ export default function AddPriceListItemScreen() {
             <Pressable
               style={({ pressed }) => [
                 styles.button,
-                { backgroundColor: Colors[colorScheme ?? 'light'].buttonNeutralBackground },
+                { backgroundColor: palette.buttonNeutralBackground },
                 pressed && styles.pressed,
               ]}
               onPress={handleCancel}
             >
-              <ThemedText
-                style={[
-                  styles.cancelButtonText,
-                  { color: Colors[colorScheme ?? 'light'].textMuted },
-                ]}
-              >
+              <ThemedText style={[styles.cancelButtonText, { color: palette.textMuted }]}>
                 {LL.common.cancel()}
               </ThemedText>
             </Pressable>
             <Pressable
               style={({ pressed }) => [
                 styles.button,
-                { backgroundColor: Colors[colorScheme ?? 'light'].tint },
+                { backgroundColor: palette.tint },
                 pressed && styles.pressed,
               ]}
               onPress={handleSubmit}
               disabled={isSubmitting}
             >
-              <ThemedText
-                style={[styles.buttonText, { color: Colors[colorScheme ?? 'light'].onTint }]}
-              >
+              <ThemedText style={[styles.buttonText, { color: palette.onTint }]}>
                 {LL.common.save()}
               </ThemedText>
             </Pressable>

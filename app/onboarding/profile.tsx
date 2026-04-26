@@ -3,8 +3,8 @@ import { loadRegistrySettingsForLookup } from '@/components/clients/company-regi
 import { ThemedText } from '@/components/themed-text';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { KeyboardAwareScroll } from '@/components/ui/keyboard-aware-scroll';
-import { Colors, getSwitchColors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { getSwitchColors } from '@/constants/theme';
+import { usePalette } from '@/hooks/use-palette';
 import { useI18nContext } from '@/i18n/i18n-react';
 import { normalizeIntlLocale } from '@/i18n/locale-options';
 import {
@@ -32,8 +32,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 const FREE_REGISTRY_KEYS: CompanyRegistryKey[] = ['ares', 'no_brreg', 'ee_ariregister'];
 
 export default function OnboardingProfileScreen() {
-  const colorScheme = useColorScheme();
-  const palette = Colors[colorScheme ?? 'light'];
+  const palette = usePalette();
   const switchColors = getSwitchColors(palette);
   const { LL, locale } = useI18nContext();
   const intlLocale = normalizeIntlLocale(locale, 'en');

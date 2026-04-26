@@ -68,8 +68,27 @@ interface ModelInternals {
   _setRaw: (key: string, value: unknown) => void;
 }
 
+function selectObservedSettings(rows: AppSettingsModel[]): AppSettingsModel | null {
+  if (rows.length === 0) return null;
+  return rows.find((settings) => settings.id === APP_SETTINGS_SINGLETON_ID) ?? rows[0];
+}
+
 export async function getSettings(): Promise<AppSettingsModel> {
   return ensureSingletonSettings();
+}
+
+export function observeSettings(
+  listener: (settings: AppSettingsModel | null) => void,
+  columns: string[] = [],
+): () => void {
+  const settingsCollection = database.get<AppSettingsModel>(AppSettingsModel.table);
+  const query = settingsCollection.query();
+  const observable = columns.length > 0 ? query.observeWithColumns(columns) : query.observe();
+  const subscription = observable.subscribe((rows) => {
+    listener(selectObservedSettings(rows));
+  });
+
+  return () => subscription.unsubscribe();
 }
 
 async function ensureSingletonSettings(): Promise<AppSettingsModel> {

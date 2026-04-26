@@ -1,9 +1,10 @@
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Colors, withOpacity } from '@/constants/theme';
+import { withOpacity } from '@/constants/theme';
 import { useBottomSafeAreaStyle } from '@/hooks/use-bottom-safe-area-style';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { usePalette } from '@/hooks/use-palette';
 import { useI18nContext } from '@/i18n/i18n-react';
 import { isIos } from '@/utils/platform';
 import React, { useEffect, useMemo, useState } from 'react';
@@ -45,7 +46,7 @@ export function EntityPickerField({
   disabled = false,
 }: EntityPickerFieldProps) {
   const colorScheme = useColorScheme();
-  const palette = Colors[colorScheme ?? 'light'];
+  const palette = usePalette();
   const { LL } = useI18nContext();
   const insets = useSafeAreaInsets();
   const modalContentStyle = useBottomSafeAreaStyle(styles.modalContent);

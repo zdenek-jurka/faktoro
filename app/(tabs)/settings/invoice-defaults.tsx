@@ -13,9 +13,9 @@ import {
   canConvertCzBankAccountToIban,
   isIbanLike,
 } from '@/components/settings/invoice-settings-shared';
-import { Colors, getSwitchColors } from '@/constants/theme';
+import { getSwitchColors } from '@/constants/theme';
 import { useBottomSafeAreaStyle } from '@/hooks/use-bottom-safe-area-style';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { usePalette } from '@/hooks/use-palette';
 import { useCurrencySettings } from '@/hooks/use-currency-settings';
 import { useI18nContext } from '@/i18n/i18n-react';
 import { VatCodeModel, VatRateModel } from '@/model';
@@ -38,6 +38,7 @@ import {
 } from '@/utils/timer-limit-utils';
 import { parseBillingIntervalMinutesInput } from '@/utils/time-utils';
 import { getLocalizedVatCodeName, resolvePreferredVatCodeId } from '@/utils/vat-code-utils';
+import { formatVatRatePercent, resolveVatRateForDate } from '@/utils/vat-rate-utils';
 import { useHeaderHeight } from '@react-navigation/elements';
 import { Stack } from 'expo-router';
 import React, { useEffect, useMemo, useState } from 'react';
@@ -52,24 +53,8 @@ import {
   View,
 } from 'react-native';
 
-function resolveVatRateForDate(rates: VatRateModel[], taxableAt: number): number | null {
-  const matching = rates.filter(
-    (rate) => rate.validFrom <= taxableAt && (rate.validTo == null || rate.validTo >= taxableAt),
-  );
-  if (matching.length === 0) return null;
-  matching.sort((a, b) => b.validFrom - a.validFrom);
-  return matching[0].ratePercent;
-}
-
-function formatVatRatePercent(ratePercent: number): string {
-  return new Intl.NumberFormat(undefined, {
-    minimumFractionDigits: Number.isInteger(ratePercent) ? 0 : 1,
-    maximumFractionDigits: 2,
-  }).format(ratePercent);
-}
-
 export default function SettingsInvoiceDefaultsScreen() {
-  const colorScheme = useColorScheme();
+  const palette = usePalette();
   const { LL } = useI18nContext();
   const headerHeight = useHeaderHeight();
   const contentStyle = useBottomSafeAreaStyle(styles.content);
@@ -331,7 +316,7 @@ export default function SettingsInvoiceDefaultsScreen() {
           keyboardDismissMode="on-drag"
           keyboardShouldPersistTaps="handled"
         >
-          <ThemedView style={[styles.section, sectionCard(colorScheme)]}>
+          <ThemedView style={[styles.section, sectionCard(palette)]}>
             <ThemedText style={styles.sectionDescription}>
               {LL.settings.invoiceDefaultsSubtitle()}
             </ThemedText>
@@ -386,9 +371,9 @@ export default function SettingsInvoiceDefaultsScreen() {
               {LL.settings.defaultInvoiceDueDaysHelp()}
             </ThemedText>
             <TextInput
-              style={[styles.input, stylesField(colorScheme)]}
+              style={[styles.input, stylesField(palette)]}
               placeholder={String(DEFAULT_INVOICE_DUE_DAYS)}
-              placeholderTextColor={placeholder(colorScheme)}
+              placeholderTextColor={placeholder(palette)}
               value={defaultInvoiceDueDays}
               onChangeText={setDefaultInvoiceDueDays}
               keyboardType="numeric"
@@ -452,14 +437,14 @@ export default function SettingsInvoiceDefaultsScreen() {
               <Switch
                 value={useBillingInterval}
                 onValueChange={setUseBillingInterval}
-                {...getSwitchColors(Colors[colorScheme ?? 'light'])}
+                {...getSwitchColors(palette)}
               />
             </View>
             {useBillingInterval && (
               <TextInput
-                style={[styles.input, stylesField(colorScheme)]}
+                style={[styles.input, stylesField(palette)]}
                 placeholder="15"
-                placeholderTextColor={placeholder(colorScheme)}
+                placeholderTextColor={placeholder(palette)}
                 value={defaultBillingInterval}
                 onChangeText={setDefaultBillingInterval}
                 keyboardType="numeric"
@@ -483,14 +468,14 @@ export default function SettingsInvoiceDefaultsScreen() {
               <Switch
                 value={timerSoftLimitEnabled}
                 onValueChange={setTimerSoftLimitEnabled}
-                {...getSwitchColors(Colors[colorScheme ?? 'light'])}
+                {...getSwitchColors(palette)}
               />
             </View>
             {timerSoftLimitEnabled && (
               <TextInput
-                style={[styles.input, stylesField(colorScheme)]}
+                style={[styles.input, stylesField(palette)]}
                 placeholder={LL.settings.timerSoftLimitHoursPlaceholder()}
-                placeholderTextColor={placeholder(colorScheme)}
+                placeholderTextColor={placeholder(palette)}
                 value={timerSoftLimitHours}
                 onChangeText={setTimerSoftLimitHours}
                 autoCorrect={false}
@@ -508,14 +493,14 @@ export default function SettingsInvoiceDefaultsScreen() {
               <Switch
                 value={timerHardLimitEnabled}
                 onValueChange={setTimerHardLimitEnabled}
-                {...getSwitchColors(Colors[colorScheme ?? 'light'])}
+                {...getSwitchColors(palette)}
               />
             </View>
             {timerHardLimitEnabled && (
               <TextInput
-                style={[styles.input, stylesField(colorScheme)]}
+                style={[styles.input, stylesField(palette)]}
                 placeholder={LL.settings.timerHardLimitHoursPlaceholder()}
-                placeholderTextColor={placeholder(colorScheme)}
+                placeholderTextColor={placeholder(palette)}
                 value={timerHardLimitHours}
                 onChangeText={setTimerHardLimitHours}
                 autoCorrect={false}
@@ -578,14 +563,12 @@ export default function SettingsInvoiceDefaultsScreen() {
           <Pressable
             style={({ pressed }) => [
               styles.saveButton,
-              { backgroundColor: Colors[colorScheme ?? 'light'].tint },
+              { backgroundColor: palette.tint },
               pressed && styles.pressed,
             ]}
             onPress={handleSave}
           >
-            <ThemedText
-              style={[styles.saveButtonText, { color: Colors[colorScheme ?? 'light'].onTint }]}
-            >
+            <ThemedText style={[styles.saveButtonText, { color: palette.onTint }]}>
               {LL.common.save()}
             </ThemedText>
           </Pressable>
@@ -595,22 +578,22 @@ export default function SettingsInvoiceDefaultsScreen() {
   );
 }
 
-function stylesField(colorScheme: ReturnType<typeof useColorScheme>) {
+function stylesField(palette: ReturnType<typeof usePalette>) {
   return {
-    color: Colors[colorScheme ?? 'light'].text,
-    borderColor: Colors[colorScheme ?? 'light'].inputBorder,
-    backgroundColor: Colors[colorScheme ?? 'light'].inputBackground,
+    color: palette.text,
+    borderColor: palette.inputBorder,
+    backgroundColor: palette.inputBackground,
   };
 }
 
-function sectionCard(colorScheme: ReturnType<typeof useColorScheme>) {
+function sectionCard(palette: ReturnType<typeof usePalette>) {
   return {
-    backgroundColor: Colors[colorScheme ?? 'light'].cardBackground,
+    backgroundColor: palette.cardBackground,
   };
 }
 
-function placeholder(colorScheme: ReturnType<typeof useColorScheme>) {
-  return Colors[colorScheme ?? 'light'].placeholder;
+function placeholder(palette: ReturnType<typeof usePalette>) {
+  return palette.placeholder;
 }
 
 const styles = StyleSheet.create({

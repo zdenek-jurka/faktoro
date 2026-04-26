@@ -8,8 +8,7 @@ import {
   requestMissingRegistryConfiguration,
 } from '@/components/clients/company-registry-lookup';
 import { ClientForm } from '@/components/clients/client-form';
-import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { usePalette } from '@/hooks/use-palette';
 import { useI18nContext } from '@/i18n/i18n-react';
 import {
   type CompanyRegistryCompany,
@@ -22,6 +21,10 @@ import {
 import { createAddress } from '@/repositories/address-repository';
 import { createClient, findPotentialDuplicateClients } from '@/repositories/client-repository';
 import { getSettings } from '@/repositories/settings-repository';
+import {
+  resolveClientAddReturnHref,
+  type ClientAddReturnTarget,
+} from '@/utils/client-add-navigation';
 import { parseInvoiceDueDaysInput } from '@/utils/invoice-defaults';
 import { isPlausibleEmail } from '@/utils/email-utils';
 import { parseTimerLimitHoursInput, validateTimerLimitOrder } from '@/utils/timer-limit-utils';
@@ -86,8 +89,11 @@ function toImportedAddressDrafts(
 
 export default function AddClientScreen() {
   const router = useRouter();
-  const params = useLocalSearchParams<{ returnTo?: string | string[] }>();
-  const colorScheme = useColorScheme();
+  const params = useLocalSearchParams<{
+    returnTo?: ClientAddReturnTarget | ClientAddReturnTarget[];
+    returnToId?: string | string[];
+  }>();
+  const palette = usePalette();
   const { LL } = useI18nContext();
   const [formData, setFormData] = useState<ClientFormData>(initialFormData);
   const [isLookupLoading, setIsLookupLoading] = useState(false);
@@ -108,18 +114,13 @@ export default function AddClientScreen() {
     void loadSettings();
   }, []);
 
-  const returnTo =
-    typeof params.returnTo === 'string'
-      ? params.returnTo
-      : Array.isArray(params.returnTo)
-        ? params.returnTo[0]
-        : undefined;
+  const returnToHref = resolveClientAddReturnHref(params.returnTo, params.returnToId);
 
   const navigateAfterClose = () => {
     router.dismissTo('/clients');
 
-    if (returnTo && returnTo !== '/clients') {
-      router.replace(returnTo);
+    if (returnToHref) {
+      router.replace(returnToHref);
     }
   };
 
@@ -427,9 +428,9 @@ export default function AddClientScreen() {
           title: LL.clients.addNew(),
           headerBackTitle: LL.clients.title(),
           headerStyle: {
-            backgroundColor: Colors[colorScheme ?? 'light'].background,
+            backgroundColor: palette.background,
           },
-          headerTintColor: Colors[colorScheme ?? 'light'].text,
+          headerTintColor: palette.text,
         }}
       />
       <KeyboardAwareScroll contentContainerStyle={styles.content}>

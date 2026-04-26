@@ -1,10 +1,10 @@
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Colors, FontSizes, Spacing, getSwitchColors } from '@/constants/theme';
+import { FontSizes, Spacing, getSwitchColors } from '@/constants/theme';
 import { isSyncEnabled } from '@/constants/features';
 import { useBottomSafeAreaStyle } from '@/hooks/use-bottom-safe-area-style';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { usePalette } from '@/hooks/use-palette';
 import { useI18nContext } from '@/i18n/i18n-react';
 import {
   getDeviceSyncSettings,
@@ -56,8 +56,7 @@ export default function SyncPairingScreen() {
 }
 
 function SyncPairingScreenContent() {
-  const colorScheme = useColorScheme();
-  const palette = Colors[colorScheme === 'dark' ? 'dark' : 'light'];
+  const palette = usePalette();
   const { LL } = useI18nContext();
   const headerHeight = useHeaderHeight();
   const contentStyle = useBottomSafeAreaStyle(styles.content);
@@ -68,6 +67,12 @@ function SyncPairingScreenContent() {
     addDeviceDeviceName?: string;
     completeOnSuccess?: string;
   }>();
+  const addDeviceServerUrl = normalizeRouteParam(params.addDeviceServerUrl);
+  const addDeviceInstanceId = normalizeRouteParam(params.addDeviceInstanceId);
+  const addDeviceRecoveryEmail = normalizeRouteParam(params.addDeviceRecoveryEmail);
+  const addDeviceDeviceName = normalizeRouteParam(params.addDeviceDeviceName);
+  const completeOnSuccess = normalizeRouteParam(params.completeOnSuccess) === '1';
+  const isAddDeviceFlow = !!addDeviceServerUrl;
 
   const [syncServerUrl, setSyncServerUrl] = useState('');
   const [syncInstanceId, setSyncInstanceId] = useState('');
@@ -85,12 +90,6 @@ function SyncPairingScreenContent() {
     useState(isAddDeviceFlow);
   const [initialServerUrl, setInitialServerUrl] = useState('');
   const [settings, setSettings] = useState<Awaited<ReturnType<typeof getSettings>> | null>(null);
-  const addDeviceServerUrl = normalizeRouteParam(params.addDeviceServerUrl);
-  const addDeviceInstanceId = normalizeRouteParam(params.addDeviceInstanceId);
-  const addDeviceRecoveryEmail = normalizeRouteParam(params.addDeviceRecoveryEmail);
-  const addDeviceDeviceName = normalizeRouteParam(params.addDeviceDeviceName);
-  const completeOnSuccess = normalizeRouteParam(params.completeOnSuccess) === '1';
-  const isAddDeviceFlow = !!addDeviceServerUrl;
 
   useEffect(() => {
     const load = async () => {

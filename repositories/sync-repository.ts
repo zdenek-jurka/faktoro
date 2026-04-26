@@ -44,6 +44,12 @@ import { synchronize } from '@nozbe/watermelondb/sync';
 
 type RawRecord = Record<string, unknown>;
 
+type WebSocketWithOptionsConstructor = new (
+  uri: string,
+  protocols?: string | string[] | null,
+  options?: { headers: Record<string, string>; [optionName: string]: unknown } | null,
+) => WebSocket;
+
 /** Internal WatermelonDB model properties not exposed in public types */
 interface ModelInternals {
   _raw: WMRawRecord;
@@ -799,7 +805,8 @@ export function subscribeToSyncEvents(
     const endpoint = `${wsUrl}/api/sync/events/ws`;
 
     try {
-      ws = new WebSocket(endpoint, null, {
+      const NativeWebSocket = WebSocket as unknown as WebSocketWithOptionsConstructor;
+      ws = new NativeWebSocket(endpoint, null, {
         headers: buildSyncAuthHeaders(authToken, deviceId),
       });
     } catch (error) {

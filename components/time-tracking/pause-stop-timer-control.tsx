@@ -1,7 +1,7 @@
 import { ThemedText } from '@/components/themed-text';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { BorderRadius, Colors, FontSizes, Opacity, Shadows, Spacing } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { BorderRadius, FontSizes, Opacity, Shadows, Spacing } from '@/constants/theme';
+import { usePalette } from '@/hooks/use-palette';
 import { useI18nContext } from '@/i18n/i18n-react';
 import { ClientModel, TimeEntryModel } from '@/model';
 import { roundTimeByInterval } from '@/utils/time-utils';
@@ -25,8 +25,7 @@ export function PauseStopTimerControl({
   onStop,
   maxWidth,
 }: PauseStopTimerControlProps) {
-  const colorScheme = useColorScheme();
-  const palette = Colors[(colorScheme ?? 'light') as 'light' | 'dark'];
+  const palette = usePalette();
   const { LL } = useI18nContext();
   const [elapsedTime, setElapsedTime] = useState(0);
 

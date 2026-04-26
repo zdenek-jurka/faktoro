@@ -24,7 +24,7 @@ import {
 import { Colors } from '@/constants/theme';
 import database from '@/db';
 import { useBottomSafeAreaStyle } from '@/hooks/use-bottom-safe-area-style';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { usePalette } from '@/hooks/use-palette';
 import { useCurrencySettings } from '@/hooks/use-currency-settings';
 import { useI18nContext } from '@/i18n/i18n-react';
 import { normalizeIntlLocale } from '@/i18n/locale-options';
@@ -57,6 +57,7 @@ import {
   normalizeCurrencyCode,
 } from '@/utils/currency-utils';
 import { getErrorMessage } from '@/utils/error-utils';
+import { parseISODate, todayISODate, toLocalISODate } from '@/utils/iso-date';
 import {
   type InvoiceBuyerDraft,
   type InvoiceDraftBuyerMode,
@@ -72,8 +73,10 @@ import {
   resolveInvoiceDueDays,
   resolveInvoicePaymentMethod,
 } from '@/utils/invoice-defaults';
+import { calculateLineItemTotals, roundCurrency } from '@/utils/money';
 import { formatPrice } from '@/utils/price-utils';
 import { isIos } from '@/utils/platform';
+import { resolveVatRateForDate } from '@/utils/vat-rate-utils';
 import { Q } from '@nozbe/watermelondb';
 import { useHeaderHeight } from '@react-navigation/elements';
 import SegmentedControl from '@react-native-segmented-control/segmented-control';
@@ -134,34 +137,6 @@ function withLocalIds(items: DraftInvoiceItemInput[], startAt = 1): DraftListIte
   }));
 }
 
-function toLocalISODate(value: Date): string {
-  const year = value.getFullYear();
-  const month = String(value.getMonth() + 1).padStart(2, '0');
-  const day = String(value.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-}
-
-function todayISODate(): string {
-  return toLocalISODate(new Date());
-}
-
-function parseISODate(value?: string): number | undefined {
-  const raw = value?.trim();
-  if (!raw) return undefined;
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(raw)) return undefined;
-  const date = new Date(`${raw}T00:00:00`);
-  if (!Number.isFinite(date.getTime())) return undefined;
-  const [year, month, day] = raw.split('-').map(Number);
-  if (date.getFullYear() !== year || date.getMonth() + 1 !== month || date.getDate() !== day) {
-    return undefined;
-  }
-  return date.getTime();
-}
-
-function roundCurrency(value: number): number {
-  return Math.round(value * 100) / 100;
-}
-
 function isIssuedDateBeyondTaxableWindow(
   issuedDateValue?: string,
   taxableDateValue?: string,
@@ -180,28 +155,8 @@ function isDueDateInPast(dueDateValue?: string): boolean {
   return dueAt < todayAt;
 }
 
-function calculateTotals(items: DraftInvoiceItemInput[], includeVat: boolean) {
-  const subtotal = roundCurrency(items.reduce((sum, item) => sum + item.totalPrice, 0));
-  const vatTotal = includeVat
-    ? roundCurrency(
-        items.reduce((sum, item) => sum + item.totalPrice * ((item.vatRate ?? 0) / 100), 0),
-      )
-    : 0;
-  return {
-    subtotal,
-    vatTotal,
-    total: roundCurrency(subtotal + vatTotal),
-  };
-}
-
-function resolveVatRateForDate(rates: VatRateModel[], taxableAt: number): number | undefined {
-  const matching = rates.filter(
-    (rate) => rate.validFrom <= taxableAt && (rate.validTo == null || rate.validTo >= taxableAt),
-  );
-  if (matching.length === 0) return undefined;
-
-  matching.sort((a, b) => b.validFrom - a.validFrom);
-  return matching[0].ratePercent;
+function parseOptionalISODate(value?: string): number | undefined {
+  return parseISODate(value) ?? undefined;
 }
 
 function getPaymentMethodLabel(LL: ReturnType<typeof useI18nContext>['LL'], value: string): string {
@@ -235,8 +190,7 @@ function pickRegistryImportAddress(
 export default function InvoiceDraftScreen() {
   const router = useRouter();
   const headerHeight = useHeaderHeight();
-  const colorScheme = useColorScheme();
-  const palette = Colors[colorScheme === 'dark' ? 'dark' : 'light'];
+  const palette = usePalette();
   const { LL, locale } = useI18nContext();
   const intlLocale = normalizeIntlLocale(locale, 'en');
   const contentStyle = useBottomSafeAreaStyle(styles.content);
@@ -327,7 +281,14 @@ export default function InvoiceDraftScreen() {
     const subscription = database
       .get<ClientModel>(ClientModel.table)
       .query(Q.where('is_archived', false), Q.sortBy('name', Q.asc))
-      .observe()
+      .observeWithColumns([
+        'name',
+        'company_id',
+        'vat_number',
+        'invoice_payment_method',
+        'invoice_due_days',
+        'is_archived',
+      ])
       .subscribe(setClients);
 
     return () => subscription.unsubscribe();
@@ -508,7 +469,7 @@ export default function InvoiceDraftScreen() {
 
   const effectiveTaxableAt = useMemo(
     () =>
-      parseISODate(headerDraft.taxableDate) || parseISODate(headerDraft.issuedDate) || Date.now(),
+      parseISODate(headerDraft.taxableDate) ?? parseISODate(headerDraft.issuedDate) ?? Date.now(),
     [headerDraft.issuedDate, headerDraft.taxableDate],
   );
   const resolvedDraftVatRateByCodeId = useMemo(() => {
@@ -519,7 +480,7 @@ export default function InvoiceDraftScreen() {
 
     for (const vatCodeId of vatCodeIds) {
       const ratesForCode = vatRates.filter((rate) => rate.vatCodeId === vatCodeId);
-      resolved.set(vatCodeId, resolveVatRateForDate(ratesForCode, effectiveTaxableAt));
+      resolved.set(vatCodeId, resolveVatRateForDate(ratesForCode, effectiveTaxableAt) ?? undefined);
     }
 
     return resolved;
@@ -527,7 +488,7 @@ export default function InvoiceDraftScreen() {
 
   const totals = useMemo(
     () =>
-      calculateTotals(
+      calculateLineItemTotals(
         items.map(({ localId: _localId, ...item }) => ({
           ...(item as DraftInvoiceItemInput),
           vatRate:
@@ -1127,9 +1088,9 @@ export default function InvoiceDraftScreen() {
       clientId: headerDraft.clientId,
       buyerSnapshot: buyerMode === 'one_off' ? normalizedBuyerSnapshot : undefined,
       invoiceNumber: invoiceNumberOverride ?? headerDraft.invoiceNumber,
-      issuedAt: parseISODate(headerDraft.issuedDate) || Date.now(),
-      taxableAt: parseISODate(headerDraft.taxableDate),
-      dueAt: parseISODate(headerDraft.dueDate),
+      issuedAt: parseISODate(headerDraft.issuedDate) ?? Date.now(),
+      taxableAt: parseOptionalISODate(headerDraft.taxableDate),
+      dueAt: parseOptionalISODate(headerDraft.dueDate),
       currency: headerDraft.currency,
       paymentMethod: headerDraft.paymentMethod,
       headerNote: headerNote.trim() || undefined,
@@ -1179,11 +1140,11 @@ export default function InvoiceDraftScreen() {
       Alert.alert(LL.common.error(), LL.invoices.errorHeaderRequired());
       return;
     }
-    if (!parseISODate(headerDraft.issuedDate) || !parseISODate(headerDraft.dueDate)) {
+    if (parseISODate(headerDraft.issuedDate) == null || parseISODate(headerDraft.dueDate) == null) {
       Alert.alert(LL.common.error(), LL.invoices.errorInvalidDateFormat());
       return;
     }
-    if (isVatPayer && !parseISODate(headerDraft.taxableDate)) {
+    if (isVatPayer && parseISODate(headerDraft.taxableDate) == null) {
       Alert.alert(LL.common.error(), LL.invoices.errorTaxableDateRequired());
       return;
     }
@@ -1255,6 +1216,7 @@ export default function InvoiceDraftScreen() {
           {!hasClients && buyerMode === 'client' && (
             <NoClientsRequiredNotice
               message={LL.timeTracking.addClientFirst()}
+              returnTo="invoiceNew"
               style={styles.notice}
             />
           )}

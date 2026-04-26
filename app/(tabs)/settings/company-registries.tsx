@@ -5,9 +5,8 @@ import {
   getRegistryLabel,
 } from '@/components/clients/company-registry-lookup';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Colors } from '@/constants/theme';
 import { useBottomSafeAreaStyle } from '@/hooks/use-bottom-safe-area-style';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { usePalette } from '@/hooks/use-palette';
 import { useI18nContext } from '@/i18n/i18n-react';
 import {
   type CompanyRegistryKey,
@@ -21,7 +20,7 @@ import { Alert, ScrollView, StyleSheet, Pressable, View } from 'react-native';
 const REGISTRY_OPTIONS: CompanyRegistryKey[] = ['none', ...COMPANY_REGISTRY_OPTIONS];
 
 export default function SettingsCompanyRegistriesScreen() {
-  const colorScheme = useColorScheme();
+  const palette = usePalette();
   const { LL } = useI18nContext();
   const router = useRouter();
   const contentStyle = useBottomSafeAreaStyle(styles.content);
@@ -53,12 +52,7 @@ export default function SettingsCompanyRegistriesScreen() {
     <ThemedView style={styles.container}>
       <Stack.Screen options={{ title: LL.settings.companyRegistrySettingsTitle() }} />
       <ScrollView contentContainerStyle={contentStyle} showsVerticalScrollIndicator={false}>
-        <ThemedView
-          style={[
-            styles.section,
-            { backgroundColor: Colors[colorScheme ?? 'light'].cardBackground },
-          ]}
-        >
+        <ThemedView style={[styles.section, { backgroundColor: palette.cardBackground }]}>
           <ThemedText type="subtitle" style={styles.sectionTitle}>
             {LL.settings.companyRegistryDefault()}
           </ThemedText>
@@ -69,8 +63,8 @@ export default function SettingsCompanyRegistriesScreen() {
             style={[
               styles.selectCard,
               {
-                borderColor: Colors[colorScheme ?? 'light'].inputBorder,
-                backgroundColor: Colors[colorScheme ?? 'light'].inputBackground,
+                borderColor: palette.inputBorder,
+                backgroundColor: palette.inputBackground,
               },
             ]}
           >
@@ -82,14 +76,12 @@ export default function SettingsCompanyRegistriesScreen() {
                   style={({ pressed }) => [
                     styles.optionButton,
                     {
-                      backgroundColor: isSelected
-                        ? Colors[colorScheme ?? 'light'].infoBadgeBackground
-                        : 'transparent',
+                      backgroundColor: isSelected ? palette.infoBadgeBackground : 'transparent',
                       opacity: pressed ? 0.82 : 1,
                     },
                     index < REGISTRY_OPTIONS.length - 1
                       ? {
-                          borderBottomColor: Colors[colorScheme ?? 'light'].inputBorder,
+                          borderBottomColor: palette.inputBorder,
                           borderBottomWidth: StyleSheet.hairlineWidth,
                         }
                       : null,
@@ -103,20 +95,14 @@ export default function SettingsCompanyRegistriesScreen() {
                     style={[
                       styles.optionText,
                       isSelected && {
-                        color: Colors[colorScheme ?? 'light'].infoBadgeText,
+                        color: palette.infoBadgeText,
                         fontWeight: '600',
                       },
                     ]}
                   >
                     {getRegistryLabel(LL, registryKey)}
                   </ThemedText>
-                  {isSelected && (
-                    <IconSymbol
-                      name="checkmark"
-                      size={18}
-                      color={Colors[colorScheme ?? 'light'].tint}
-                    />
-                  )}
+                  {isSelected && <IconSymbol name="checkmark" size={18} color={palette.tint} />}
                 </Pressable>
               );
             })}
@@ -124,7 +110,7 @@ export default function SettingsCompanyRegistriesScreen() {
         </ThemedView>
 
         <Pressable
-          style={[styles.row, { backgroundColor: Colors[colorScheme ?? 'light'].cardBackground }]}
+          style={[styles.row, { backgroundColor: palette.cardBackground }]}
           onPress={() => router.push('/settings/company-registry-uk')}
         >
           <View style={styles.rowContent}>
@@ -135,11 +121,11 @@ export default function SettingsCompanyRegistriesScreen() {
               {LL.settings.companyRegistryApiKeyHelp()}
             </ThemedText>
           </View>
-          <IconSymbol name="chevron.right" size={20} color={Colors[colorScheme ?? 'light'].icon} />
+          <IconSymbol name="chevron.right" size={20} color={palette.icon} />
         </Pressable>
 
         <Pressable
-          style={[styles.row, { backgroundColor: Colors[colorScheme ?? 'light'].cardBackground }]}
+          style={[styles.row, { backgroundColor: palette.cardBackground }]}
           onPress={() => router.push('/settings/company-registry-fr')}
         >
           <View style={styles.rowContent}>
@@ -150,11 +136,11 @@ export default function SettingsCompanyRegistriesScreen() {
               {LL.settings.companyRegistryApiTokenHelp()}
             </ThemedText>
           </View>
-          <IconSymbol name="chevron.right" size={20} color={Colors[colorScheme ?? 'light'].icon} />
+          <IconSymbol name="chevron.right" size={20} color={palette.icon} />
         </Pressable>
 
         <Pressable
-          style={[styles.row, { backgroundColor: Colors[colorScheme ?? 'light'].cardBackground }]}
+          style={[styles.row, { backgroundColor: palette.cardBackground }]}
           onPress={() => router.push('/settings/company-registry-custom')}
         >
           <View style={styles.rowContent}>
@@ -165,20 +151,18 @@ export default function SettingsCompanyRegistriesScreen() {
               {LL.settings.companyRegistryCustomConnectorHelp()}
             </ThemedText>
           </View>
-          <IconSymbol name="chevron.right" size={20} color={Colors[colorScheme ?? 'light'].icon} />
+          <IconSymbol name="chevron.right" size={20} color={palette.icon} />
         </Pressable>
 
         <Pressable
           style={({ pressed }) => [
             styles.saveButton,
-            { backgroundColor: Colors[colorScheme ?? 'light'].tint },
+            { backgroundColor: palette.tint },
             pressed && styles.pressed,
           ]}
           onPress={() => void handleSave()}
         >
-          <ThemedText
-            style={[styles.saveButtonText, { color: Colors[colorScheme ?? 'light'].onTint }]}
-          >
+          <ThemedText style={[styles.saveButtonText, { color: palette.onTint }]}>
             {LL.common.save()}
           </ThemedText>
         </Pressable>

@@ -1,8 +1,8 @@
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { usePalette } from '@/hooks/use-palette';
 import { useI18nContext } from '@/i18n/i18n-react';
 import type { Locales } from '@/i18n/i18n-types';
 import { isAndroid, isPad } from '@/utils/platform';
@@ -234,8 +234,8 @@ type SelectTriggerProps = {
 };
 
 export function SelectTrigger({ children }: SelectTriggerProps) {
-  const scheme = useColorScheme() ?? 'light';
-  const palette = Colors[scheme];
+  const scheme = useColorScheme();
+  const palette = usePalette();
   const { LL, locale } = useI18nContext();
   const { value, onValueChange, open, setOpen, setTriggerLayout, options } = useSelectContext();
   const openLabel = SELECT_LABELS[locale].open;
@@ -362,8 +362,7 @@ export function SelectContent({ children }: SelectContentProps) {
   const { locale } = useI18nContext();
   const { open, setOpen, triggerLayout, setTriggerLayout, options, value, onValueChange } =
     useSelectContext();
-  const scheme = useColorScheme() ?? 'light';
-  const palette = Colors[scheme];
+  const palette = usePalette();
   const window = useWindowDimensions();
   const closeLabel = SELECT_LABELS[locale].close;
 

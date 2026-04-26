@@ -27,7 +27,9 @@ export function useCurrencySettings(includeInactive: boolean = false) {
               Q.sortBy('code', Q.asc),
             );
 
-      subscription = query.observe().subscribe(setCurrencies);
+      subscription = query
+        .observeWithColumns(['code', 'sort_order', 'is_active', 'prefix', 'suffix'])
+        .subscribe(setCurrencies);
     };
 
     void load();

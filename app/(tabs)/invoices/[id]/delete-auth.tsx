@@ -2,8 +2,8 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { KeyboardAwareScroll } from '@/components/ui/keyboard-aware-scroll';
-import { Colors, withOpacity } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { withOpacity } from '@/constants/theme';
+import { usePalette } from '@/hooks/use-palette';
 import { useI18nContext } from '@/i18n/i18n-react';
 import { verifyPin } from '@/repositories/app-lock-repository';
 import { normalizeAppLockPinInput } from '@/utils/app-lock-pin';
@@ -24,8 +24,7 @@ export default function InvoiceDeleteAuthScreen() {
   }>();
   const router = useRouter();
   const { LL, locale } = useI18nContext();
-  const colorScheme = useColorScheme();
-  const palette = Colors[colorScheme ?? 'light'];
+  const palette = usePalette();
 
   const [pin, setPin] = useState('');
   const [pinError, setPinError] = useState('');

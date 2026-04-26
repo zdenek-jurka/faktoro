@@ -5,15 +5,14 @@ import React from 'react';
 
 import { HapticTab } from '@/components/haptic-tab';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { usePalette } from '@/hooks/use-palette';
 import { usePendingSyncConflictCount } from '@/hooks/use-pending-sync-conflict-count';
 import { useI18nContext } from '@/i18n/i18n-react';
 import { getMoreSectionTitle } from '@/i18n/locale-options';
 import { isIos } from '@/utils/platform';
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
+  const palette = usePalette();
   const { LL, locale } = useI18nContext();
   const drawerNavigation = useNavigation<DrawerNavigationProp<ParamListBase>>('/');
   const moreTitle = getMoreSectionTitle(locale);
@@ -25,7 +24,7 @@ export default function TabLayout() {
     <Tabs
       initialRouteName="time-tracking"
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
+        tabBarActiveTintColor: palette.tint,
         headerShown: false,
         tabBarButton: HapticTab,
       }}

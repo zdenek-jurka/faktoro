@@ -91,11 +91,20 @@ export function KeyboardAwareScroll({
       ) => void;
     } | null;
 
-    if (keyboardScreenY == null || !focusedInput?.measureInWindow || !scrollView?.measureInWindow) {
+    const measureFocusedInputInWindow = focusedInput?.measureInWindow?.bind(focusedInput);
+    const measureScrollViewInWindow = scrollView?.measureInWindow?.bind(scrollView);
+    const scrollTo = scrollView?.scrollTo.bind(scrollView);
+
+    if (
+      keyboardScreenY == null ||
+      !measureFocusedInputInWindow ||
+      !measureScrollViewInWindow ||
+      !scrollTo
+    ) {
       return;
     }
 
-    scrollView.measureInWindow((_scrollX, scrollY, _scrollWidth, scrollHeight) => {
+    measureScrollViewInWindow((_scrollX, scrollY, _scrollWidth, scrollHeight) => {
       const visibleTop = scrollY + INPUT_VISIBLE_TOP_MARGIN;
       const bottomMargin = isIos ? IOS_KEYBOARD_INPUT_MARGIN : ANDROID_KEYBOARD_INPUT_MARGIN;
       const visibleBottom = Math.min(scrollY + scrollHeight, keyboardScreenY) - bottomMargin;
@@ -103,7 +112,7 @@ export function KeyboardAwareScroll({
 
       if (visibleHeight <= 0) return;
 
-      focusedInput.measureInWindow((_x, inputY, _width, inputHeight) => {
+      measureFocusedInputInWindow((_x, inputY, _width, inputHeight) => {
         const inputTop = inputY;
         const inputBottom = inputY + inputHeight;
         const fitsFully = inputHeight <= visibleHeight;
@@ -122,7 +131,7 @@ export function KeyboardAwareScroll({
 
         if (delta === 0) return;
 
-        scrollView.scrollTo({
+        scrollTo({
           y: Math.max(0, scrollOffsetYRef.current + delta),
           animated: true,
         });
@@ -152,6 +161,14 @@ export function KeyboardAwareScroll({
     };
   }, [scrollFocusedInputIntoView]);
 
+  const focusCaptureProps = {
+    onFocusCapture: () => {
+      if (isKeyboardVisible) {
+        requestAnimationFrame(scrollFocusedInputIntoView);
+      }
+    },
+  };
+
   return (
     <KeyboardAvoidingView
       style={[styles.keyboardAvoiding, style]}
@@ -169,11 +186,7 @@ export function KeyboardAwareScroll({
           scrollOffsetYRef.current = event.nativeEvent.contentOffset.y;
         }}
         scrollEventThrottle={16}
-        onFocusCapture={() => {
-          if (isKeyboardVisible) {
-            requestAnimationFrame(scrollFocusedInputIntoView);
-          }
-        }}
+        {...focusCaptureProps}
       >
         {children}
       </ScrollView>

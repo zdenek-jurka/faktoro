@@ -4,6 +4,7 @@ import { useI18nContext } from '@/i18n/i18n-react';
 import { normalizeIntlLocale } from '@/i18n/locale-options';
 import { ClientModel, InvoiceItemModel, TimeEntryModel, TimesheetModel } from '@/model';
 import { getTimesheets } from '@/repositories/timesheet-repository';
+import { buildClientIdentitySearchClause } from '@/utils/client-search';
 import { Q } from '@nozbe/watermelondb';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useMemo, useState } from 'react';
@@ -32,9 +33,12 @@ export function TimesheetsClientsListContainer({
   const [timesheets, setTimesheets] = useState<TimesheetModel[]>([]);
   const [timesheetEntries, setTimesheetEntries] = useState<TimeEntryModel[]>([]);
   const [linkedTimesheetIds, setLinkedTimesheetIds] = useState<Set<string>>(new Set());
+  const [matchingClientIds, setMatchingClientIds] = useState<Set<string> | null>(null);
 
   useEffect(() => {
-    const timesheetsSubscription = getTimesheets().observe().subscribe(setTimesheets);
+    const timesheetsSubscription = getTimesheets()
+      .observeWithColumns(['client_id', 'created_at'])
+      .subscribe(setTimesheets);
 
     return () => {
       timesheetsSubscription.unsubscribe();
@@ -56,13 +60,31 @@ export function TimesheetsClientsListContainer({
     const clientsSubscription = database
       .get<ClientModel>(ClientModel.table)
       .query(Q.where('id', Q.oneOf(clientIds)), Q.sortBy('name', Q.asc))
-      .observe()
+      .observeWithColumns(['name', 'company_id', 'email'])
       .subscribe(setClients);
 
     return () => {
       clientsSubscription.unsubscribe();
     };
   }, [clientIds]);
+
+  useEffect(() => {
+    const searchClause = buildClientIdentitySearchClause(searchQuery);
+    if (clientIds.length === 0 || !searchClause) {
+      setMatchingClientIds(null);
+      return;
+    }
+
+    const subscription = database
+      .get<ClientModel>(ClientModel.table)
+      .query(Q.where('id', Q.oneOf(clientIds)), searchClause)
+      .observeWithColumns(['name', 'company_id', 'email'])
+      .subscribe((matchingClients) => {
+        setMatchingClientIds(new Set(matchingClients.map((client) => client.id)));
+      });
+
+    return () => subscription.unsubscribe();
+  }, [clientIds, searchQuery]);
 
   useEffect(() => {
     if (timesheetIds.length === 0) {
@@ -73,7 +95,7 @@ export function TimesheetsClientsListContainer({
     const entriesSubscription = database
       .get<TimeEntryModel>(TimeEntryModel.table)
       .query(Q.where('timesheet_id', Q.oneOf(timesheetIds)))
-      .observe()
+      .observeWithColumns(['timesheet_id', 'duration', 'timesheet_duration'])
       .subscribe(setTimesheetEntries);
 
     return () => {
@@ -90,7 +112,7 @@ export function TimesheetsClientsListContainer({
     const linkedTimesheetsSubscription = database
       .get<InvoiceItemModel>(InvoiceItemModel.table)
       .query(Q.where('source_kind', 'timesheet'), Q.where('source_id', Q.oneOf(timesheetIds)))
-      .observe()
+      .observeWithColumns(['source_kind', 'source_id'])
       .subscribe((items) => {
         const ids = new Set(
           items.map((item) => item.sourceId).filter((id): id is string => !!id?.trim()),
@@ -145,16 +167,9 @@ export function TimesheetsClientsListContainer({
   }, [clients, intlLocale, linkedTimesheetIds, timesheetEntries, timesheets]);
 
   const filteredClients = useMemo(() => {
-    const query = searchQuery.trim().toLowerCase();
-    if (!query) return groupedClients;
-
-    return groupedClients.filter(({ client }) => {
-      const name = client.name.toLowerCase();
-      const companyId = (client.companyId ?? '').toLowerCase();
-      const email = (client.email ?? '').toLowerCase();
-      return name.includes(query) || companyId.includes(query) || email.includes(query);
-    });
-  }, [groupedClients, searchQuery]);
+    if (!matchingClientIds) return groupedClients;
+    return groupedClients.filter(({ client }) => matchingClientIds.has(client.id));
+  }, [groupedClients, matchingClientIds]);
 
   return (
     <TimesheetsClientList

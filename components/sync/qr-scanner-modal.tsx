@@ -1,6 +1,6 @@
 import { ThemedText } from '@/components/themed-text';
-import { Colors, BorderRadius, Spacing, FontSizes } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { BorderRadius, Spacing, FontSizes } from '@/constants/theme';
+import { usePalette } from '@/hooks/use-palette';
 import { useBottomSafeAreaStyle } from '@/hooks/use-bottom-safe-area-style';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import React, { useEffect, useRef } from 'react';
@@ -15,8 +15,7 @@ type Props = {
 };
 
 export function QrScannerModal({ visible, hint, cancelLabel, onScanned, onClose }: Props) {
-  const colorScheme = useColorScheme();
-  const palette = Colors[colorScheme === 'dark' ? 'dark' : 'light'];
+  const palette = usePalette();
   const scannerFooterStyle = useBottomSafeAreaStyle(styles.footer);
   useCameraPermissions();
   const hasScannedRef = useRef(false);

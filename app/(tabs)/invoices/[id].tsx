@@ -11,7 +11,7 @@ import {
 import { Colors, withOpacity } from '@/constants/theme';
 import database from '@/db';
 import { useBottomSafeAreaStyle } from '@/hooks/use-bottom-safe-area-style';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { usePalette } from '@/hooks/use-palette';
 import { useI18nContext } from '@/i18n/i18n-react';
 import { normalizeIntlLocale, normalizeLocale } from '@/i18n/locale-options';
 import type { Locales } from '@/i18n/i18n-types';
@@ -53,6 +53,7 @@ import {
 } from '@/utils/error-utils';
 import { openLocalFile } from '@/utils/open-local-file';
 import { buildCopyFileName } from '@/utils/file-name-utils';
+import { toLocalISODate } from '@/utils/iso-date';
 import type { InvoiceDraftBuyerMode } from '@/utils/invoice-buyer';
 import {
   canCancelIssuedInvoice,
@@ -126,14 +127,6 @@ type FooterDraft = {
   headerNote: string;
   footerNote: string;
 };
-
-function toLocalISODate(value: number): string {
-  const date = new Date(value);
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-}
 
 function addDaysToLocalISODate(baseDate: string, days: number): string {
   const normalizedDays = Math.max(0, Math.floor(days));
@@ -373,8 +366,7 @@ async function buildPaymentQrHtmlEmbedded(
 export default function InvoiceDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const colorScheme = useColorScheme();
-  const palette = Colors[colorScheme ?? 'light'];
+  const palette = usePalette();
   const { LL, locale } = useI18nContext();
   const listContentStyle = useBottomSafeAreaStyle(styles.listContent);
   const intlLocale = normalizeIntlLocale(locale, 'en');
@@ -455,7 +447,19 @@ export default function InvoiceDetailScreen() {
     const itemsSubscription = database
       .get<InvoiceItemModel>(InvoiceItemModel.table)
       .query(Q.where('invoice_id', id), Q.sortBy('created_at', Q.asc))
-      .observe()
+      .observeWithColumns([
+        'invoice_id',
+        'source_kind',
+        'source_id',
+        'description',
+        'quantity',
+        'unit',
+        'unit_price',
+        'total_price',
+        'vat_code_id',
+        'vat_rate',
+        'created_at',
+      ])
       .subscribe(setItems);
 
     return () => itemsSubscription.unsubscribe();
@@ -515,45 +519,50 @@ export default function InvoiceDetailScreen() {
   }, [client?.invoiceDefaultExportFormat]);
 
   const runPendingExportSheetAction = useEffectEvent(() => {
-    if (pendingExportSheetAction === 'pdf') {
+    const action = pendingExportSheetAction;
+    if (action === null) {
+      return;
+    }
+
+    if (action === 'pdf') {
       setPendingExportSheetAction(null);
       void handleExportPdf();
       return;
     }
-    if (pendingExportSheetAction === 'open_pdf') {
+    if (action === 'open_pdf') {
       setPendingExportSheetAction(null);
       if (isPdfOpenEnabled) {
         void handleOpenPdf();
       }
       return;
     }
-    if (pendingExportSheetAction === 'html') {
+    if (action === 'html') {
       setPendingExportSheetAction(null);
       if (isInvoiceHtmlExportEnabled) {
         void handleExportHtml();
       }
       return;
     }
-    if (pendingExportSheetAction === 'save_pdf') {
+    if (action === 'save_pdf') {
       setPendingExportSheetAction(null);
       if (isPdfSaveEnabled) {
         void handleSavePdf();
       }
       return;
     }
-    if (pendingExportSheetAction === 'xml_base') {
+    if (action === 'xml_base') {
       setPendingExportSheetAction(null);
       void handleExportCustomXml(null);
       return;
     }
-    if (pendingExportSheetAction.startsWith('structured:')) {
-      const format = pendingExportSheetAction.slice('structured:'.length) as InvoiceXmlFormat;
+    if (action.startsWith('structured:')) {
+      const format = action.slice('structured:'.length) as InvoiceXmlFormat;
       setPendingExportSheetAction(null);
       void handleExportXml(format);
       return;
     }
-    if (pendingExportSheetAction.startsWith('integration:')) {
-      const integrationId = pendingExportSheetAction.slice('integration:'.length);
+    if (action.startsWith('integration:')) {
+      const integrationId = action.slice('integration:'.length);
       setPendingExportSheetAction(null);
       void handleExportCustomXml(integrationId);
     }
@@ -694,6 +703,7 @@ export default function InvoiceDetailScreen() {
       return [
         {
           sourceKind: 'manual',
+          sourceId: undefined,
           description: item.description,
           quantity: item.quantity,
           unit: item.unit,
@@ -1176,7 +1186,7 @@ export default function InvoiceDetailScreen() {
 
         const existingNames = new Set(existingEntries.map((entry) => entry.name));
         const copyFileName = buildCopyFileName(pdfFile.fileName, existingNames);
-        targetFileName = await new Promise<string | null>((resolve) => {
+        const selectedFileName = await new Promise<string | null>((resolve) => {
           Alert.alert(
             LLExport.invoices.savePdfExistsTitle(),
             LLExport.invoices.savePdfExistsMessage({ fileName: pdfFile.fileName }),
@@ -1203,9 +1213,11 @@ export default function InvoiceDetailScreen() {
           );
         });
 
-        if (!targetFileName) {
+        if (!selectedFileName) {
           return;
         }
+
+        targetFileName = selectedFileName;
 
         if (targetFileName === pdfFile.fileName) {
           existingEntry.delete();
@@ -1707,7 +1719,7 @@ export default function InvoiceDetailScreen() {
                 <View
                   style={[
                     styles.row,
-                    { backgroundColor: Colors[colorScheme ?? 'light'].cardBackground },
+                    { backgroundColor: palette.cardBackground },
                     index === 0 && styles.rowFirst,
                     isLast && styles.rowLast,
                   ]}

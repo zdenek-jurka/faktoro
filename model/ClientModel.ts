@@ -1,15 +1,15 @@
 import { Model } from '@nozbe/watermelondb';
 import { children, date, field, readonly, text } from '@nozbe/watermelondb/decorators';
 import { Associations } from '@nozbe/watermelondb/Model';
-import ClientAddress from './ClientAddressModel';
+import type ClientAddressModel from './ClientAddressModel';
 import type ClientPriceOverrideModel from './ClientPriceOverrideModel';
 
 export default class ClientModel extends Model {
   static table = 'client';
 
   static associations: Associations = {
-    client_addresses: { type: 'has_many', foreignKey: 'client_id' },
-    client_price_overrides: { type: 'has_many', foreignKey: 'client_id' },
+    client_address: { type: 'has_many', foreignKey: 'client_id' },
+    client_price_override: { type: 'has_many', foreignKey: 'client_id' },
   };
 
   @text('name') name: string;
@@ -34,6 +34,6 @@ export default class ClientModel extends Model {
   @readonly @date('created_at') createdAt: Date;
   @readonly @date('updated_at') updatedAt: Date;
 
-  @children('client_addresses') client_addresses: ClientAddress[];
+  @children('client_address') clientAddresses: ClientAddressModel[];
   @children('client_price_override') clientPriceOverrides: ClientPriceOverrideModel[];
 }

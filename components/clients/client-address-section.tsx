@@ -2,10 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { Alert, StyleSheet, View } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
 import { SwipeableList } from '@/components/ui/swipeable-list';
-import { Colors, FontSizes, Opacity, Spacing } from '@/constants/theme';
+import { FontSizes, Opacity, Spacing } from '@/constants/theme';
 import database from '@/db';
 import { AddressType } from '@/db/schema';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { usePalette } from '@/hooks/use-palette';
 import { useI18nContext } from '@/i18n/i18n-react';
 import { ClientModel } from '@/model';
 import ClientAddressModel from '@/model/ClientAddressModel';
@@ -19,8 +19,7 @@ interface ClientAddressSectionProps {
 
 export function ClientAddressSection({ client }: ClientAddressSectionProps) {
   const router = useRouter();
-  const colorScheme = useColorScheme();
-  const palette = Colors[colorScheme ?? 'light'];
+  const palette = usePalette();
   const { LL } = useI18nContext();
   const [addresses, setAddresses] = useState<ClientAddressModel[]>([]);
 
@@ -29,7 +28,16 @@ export function ClientAddressSection({ client }: ClientAddressSectionProps) {
     const subscription = database
       .get<ClientAddressModel>(ClientAddressModel.table)
       .query(Q.where('client_id', client.id))
-      .observe()
+      .observeWithColumns([
+        'client_id',
+        'type',
+        'street',
+        'street2',
+        'city',
+        'postal_code',
+        'country',
+        'is_default',
+      ])
       .subscribe((newAddresses) => {
         const sortedAddresses = newAddresses.sort((a, b) => {
           if (a.isDefault && !b.isDefault) return -1;
@@ -97,7 +105,7 @@ export function ClientAddressSection({ client }: ClientAddressSectionProps) {
           </View>
         )}
         emptyText={LL.clients.noAddresses()}
-        itemBackgroundColor={Colors[colorScheme ?? 'light'].cardBackground}
+        itemBackgroundColor={palette.cardBackground}
       />
     </View>
   );

@@ -10,9 +10,9 @@ import {
   getEuMemberStateOptions,
   normalizeEuMemberStateCode,
 } from '@/constants/eu-countries';
-import { Colors, getSwitchColors } from '@/constants/theme';
+import { getSwitchColors } from '@/constants/theme';
 import { useBottomSafeAreaStyle } from '@/hooks/use-bottom-safe-area-style';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { usePalette } from '@/hooks/use-palette';
 import { useI18nContext } from '@/i18n/i18n-react';
 import { normalizeIntlLocale } from '@/i18n/locale-options';
 import { VatCodeModel, VatRateModel } from '@/model';
@@ -34,6 +34,8 @@ import {
   updateVatRate,
   VAT_VALID_FROM_BEGINNING_TS,
 } from '@/repositories/vat-rate-repository';
+import { parseISODate, toLocalISODate } from '@/utils/iso-date';
+import { parseDecimalInputInRange } from '@/utils/number-input';
 import { isIos } from '@/utils/platform';
 import {
   createBootstrapVatCodeToken,
@@ -55,8 +57,7 @@ import {
 } from 'react-native';
 
 export default function SettingsVatScreen() {
-  const colorScheme = useColorScheme();
-  const palette = Colors[colorScheme ?? 'light'];
+  const palette = usePalette();
   const switchColors = getSwitchColors(palette);
   const { LL, locale } = useI18nContext();
   const intlLocale = normalizeIntlLocale(locale, 'en');
@@ -171,8 +172,10 @@ export default function SettingsVatScreen() {
   }, [LL, bootstrapCountry, bootstrapPreview]);
 
   useEffect(() => {
-    const codeSubscription = getVatCodes().observe().subscribe(setVatCodes);
-    const subscription = getVatRates().observe().subscribe(setVatRates);
+    const codeSubscription = getVatCodes().observeWithColumns(['name']).subscribe(setVatCodes);
+    const subscription = getVatRates()
+      .observeWithColumns(['vat_code_id', 'rate_percent', 'valid_from', 'valid_to'])
+      .subscribe(setVatRates);
 
     void getSettings().then((settings) => {
       const normalizedCountry = normalizeEuMemberStateCode(settings.invoiceCountry);
@@ -192,20 +195,6 @@ export default function SettingsVatScreen() {
       setBootstrapPreview(null);
     }
   }, [bootstrapCountry, bootstrapPreview]);
-
-  const toDateStart = (dateStr: string): number | null => {
-    const [y, m, d] = dateStr.split('-').map((v) => parseInt(v, 10));
-    if (!y || !m || !d) return null;
-    const dt = new Date(y, m - 1, d, 0, 0, 0, 0);
-    return Number.isNaN(dt.getTime()) ? null : dt.getTime();
-  };
-
-  const toLocalISODate = (value: Date): string => {
-    const year = value.getFullYear();
-    const month = `${value.getMonth() + 1}`.padStart(2, '0');
-    const day = `${value.getDate()}`.padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  };
 
   const formatDate = (timestamp?: number): string => {
     if (!timestamp) return '-';
@@ -270,7 +259,7 @@ export default function SettingsVatScreen() {
 
   const openDatePicker = (field: 'from' | 'to') => {
     const currentValue = field === 'from' ? validFrom : validTo;
-    const timestamp = currentValue ? toDateStart(currentValue) : Date.now();
+    const timestamp = currentValue ? parseISODate(currentValue) : Date.now();
     setPickerDate(new Date(timestamp ?? Date.now()));
     setActiveDateField(field);
   };
@@ -455,14 +444,14 @@ export default function SettingsVatScreen() {
       }
     }
 
-    const parsedRate = parseFloat(ratePercent.replace(',', '.'));
-    if (Number.isNaN(parsedRate) || parsedRate < 0 || parsedRate >= 100) {
+    const parsedRate = parseDecimalInputInRange(ratePercent, { min: 0, maxExclusive: 100 });
+    if (!Number.isFinite(parsedRate)) {
       Alert.alert(LL.common.error(), LL.settings.vatRateInvalidRate());
       return;
     }
 
     const validFromRaw = validFrom.trim();
-    const parsedFromTs = validFromRaw ? toDateStart(validFromRaw) : null;
+    const parsedFromTs = validFromRaw ? parseISODate(validFromRaw) : null;
     if (validFromRaw && parsedFromTs == null) {
       Alert.alert(LL.common.error(), LL.settings.vatRateValidFromInvalid());
       return;
@@ -470,7 +459,7 @@ export default function SettingsVatScreen() {
     const fromTs = parsedFromTs ?? VAT_VALID_FROM_BEGINNING_TS;
 
     const toRaw = validTo.trim();
-    const toTs = toRaw ? toDateStart(toRaw) : null;
+    const toTs = toRaw ? parseISODate(toRaw) : null;
     if (toRaw && toTs == null) {
       Alert.alert(LL.common.error(), LL.settings.vatRateValidToInvalid());
       return;

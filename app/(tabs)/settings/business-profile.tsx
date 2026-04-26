@@ -10,9 +10,9 @@ import {
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { OptionSheetModal } from '@/components/ui/option-sheet-modal';
-import { Colors, getSwitchColors } from '@/constants/theme';
+import { getSwitchColors } from '@/constants/theme';
 import { useBottomSafeAreaStyle } from '@/hooks/use-bottom-safe-area-style';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { usePalette } from '@/hooks/use-palette';
 import { useI18nContext } from '@/i18n/i18n-react';
 import {
   CompanyRegistryLookupError,
@@ -41,7 +41,7 @@ import {
 
 export default function SettingsBusinessProfileScreen() {
   const router = useRouter();
-  const colorScheme = useColorScheme();
+  const palette = usePalette();
   const { LL } = useI18nContext();
   const headerHeight = useHeaderHeight();
   const contentStyle = useBottomSafeAreaStyle(styles.content);
@@ -272,7 +272,7 @@ export default function SettingsBusinessProfileScreen() {
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode={isIos ? 'interactive' : 'on-drag'}
         >
-          <ThemedView style={[styles.section, sectionCard(colorScheme)]}>
+          <ThemedView style={[styles.section, sectionCard(palette)]}>
             <ThemedText style={styles.sectionDescription}>
               {LL.settings.businessProfileSubtitle()}
             </ThemedText>
@@ -284,61 +284,61 @@ export default function SettingsBusinessProfileScreen() {
               <Switch
                 value={isVatPayer}
                 onValueChange={setIsVatPayer}
-                {...getSwitchColors(Colors[colorScheme ?? 'light'])}
+                {...getSwitchColors(palette)}
               />
             </View>
 
             <TextInput
-              style={[styles.input, stylesField(colorScheme)]}
+              style={[styles.input, stylesField(palette)]}
               placeholder={LL.settings.companyName()}
-              placeholderTextColor={placeholder(colorScheme)}
+              placeholderTextColor={placeholder(palette)}
               value={invoiceCompanyName}
               onChangeText={setInvoiceCompanyName}
             />
             <TextInput
-              style={[styles.input, stylesField(colorScheme)]}
+              style={[styles.input, stylesField(palette)]}
               placeholder={LL.settings.address()}
-              placeholderTextColor={placeholder(colorScheme)}
+              placeholderTextColor={placeholder(palette)}
               value={invoiceAddress}
               onChangeText={setInvoiceAddress}
             />
             <TextInput
-              style={[styles.input, stylesField(colorScheme)]}
+              style={[styles.input, stylesField(palette)]}
               placeholder={LL.clients.street2()}
-              placeholderTextColor={placeholder(colorScheme)}
+              placeholderTextColor={placeholder(palette)}
               value={invoiceStreet2}
               onChangeText={setInvoiceStreet2}
             />
 
             <View style={styles.row}>
               <TextInput
-                style={[styles.input, styles.halfInput, stylesField(colorScheme)]}
+                style={[styles.input, styles.halfInput, stylesField(palette)]}
                 placeholder={LL.settings.city()}
-                placeholderTextColor={placeholder(colorScheme)}
+                placeholderTextColor={placeholder(palette)}
                 value={invoiceCity}
                 onChangeText={setInvoiceCity}
               />
               <TextInput
-                style={[styles.input, styles.halfInput, stylesField(colorScheme)]}
+                style={[styles.input, styles.halfInput, stylesField(palette)]}
                 placeholder={LL.settings.postalCode()}
-                placeholderTextColor={placeholder(colorScheme)}
+                placeholderTextColor={placeholder(palette)}
                 value={invoicePostalCode}
                 onChangeText={setInvoicePostalCode}
               />
             </View>
 
             <TextInput
-              style={[styles.input, stylesField(colorScheme)]}
+              style={[styles.input, stylesField(palette)]}
               placeholder={LL.settings.country()}
-              placeholderTextColor={placeholder(colorScheme)}
+              placeholderTextColor={placeholder(palette)}
               value={invoiceCountry}
               onChangeText={setInvoiceCountry}
             />
 
             <TextInput
-              style={[styles.input, stylesField(colorScheme)]}
+              style={[styles.input, stylesField(palette)]}
               placeholder={LL.settings.companyId()}
-              placeholderTextColor={placeholder(colorScheme)}
+              placeholderTextColor={placeholder(palette)}
               value={invoiceCompanyId}
               onChangeText={setInvoiceCompanyId}
             />
@@ -346,32 +346,28 @@ export default function SettingsBusinessProfileScreen() {
               style={({ pressed }) => [
                 styles.lookupButton,
                 {
-                  backgroundColor: isLookupLoading
-                    ? Colors[colorScheme ?? 'light'].inputBorder
-                    : Colors[colorScheme ?? 'light'].tint,
+                  backgroundColor: isLookupLoading ? palette.inputBorder : palette.tint,
                 },
                 pressed && styles.pressed,
               ]}
               onPress={handleLookupByDefaultRegistry}
               disabled={isLookupLoading}
             >
-              <ThemedText
-                style={[styles.lookupButtonText, { color: Colors[colorScheme ?? 'light'].onTint }]}
-              >
+              <ThemedText style={[styles.lookupButtonText, { color: palette.onTint }]}>
                 {isLookupLoading ? LL.common.loading() : LL.clients.lookupCompanyById()}
               </ThemedText>
             </Pressable>
             <TextInput
-              style={[styles.input, stylesField(colorScheme)]}
+              style={[styles.input, stylesField(palette)]}
               placeholder={LL.settings.vatNumber() + (isVatPayer ? ' *' : '')}
-              placeholderTextColor={placeholder(colorScheme)}
+              placeholderTextColor={placeholder(palette)}
               value={invoiceVatNumber}
               onChangeText={setInvoiceVatNumber}
             />
             <TextInput
-              style={[styles.input, stylesField(colorScheme), styles.multilineInput]}
+              style={[styles.input, stylesField(palette), styles.multilineInput]}
               placeholder={LL.settings.invoiceRegistrationNote()}
-              placeholderTextColor={placeholder(colorScheme)}
+              placeholderTextColor={placeholder(palette)}
               value={invoiceRegistrationNote}
               onChangeText={setInvoiceRegistrationNote}
               multiline
@@ -381,9 +377,9 @@ export default function SettingsBusinessProfileScreen() {
               {LL.settings.invoiceRegistrationNoteHelp()}
             </ThemedText>
             <TextInput
-              style={[styles.input, stylesField(colorScheme)]}
+              style={[styles.input, stylesField(palette)]}
               placeholder={LL.settings.email()}
-              placeholderTextColor={placeholder(colorScheme)}
+              placeholderTextColor={placeholder(palette)}
               value={invoiceEmail}
               onChangeText={setInvoiceEmail}
               keyboardType="email-address"
@@ -393,41 +389,41 @@ export default function SettingsBusinessProfileScreen() {
               autoComplete="email"
             />
             <TextInput
-              style={[styles.input, stylesField(colorScheme)]}
+              style={[styles.input, stylesField(palette)]}
               placeholder={LL.settings.phone()}
-              placeholderTextColor={placeholder(colorScheme)}
+              placeholderTextColor={placeholder(palette)}
               value={invoicePhone}
               onChangeText={setInvoicePhone}
               keyboardType="phone-pad"
             />
             <TextInput
-              style={[styles.input, stylesField(colorScheme)]}
+              style={[styles.input, stylesField(palette)]}
               placeholder={LL.settings.website()}
-              placeholderTextColor={placeholder(colorScheme)}
+              placeholderTextColor={placeholder(palette)}
               value={invoiceWebsite}
               onChangeText={setInvoiceWebsite}
               keyboardType="url"
               autoCapitalize="none"
             />
             <TextInput
-              style={[styles.input, stylesField(colorScheme)]}
+              style={[styles.input, stylesField(palette)]}
               placeholder={LL.settings.bankAccount()}
-              placeholderTextColor={placeholder(colorScheme)}
+              placeholderTextColor={placeholder(palette)}
               value={invoiceBankAccount}
               onChangeText={setInvoiceBankAccount}
             />
             <TextInput
-              style={[styles.input, stylesField(colorScheme)]}
+              style={[styles.input, stylesField(palette)]}
               placeholder={LL.settings.iban()}
-              placeholderTextColor={placeholder(colorScheme)}
+              placeholderTextColor={placeholder(palette)}
               value={invoiceIban}
               onChangeText={setInvoiceIban}
               autoCapitalize="characters"
             />
             <TextInput
-              style={[styles.input, stylesField(colorScheme)]}
+              style={[styles.input, stylesField(palette)]}
               placeholder={LL.settings.swift()}
-              placeholderTextColor={placeholder(colorScheme)}
+              placeholderTextColor={placeholder(palette)}
               value={invoiceSwift}
               onChangeText={setInvoiceSwift}
               autoCapitalize="characters"
@@ -437,14 +433,12 @@ export default function SettingsBusinessProfileScreen() {
           <Pressable
             style={({ pressed }) => [
               styles.saveButton,
-              { backgroundColor: Colors[colorScheme ?? 'light'].tint },
+              { backgroundColor: palette.tint },
               pressed && styles.pressed,
             ]}
             onPress={handleSave}
           >
-            <ThemedText
-              style={[styles.saveButtonText, { color: Colors[colorScheme ?? 'light'].onTint }]}
-            >
+            <ThemedText style={[styles.saveButtonText, { color: palette.onTint }]}>
               {LL.common.save()}
             </ThemedText>
           </Pressable>
@@ -487,22 +481,22 @@ export default function SettingsBusinessProfileScreen() {
   );
 }
 
-function stylesField(colorScheme: ReturnType<typeof useColorScheme>) {
+function stylesField(palette: ReturnType<typeof usePalette>) {
   return {
-    color: Colors[colorScheme ?? 'light'].text,
-    borderColor: Colors[colorScheme ?? 'light'].inputBorder,
-    backgroundColor: Colors[colorScheme ?? 'light'].inputBackground,
+    color: palette.text,
+    borderColor: palette.inputBorder,
+    backgroundColor: palette.inputBackground,
   };
 }
 
-function sectionCard(colorScheme: ReturnType<typeof useColorScheme>) {
+function sectionCard(palette: ReturnType<typeof usePalette>) {
   return {
-    backgroundColor: Colors[colorScheme ?? 'light'].cardBackground,
+    backgroundColor: palette.cardBackground,
   };
 }
 
-function placeholder(colorScheme: ReturnType<typeof useColorScheme>) {
-  return Colors[colorScheme ?? 'light'].placeholder;
+function placeholder(palette: ReturnType<typeof usePalette>) {
+  return palette.placeholder;
 }
 
 const styles = StyleSheet.create({

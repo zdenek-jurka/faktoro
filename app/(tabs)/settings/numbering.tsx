@@ -1,10 +1,11 @@
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { Colors, getSwitchColors } from '@/constants/theme';
+import { getSwitchColors } from '@/constants/theme';
 import { useBottomSafeAreaStyle } from '@/hooks/use-bottom-safe-area-style';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { usePalette } from '@/hooks/use-palette';
 import { useI18nContext } from '@/i18n/i18n-react';
 import { getSettings, updateSettings } from '@/repositories/settings-repository';
+import { parsePositiveIntegerInput } from '@/utils/number-input';
 import { showConfirm } from '@/utils/platform-alert';
 import { isIos } from '@/utils/platform';
 import { buildSeriesIdentifier, getSeriesPaddingFromPattern } from '@/utils/series-utils';
@@ -51,7 +52,7 @@ function buildSeriesPreview({
 }
 
 export default function SettingsNumberingScreen() {
-  const colorScheme = useColorScheme();
+  const palette = usePalette();
   const { LL } = useI18nContext();
   const headerHeight = useHeaderHeight();
   const contentStyle = useBottomSafeAreaStyle(styles.content);
@@ -120,17 +121,19 @@ export default function SettingsNumberingScreen() {
 
   const handleSave = async () => {
     try {
-      const normalizedInvoiceSeriesNextNumber = Number.isFinite(Number(invoiceSeriesNextNumber))
-        ? Math.max(1, Math.floor(Number(invoiceSeriesNextNumber)))
-        : null;
-      const normalizedTimesheetSeriesNextNumber = Number.isFinite(Number(timesheetSeriesNextNumber))
-        ? Math.max(1, Math.floor(Number(timesheetSeriesNextNumber)))
-        : null;
+      const normalizedInvoiceSeriesNextNumber = parsePositiveIntegerInput(invoiceSeriesNextNumber);
+      const normalizedTimesheetSeriesNextNumber =
+        parsePositiveIntegerInput(timesheetSeriesNextNumber);
 
       if (
-        normalizedInvoiceSeriesNextNumber !== null &&
-        normalizedInvoiceSeriesNextNumber !== initialInvoiceSeriesNextNumber
+        !Number.isFinite(normalizedInvoiceSeriesNextNumber) ||
+        !Number.isFinite(normalizedTimesheetSeriesNextNumber)
       ) {
+        Alert.alert(LL.common.error(), LL.settings.saveError());
+        return;
+      }
+
+      if (normalizedInvoiceSeriesNextNumber !== initialInvoiceSeriesNextNumber) {
         const confirmed = await showConfirm({
           title: LL.settings.seriesNextNumberChangeConfirmTitle(),
           message: LL.settings.seriesNextNumberChangeConfirmMessage(),
@@ -143,10 +146,7 @@ export default function SettingsNumberingScreen() {
         }
       }
 
-      if (
-        normalizedTimesheetSeriesNextNumber !== null &&
-        normalizedTimesheetSeriesNextNumber !== initialTimesheetSeriesNextNumber
-      ) {
+      if (normalizedTimesheetSeriesNextNumber !== initialTimesheetSeriesNextNumber) {
         const confirmed = await showConfirm({
           title: LL.settings.seriesNextNumberChangeConfirmTitle(),
           message: LL.settings.seriesNextNumberChangeConfirmMessage(),
@@ -174,14 +174,10 @@ export default function SettingsNumberingScreen() {
         timesheetSeriesDeviceCode: timesheetSeriesDeviceCode.trim() || null,
       });
 
-      if (normalizedInvoiceSeriesNextNumber !== null) {
-        setInvoiceSeriesNextNumber(String(normalizedInvoiceSeriesNextNumber));
-        setInitialInvoiceSeriesNextNumber(normalizedInvoiceSeriesNextNumber);
-      }
-      if (normalizedTimesheetSeriesNextNumber !== null) {
-        setTimesheetSeriesNextNumber(String(normalizedTimesheetSeriesNextNumber));
-        setInitialTimesheetSeriesNextNumber(normalizedTimesheetSeriesNextNumber);
-      }
+      setInvoiceSeriesNextNumber(String(normalizedInvoiceSeriesNextNumber));
+      setInitialInvoiceSeriesNextNumber(normalizedInvoiceSeriesNextNumber);
+      setTimesheetSeriesNextNumber(String(normalizedTimesheetSeriesNextNumber));
+      setInitialTimesheetSeriesNextNumber(normalizedTimesheetSeriesNextNumber);
 
       Alert.alert(LL.common.success(), LL.settings.saveSuccess());
     } catch (error) {
@@ -204,7 +200,7 @@ export default function SettingsNumberingScreen() {
           keyboardDismissMode="on-drag"
           keyboardShouldPersistTaps="handled"
         >
-          <ThemedView style={[styles.section, sectionCard(colorScheme)]}>
+          <ThemedView style={[styles.section, sectionCard(palette)]}>
             <ThemedText style={styles.sectionDescription}>
               {LL.settings.numberingSubtitle()}
             </ThemedText>
@@ -213,9 +209,9 @@ export default function SettingsNumberingScreen() {
               {LL.settings.invoiceSeriesTitle()}
             </ThemedText>
             <TextInput
-              style={[styles.input, stylesField(colorScheme)]}
+              style={[styles.input, stylesField(palette)]}
               placeholder={LL.settings.invoiceSeriesPattern()}
-              placeholderTextColor={placeholder(colorScheme)}
+              placeholderTextColor={placeholder(palette)}
               value={invoiceSeriesPattern}
               onChangeText={setInvoiceSeriesPattern}
               autoCapitalize="characters"
@@ -223,7 +219,7 @@ export default function SettingsNumberingScreen() {
             <ThemedText style={styles.hintText}>
               {LL.settings.invoiceSeriesPatternHelp()}
             </ThemedText>
-            <ThemedView style={[styles.previewBox, sectionCard(colorScheme)]}>
+            <ThemedView style={[styles.previewBox, sectionCard(palette)]}>
               <ThemedText style={styles.previewLabel}>
                 {LL.settings.invoiceSeriesPreviewLabel()}
               </ThemedText>
@@ -232,9 +228,9 @@ export default function SettingsNumberingScreen() {
               </ThemedText>
             </ThemedView>
             <TextInput
-              style={[styles.input, stylesField(colorScheme)]}
+              style={[styles.input, stylesField(palette)]}
               placeholder={LL.settings.invoiceSeriesNextNumber()}
-              placeholderTextColor={placeholder(colorScheme)}
+              placeholderTextColor={placeholder(palette)}
               value={invoiceSeriesNextNumber}
               onChangeText={setInvoiceSeriesNextNumber}
               keyboardType="number-pad"
@@ -246,14 +242,14 @@ export default function SettingsNumberingScreen() {
               <Switch
                 value={invoiceSeriesPerDevice}
                 onValueChange={setInvoiceSeriesPerDevice}
-                {...getSwitchColors(Colors[colorScheme ?? 'light'])}
+                {...getSwitchColors(palette)}
               />
             </View>
             {invoiceSeriesPerDevice && (
               <TextInput
-                style={[styles.input, stylesField(colorScheme)]}
+                style={[styles.input, stylesField(palette)]}
                 placeholder={LL.settings.invoiceSeriesDeviceCode()}
-                placeholderTextColor={placeholder(colorScheme)}
+                placeholderTextColor={placeholder(palette)}
                 value={invoiceSeriesDeviceCode}
                 onChangeText={setInvoiceSeriesDeviceCode}
                 autoCapitalize="characters"
@@ -264,9 +260,9 @@ export default function SettingsNumberingScreen() {
               {LL.settings.timesheetSeriesTitle()}
             </ThemedText>
             <TextInput
-              style={[styles.input, stylesField(colorScheme)]}
+              style={[styles.input, stylesField(palette)]}
               placeholder={LL.settings.invoiceSeriesPattern()}
-              placeholderTextColor={placeholder(colorScheme)}
+              placeholderTextColor={placeholder(palette)}
               value={timesheetSeriesPattern}
               onChangeText={setTimesheetSeriesPattern}
               autoCapitalize="characters"
@@ -274,7 +270,7 @@ export default function SettingsNumberingScreen() {
             <ThemedText style={styles.hintText}>
               {LL.settings.invoiceSeriesPatternHelp()}
             </ThemedText>
-            <ThemedView style={[styles.previewBox, sectionCard(colorScheme)]}>
+            <ThemedView style={[styles.previewBox, sectionCard(palette)]}>
               <ThemedText style={styles.previewLabel}>
                 {LL.settings.invoiceSeriesPreviewLabel()}
               </ThemedText>
@@ -283,9 +279,9 @@ export default function SettingsNumberingScreen() {
               </ThemedText>
             </ThemedView>
             <TextInput
-              style={[styles.input, stylesField(colorScheme)]}
+              style={[styles.input, stylesField(palette)]}
               placeholder={LL.settings.invoiceSeriesNextNumber()}
-              placeholderTextColor={placeholder(colorScheme)}
+              placeholderTextColor={placeholder(palette)}
               value={timesheetSeriesNextNumber}
               onChangeText={setTimesheetSeriesNextNumber}
               keyboardType="number-pad"
@@ -297,14 +293,14 @@ export default function SettingsNumberingScreen() {
               <Switch
                 value={timesheetSeriesPerDevice}
                 onValueChange={setTimesheetSeriesPerDevice}
-                {...getSwitchColors(Colors[colorScheme ?? 'light'])}
+                {...getSwitchColors(palette)}
               />
             </View>
             {timesheetSeriesPerDevice && (
               <TextInput
-                style={[styles.input, stylesField(colorScheme)]}
+                style={[styles.input, stylesField(palette)]}
                 placeholder={LL.settings.invoiceSeriesDeviceCode()}
-                placeholderTextColor={placeholder(colorScheme)}
+                placeholderTextColor={placeholder(palette)}
                 value={timesheetSeriesDeviceCode}
                 onChangeText={setTimesheetSeriesDeviceCode}
                 autoCapitalize="characters"
@@ -315,14 +311,12 @@ export default function SettingsNumberingScreen() {
           <Pressable
             style={({ pressed }) => [
               styles.saveButton,
-              { backgroundColor: Colors[colorScheme ?? 'light'].tint },
+              { backgroundColor: palette.tint },
               pressed && styles.pressed,
             ]}
             onPress={handleSave}
           >
-            <ThemedText
-              style={[styles.saveButtonText, { color: Colors[colorScheme ?? 'light'].onTint }]}
-            >
+            <ThemedText style={[styles.saveButtonText, { color: palette.onTint }]}>
               {LL.common.save()}
             </ThemedText>
           </Pressable>
@@ -332,22 +326,22 @@ export default function SettingsNumberingScreen() {
   );
 }
 
-function stylesField(colorScheme: ReturnType<typeof useColorScheme>) {
+function stylesField(palette: ReturnType<typeof usePalette>) {
   return {
-    color: Colors[colorScheme ?? 'light'].text,
-    borderColor: Colors[colorScheme ?? 'light'].inputBorder,
-    backgroundColor: Colors[colorScheme ?? 'light'].inputBackground,
+    color: palette.text,
+    borderColor: palette.inputBorder,
+    backgroundColor: palette.inputBackground,
   };
 }
 
-function sectionCard(colorScheme: ReturnType<typeof useColorScheme>) {
+function sectionCard(palette: ReturnType<typeof usePalette>) {
   return {
-    backgroundColor: Colors[colorScheme ?? 'light'].cardBackground,
+    backgroundColor: palette.cardBackground,
   };
 }
 
-function placeholder(colorScheme: ReturnType<typeof useColorScheme>) {
-  return Colors[colorScheme ?? 'light'].placeholder;
+function placeholder(palette: ReturnType<typeof usePalette>) {
+  return palette.placeholder;
 }
 
 const styles = StyleSheet.create({

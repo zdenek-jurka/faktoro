@@ -1,6 +1,5 @@
 import { ThemedText } from '@/components/themed-text';
-import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { usePalette } from '@/hooks/use-palette';
 import React, { useMemo, useState } from 'react';
 import {
   NativeSyntheticEvent,
@@ -27,9 +26,8 @@ export function LabeledAutoGrowTextArea({
   minHeight = 84,
   numberOfLines = 3,
 }: LabeledAutoGrowTextAreaProps) {
-  const colorScheme = useColorScheme();
+  const palette = usePalette();
   const [inputHeight, setInputHeight] = useState(minHeight);
-  const theme = Colors[colorScheme ?? 'light'];
 
   const effectiveHeight = useMemo(() => Math.max(minHeight, inputHeight), [minHeight, inputHeight]);
 
@@ -48,14 +46,14 @@ export function LabeledAutoGrowTextArea({
         style={[
           styles.input,
           {
-            color: theme.text,
-            borderColor: theme.inputBorder,
-            backgroundColor: Colors[colorScheme ?? 'light'].inputBackground,
+            color: palette.text,
+            borderColor: palette.inputBorder,
+            backgroundColor: palette.inputBackground,
             height: effectiveHeight,
           },
         ]}
         placeholder={placeholder}
-        placeholderTextColor={theme.placeholder}
+        placeholderTextColor={palette.placeholder}
         value={value}
         onChangeText={onChangeText}
         multiline

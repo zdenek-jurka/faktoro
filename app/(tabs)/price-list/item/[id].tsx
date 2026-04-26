@@ -8,6 +8,7 @@ import { BorderRadius, Colors, FontSizes, Opacity, Spacing } from '@/constants/t
 import database from '@/db';
 import { useBottomSafeAreaStyle } from '@/hooks/use-bottom-safe-area-style';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { usePalette } from '@/hooks/use-palette';
 import { useDefaultInvoiceCurrency } from '@/hooks/use-default-invoice-currency';
 import { useI18nContext } from '@/i18n/i18n-react';
 import { normalizeIntlLocale } from '@/i18n/locale-options';
@@ -15,31 +16,17 @@ import { PriceListItemModel, VatCodeModel, VatRateModel } from '@/model';
 import { normalizeCurrencyCode } from '@/utils/currency-utils';
 import { formatPrice } from '@/utils/price-utils';
 import { getLocalizedVatCodeName } from '@/utils/vat-code-utils';
+import { formatVatRatePercent, resolveVatRateForDate } from '@/utils/vat-rate-utils';
 import { Q } from '@nozbe/watermelondb';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
 import { Animated, StyleSheet, View } from 'react-native';
 
-function resolveVatRateForDate(rates: VatRateModel[], taxableAt: number): number | null {
-  const matching = rates.filter(
-    (rate) => rate.validFrom <= taxableAt && (rate.validTo == null || rate.validTo >= taxableAt),
-  );
-  if (matching.length === 0) return null;
-  matching.sort((a, b) => b.validFrom - a.validFrom);
-  return matching[0].ratePercent;
-}
-
-function formatVatRatePercent(ratePercent: number): string {
-  return new Intl.NumberFormat(undefined, {
-    minimumFractionDigits: Number.isInteger(ratePercent) ? 0 : 1,
-    maximumFractionDigits: 2,
-  }).format(ratePercent);
-}
-
 export default function PriceListDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const colorScheme = useColorScheme();
+  const palette = usePalette();
   const { LL, locale } = useI18nContext();
   const intlLocale = normalizeIntlLocale(locale, 'en');
   const defaultInvoiceCurrency = useDefaultInvoiceCurrency();
@@ -168,7 +155,7 @@ export default function PriceListDetailScreen() {
               style={[
                 styles.inactiveBadge,
                 {
-                  backgroundColor: Colors[colorScheme ?? 'light'].buttonNeutralBackground,
+                  backgroundColor: palette.buttonNeutralBackground,
                   opacity: scrollY.interpolate({
                     inputRange: [0, 80],
                     outputRange: [1, 0],
@@ -186,12 +173,7 @@ export default function PriceListDetailScreen() {
                 },
               ]}
             >
-              <ThemedText
-                style={[
-                  styles.inactiveBadgeText,
-                  { color: Colors[colorScheme ?? 'light'].textMuted },
-                ]}
-              >
+              <ThemedText style={[styles.inactiveBadgeText, { color: palette.textMuted }]}>
                 {LL.priceList.inactive()}
               </ThemedText>
             </Animated.View>
@@ -201,15 +183,10 @@ export default function PriceListDetailScreen() {
         {/* Details Section */}
         <ThemedView style={styles.section}>
           {/* Default Price */}
-          <View
-            style={[
-              styles.infoBox,
-              { backgroundColor: Colors[colorScheme ?? 'light'].cardBackground },
-            ]}
-          >
+          <View style={[styles.infoBox, { backgroundColor: palette.cardBackground }]}>
             <View style={styles.detailContent}>
               <View style={styles.iconContainer}>
-                <IconSymbol name="tag" size={30} color={Colors[colorScheme ?? 'light'].icon} />
+                <IconSymbol name="tag" size={30} color={palette.icon} />
               </View>
               <View style={styles.detailTextContainer}>
                 <ThemedText style={styles.detailValue}>
@@ -229,19 +206,10 @@ export default function PriceListDetailScreen() {
 
           {/* Description */}
           {item.description && (
-            <View
-              style={[
-                styles.infoBox,
-                { backgroundColor: Colors[colorScheme ?? 'light'].cardBackground },
-              ]}
-            >
+            <View style={[styles.infoBox, { backgroundColor: palette.cardBackground }]}>
               <View style={styles.detailContent}>
                 <View style={styles.iconContainer}>
-                  <IconSymbol
-                    name="note.text"
-                    size={30}
-                    color={Colors[colorScheme ?? 'light'].icon}
-                  />
+                  <IconSymbol name="note.text" size={30} color={palette.icon} />
                 </View>
                 <View style={styles.detailTextContainer}>
                   <ThemedText style={styles.detailValue}>{item.description}</ThemedText>
@@ -253,19 +221,10 @@ export default function PriceListDetailScreen() {
 
           {/* VAT code name */}
           {displayVatCodeName && (
-            <View
-              style={[
-                styles.infoBox,
-                { backgroundColor: Colors[colorScheme ?? 'light'].cardBackground },
-              ]}
-            >
+            <View style={[styles.infoBox, { backgroundColor: palette.cardBackground }]}>
               <View style={styles.detailContent}>
                 <View style={styles.iconContainer}>
-                  <IconSymbol
-                    name="percent"
-                    size={30}
-                    color={Colors[colorScheme ?? 'light'].icon}
-                  />
+                  <IconSymbol name="percent" size={30} color={palette.icon} />
                 </View>
                 <View style={styles.detailTextContainer}>
                   <ThemedText style={styles.detailValue}>{displayVatCodeName}</ThemedText>

@@ -7,20 +7,19 @@ import { TimeEntryFormModal } from '@/components/time-tracking/time-entry-form-m
 import { ActionEmptyState } from '@/components/ui/action-empty-state';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { SwipeableList } from '@/components/ui/swipeable-list';
-import { Colors } from '@/constants/theme';
 import database from '@/db';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { usePalette } from '@/hooks/use-palette';
 import { useDefaultInvoiceCurrency } from '@/hooks/use-default-invoice-currency';
 import { useI18nContext } from '@/i18n/i18n-react';
 import { normalizeIntlLocale } from '@/i18n/locale-options';
-import { AppSettingsModel, ClientModel, PriceListItemModel, TimeEntryModel } from '@/model';
+import { ClientModel, PriceListItemModel, TimeEntryModel } from '@/model';
 import { getEffectivePriceDetails } from '@/repositories/client-price-override-repository';
 import {
   getDeviceSyncSettings,
   observeDeviceSyncSettings,
 } from '@/repositories/device-sync-settings-repository';
 import { getPriceListItems } from '@/repositories/price-list-repository';
-import { getSettings } from '@/repositories/settings-repository';
+import { getSettings, observeSettings } from '@/repositories/settings-repository';
 import {
   deleteTimeEntry,
   pauseTimeEntry,
@@ -46,8 +45,7 @@ type Props = {
 
 export function ClientTimeEntriesContent({ clientId, backToClientId }: Props) {
   const router = useRouter();
-  const colorScheme = useColorScheme();
-  const palette = Colors[colorScheme === 'dark' ? 'dark' : 'light'];
+  const palette = usePalette();
   const { LL, locale } = useI18nContext();
   const intlLocale = normalizeIntlLocale(locale, 'en');
   const defaultInvoiceCurrency = useDefaultInvoiceCurrency();
@@ -90,7 +88,20 @@ export function ClientTimeEntriesContent({ clientId, backToClientId }: Props) {
         Q.where('timesheet_id', null),
         Q.sortBy('start_time', Q.desc),
       )
-      .observe()
+      .observeWithColumns([
+        'client_id',
+        'timesheet_id',
+        'start_time',
+        'duration',
+        'is_running',
+        'is_paused',
+        'paused_at',
+        'total_paused_duration',
+        'description',
+        'price_list_item_id',
+        'rate',
+        'rate_currency',
+      ])
       .subscribe(setEntries);
 
     return () => {
@@ -100,7 +111,9 @@ export function ClientTimeEntriesContent({ clientId, backToClientId }: Props) {
   }, [clientId]);
 
   useEffect(() => {
-    const subscription = getPriceListItems(false).observe().subscribe(setPriceListItems);
+    const subscription = getPriceListItems(false)
+      .observeWithColumns(['name', 'default_price', 'default_price_currency', 'unit', 'is_active'])
+      .subscribe(setPriceListItems);
     return () => subscription.unsubscribe();
   }, []);
 
@@ -113,24 +126,18 @@ export function ClientTimeEntriesContent({ clientId, backToClientId }: Props) {
     };
     void loadDevice();
 
-    const settingsSubscription = database
-      .get<AppSettingsModel>(AppSettingsModel.table)
-      .query()
-      .observeWithColumns(['default_billing_interval'])
-      .subscribe((allSettings) => {
-        if (allSettings.length === 0) {
-          setDefaultBillingInterval(undefined);
-          return;
-        }
-        setDefaultBillingInterval(allSettings[0].defaultBillingInterval);
-      });
-
+    const unsubscribeSettings = observeSettings(
+      (settings) => {
+        setDefaultBillingInterval(settings?.defaultBillingInterval);
+      },
+      ['default_billing_interval'],
+    );
     const deviceSubscription = observeDeviceSyncSettings((deviceSettings) => {
       setLocalDeviceId(deviceSettings.syncDeviceId || null);
     });
 
     return () => {
-      settingsSubscription.unsubscribe();
+      unsubscribeSettings();
       deviceSubscription();
     };
   }, []);

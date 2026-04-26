@@ -1,4 +1,4 @@
-import { Colors, FontSizes } from '@/constants/theme';
+import { FontSizes } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';

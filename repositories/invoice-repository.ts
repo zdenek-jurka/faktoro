@@ -17,7 +17,9 @@ import type { BuyerSnapshot, SellerSnapshot } from '@/templates/invoice/xml';
 import { DEFAULT_CURRENCY_CODE, normalizeCurrencyCode } from '@/utils/currency-utils';
 import { normalizeBuyerSnapshot } from '@/utils/invoice-buyer';
 import { isInvoiceVatPayer, type InvoiceCancellationMode } from '@/utils/invoice-status';
+import { calculateLineItemTotals } from '@/utils/money';
 import { buildSeriesIdentifier } from '@/utils/series-utils';
+import { resolveVatRateForDate } from '@/utils/vat-rate-utils';
 import { Q } from '@nozbe/watermelondb';
 
 export type DraftInvoiceItemInput = {
@@ -78,41 +80,8 @@ type ResolvedInvoiceWriteData = {
   normalizedFooterNote?: string;
 };
 
-function roundCurrency(value: number): number {
-  return Math.round(value * 100) / 100;
-}
-
-function calculateInvoiceTotals(
-  items: DraftInvoiceItemInput[],
-  includeVat: boolean,
-): {
-  subtotal: number;
-  total: number;
-} {
-  const subtotal = roundCurrency(items.reduce((sum, item) => sum + item.totalPrice, 0));
-  const vatTotal = includeVat
-    ? roundCurrency(
-        items.reduce((sum, item) => {
-          const rate = item.vatRate ?? 0;
-          return sum + item.totalPrice * (rate / 100);
-        }, 0),
-      )
-    : 0;
-  return { subtotal, total: roundCurrency(subtotal + vatTotal) };
-}
-
 function normalizeVatName(value?: string): string {
   return (value || '').trim().toLocaleLowerCase();
-}
-
-function resolveVatRateForDate(rates: VatRateModel[], taxableAt: number): number | undefined {
-  const matching = rates.filter(
-    (rate) => rate.validFrom <= taxableAt && (rate.validTo == null || rate.validTo >= taxableAt),
-  );
-  if (matching.length === 0) return undefined;
-
-  matching.sort((a, b) => b.validFrom - a.validFrom);
-  return matching[0].ratePercent;
 }
 
 function buildInvoiceNumberFromSettings(
@@ -331,7 +300,7 @@ async function resolveInvoiceWriteData(
     const vatCodeId =
       priceListItem?.vatCodeId || (vatName ? vatCodeNameToId.get(vatName) : undefined);
     const rates = vatCodeId ? vatRatesByCodeId.get(vatCodeId) || [] : [];
-    const rateByTaxableDate = resolveVatRateForDate(rates, taxableAt);
+    const rateByTaxableDate = resolveVatRateForDate(rates, taxableAt) ?? undefined;
 
     return {
       ...draftItem,
@@ -352,7 +321,10 @@ async function resolveInvoiceWriteData(
     buyerSnapshot,
     sellerSnapshot,
     normalizedItems,
-    totals: calculateInvoiceTotals(normalizedItems, isVatPayer),
+    totals: (() => {
+      const { subtotal, total } = calculateLineItemTotals(normalizedItems, isVatPayer);
+      return { subtotal, total };
+    })(),
     normalizedCurrency: normalizeCurrencyCode(
       input.currency,
       settings?.defaultInvoiceCurrency || DEFAULT_CURRENCY_CODE,

@@ -10,9 +10,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { CrossPlatformDatePicker } from '@/components/ui/cross-platform-date-picker';
-import { Colors } from '@/constants/theme';
 import { useBottomSafeAreaStyle } from '@/hooks/use-bottom-safe-area-style';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { usePalette } from '@/hooks/use-palette';
 import { useI18nContext } from '@/i18n/i18n-react';
 import { normalizeIntlLocale } from '@/i18n/locale-options';
 import { CreateTimesheetInput, TimesheetPreset } from '@/repositories/timesheet-repository';
@@ -161,8 +160,7 @@ export function CreateTimesheetModal({
   onClose,
   onCreate,
 }: CreateTimesheetModalProps) {
-  const colorScheme = useColorScheme();
-  const palette = Colors[colorScheme ?? 'light'];
+  const palette = usePalette();
   const { LL, locale } = useI18nContext();
   const intlLocale = normalizeIntlLocale(locale, 'en');
   const modalContentStyle = useBottomSafeAreaStyle(styles.modalContent);

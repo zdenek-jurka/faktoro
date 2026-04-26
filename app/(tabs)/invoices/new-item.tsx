@@ -13,7 +13,7 @@ import {
 import { Colors } from '@/constants/theme';
 import database from '@/db';
 import { useBottomSafeAreaStyle } from '@/hooks/use-bottom-safe-area-style';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { usePalette } from '@/hooks/use-palette';
 import { useI18nContext } from '@/i18n/i18n-react';
 import { PriceListItemModel, TimeEntryModel, VatCodeModel, VatRateModel } from '@/model';
 import {
@@ -30,8 +30,11 @@ import {
 } from '@/repositories/time-entry-repository';
 import { getVatCodes, getVatRates } from '@/repositories/vat-rate-repository';
 import { hasMatchingCurrency, normalizeCurrencyCode } from '@/utils/currency-utils';
+import { parseISODate } from '@/utils/iso-date';
+import { parsePositiveDecimalInput } from '@/utils/number-input';
 import { isIos } from '@/utils/platform';
 import { getLocalizedVatCodeName, resolvePreferredVatCodeId } from '@/utils/vat-code-utils';
+import { formatVatRatePercent, resolveVatRateForDate } from '@/utils/vat-rate-utils';
 import { Q } from '@nozbe/watermelondb';
 import { useHeaderHeight } from '@react-navigation/elements';
 import SegmentedControl from '@react-native-segmented-control/segmented-control';
@@ -75,35 +78,6 @@ type MissingTimesheetEntry = {
 
 type Palette = (typeof Colors)['light'];
 
-function parseISODate(value?: string): number | null {
-  const raw = value?.trim();
-  if (!raw) return null;
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(raw)) return null;
-  const date = new Date(`${raw}T00:00:00`);
-  if (!Number.isFinite(date.getTime())) return null;
-  const [year, month, day] = raw.split('-').map(Number);
-  if (date.getFullYear() !== year || date.getMonth() + 1 !== month || date.getDate() !== day) {
-    return null;
-  }
-  return date.getTime();
-}
-
-function resolveVatRateForDate(rates: VatRateModel[], taxableAt: number): number | null {
-  const matching = rates.filter(
-    (rate) => rate.validFrom <= taxableAt && (rate.validTo == null || rate.validTo >= taxableAt),
-  );
-  if (matching.length === 0) return null;
-  matching.sort((a, b) => b.validFrom - a.validFrom);
-  return matching[0].ratePercent;
-}
-
-function formatVatRatePercent(ratePercent: number): string {
-  return new Intl.NumberFormat(undefined, {
-    minimumFractionDigits: Number.isInteger(ratePercent) ? 0 : 1,
-    maximumFractionDigits: 2,
-  }).format(ratePercent);
-}
-
 function formatDuration(seconds: number): string {
   const hours = Math.floor(seconds / 3600);
   const minutes = Math.floor((seconds % 3600) / 60);
@@ -135,8 +109,7 @@ export default function InvoiceNewItemScreen() {
   const router = useRouter();
   const headerHeight = useHeaderHeight();
   const { LL } = useI18nContext();
-  const colorScheme = useColorScheme();
-  const palette = Colors[colorScheme === 'dark' ? 'dark' : 'light'];
+  const palette = usePalette();
   const contentStyle = useBottomSafeAreaStyle(styles.content);
   const params = useLocalSearchParams<{
     editingInvoiceId?: string;
@@ -571,8 +544,8 @@ export default function InvoiceNewItemScreen() {
         }
 
         const rawRate = missingEntryManualRateById[missingEntry.id];
-        const parsedRate = Number.parseFloat(rawRate);
-        if (!Number.isFinite(parsedRate) || parsedRate <= 0) {
+        const parsedRate = parsePositiveDecimalInput(rawRate);
+        if (!Number.isFinite(parsedRate)) {
           Alert.alert(LL.common.error(), LL.invoices.errorInvalidUnitPrice());
           return;
         }
@@ -699,8 +672,8 @@ export default function InvoiceNewItemScreen() {
       return;
     }
 
-    const quantity = Number.parseFloat(priceItemQty);
-    if (!Number.isFinite(quantity) || quantity <= 0) {
+    const quantity = parsePositiveDecimalInput(priceItemQty);
+    if (!Number.isFinite(quantity)) {
       Alert.alert(LL.common.error(), LL.invoices.errorInvalidQuantity());
       return;
     }
@@ -764,14 +737,14 @@ export default function InvoiceNewItemScreen() {
       return;
     }
 
-    const quantity = Number.parseFloat(manualQty);
-    if (!Number.isFinite(quantity) || quantity <= 0) {
+    const quantity = parsePositiveDecimalInput(manualQty);
+    if (!Number.isFinite(quantity)) {
       Alert.alert(LL.common.error(), LL.invoices.errorInvalidQuantity());
       return;
     }
 
-    const unitPrice = Number.parseFloat(manualUnitPrice);
-    if (!Number.isFinite(unitPrice) || unitPrice <= 0) {
+    const unitPrice = parsePositiveDecimalInput(manualUnitPrice);
+    if (!Number.isFinite(unitPrice)) {
       Alert.alert(LL.common.error(), LL.invoices.errorInvalidUnitPrice());
       return;
     }

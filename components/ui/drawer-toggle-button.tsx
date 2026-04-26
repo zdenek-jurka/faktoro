@@ -3,8 +3,7 @@ import type { ParamListBase } from '@react-navigation/native';
 import { useNavigation } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
-import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { usePalette } from '@/hooks/use-palette';
 import { usePendingSyncConflictCount } from '@/hooks/use-pending-sync-conflict-count';
 import { useI18nContext } from '@/i18n/i18n-react';
 import { getMoreSectionTitle } from '@/i18n/locale-options';
@@ -15,8 +14,7 @@ import { IconButton } from './icon-button';
 export function DrawerToggleButton() {
   const navigation = useNavigation<DrawerNavigationProp<ParamListBase>>('/');
   const { locale } = useI18nContext();
-  const colorScheme = useColorScheme();
-  const palette = Colors[colorScheme ?? 'light'];
+  const palette = usePalette();
   const pendingConflictCount = usePendingSyncConflictCount();
 
   if (isIos) {

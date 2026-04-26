@@ -2,9 +2,8 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { isSyncEnabled } from '@/constants/features';
-import { Colors } from '@/constants/theme';
 import { useBottomSafeAreaStyle } from '@/hooks/use-bottom-safe-area-style';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { usePalette } from '@/hooks/use-palette';
 import { usePendingSyncConflictCount } from '@/hooks/use-pending-sync-conflict-count';
 import { useI18nContext } from '@/i18n/i18n-react';
 import { observeDeviceSyncSettings } from '@/repositories/device-sync-settings-repository';
@@ -43,8 +42,7 @@ type SettingsSection = {
 };
 
 function SettingsRow({ item, onPress }: { item: SettingsItem; onPress: () => void }) {
-  const colorScheme = useColorScheme();
-  const palette = Colors[colorScheme ?? 'light'];
+  const palette = usePalette();
 
   return (
     <Pressable

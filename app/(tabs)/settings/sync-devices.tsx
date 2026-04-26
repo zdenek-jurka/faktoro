@@ -3,10 +3,10 @@ import { ThemedView } from '@/components/themed-view';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { SyncPayloadEntryModal } from '@/components/sync/sync-payload-entry-modal';
 import { QrScannerModal } from '@/components/sync/qr-scanner-modal';
-import { BorderRadius, BorderWidth, Colors, FontSizes, Spacing } from '@/constants/theme';
+import { BorderRadius, BorderWidth, FontSizes, Spacing } from '@/constants/theme';
 import { isSyncEnabled, isSyncRecoveryPayloadEntryEnabled } from '@/constants/features';
 import { useBottomSafeAreaStyle } from '@/hooks/use-bottom-safe-area-style';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { usePalette } from '@/hooks/use-palette';
 import { useI18nContext } from '@/i18n/i18n-react';
 import {
   getDeviceSyncSettings,
@@ -65,8 +65,7 @@ export default function SyncDevicesScreen() {
 }
 
 function SyncDevicesScreenContent() {
-  const colorScheme = useColorScheme();
-  const palette = Colors[colorScheme === 'dark' ? 'dark' : 'light'];
+  const palette = usePalette();
   const { LL } = useI18nContext();
   const router = useRouter();
   const headerHeight = useHeaderHeight();

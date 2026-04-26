@@ -12,13 +12,12 @@ import database from '@/db';
 import { usePalette } from '@/hooks/use-palette';
 import { useI18nContext } from '@/i18n/i18n-react';
 import { normalizeIntlLocale } from '@/i18n/locale-options';
-import AppSettingsModel from '@/model/AppSettingsModel';
 import ClientModel from '@/model/ClientModel';
 import InvoiceItemModel from '@/model/InvoiceItemModel';
 import InvoiceModel from '@/model/InvoiceModel';
 import TimesheetModel from '@/model/TimesheetModel';
 import TimeEntryModel from '@/model/TimeEntryModel';
-import { getSettings } from '@/repositories/settings-repository';
+import { getSettings, observeSettings } from '@/repositories/settings-repository';
 import { normalizeCurrencyCode } from '@/utils/currency-utils';
 import { getBuyerDisplayName, parseBuyerSnapshotJson } from '@/utils/invoice-buyer';
 import { formatPrice } from '@/utils/price-utils';
@@ -101,7 +100,7 @@ export default function ReportsScreen() {
 
       const rangedEntryQuery = range
         ? database
-            .get<TimeEntryModel>('time_entry')
+            .get<TimeEntryModel>(TimeEntryModel.table)
             .query(
               Q.where('is_running', false),
               Q.where('end_time', Q.notEq(null)),
@@ -109,12 +108,12 @@ export default function ReportsScreen() {
               Q.where('end_time', Q.lte(range.end)),
             )
         : database
-            .get<TimeEntryModel>('time_entry')
+            .get<TimeEntryModel>(TimeEntryModel.table)
             .query(Q.where('is_running', false), Q.where('end_time', Q.notEq(null)));
 
       // All completed entries (any period) — for unbilled count
       const allUnbilledQuery = database
-        .get<TimeEntryModel>('time_entry')
+        .get<TimeEntryModel>(TimeEntryModel.table)
         .query(
           Q.where('is_running', false),
           Q.where('end_time', Q.notEq(null)),
@@ -122,17 +121,17 @@ export default function ReportsScreen() {
         );
 
       // All timesheets + invoice items referencing timesheets (to compute uninvoiced count)
-      const allTimesheetsQuery = database.get<TimesheetModel>('timesheet').query();
+      const allTimesheetsQuery = database.get<TimesheetModel>(TimesheetModel.table).query();
       const timesheetInvoiceItemsQuery = database
-        .get<InvoiceItemModel>('invoice_item')
+        .get<InvoiceItemModel>(InvoiceItemModel.table)
         .query(Q.where('source_kind', 'timesheet'));
 
       // Invoice conditions
       const invoicesQuery = range
         ? database
-            .get<InvoiceModel>('invoice')
+            .get<InvoiceModel>(InvoiceModel.table)
             .query(Q.where('issued_at', Q.gte(range.start)), Q.where('issued_at', Q.lte(range.end)))
-        : database.get<InvoiceModel>('invoice').query();
+        : database.get<InvoiceModel>(InvoiceModel.table).query();
 
       const [entries, allUnbilled, allTimesheets, timesheetInvoiceItems, invoices, clients] =
         await Promise.all([
@@ -141,7 +140,7 @@ export default function ReportsScreen() {
           allTimesheetsQuery.fetch(),
           timesheetInvoiceItemsQuery.fetch(),
           invoicesQuery.fetch(),
-          database.get<ClientModel>('client').query().fetch(),
+          database.get<ClientModel>(ClientModel.table).query().fetch(),
         ]);
 
       const invoicedTimesheetIds = new Set(timesheetInvoiceItems.map((ii) => ii.sourceId));
@@ -277,37 +276,70 @@ export default function ReportsScreen() {
       }, 120);
     };
 
-    const subscribeAfterInitialEmission = (
-      subscribe: (onChange: () => void) => { unsubscribe: () => void },
-    ) => {
+    const subscribeAfterInitialEmission = (subscribe: (onChange: () => void) => () => void) => {
       let hasReceivedInitialValue = false;
-      const subscription = subscribe(() => {
+      const unsubscribe = subscribe(() => {
         if (!hasReceivedInitialValue) {
           hasReceivedInitialValue = true;
           return;
         }
         scheduleReload();
       });
-      unsubscribeCallbacks.push(() => subscription.unsubscribe());
+      unsubscribeCallbacks.push(unsubscribe);
     };
 
+    subscribeAfterInitialEmission((onChange) => {
+      const subscription = database
+        .get<TimeEntryModel>(TimeEntryModel.table)
+        .query()
+        .observeWithColumns([
+          'is_running',
+          'end_time',
+          'timesheet_id',
+          'duration',
+          'rate',
+          'rate_currency',
+          'client_id',
+        ])
+        .subscribe(onChange);
+      return () => subscription.unsubscribe();
+    });
+    subscribeAfterInitialEmission((onChange) => {
+      const subscription = database
+        .get<TimesheetModel>(TimesheetModel.table)
+        .query()
+        .observeWithColumns(['client_id'])
+        .subscribe(onChange);
+      return () => subscription.unsubscribe();
+    });
+    subscribeAfterInitialEmission((onChange) => {
+      const subscription = database
+        .get<InvoiceItemModel>(InvoiceItemModel.table)
+        .query()
+        .observeWithColumns(['source_kind', 'source_id'])
+        .subscribe(onChange);
+      return () => subscription.unsubscribe();
+    });
+    subscribeAfterInitialEmission((onChange) => {
+      const subscription = database
+        .get<InvoiceModel>(InvoiceModel.table)
+        .query()
+        .observeWithColumns(['issued_at', 'currency', 'total', 'client_id', 'buyer_snapshot_json'])
+        .subscribe(onChange);
+      return () => subscription.unsubscribe();
+    });
+    subscribeAfterInitialEmission((onChange) => {
+      const subscription = database
+        .get<ClientModel>(ClientModel.table)
+        .query()
+        .observeWithColumns(['name'])
+        .subscribe(onChange);
+      return () => subscription.unsubscribe();
+    });
     subscribeAfterInitialEmission((onChange) =>
-      database.get<TimeEntryModel>('time_entry').query().observe().subscribe(onChange),
-    );
-    subscribeAfterInitialEmission((onChange) =>
-      database.get<TimesheetModel>('timesheet').query().observe().subscribe(onChange),
-    );
-    subscribeAfterInitialEmission((onChange) =>
-      database.get<InvoiceItemModel>('invoice_item').query().observe().subscribe(onChange),
-    );
-    subscribeAfterInitialEmission((onChange) =>
-      database.get<InvoiceModel>('invoice').query().observe().subscribe(onChange),
-    );
-    subscribeAfterInitialEmission((onChange) =>
-      database.get<ClientModel>('client').query().observe().subscribe(onChange),
-    );
-    subscribeAfterInitialEmission((onChange) =>
-      database.get<AppSettingsModel>('app_settings').query().observe().subscribe(onChange),
+      observeSettings(() => {
+        onChange();
+      }, ['default_invoice_currency']),
     );
 
     return () => {

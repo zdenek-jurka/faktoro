@@ -1,9 +1,9 @@
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { KeyboardAwareScroll } from '@/components/ui/keyboard-aware-scroll';
-import { Colors, withOpacity } from '@/constants/theme';
+import { withOpacity } from '@/constants/theme';
 import database from '@/db';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { usePalette } from '@/hooks/use-palette';
 import { useI18nContext } from '@/i18n/i18n-react';
 import { InvoiceItemModel, InvoiceModel } from '@/model';
 import {
@@ -27,8 +27,7 @@ export default function InvoiceCancelScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { LL } = useI18nContext();
-  const colorScheme = useColorScheme();
-  const palette = Colors[colorScheme ?? 'light'];
+  const palette = usePalette();
 
   const [invoice, setInvoice] = useState<InvoiceModel | null>(null);
   const [hasTimesheetItems, setHasTimesheetItems] = useState(false);
@@ -46,7 +45,7 @@ export default function InvoiceCancelScreen() {
     const itemsSubscription = database
       .get<InvoiceItemModel>(InvoiceItemModel.table)
       .query(Q.where('invoice_id', id), Q.where('source_kind', 'timesheet'))
-      .observe()
+      .observeWithColumns(['invoice_id', 'source_kind'])
       .subscribe((items) => setHasTimesheetItems(items.length > 0));
 
     return () => {

@@ -2,9 +2,8 @@ import React from 'react';
 import { Modal, ScrollView, StyleSheet, Pressable, View } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { Colors } from '@/constants/theme';
 import { useBottomSafeAreaStyle } from '@/hooks/use-bottom-safe-area-style';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { usePalette } from '@/hooks/use-palette';
 import { type CompanyRegistryKey } from '@/repositories/company-registry';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
@@ -28,8 +27,7 @@ export function CompanyRegistryPickerModal({
   onClose,
   onSelect,
 }: Props) {
-  const colorScheme = useColorScheme() ?? 'light';
-  const palette = Colors[colorScheme];
+  const palette = usePalette();
   const insets = useSafeAreaInsets();
   const sheetStyle = useBottomSafeAreaStyle(styles.sheet);
   const optionsContentStyle = useBottomSafeAreaStyle(styles.optionsContent);

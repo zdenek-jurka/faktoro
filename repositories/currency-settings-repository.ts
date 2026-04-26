@@ -210,7 +210,7 @@ export async function setupCurrencyFormatCacheSync(): Promise<{ remove: () => vo
   const subscription = database
     .get<CurrencySettingModel>(CurrencySettingModel.table)
     .query(Q.sortBy('sort_order', Q.asc), Q.sortBy('code', Q.asc))
-    .observe()
+    .observeWithColumns(['code', 'sort_order', 'is_active', 'prefix', 'suffix'])
     .subscribe((rows) => {
       setCurrencyFormatDefinitions(rows.map(toCurrencyDefinition));
     });
