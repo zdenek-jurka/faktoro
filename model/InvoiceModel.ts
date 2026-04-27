@@ -14,6 +14,7 @@ export default class InvoiceModel extends Model {
 
   @field('client_id') clientId: string;
   @text('invoice_number') invoiceNumber: string;
+  @text('buyer_reference') buyerReference?: string;
   @field('issued_at') issuedAt: number;
   @field('taxable_at') taxableAt?: number;
   @field('due_at') dueAt?: number;

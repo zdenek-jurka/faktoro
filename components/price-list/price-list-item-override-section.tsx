@@ -197,6 +197,7 @@ export function PriceListItemOverrideSection({ priceListItem }: PriceListItemOve
         }
         itemBackgroundColor={palette.cardBackground}
         showAddButton={clients.length > 0 && availableClients.length > 0}
+        swipeHintKey="price-list.client-overrides"
       />
       {clients.length === 0 && (
         <NoClientsRequiredNotice

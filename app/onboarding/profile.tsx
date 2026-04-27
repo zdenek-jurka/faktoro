@@ -165,14 +165,7 @@ export default function OnboardingProfileScreen() {
       isVatPayer,
     });
 
-    if (isVatPayer) {
-      router.push({
-        pathname: '/onboarding/vat',
-        params: country.trim() ? { bootstrapCountry: country.trim() } : undefined,
-      });
-    } else {
-      router.push('/onboarding/currency');
-    }
+    router.push('/onboarding/invoice-profile');
   }
 
   return (

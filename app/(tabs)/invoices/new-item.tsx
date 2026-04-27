@@ -54,6 +54,7 @@ type HeaderDraft = {
   clientId: string;
   invoiceNumber: string;
   invoiceNumberManuallyEdited?: boolean;
+  buyerReference?: string;
   issuedDate: string;
   taxableDate?: string;
   dueDate: string;

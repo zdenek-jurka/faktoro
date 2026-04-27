@@ -1,6 +1,7 @@
 import { PriceListItem } from '@/components/price-list/price-list-item';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { DismissibleSwipeHint } from '@/components/ui/dismissible-swipe-hint';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { SwipeableRow } from '@/components/ui/swipeable-row';
 import { usePalette } from '@/hooks/use-palette';
@@ -36,10 +37,15 @@ export function PriceListList({
     <FlatList
       data={items}
       keyExtractor={(item) => item.id}
+      ListHeaderComponent={
+        <DismissibleSwipeHint hintKey="price-list.items" visible={items.length > 0} />
+      }
       renderItem={({ item }) => (
-        <SwipeableRow onEdit={() => onItemEdit(item.id)} onDelete={() => onItemDelete(item.id)}>
-          <PriceListItem item={item} fallbackCurrency={fallbackCurrency} onPress={onItemPress} />
-        </SwipeableRow>
+        <ThemedView style={styles.itemWrap}>
+          <SwipeableRow onEdit={() => onItemEdit(item.id)} onDelete={() => onItemDelete(item.id)}>
+            <PriceListItem item={item} fallbackCurrency={fallbackCurrency} onPress={onItemPress} />
+          </SwipeableRow>
+        </ThemedView>
       )}
       keyboardShouldPersistTaps="handled"
       contentInsetAdjustmentBehavior="automatic"
@@ -70,7 +76,11 @@ export function PriceListList({
 
 const styles = StyleSheet.create({
   listContent: {
+    paddingHorizontal: 16,
     paddingBottom: 24,
+  },
+  itemWrap: {
+    marginHorizontal: -16,
   },
   listContentEmpty: {
     flexGrow: 1,

@@ -147,6 +147,7 @@ export function buildIsdocXml({ invoice, items, buyer, seller }: InvoiceXmlBuild
   const localCurrencyCode = normalizeCurrency(invoice.currency);
   const invoiceUuid = deterministicUuid(invoice.id || invoice.invoiceNumber);
   const invoiceNote = compactText(invoice.footerNote || invoice.headerNote);
+  const buyerReference = compactText(invoice.buyerReference);
   const vatApplicable = items.some((item) => Number(item.vatRate ?? 0) > 0) || !!seller.vatNumber;
   const anonymousCustomerParty = compactDigits(buyer.companyId).length === 0;
 
@@ -261,7 +262,17 @@ export function buildIsdocXml({ invoice, items, buyer, seller }: InvoiceXmlBuild
   ${anonymousCustomerParty ? '<AnonymousCustomerParty>true</AnonymousCustomerParty>' : ''}
   <AccountingCustomerParty>
     ${buildPartyXml(buyer, buyer.companyId || invoice.clientId || invoice.id, 'Customer')}
-  </AccountingCustomerParty>
+  </AccountingCustomerParty>${
+    buyerReference
+      ? `
+  <OrderReferences>
+    <OrderReference>
+      <SalesOrderID>${escapeXml(buyerReference)}</SalesOrderID>
+      <ExternalOrderID>${escapeXml(buyerReference)}</ExternalOrderID>
+    </OrderReference>
+  </OrderReferences>`
+      : ''
+  }
   <InvoiceLines>
 ${linesXml}
   </InvoiceLines>

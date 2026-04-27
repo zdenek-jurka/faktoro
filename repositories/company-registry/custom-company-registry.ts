@@ -3,6 +3,11 @@ import {
   CompanyRegistryLookupError,
   CompanyRegistryService,
 } from './types';
+import {
+  type HttpAuth,
+  parseSecureOrLocalHttpUrl,
+  resolveHttpAuthHeaders,
+} from '@/utils/http-auth';
 
 type CustomRegistryResponse = {
   companyId?: string;
@@ -23,8 +28,8 @@ type CustomRegistryResponse = {
 
 type CustomConnectorConfig = {
   url?: string;
-  headerKey?: string;
-  headerValue?: string;
+  auth?: HttpAuth;
+  tokenCacheStorageKey?: string;
 };
 
 function normalizeCompanyId(value: string): string {
@@ -34,7 +39,11 @@ function normalizeCompanyId(value: string): string {
 function buildLookupUrl(baseUrl: string, companyId: string): string {
   const trimmed = baseUrl.trim();
   if (!trimmed) return '';
-  if (!/^https?:\/\//i.test(trimmed)) return '';
+  try {
+    parseSecureOrLocalHttpUrl(trimmed, 'Custom connector URL');
+  } catch {
+    return '';
+  }
 
   if (trimmed.includes('{companyId}')) {
     return trimmed.replaceAll('{companyId}', encodeURIComponent(companyId));
@@ -47,13 +56,14 @@ export class CustomCompanyRegistryService implements CompanyRegistryService {
   readonly countryCode = 'ZZ';
   readonly registryName = 'Custom Connector';
   private readonly url: string;
-  private readonly headerKey: string;
-  private readonly headerValue: string;
+  private readonly auth: HttpAuth;
+  private readonly tokenCacheStorageKey: string;
 
   constructor(config?: CustomConnectorConfig) {
     this.url = config?.url?.trim() || '';
-    this.headerKey = config?.headerKey?.trim() || '';
-    this.headerValue = config?.headerValue?.trim() || '';
+    this.auth = config?.auth ?? { type: 'none' };
+    this.tokenCacheStorageKey =
+      config?.tokenCacheStorageKey || 'company_registry_oauth2_token.custom_connector';
   }
 
   async lookupCompanyById(companyId: string): Promise<CompanyRegistryCompany> {
@@ -70,17 +80,10 @@ export class CustomCompanyRegistryService implements CompanyRegistryService {
       );
     }
 
-    if ((this.headerKey && !this.headerValue) || (!this.headerKey && this.headerValue)) {
-      throw new CompanyRegistryLookupError(
-        'configuration_required',
-        'Custom connector requires both header key and header value',
-      );
-    }
-
-    const headers: Record<string, string> = { Accept: 'application/json' };
-    if (this.headerKey && this.headerValue) {
-      headers[this.headerKey] = this.headerValue;
-    }
+    const headers = {
+      Accept: 'application/json',
+      ...(await this.resolveAuthHeaders()),
+    };
 
     let response: Response;
     try {
@@ -158,5 +161,71 @@ export class CustomCompanyRegistryService implements CompanyRegistryService {
       vatNumber: data.vatNumber || data.vat_number,
       importAddresses: normalizedImportAddresses.length > 0 ? normalizedImportAddresses : undefined,
     };
+  }
+
+  private validateAuthConfig(): void {
+    if (this.auth.type === 'bearer' && !this.auth.token.trim()) {
+      throw new CompanyRegistryLookupError(
+        'configuration_required',
+        'Custom connector bearer token is required',
+      );
+    }
+    if (this.auth.type === 'api_key' && (!this.auth.headerName.trim() || !this.auth.value.trim())) {
+      throw new CompanyRegistryLookupError(
+        'configuration_required',
+        'Custom connector API key header name and value are required',
+      );
+    }
+    if (this.auth.type === 'basic' && (!this.auth.username.trim() || !this.auth.password.trim())) {
+      throw new CompanyRegistryLookupError(
+        'configuration_required',
+        'Custom connector basic username and password are required',
+      );
+    }
+    if (
+      this.auth.type === 'oauth2_cc' &&
+      (!this.auth.tokenUrl.trim() || !this.auth.clientId.trim() || !this.auth.clientSecret.trim())
+    ) {
+      throw new CompanyRegistryLookupError(
+        'configuration_required',
+        'Custom connector OAuth2 token URL, client ID and client secret are required',
+      );
+    }
+  }
+
+  private async resolveAuthHeaders(): Promise<Record<string, string>> {
+    this.validateAuthConfig();
+
+    try {
+      return await resolveHttpAuthHeaders(this.auth, {
+        tokenCacheStorageKey: this.tokenCacheStorageKey,
+      });
+    } catch (error) {
+      const status =
+        typeof error === 'object' && error
+          ? (error as { httpStatus?: number }).httpStatus
+          : undefined;
+      if (status === 401 || status === 403) {
+        throw new CompanyRegistryLookupError(
+          'configuration_required',
+          'Custom connector credentials are invalid',
+        );
+      }
+      if (
+        status === 408 ||
+        status === 429 ||
+        (typeof status === 'number' && status >= 500) ||
+        (error instanceof Error && /network request failed|timed out/i.test(error.message))
+      ) {
+        throw new CompanyRegistryLookupError(
+          'service_unavailable',
+          'Unable to connect to custom connector auth service',
+        );
+      }
+      throw new CompanyRegistryLookupError(
+        'configuration_required',
+        error instanceof Error ? error.message : 'Custom connector auth configuration is invalid',
+      );
+    }
   }
 }

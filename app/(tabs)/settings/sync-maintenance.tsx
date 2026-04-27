@@ -607,6 +607,8 @@ function SyncMaintenanceScreenContent() {
         return LL.timeTracking.activity();
       case 'invoice.invoice_number':
         return LL.invoices.invoiceNumber();
+      case 'invoice.buyer_reference':
+        return LL.invoices.buyerReference();
       case 'invoice.currency':
         return LL.settings.currenciesTitle();
       case 'invoice.payment_method':

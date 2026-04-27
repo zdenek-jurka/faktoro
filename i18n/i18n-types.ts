@@ -81,6 +81,14 @@ type RootTranslation = {
 		 */
 		continueAction: string
 		/**
+		 * D​i​s​m​i​s​s
+		 */
+		dismiss: string
+		/**
+		 * T​i​p​:​ ​S​w​i​p​e​ ​a​n​ ​i​t​e​m​ ​s​i​d​e​w​a​y​s​ ​t​o​ ​s​h​o​w​ ​q​u​i​c​k​ ​a​c​t​i​o​n​s​.
+		 */
+		swipeActionsHint: string
+		/**
 		 * D​i​s​c​a​r​d​ ​c​h​a​n​g​e​s
 		 */
 		discard: string
@@ -739,6 +747,10 @@ type RootTranslation = {
 		 */
 		editTimer: string
 		/**
+		 * B​a​c​k​ ​w​i​t​h​o​u​t​ ​s​a​v​i​n​g
+		 */
+		backWithoutChanges: string
+		/**
 		 * C​l​i​e​n​t​:
 		 */
 		client: string
@@ -803,6 +815,10 @@ type RootTranslation = {
 		 */
 		errorUpdateEntry: string
 		/**
+		 * F​a​i​l​e​d​ ​t​o​ ​d​e​l​e​t​e​ ​e​n​t​r​y
+		 */
+		errorDeleteEntry: string
+		/**
 		 * T​h​i​s​ ​t​i​m​e​r​ ​c​a​n​ ​o​n​l​y​ ​b​e​ ​c​o​n​t​r​o​l​l​e​d​ ​o​n​ ​t​h​e​ ​d​e​v​i​c​e​ ​w​h​e​r​e​ ​i​t​ ​i​s​ ​r​u​n​n​i​n​g​.
 		 */
 		errorControlOtherDevice: string
@@ -838,6 +854,96 @@ type RootTranslation = {
 		 * S​e​l​e​c​t​ ​p​r​i​c​e​ ​i​t​e​m​.​.​.
 		 */
 		selectPriceItem: string
+		/**
+		 * T​i​p​:​ ​S​w​i​p​e​ ​a​n​ ​e​n​t​r​y​ ​s​i​d​e​w​a​y​s​ ​t​o​ ​e​d​i​t​ ​o​r​ ​d​e​l​e​t​e​ ​i​t​.
+		 */
+		swipeActionsHint: string
+		/**
+		 * T​i​m​e​ ​a​n​d​ ​b​i​l​l​i​n​g
+		 */
+		timeAndBilling: string
+		/**
+		 * R​e​v​i​e​w​ ​t​i​m​e​,​ ​d​u​r​a​t​i​o​n​,​ ​a​n​d​ ​r​a​t​e
+		 */
+		timeAndBillingHint: string
+		/**
+		 * T​i​m​e​ ​d​e​t​a​i​l​s
+		 */
+		timeDetails: string
+		/**
+		 * S​t​a​r​t​ ​d​a​t​e
+		 */
+		startDate: string
+		/**
+		 * S​t​a​r​t​ ​t​i​m​e
+		 */
+		startTime: string
+		/**
+		 * E​n​d​ ​d​a​t​e
+		 */
+		endDate: string
+		/**
+		 * E​n​d​ ​t​i​m​e
+		 */
+		endTime: string
+		/**
+		 * D​u​r​a​t​i​o​n​ ​(​m​i​n​u​t​e​s​)
+		 */
+		durationMinutes: string
+		/**
+		 * W​o​r​k​ ​d​u​r​a​t​i​o​n​ ​(​m​i​n​u​t​e​s​)
+		 */
+		workDurationMinutes: string
+		/**
+		 * P​a​u​s​e​d​ ​t​i​m​e
+		 */
+		pausedDuration: string
+		/**
+		 * W​o​r​k​ ​d​u​r​a​t​i​o​n​ ​i​s​ ​t​h​e​ ​t​r​a​c​k​e​d​ ​t​i​m​e​ ​e​x​c​l​u​d​i​n​g​ ​p​a​u​s​e​s​.
+		 */
+		workDurationExcludesPausesHint: string
+		/**
+		 * B​i​l​l​i​n​g​ ​r​o​u​n​d​i​n​g​ ​i​s​ ​a​c​t​i​v​e​.​ ​T​h​i​s​ ​e​n​t​r​y​ ​w​i​l​l​ ​b​e​ ​b​i​l​l​e​d​ ​a​s​ ​{​d​u​r​a​t​i​o​n​}​ ​u​s​i​n​g​ ​a​ ​{​i​n​t​e​r​v​a​l​}​ ​m​i​n​ ​i​n​t​e​r​v​a​l​.
+		 * @param {unknown} duration
+		 * @param {unknown} interval
+		 */
+		billingRoundingInfo: RequiredParams<'duration' | 'interval'>
+		/**
+		 * R​a​t​e​ ​d​e​t​a​i​l​s
+		 */
+		rateDetails: string
+		/**
+		 * P​r​i​c​e​ ​l​i​s​t
+		 */
+		rateSourcePriceList: string
+		/**
+		 * M​a​n​u​a​l​ ​r​a​t​e
+		 */
+		rateSourceManual: string
+		/**
+		 * R​a​t​e
+		 */
+		manualRate: string
+		/**
+		 * C​u​r​r​e​n​c​y
+		 */
+		rateCurrency: string
+		/**
+		 * E​n​t​e​r​ ​s​t​a​r​t​ ​a​n​d​ ​e​n​d​ ​d​a​t​e​/​t​i​m​e​ ​i​n​ ​a​ ​v​a​l​i​d​ ​f​o​r​m​a​t​.
+		 */
+		errorInvalidTimeInput: string
+		/**
+		 * D​u​r​a​t​i​o​n​ ​m​u​s​t​ ​b​e​ ​g​r​e​a​t​e​r​ ​t​h​a​n​ ​z​e​r​o​ ​a​n​d​ ​e​n​d​ ​a​f​t​e​r​ ​t​h​e​ ​s​t​a​r​t​ ​t​i​m​e​.
+		 */
+		errorInvalidDuration: string
+		/**
+		 * T​h​e​ ​t​i​m​e​ ​r​a​n​g​e​ ​m​u​s​t​ ​b​e​ ​l​o​n​g​ ​e​n​o​u​g​h​ ​t​o​ ​i​n​c​l​u​d​e​ ​t​h​e​ ​w​o​r​k​ ​d​u​r​a​t​i​o​n​ ​a​n​d​ ​s​a​v​e​d​ ​p​a​u​s​e​s​.
+		 */
+		errorPausedDurationExceedsRange: string
+		/**
+		 * E​n​t​e​r​ ​a​ ​v​a​l​i​d​ ​r​a​t​e​.
+		 */
+		errorInvalidRate: string
 		/**
 		 * S​o​f​t​ ​t​i​m​e​r​ ​l​i​m​i​t​ ​r​e​a​c​h​e​d
 		 */
@@ -1356,6 +1462,14 @@ type RootTranslation = {
 		 */
 		buyerModeOneOff: string
 		/**
+		 * B​u​y​e​r​ ​r​e​f​e​r​e​n​c​e​ ​/​ ​L​e​i​t​w​e​g​-​I​D
+		 */
+		buyerReference: string
+		/**
+		 * R​e​f​e​r​e​n​c​e​ ​r​e​q​u​i​r​e​d​ ​b​y​ ​t​h​e​ ​b​u​y​e​r
+		 */
+		buyerReferencePlaceholder: string
+		/**
 		 * e​.​g​.​ ​2​0​2​6​-​0​0​1
 		 */
 		invoiceNumberPlaceholder: string
@@ -1384,6 +1498,10 @@ type RootTranslation = {
 		 */
 		dueDatePastWarning: string
 		/**
+		 * T​h​e​ ​d​u​e​ ​d​a​t​e​ ​i​s​ ​b​e​f​o​r​e​ ​t​h​e​ ​i​s​s​u​e​ ​d​a​t​e​.​ ​C​h​e​c​k​ ​t​h​e​ ​p​a​y​m​e​n​t​ ​t​e​r​m​s​ ​b​e​f​o​r​e​ ​s​a​v​i​n​g​ ​t​h​e​ ​i​n​v​o​i​c​e​.
+		 */
+		dueDateBeforeIssueWarning: string
+		/**
 		 * C​u​r​r​e​n​c​y
 		 */
 		currency: string
@@ -1407,6 +1525,86 @@ type RootTranslation = {
 		 * C​a​r​d​ ​(​N​F​C​)
 		 */
 		paymentMethodCardNfc: string
+		/**
+		 * S​h​o​w​ ​p​a​y​m​e​n​t​ ​Q​R
+		 */
+		paymentQrAction: string
+		/**
+		 * P​a​y​m​e​n​t​ ​Q​R
+		 */
+		paymentQrTitle: string
+		/**
+		 * C​l​o​s​e
+		 */
+		paymentQrClose: string
+		/**
+		 * P​a​y​m​e​n​t​ ​Q​R​ ​c​a​n​n​o​t​ ​b​e​ ​s​h​o​w​n
+		 */
+		paymentQrUnavailableTitle: string
+		/**
+		 * T​h​e​ ​Q​R​ ​d​a​t​a​ ​c​o​u​l​d​ ​n​o​t​ ​b​e​ ​c​r​e​a​t​e​d​ ​f​r​o​m​ ​t​h​e​ ​c​u​r​r​e​n​t​ ​i​n​v​o​i​c​e​.
+		 */
+		paymentQrBuildFailed: string
+		/**
+		 * T​h​e​ ​Q​R​ ​i​m​a​g​e​ ​c​o​u​l​d​ ​n​o​t​ ​b​e​ ​r​e​n​d​e​r​e​d​ ​o​n​ ​t​h​i​s​ ​d​e​v​i​c​e​.
+		 */
+		paymentQrRenderError: string
+		/**
+		 * C​o​p​y​ ​p​a​y​m​e​n​t​ ​d​a​t​a
+		 */
+		paymentQrCopyPayload: string
+		/**
+		 * P​a​y​m​e​n​t​ ​d​a​t​a​ ​c​o​p​i​e​d​ ​t​o​ ​c​l​i​p​b​o​a​r​d​.
+		 */
+		paymentQrCopySuccess: string
+		/**
+		 * F​a​i​l​e​d​ ​t​o​ ​c​o​p​y​ ​p​a​y​m​e​n​t​ ​d​a​t​a​.
+		 */
+		paymentQrCopyError: string
+		/**
+		 * A​m​o​u​n​t
+		 */
+		paymentQrAmount: string
+		/**
+		 * R​e​c​e​i​v​e​r
+		 */
+		paymentQrReceiver: string
+		/**
+		 * R​e​f​e​r​e​n​c​e
+		 */
+		paymentQrReference: string
+		/**
+		 * S​u​p​p​l​i​e​r​ ​d​e​t​a​i​l​s​ ​a​r​e​ ​s​t​o​r​e​d​ ​i​n​ ​t​h​i​s​ ​i​n​v​o​i​c​e
+		 */
+		sellerSnapshotNoticeTitle: string
+		/**
+		 * U​s​e​ ​t​h​i​s​ ​w​h​e​n​ ​y​o​u​ ​c​h​a​n​g​e​d​ ​t​h​e​ ​b​u​s​i​n​e​s​s​ ​p​r​o​f​i​l​e​ ​a​n​d​ ​w​a​n​t​ ​t​h​i​s​ ​i​n​v​o​i​c​e​ ​t​o​ ​u​s​e​ ​t​h​e​ ​c​u​r​r​e​n​t​ ​s​u​p​p​l​i​e​r​ ​d​e​t​a​i​l​s​,​ ​i​n​c​l​u​d​i​n​g​ ​b​a​n​k​ ​a​c​c​o​u​n​t​,​ ​I​B​A​N​,​ ​S​W​I​F​T​,​ ​Q​R​ ​p​a​y​m​e​n​t​,​ ​a​n​d​ ​l​o​g​o​.
+		 */
+		sellerSnapshotNoticeDescription: string
+		/**
+		 * R​e​f​r​e​s​h​ ​s​u​p​p​l​i​e​r​ ​d​e​t​a​i​l​s
+		 */
+		refreshSellerSnapshotAction: string
+		/**
+		 * R​e​f​r​e​s​h​ ​s​u​p​p​l​i​e​r​ ​d​e​t​a​i​l​s​?
+		 */
+		refreshSellerSnapshotConfirmTitle: string
+		/**
+		 * T​h​i​s​ ​i​n​v​o​i​c​e​ ​w​i​l​l​ ​u​s​e​ ​t​h​e​ ​c​u​r​r​e​n​t​ ​b​u​s​i​n​e​s​s​ ​p​r​o​f​i​l​e​ ​f​o​r​ ​s​u​p​p​l​i​e​r​ ​d​e​t​a​i​l​s​.​ ​T​h​e​ ​i​n​v​o​i​c​e​ ​n​u​m​b​e​r​,​ ​b​u​y​e​r​,​ ​d​a​t​e​s​,​ ​n​o​t​e​s​,​ ​a​n​d​ ​i​t​e​m​s​ ​w​i​l​l​ ​n​o​t​ ​c​h​a​n​g​e​.
+		 */
+		refreshSellerSnapshotConfirmMessage: string
+		/**
+		 * R​e​f​r​e​s​h​ ​d​e​t​a​i​l​s
+		 */
+		refreshSellerSnapshotConfirmAction: string
+		/**
+		 * S​u​p​p​l​i​e​r​ ​d​e​t​a​i​l​s​ ​w​i​l​l​ ​b​e​ ​r​e​f​r​e​s​h​e​d​ ​f​r​o​m​ ​t​h​e​ ​c​u​r​r​e​n​t​ ​b​u​s​i​n​e​s​s​ ​p​r​o​f​i​l​e​ ​w​h​e​n​ ​y​o​u​ ​s​a​v​e​ ​t​h​e​ ​i​n​v​o​i​c​e​.
+		 */
+		sellerSnapshotRefreshPending: string
+		/**
+		 * R​e​f​r​e​s​h​ ​p​e​n​d​i​n​g
+		 */
+		sellerSnapshotRefreshPendingShort: string
 		/**
 		 * V​A​T​ ​c​o​d​e
 		 */
@@ -1870,6 +2068,10 @@ type RootTranslation = {
 		 */
 		exportInvoiceNumberLabel: string
 		/**
+		 * B​u​y​e​r​ ​r​e​f​e​r​e​n​c​e
+		 */
+		exportBuyerReferenceLabel: string
+		/**
 		 * V​A​T
 		 */
 		exportVat: string
@@ -2126,11 +2328,11 @@ type RootTranslation = {
 		 */
 		structuredExportIssueUnsupportedRequirement: RequiredParams<'format' | 'requirement'>
 		/**
-		 * b​u​y​e​r​ ​r​e​f​e​r​e​n​c​e​ ​/​ ​L​e​i​t​w​e​g​-​I​D​ ​i​s​ ​n​o​t​ ​s​t​o​r​e​d​ ​o​n​ ​t​h​i​s​ ​i​n​v​o​i​c​e
+		 * b​u​y​e​r​ ​r​e​f​e​r​e​n​c​e​ ​/​ ​L​e​i​t​w​e​g​-​I​D​ ​o​r​ ​o​r​d​e​r​ ​r​e​f​e​r​e​n​c​e​ ​i​s​ ​n​o​t​ ​s​t​o​r​e​d​ ​o​n​ ​t​h​i​s​ ​i​n​v​o​i​c​e
 		 */
 		structuredExportRequirementBuyerReference: string
 		/**
-		 * e​l​e​c​t​r​o​n​i​c​ ​a​d​d​r​e​s​s​ ​e​n​d​p​o​i​n​t​ ​I​D​ ​a​n​d​ ​s​c​h​e​m​e​ ​a​r​e​ ​n​o​t​ ​s​t​o​r​e​d​ ​s​e​p​a​r​a​t​e​l​y
+		 * e​l​e​c​t​r​o​n​i​c​ ​a​d​d​r​e​s​s​ ​e​n​d​p​o​i​n​t​ ​I​D​ ​a​n​d​ ​s​c​h​e​m​e​I​D​ ​a​r​e​ ​i​n​f​e​r​r​e​d​ ​f​r​o​m​ ​e​m​a​i​l​ ​w​h​e​n​ ​a​v​a​i​l​a​b​l​e​,​ ​n​o​t​ ​s​t​o​r​e​d​ ​s​e​p​a​r​a​t​e​l​y
 		 */
 		structuredExportRequirementElectronicAddress: string
 		/**
@@ -2142,7 +2344,11 @@ type RootTranslation = {
 		 */
 		structuredExportRequirementSellerPostalAddress: string
 		/**
-		 * t​a​x​ ​t​o​t​a​l​s​ ​a​n​d​ ​t​a​x​ ​c​a​t​e​g​o​r​i​e​s​ ​a​r​e​ ​n​o​t​ ​e​x​p​o​r​t​e​d​ ​c​o​m​p​l​e​t​e​l​y
+		 * s​e​l​l​e​r​ ​c​o​n​t​a​c​t​ ​n​a​m​e​ ​i​s​ ​n​o​t​ ​s​t​o​r​e​d​ ​s​e​p​a​r​a​t​e​l​y
+		 */
+		structuredExportRequirementSellerContactName: string
+		/**
+		 * z​e​r​o​ ​o​r​ ​m​i​s​s​i​n​g​ ​V​A​T​ ​r​a​t​e​s​ ​u​s​e​ ​a​n​ ​i​n​f​e​r​r​e​d​ ​t​a​x​ ​c​a​t​e​g​o​r​y​ ​w​i​t​h​o​u​t​ ​a​n​ ​e​x​e​m​p​t​i​o​n​ ​r​e​a​s​o​n
 		 */
 		structuredExportRequirementTaxBreakdown: string
 		/**
@@ -2150,7 +2356,7 @@ type RootTranslation = {
 		 */
 		structuredExportRequirementTaxScheme: string
 		/**
-		 * l​i​n​e​ ​{​l​i​n​e​}​ ​q​u​a​n​t​i​t​y​ ​i​s​ ​e​x​p​o​r​t​e​d​ ​w​i​t​h​o​u​t​ ​a​ ​r​e​q​u​i​r​e​d​ ​e​-​i​n​v​o​i​c​i​n​g​ ​u​n​i​t​ ​c​o​d​e
+		 * l​i​n​e​ ​{​l​i​n​e​}​ ​u​n​i​t​ ​i​s​ ​n​o​t​ ​m​a​p​p​e​d​ ​t​o​ ​a​ ​U​N​E​C​E​ ​u​n​i​t​ ​c​o​d​e​ ​a​n​d​ ​w​i​l​l​ ​f​a​l​l​ ​b​a​c​k​ ​t​o​ ​C​6​2
 		 * @param {unknown} line
 		 */
 		structuredExportRequirementUnitCode: RequiredParams<'line'>
@@ -3273,13 +3479,68 @@ type RootTranslation = {
 		 */
 		invoiceQrBankRequiredSpayd: string
 		/**
-		 * F​o​r​ ​E​P​C​ ​Q​R​,​ ​f​i​l​l​ ​I​B​A​N​ ​a​n​d​ ​S​W​I​F​T​/​B​I​C​.
+		 * F​o​r​ ​E​P​C​ ​Q​R​,​ ​f​i​l​l​ ​a​ ​v​a​l​i​d​ ​I​B​A​N​ ​a​n​d​ ​S​W​I​F​T​/​B​I​C​.
 		 */
 		invoiceQrBankRequiredEpc: string
 		/**
-		 * F​o​r​ ​S​w​i​s​s​ ​Q​R​-​B​i​l​l​,​ ​f​i​l​l​ ​I​B​A​N​.
+		 * F​o​r​ ​S​w​i​s​s​ ​Q​R​-​B​i​l​l​,​ ​f​i​l​l​ ​a​ ​v​a​l​i​d​ ​C​H​/​L​I​ ​I​B​A​N​.
 		 */
 		invoiceQrBankRequiredSwiss: string
+		/**
+		 * F​o​r​ ​S​w​i​s​s​ ​Q​R​-​B​i​l​l​,​ ​u​s​e​ ​a​ ​s​t​a​n​d​a​r​d​ ​C​H​/​L​I​ ​I​B​A​N​.​ ​Q​R​-​I​B​A​N​ ​r​e​q​u​i​r​e​s​ ​a​ ​Q​R​ ​r​e​f​e​r​e​n​c​e​,​ ​w​h​i​c​h​ ​t​h​i​s​ ​i​n​v​o​i​c​e​ ​c​a​n​n​o​t​ ​s​t​o​r​e​ ​y​e​t​.
+		 */
+		invoiceQrBankRequiredSwissStandardIban: string
+		/**
+		 * F​o​r​ ​S​w​i​s​s​ ​Q​R​-​B​i​l​l​,​ ​f​i​l​l​ ​t​h​e​ ​c​o​m​p​a​n​y​ ​n​a​m​e​ ​a​n​d​ ​f​u​l​l​ ​s​e​l​l​e​r​ ​a​d​d​r​e​s​s​,​ ​i​n​c​l​u​d​i​n​g​ ​a​ ​t​w​o​-​l​e​t​t​e​r​ ​I​S​O​ ​c​o​u​n​t​r​y​ ​c​o​d​e​.
+		 */
+		invoiceQrSellerAddressRequiredSwiss: string
+		/**
+		 * E​P​C​ ​Q​R​ ​c​a​n​ ​o​n​l​y​ ​b​e​ ​u​s​e​d​ ​f​o​r​ ​i​n​v​o​i​c​e​s​ ​i​n​ ​E​U​R​.
+		 */
+		invoiceQrCurrencyRequiredEpc: string
+		/**
+		 * S​w​i​s​s​ ​Q​R​-​B​i​l​l​ ​c​a​n​ ​o​n​l​y​ ​b​e​ ​u​s​e​d​ ​f​o​r​ ​i​n​v​o​i​c​e​s​ ​i​n​ ​C​H​F​ ​o​r​ ​E​U​R​.
+		 */
+		invoiceQrCurrencyRequiredSwiss: string
+		/**
+		 * T​h​e​ ​i​n​v​o​i​c​e​ ​t​o​t​a​l​ ​m​u​s​t​ ​b​e​ ​b​e​t​w​e​e​n​ ​0​.​0​1​ ​a​n​d​ ​t​h​e​ ​l​i​m​i​t​ ​s​u​p​p​o​r​t​e​d​ ​b​y​ ​t​h​e​ ​s​e​l​e​c​t​e​d​ ​Q​R​ ​f​o​r​m​a​t​.
+		 */
+		invoiceQrAmountInvalid: string
+		/**
+		 * T​h​e​ ​E​P​C​ ​Q​R​ ​d​a​t​a​ ​i​s​ ​t​o​o​ ​l​o​n​g​.​ ​S​h​o​r​t​e​n​ ​t​h​e​ ​c​o​m​p​a​n​y​ ​n​a​m​e​ ​o​r​ ​i​n​v​o​i​c​e​ ​r​e​f​e​r​e​n​c​e​.
+		 */
+		invoiceQrPayloadTooLongEpc: string
+		/**
+		 * P​a​y​m​e​n​t​ ​Q​R​ ​d​e​t​a​i​l​s​ ​a​r​e​ ​m​i​s​s​i​n​g
+		 */
+		invoiceQrProfileWarningTitle: string
+		/**
+		 * T​h​e​ ​s​e​l​e​c​t​e​d​ ​t​y​p​e​ ​w​i​l​l​ ​b​e​ ​s​a​v​e​d​,​ ​b​u​t​ ​t​h​e​ ​Q​R​ ​c​o​d​e​ ​w​i​l​l​ ​n​o​t​ ​b​e​ ​i​n​c​l​u​d​e​d​ ​i​n​ ​t​h​e​ ​i​n​v​o​i​c​e​ ​P​D​F​ ​u​n​t​i​l​ ​t​h​e​ ​d​e​t​a​i​l​s​ ​a​r​e​ ​c​o​m​p​l​e​t​e​d​.
+		 */
+		invoiceQrProfileWarningDescription: string
+		/**
+		 * C​o​m​p​l​e​t​e​ ​i​n​ ​b​u​s​i​n​e​s​s​ ​p​r​o​f​i​l​e
+		 */
+		invoiceQrProfileCta: string
+		/**
+		 * P​a​y​m​e​n​t​ ​Q​R​ ​w​i​l​l​ ​b​e​ ​o​m​i​t​t​e​d
+		 */
+		invoiceQrPdfWarningTitle: string
+		/**
+		 * T​h​e​ ​Q​R​ ​c​o​d​e​ ​c​o​u​l​d​ ​n​o​t​ ​b​e​ ​c​r​e​a​t​e​d​:​ ​{​r​e​a​s​o​n​}​
+	​
+	​Y​o​u​ ​c​a​n​ ​c​o​n​t​i​n​u​e​ ​w​i​t​h​o​u​t​ ​t​h​e​ ​Q​R​ ​c​o​d​e​ ​o​r​ ​c​o​m​p​l​e​t​e​ ​t​h​e​ ​m​i​s​s​i​n​g​ ​d​e​t​a​i​l​s​.
+		 * @param {unknown} reason
+		 */
+		invoiceQrPdfWarningMessage: RequiredParams<'reason'>
+		/**
+		 * C​o​n​t​i​n​u​e​ ​w​i​t​h​o​u​t​ ​Q​R
+		 */
+		invoiceQrContinueWithoutQr: string
+		/**
+		 * E​d​i​t​ ​i​n​v​o​i​c​e
+		 */
+		invoiceQrEditInvoice: string
 		/**
 		 * D​e​f​a​u​l​t​ ​X​M​L​ ​e​x​p​o​r​t​ ​f​o​r​m​a​t
 		 */
@@ -4431,6 +4692,22 @@ type RootTranslation = {
 		 */
 		startTitle: string
 		/**
+		 * Y​o​u​r​ ​d​a​t​a​ ​s​t​a​y​s​ ​o​n​ ​t​h​i​s​ ​d​e​v​i​c​e
+		 */
+		offlineFirstTitle: string
+		/**
+		 * F​a​k​t​o​r​o​ ​w​o​r​k​s​ ​w​i​t​h​o​u​t​ ​a​n​ ​a​c​c​o​u​n​t​.​ ​O​n​l​i​n​e​ ​s​y​n​c​ ​i​s​ ​o​p​t​i​o​n​a​l​ ​a​n​d​ ​b​a​c​k​u​p​s​ ​a​r​e​ ​t​h​e​ ​s​a​f​e​s​t​ ​w​a​y​ ​t​o​ ​p​r​o​t​e​c​t​ ​l​o​c​a​l​ ​d​a​t​a​.
+		 */
+		offlineFirstDescription: string
+		/**
+		 * C​r​e​a​t​e​ ​b​a​c​k​u​p​s​ ​r​e​g​u​l​a​r​l​y​ ​a​n​d​ ​s​t​o​r​e​ ​t​h​e​m​ ​s​o​m​e​w​h​e​r​e​ ​s​a​f​e​.
+		 */
+		offlineFirstBackup: string
+		/**
+		 * U​s​e​ ​s​y​n​c​ ​o​n​l​y​ ​w​h​e​n​ ​y​o​u​ ​w​a​n​t​ ​t​o​ ​c​o​n​n​e​c​t​ ​y​o​u​r​ ​o​w​n​ ​s​e​r​v​e​r​ ​o​r​ ​a​n​o​t​h​e​r​ ​d​e​v​i​c​e​.
+		 */
+		offlineFirstSync: string
+		/**
 		 * S​t​a​r​t​ ​f​r​e​s​h
 		 */
 		startNewTitle: string
@@ -4482,6 +4759,26 @@ type RootTranslation = {
 		 * R​e​g​i​s​t​r​y​ ​f​o​r​ ​c​o​m​p​a​n​y​ ​I​D​ ​l​o​o​k​u​p
 		 */
 		profileRegistryLabel: string
+		/**
+		 * I​n​v​o​i​c​e​ ​d​e​t​a​i​l​s
+		 */
+		invoiceProfileTitle: string
+		/**
+		 * A​d​d​ ​o​p​t​i​o​n​a​l​ ​c​o​n​t​a​c​t​ ​a​n​d​ ​p​a​y​m​e​n​t​ ​d​e​t​a​i​l​s​ ​n​o​w​,​ ​o​r​ ​s​k​i​p​ ​t​h​i​s​ ​a​n​d​ ​f​i​l​l​ ​t​h​e​m​ ​i​n​ ​l​a​t​e​r​.
+		 */
+		invoiceProfileSubtitle: string
+		/**
+		 * T​h​e​s​e​ ​d​e​t​a​i​l​s​ ​i​m​p​r​o​v​e​ ​P​D​F​ ​i​n​v​o​i​c​e​s​,​ ​p​a​y​m​e​n​t​ ​Q​R​ ​c​o​d​e​s​,​ ​a​n​d​ ​s​t​r​u​c​t​u​r​e​d​ ​e​x​p​o​r​t​s​.
+		 */
+		invoiceProfileOptionalNote: string
+		/**
+		 * S​a​v​e​ ​a​n​d​ ​c​o​n​t​i​n​u​e
+		 */
+		invoiceProfileSaveContinue: string
+		/**
+		 * N​o​t​ ​n​o​w
+		 */
+		invoiceProfileSkip: string
 		/**
 		 * V​A​T​ ​r​a​t​e​s
 		 */
@@ -4588,6 +4885,22 @@ type RootTranslation = {
 		 * D​e​f​i​n​e​ ​s​e​r​v​i​c​e​s​ ​w​i​t​h​ ​r​a​t​e​s​ ​—​ ​s​e​l​e​c​t​i​n​g​ ​t​h​e​m​ ​w​h​e​n​ ​t​r​a​c​k​i​n​g​ ​t​i​m​e​ ​s​a​v​e​s​ ​w​o​r​k​ ​l​a​t​e​r​.
 		 */
 		donePriceListDesc: string
+		/**
+		 * C​r​e​a​t​e​ ​a​ ​b​a​c​k​u​p
+		 */
+		doneBackup: string
+		/**
+		 * S​a​v​e​ ​a​n​ ​o​f​f​l​i​n​e​ ​b​a​c​k​u​p​ ​f​i​l​e​ ​b​e​f​o​r​e​ ​y​o​u​ ​s​t​a​r​t​ ​r​e​l​y​i​n​g​ ​o​n​ ​l​o​c​a​l​ ​d​a​t​a​.
+		 */
+		doneBackupDesc: string
+		/**
+		 * S​e​t​ ​u​p​ ​s​y​n​c
+		 */
+		doneSync: string
+		/**
+		 * C​o​n​n​e​c​t​ ​t​h​i​s​ ​d​e​v​i​c​e​ ​t​o​ ​y​o​u​r​ ​s​e​l​f​-​h​o​s​t​e​d​ ​F​a​k​t​o​r​o​ ​s​y​n​c​ ​s​e​r​v​e​r​.
+		 */
+		doneSyncDesc: string
 		/**
 		 * G​o​ ​t​o​ ​a​p​p
 		 */
@@ -4747,6 +5060,10 @@ type RootTranslation = {
 		 */
 		timeByClient: string
 		/**
+		 * B​i​l​l​a​b​l​e​ ​t​i​m​e​ ​b​y​ ​c​l​i​e​n​t
+		 */
+		billableTimeByClient: string
+		/**
 		 * R​e​v​e​n​u​e​ ​b​y​ ​c​l​i​e​n​t
 		 */
 		revenueByClient: string
@@ -4857,6 +5174,14 @@ export type TranslationFunctions = {
 		 * Continue
 		 */
 		continueAction: () => LocalizedString
+		/**
+		 * Dismiss
+		 */
+		dismiss: () => LocalizedString
+		/**
+		 * Tip: Swipe an item sideways to show quick actions.
+		 */
+		swipeActionsHint: () => LocalizedString
 		/**
 		 * Discard changes
 		 */
@@ -5508,6 +5833,10 @@ export type TranslationFunctions = {
 		 */
 		editTimer: () => LocalizedString
 		/**
+		 * Back without saving
+		 */
+		backWithoutChanges: () => LocalizedString
+		/**
 		 * Client:
 		 */
 		client: () => LocalizedString
@@ -5572,6 +5901,10 @@ export type TranslationFunctions = {
 		 */
 		errorUpdateEntry: () => LocalizedString
 		/**
+		 * Failed to delete entry
+		 */
+		errorDeleteEntry: () => LocalizedString
+		/**
 		 * This timer can only be controlled on the device where it is running.
 		 */
 		errorControlOtherDevice: () => LocalizedString
@@ -5607,6 +5940,94 @@ export type TranslationFunctions = {
 		 * Select price item...
 		 */
 		selectPriceItem: () => LocalizedString
+		/**
+		 * Tip: Swipe an entry sideways to edit or delete it.
+		 */
+		swipeActionsHint: () => LocalizedString
+		/**
+		 * Time and billing
+		 */
+		timeAndBilling: () => LocalizedString
+		/**
+		 * Review time, duration, and rate
+		 */
+		timeAndBillingHint: () => LocalizedString
+		/**
+		 * Time details
+		 */
+		timeDetails: () => LocalizedString
+		/**
+		 * Start date
+		 */
+		startDate: () => LocalizedString
+		/**
+		 * Start time
+		 */
+		startTime: () => LocalizedString
+		/**
+		 * End date
+		 */
+		endDate: () => LocalizedString
+		/**
+		 * End time
+		 */
+		endTime: () => LocalizedString
+		/**
+		 * Duration (minutes)
+		 */
+		durationMinutes: () => LocalizedString
+		/**
+		 * Work duration (minutes)
+		 */
+		workDurationMinutes: () => LocalizedString
+		/**
+		 * Paused time
+		 */
+		pausedDuration: () => LocalizedString
+		/**
+		 * Work duration is the tracked time excluding pauses.
+		 */
+		workDurationExcludesPausesHint: () => LocalizedString
+		/**
+		 * Billing rounding is active. This entry will be billed as {duration} using a {interval} min interval.
+		 */
+		billingRoundingInfo: (arg: { duration: unknown, interval: unknown }) => LocalizedString
+		/**
+		 * Rate details
+		 */
+		rateDetails: () => LocalizedString
+		/**
+		 * Price list
+		 */
+		rateSourcePriceList: () => LocalizedString
+		/**
+		 * Manual rate
+		 */
+		rateSourceManual: () => LocalizedString
+		/**
+		 * Rate
+		 */
+		manualRate: () => LocalizedString
+		/**
+		 * Currency
+		 */
+		rateCurrency: () => LocalizedString
+		/**
+		 * Enter start and end date/time in a valid format.
+		 */
+		errorInvalidTimeInput: () => LocalizedString
+		/**
+		 * Duration must be greater than zero and end after the start time.
+		 */
+		errorInvalidDuration: () => LocalizedString
+		/**
+		 * The time range must be long enough to include the work duration and saved pauses.
+		 */
+		errorPausedDurationExceedsRange: () => LocalizedString
+		/**
+		 * Enter a valid rate.
+		 */
+		errorInvalidRate: () => LocalizedString
 		/**
 		 * Soft timer limit reached
 		 */
@@ -6100,6 +6521,14 @@ export type TranslationFunctions = {
 		 */
 		buyerModeOneOff: () => LocalizedString
 		/**
+		 * Buyer reference / Leitweg-ID
+		 */
+		buyerReference: () => LocalizedString
+		/**
+		 * Reference required by the buyer
+		 */
+		buyerReferencePlaceholder: () => LocalizedString
+		/**
 		 * e.g. 2026-001
 		 */
 		invoiceNumberPlaceholder: () => LocalizedString
@@ -6128,6 +6557,10 @@ export type TranslationFunctions = {
 		 */
 		dueDatePastWarning: () => LocalizedString
 		/**
+		 * The due date is before the issue date. Check the payment terms before saving the invoice.
+		 */
+		dueDateBeforeIssueWarning: () => LocalizedString
+		/**
 		 * Currency
 		 */
 		currency: () => LocalizedString
@@ -6151,6 +6584,86 @@ export type TranslationFunctions = {
 		 * Card (NFC)
 		 */
 		paymentMethodCardNfc: () => LocalizedString
+		/**
+		 * Show payment QR
+		 */
+		paymentQrAction: () => LocalizedString
+		/**
+		 * Payment QR
+		 */
+		paymentQrTitle: () => LocalizedString
+		/**
+		 * Close
+		 */
+		paymentQrClose: () => LocalizedString
+		/**
+		 * Payment QR cannot be shown
+		 */
+		paymentQrUnavailableTitle: () => LocalizedString
+		/**
+		 * The QR data could not be created from the current invoice.
+		 */
+		paymentQrBuildFailed: () => LocalizedString
+		/**
+		 * The QR image could not be rendered on this device.
+		 */
+		paymentQrRenderError: () => LocalizedString
+		/**
+		 * Copy payment data
+		 */
+		paymentQrCopyPayload: () => LocalizedString
+		/**
+		 * Payment data copied to clipboard.
+		 */
+		paymentQrCopySuccess: () => LocalizedString
+		/**
+		 * Failed to copy payment data.
+		 */
+		paymentQrCopyError: () => LocalizedString
+		/**
+		 * Amount
+		 */
+		paymentQrAmount: () => LocalizedString
+		/**
+		 * Receiver
+		 */
+		paymentQrReceiver: () => LocalizedString
+		/**
+		 * Reference
+		 */
+		paymentQrReference: () => LocalizedString
+		/**
+		 * Supplier details are stored in this invoice
+		 */
+		sellerSnapshotNoticeTitle: () => LocalizedString
+		/**
+		 * Use this when you changed the business profile and want this invoice to use the current supplier details, including bank account, IBAN, SWIFT, QR payment, and logo.
+		 */
+		sellerSnapshotNoticeDescription: () => LocalizedString
+		/**
+		 * Refresh supplier details
+		 */
+		refreshSellerSnapshotAction: () => LocalizedString
+		/**
+		 * Refresh supplier details?
+		 */
+		refreshSellerSnapshotConfirmTitle: () => LocalizedString
+		/**
+		 * This invoice will use the current business profile for supplier details. The invoice number, buyer, dates, notes, and items will not change.
+		 */
+		refreshSellerSnapshotConfirmMessage: () => LocalizedString
+		/**
+		 * Refresh details
+		 */
+		refreshSellerSnapshotConfirmAction: () => LocalizedString
+		/**
+		 * Supplier details will be refreshed from the current business profile when you save the invoice.
+		 */
+		sellerSnapshotRefreshPending: () => LocalizedString
+		/**
+		 * Refresh pending
+		 */
+		sellerSnapshotRefreshPendingShort: () => LocalizedString
 		/**
 		 * VAT code
 		 */
@@ -6600,6 +7113,10 @@ export type TranslationFunctions = {
 		 */
 		exportInvoiceNumberLabel: () => LocalizedString
 		/**
+		 * Buyer reference
+		 */
+		exportBuyerReferenceLabel: () => LocalizedString
+		/**
 		 * VAT
 		 */
 		exportVat: () => LocalizedString
@@ -6836,11 +7353,11 @@ export type TranslationFunctions = {
 		 */
 		structuredExportIssueUnsupportedRequirement: (arg: { format: unknown, requirement: unknown }) => LocalizedString
 		/**
-		 * buyer reference / Leitweg-ID is not stored on this invoice
+		 * buyer reference / Leitweg-ID or order reference is not stored on this invoice
 		 */
 		structuredExportRequirementBuyerReference: () => LocalizedString
 		/**
-		 * electronic address endpoint ID and scheme are not stored separately
+		 * electronic address endpoint ID and schemeID are inferred from email when available, not stored separately
 		 */
 		structuredExportRequirementElectronicAddress: () => LocalizedString
 		/**
@@ -6852,7 +7369,11 @@ export type TranslationFunctions = {
 		 */
 		structuredExportRequirementSellerPostalAddress: () => LocalizedString
 		/**
-		 * tax totals and tax categories are not exported completely
+		 * seller contact name is not stored separately
+		 */
+		structuredExportRequirementSellerContactName: () => LocalizedString
+		/**
+		 * zero or missing VAT rates use an inferred tax category without an exemption reason
 		 */
 		structuredExportRequirementTaxBreakdown: () => LocalizedString
 		/**
@@ -6860,7 +7381,7 @@ export type TranslationFunctions = {
 		 */
 		structuredExportRequirementTaxScheme: () => LocalizedString
 		/**
-		 * line {line} quantity is exported without a required e-invoicing unit code
+		 * line {line} unit is not mapped to a UNECE unit code and will fall back to C62
 		 */
 		structuredExportRequirementUnitCode: (arg: { line: unknown }) => LocalizedString
 		/**
@@ -7974,13 +8495,67 @@ export type TranslationFunctions = {
 		 */
 		invoiceQrBankRequiredSpayd: () => LocalizedString
 		/**
-		 * For EPC QR, fill IBAN and SWIFT/BIC.
+		 * For EPC QR, fill a valid IBAN and SWIFT/BIC.
 		 */
 		invoiceQrBankRequiredEpc: () => LocalizedString
 		/**
-		 * For Swiss QR-Bill, fill IBAN.
+		 * For Swiss QR-Bill, fill a valid CH/LI IBAN.
 		 */
 		invoiceQrBankRequiredSwiss: () => LocalizedString
+		/**
+		 * For Swiss QR-Bill, use a standard CH/LI IBAN. QR-IBAN requires a QR reference, which this invoice cannot store yet.
+		 */
+		invoiceQrBankRequiredSwissStandardIban: () => LocalizedString
+		/**
+		 * For Swiss QR-Bill, fill the company name and full seller address, including a two-letter ISO country code.
+		 */
+		invoiceQrSellerAddressRequiredSwiss: () => LocalizedString
+		/**
+		 * EPC QR can only be used for invoices in EUR.
+		 */
+		invoiceQrCurrencyRequiredEpc: () => LocalizedString
+		/**
+		 * Swiss QR-Bill can only be used for invoices in CHF or EUR.
+		 */
+		invoiceQrCurrencyRequiredSwiss: () => LocalizedString
+		/**
+		 * The invoice total must be between 0.01 and the limit supported by the selected QR format.
+		 */
+		invoiceQrAmountInvalid: () => LocalizedString
+		/**
+		 * The EPC QR data is too long. Shorten the company name or invoice reference.
+		 */
+		invoiceQrPayloadTooLongEpc: () => LocalizedString
+		/**
+		 * Payment QR details are missing
+		 */
+		invoiceQrProfileWarningTitle: () => LocalizedString
+		/**
+		 * The selected type will be saved, but the QR code will not be included in the invoice PDF until the details are completed.
+		 */
+		invoiceQrProfileWarningDescription: () => LocalizedString
+		/**
+		 * Complete in business profile
+		 */
+		invoiceQrProfileCta: () => LocalizedString
+		/**
+		 * Payment QR will be omitted
+		 */
+		invoiceQrPdfWarningTitle: () => LocalizedString
+		/**
+		 * The QR code could not be created: {reason}
+
+	You can continue without the QR code or complete the missing details.
+		 */
+		invoiceQrPdfWarningMessage: (arg: { reason: unknown }) => LocalizedString
+		/**
+		 * Continue without QR
+		 */
+		invoiceQrContinueWithoutQr: () => LocalizedString
+		/**
+		 * Edit invoice
+		 */
+		invoiceQrEditInvoice: () => LocalizedString
 		/**
 		 * Default XML export format
 		 */
@@ -9124,6 +9699,22 @@ export type TranslationFunctions = {
 		 */
 		startTitle: () => LocalizedString
 		/**
+		 * Your data stays on this device
+		 */
+		offlineFirstTitle: () => LocalizedString
+		/**
+		 * Faktoro works without an account. Online sync is optional and backups are the safest way to protect local data.
+		 */
+		offlineFirstDescription: () => LocalizedString
+		/**
+		 * Create backups regularly and store them somewhere safe.
+		 */
+		offlineFirstBackup: () => LocalizedString
+		/**
+		 * Use sync only when you want to connect your own server or another device.
+		 */
+		offlineFirstSync: () => LocalizedString
+		/**
 		 * Start fresh
 		 */
 		startNewTitle: () => LocalizedString
@@ -9175,6 +9766,26 @@ export type TranslationFunctions = {
 		 * Registry for company ID lookup
 		 */
 		profileRegistryLabel: () => LocalizedString
+		/**
+		 * Invoice details
+		 */
+		invoiceProfileTitle: () => LocalizedString
+		/**
+		 * Add optional contact and payment details now, or skip this and fill them in later.
+		 */
+		invoiceProfileSubtitle: () => LocalizedString
+		/**
+		 * These details improve PDF invoices, payment QR codes, and structured exports.
+		 */
+		invoiceProfileOptionalNote: () => LocalizedString
+		/**
+		 * Save and continue
+		 */
+		invoiceProfileSaveContinue: () => LocalizedString
+		/**
+		 * Not now
+		 */
+		invoiceProfileSkip: () => LocalizedString
 		/**
 		 * VAT rates
 		 */
@@ -9279,6 +9890,22 @@ export type TranslationFunctions = {
 		 * Define services with rates — selecting them when tracking time saves work later.
 		 */
 		donePriceListDesc: () => LocalizedString
+		/**
+		 * Create a backup
+		 */
+		doneBackup: () => LocalizedString
+		/**
+		 * Save an offline backup file before you start relying on local data.
+		 */
+		doneBackupDesc: () => LocalizedString
+		/**
+		 * Set up sync
+		 */
+		doneSync: () => LocalizedString
+		/**
+		 * Connect this device to your self-hosted Faktoro sync server.
+		 */
+		doneSyncDesc: () => LocalizedString
 		/**
 		 * Go to app
 		 */
@@ -9437,6 +10064,10 @@ export type TranslationFunctions = {
 		 * Time by client
 		 */
 		timeByClient: () => LocalizedString
+		/**
+		 * Billable time by client
+		 */
+		billableTimeByClient: () => LocalizedString
 		/**
 		 * Revenue by client
 		 */

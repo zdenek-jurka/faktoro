@@ -82,6 +82,7 @@ export function ClientAddressSection({ client }: ClientAddressSectionProps) {
         onDelete={(address: ClientAddressModel) => handleDeleteAddress(address.id)}
         onEdit={(address: ClientAddressModel) => router.push(`/clients/address/${address.id}`)}
         keyExtractor={(address: ClientAddressModel) => address.id}
+        swipeHintKey="clients.addresses"
         renderItem={(address: ClientAddressModel) => (
           <View style={styles.addressContent}>
             {address.isDefault && (

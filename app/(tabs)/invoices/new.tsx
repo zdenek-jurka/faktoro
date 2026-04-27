@@ -50,13 +50,14 @@ import {
 } from '@/repositories/invoice-repository';
 import { getSettings } from '@/repositories/settings-repository';
 import { getVatRates } from '@/repositories/vat-rate-repository';
-import type { BuyerSnapshot } from '@/templates/invoice/xml';
+import type { BuyerSnapshot, SellerSnapshot } from '@/templates/invoice/xml';
 import {
   DEFAULT_CURRENCY_CODE,
   hasMatchingCurrency,
   normalizeCurrencyCode,
 } from '@/utils/currency-utils';
 import { getErrorMessage } from '@/utils/error-utils';
+import { getInvoiceDateValidation } from '@/utils/invoice-date-validation';
 import { parseISODate, todayISODate, toLocalISODate } from '@/utils/iso-date';
 import {
   type InvoiceBuyerDraft,
@@ -64,6 +65,12 @@ import {
   toInvoiceBuyerDraft,
   toInvoiceBuyerSnapshot,
 } from '@/utils/invoice-buyer';
+import {
+  areSellerSnapshotsEqual,
+  buildSellerSnapshotFromSettings,
+  parseSellerSnapshotJson,
+  type SellerSnapshotSettingsSource,
+} from '@/utils/invoice-seller-snapshot';
 import {
   DEFAULT_INVOICE_DUE_DAYS,
   DEFAULT_INVOICE_PAYMENT_METHOD,
@@ -99,6 +106,7 @@ type HeaderDraft = {
   buyerSnapshot?: BuyerSnapshot;
   invoiceNumber: string;
   invoiceNumberManuallyEdited?: boolean;
+  buyerReference?: string;
   issuedDate: string;
   taxableDate?: string;
   dueDate: string;
@@ -135,24 +143,6 @@ function withLocalIds(items: DraftInvoiceItemInput[], startAt = 1): DraftListIte
     ...item,
     localId: `draft-${Date.now()}-${startAt + index}`,
   }));
-}
-
-function isIssuedDateBeyondTaxableWindow(
-  issuedDateValue?: string,
-  taxableDateValue?: string,
-): boolean {
-  const issuedAt = parseISODate(issuedDateValue);
-  const taxableAt = parseISODate(taxableDateValue);
-  if (issuedAt == null || taxableAt == null) return false;
-  const maxIssuedAt = taxableAt + 15 * 24 * 60 * 60 * 1000;
-  return issuedAt > maxIssuedAt;
-}
-
-function isDueDateInPast(dueDateValue?: string): boolean {
-  const dueAt = parseISODate(dueDateValue);
-  const todayAt = parseISODate(todayISODate());
-  if (dueAt == null || todayAt == null) return false;
-  return dueAt < todayAt;
 }
 
 function parseOptionalISODate(value?: string): number | undefined {
@@ -241,6 +231,7 @@ export default function InvoiceDraftScreen() {
   const [invoiceNumber, setInvoiceNumber] = useState('');
   const [isInvoiceNumberManuallyEdited, setIsInvoiceNumberManuallyEdited] =
     useState(isEditingInvoice);
+  const [buyerReference, setBuyerReference] = useState('');
   const [issuedDate, setIssuedDate] = useState(todayISODate());
   const [taxableDate, setTaxableDate] = useState(todayISODate());
   const [dueDate, setDueDate] = useState(todayISODate());
@@ -269,6 +260,12 @@ export default function InvoiceDraftScreen() {
   const [pickerDate, setPickerDate] = useState<Date>(new Date());
   const [items, setItems] = useState<DraftListItem[]>([]);
   const [isSaving, setIsSaving] = useState(false);
+  const [refreshSellerSnapshot, setRefreshSellerSnapshot] = useState(false);
+  const [sellerSnapshotSettings, setSellerSnapshotSettings] =
+    useState<SellerSnapshotSettingsSource | null>(null);
+  const [storedSellerSnapshot, setStoredSellerSnapshot] = useState<SellerSnapshot | null>(null);
+  const [isStoredSellerSnapshotLoaded, setIsStoredSellerSnapshotLoaded] =
+    useState(!isEditingInvoice);
 
   const localIdRef = useRef(1);
   const didAutoOpenImport = useRef(false);
@@ -287,6 +284,7 @@ export default function InvoiceDraftScreen() {
         'vat_number',
         'invoice_payment_method',
         'invoice_due_days',
+        'invoice_qr_type',
         'is_archived',
       ])
       .subscribe(setClients);
@@ -310,6 +308,7 @@ export default function InvoiceDraftScreen() {
     setIsInvoiceNumberManuallyEdited(
       isEditingInvoice || !!restoredHeaderDraft.invoiceNumberManuallyEdited,
     );
+    setBuyerReference(restoredHeaderDraft.buyerReference || '');
     setIssuedDate(restoredHeaderDraft.issuedDate || todayISODate());
     setTaxableDate(restoredHeaderDraft.taxableDate || todayISODate());
     setDueDate(restoredHeaderDraft.dueDate || todayISODate());
@@ -332,8 +331,44 @@ export default function InvoiceDraftScreen() {
   }, [restoredFooterDraft]);
 
   useEffect(() => {
+    let isActive = true;
+
+    const loadStoredSellerSnapshot = async () => {
+      setRefreshSellerSnapshot(false);
+
+      if (!editingInvoiceId) {
+        setStoredSellerSnapshot(null);
+        setIsStoredSellerSnapshotLoaded(true);
+        return;
+      }
+
+      setIsStoredSellerSnapshotLoaded(false);
+
+      try {
+        const invoice = await database.get<InvoiceModel>(InvoiceModel.table).find(editingInvoiceId);
+        if (!isActive) return;
+        setStoredSellerSnapshot(parseSellerSnapshotJson(invoice.sellerSnapshotJson));
+      } catch {
+        if (!isActive) return;
+        setStoredSellerSnapshot(null);
+      } finally {
+        if (isActive) {
+          setIsStoredSellerSnapshotLoaded(true);
+        }
+      }
+    };
+
+    void loadStoredSellerSnapshot();
+
+    return () => {
+      isActive = false;
+    };
+  }, [editingInvoiceId]);
+
+  useEffect(() => {
     const loadSettings = async () => {
       const settings = await getSettings();
+      setSellerSnapshotSettings(settings);
       setIsVatPayer(!!settings.isVatPayer);
       if (settings.isVatPayer) {
         const rates = await getVatRates().fetch();
@@ -409,6 +444,23 @@ export default function InvoiceDraftScreen() {
   );
   const selectedClientName = selectedClient?.name?.trim();
   const hasClients = clients.length > 0;
+  const currentSellerSnapshot = useMemo(
+    () =>
+      sellerSnapshotSettings
+        ? buildSellerSnapshotFromSettings(sellerSnapshotSettings, selectedClient)
+        : null,
+    [selectedClient, sellerSnapshotSettings],
+  );
+  const hasSellerSnapshotChanges = useMemo(
+    () =>
+      isEditingInvoice &&
+      isStoredSellerSnapshotLoaded &&
+      currentSellerSnapshot != null &&
+      !areSellerSnapshotsEqual(storedSellerSnapshot, currentSellerSnapshot),
+    [currentSellerSnapshot, isEditingInvoice, isStoredSellerSnapshotLoaded, storedSellerSnapshot],
+  );
+  const shouldShowSellerSnapshotRefresh =
+    isEditingInvoice && (refreshSellerSnapshot || hasSellerSnapshotChanges);
 
   useEffect(() => {
     if (!paymentMethodTouchedRef.current) {
@@ -438,6 +490,7 @@ export default function InvoiceDraftScreen() {
       buyerSnapshot: buyerMode === 'one_off' ? normalizedBuyerSnapshot : undefined,
       invoiceNumber: invoiceNumber.trim(),
       invoiceNumberManuallyEdited: isInvoiceNumberManuallyEdited,
+      buyerReference: buyerReference.trim() || undefined,
       issuedDate: issuedDate.trim(),
       taxableDate: isVatPayer ? taxableDate.trim() : undefined,
       dueDate: dueDate.trim(),
@@ -446,6 +499,7 @@ export default function InvoiceDraftScreen() {
     }),
     [
       buyerMode,
+      buyerReference,
       currency,
       dueDate,
       effectiveClientId,
@@ -499,16 +553,19 @@ export default function InvoiceDraftScreen() {
       ),
     [isVatPayer, items, resolvedDraftVatRateByCodeId],
   );
-  const showIssuedDateTaxableWarning = useMemo(
+  const dateValidation = useMemo(
     () =>
-      isVatPayer &&
-      isIssuedDateBeyondTaxableWindow(headerDraft.issuedDate, headerDraft.taxableDate),
-    [headerDraft.issuedDate, headerDraft.taxableDate, isVatPayer],
+      getInvoiceDateValidation({
+        issuedDate: headerDraft.issuedDate,
+        taxableDate: headerDraft.taxableDate,
+        dueDate: headerDraft.dueDate,
+        isVatPayer,
+      }),
+    [headerDraft.dueDate, headerDraft.issuedDate, headerDraft.taxableDate, isVatPayer],
   );
-  const showDueDatePastWarning = useMemo(
-    () => isDueDateInPast(headerDraft.dueDate),
-    [headerDraft.dueDate],
-  );
+  const showIssuedDateTaxableWarning = dateValidation.issuedAfterTaxableWindow;
+  const showDueDateBeforeIssueWarning = dateValidation.dueDateBeforeIssue;
+  const showDueDatePastWarning = dateValidation.dueDatePast;
 
   const canCreate =
     !!invoiceNumber.trim() &&
@@ -1033,6 +1090,23 @@ export default function InvoiceDraftScreen() {
     router.replace(`/invoices/${editingInvoiceId}`);
   };
 
+  const confirmRefreshSellerSnapshot = () => {
+    Alert.alert(
+      LL.invoices.refreshSellerSnapshotConfirmTitle(),
+      LL.invoices.refreshSellerSnapshotConfirmMessage(),
+      [
+        {
+          text: LL.common.cancel(),
+          style: 'cancel',
+        },
+        {
+          text: LL.invoices.refreshSellerSnapshotConfirmAction(),
+          onPress: () => setRefreshSellerSnapshot(true),
+        },
+      ],
+    );
+  };
+
   const handleInvoiceNumberChange = (value: string) => {
     setInvoiceNumber(value);
     setIsInvoiceNumberManuallyEdited(true);
@@ -1088,6 +1162,7 @@ export default function InvoiceDraftScreen() {
       clientId: headerDraft.clientId,
       buyerSnapshot: buyerMode === 'one_off' ? normalizedBuyerSnapshot : undefined,
       invoiceNumber: invoiceNumberOverride ?? headerDraft.invoiceNumber,
+      buyerReference: headerDraft.buyerReference,
       issuedAt: parseISODate(headerDraft.issuedDate) ?? Date.now(),
       taxableAt: parseOptionalISODate(headerDraft.taxableDate),
       dueAt: parseOptionalISODate(headerDraft.dueDate),
@@ -1140,11 +1215,15 @@ export default function InvoiceDraftScreen() {
       Alert.alert(LL.common.error(), LL.invoices.errorHeaderRequired());
       return;
     }
-    if (parseISODate(headerDraft.issuedDate) == null || parseISODate(headerDraft.dueDate) == null) {
+    if (
+      dateValidation.invalidIssuedDate ||
+      dateValidation.invalidDueDate ||
+      dateValidation.invalidTaxableDate
+    ) {
       Alert.alert(LL.common.error(), LL.invoices.errorInvalidDateFormat());
       return;
     }
-    if (isVatPayer && parseISODate(headerDraft.taxableDate) == null) {
+    if (dateValidation.taxableDateRequired) {
       Alert.alert(LL.common.error(), LL.invoices.errorTaxableDateRequired());
       return;
     }
@@ -1158,6 +1237,7 @@ export default function InvoiceDraftScreen() {
       const invoice = editingInvoiceId
         ? await updateIssuedInvoice({
             id: editingInvoiceId,
+            refreshSellerSnapshot,
             ...buildInvoiceInput(),
           })
         : await createInvoiceWithConflictResolution();
@@ -1434,6 +1514,15 @@ export default function InvoiceDraftScreen() {
               </View>
             ) : null}
 
+            <ThemedText style={styles.label}>{LL.invoices.buyerReference()}</ThemedText>
+            <TextInput
+              style={[styles.input, stylesField(palette)]}
+              value={buyerReference}
+              onChangeText={setBuyerReference}
+              placeholder={LL.invoices.buyerReferencePlaceholder()}
+              placeholderTextColor={placeholder(palette)}
+            />
+
             <View style={styles.fieldRow}>
               <View style={styles.fieldColumn}>
                 <ThemedText style={styles.label}>{LL.invoices.issueDate()}</ThemedText>
@@ -1452,7 +1541,21 @@ export default function InvoiceDraftScreen() {
                 >
                   <ThemedText>{formatDisplayDate(dueDate)}</ThemedText>
                 </Pressable>
-                {showDueDatePastWarning ? (
+                {showDueDateBeforeIssueWarning ? (
+                  <View
+                    style={[
+                      styles.warningCard,
+                      {
+                        borderColor: palette.destructive,
+                        backgroundColor: palette.cardBackground,
+                      },
+                    ]}
+                  >
+                    <ThemedText style={[styles.warningText, { color: palette.textSecondary }]}>
+                      {LL.invoices.dueDateBeforeIssueWarning()}
+                    </ThemedText>
+                  </View>
+                ) : showDueDatePastWarning ? (
                   <View
                     style={[
                       styles.warningCard,
@@ -1597,6 +1700,7 @@ export default function InvoiceDraftScreen() {
               keyExtractor={(item) => item.localId}
               emptyText={LL.invoices.errorNoItems()}
               showAddButton={false}
+              swipeHintKey="invoices.draft-items"
               renderItem={(item) => {
                 const itemUnitLabel = getItemUnitLabel(item.unit);
 
@@ -1718,12 +1822,83 @@ export default function InvoiceDraftScreen() {
                 </ThemedText>
               </Pressable>
             ) : null}
+
+            {shouldShowSellerSnapshotRefresh ? (
+              <View
+                style={[
+                  styles.sellerSnapshotCard,
+                  {
+                    borderColor: refreshSellerSnapshot ? palette.success : palette.border,
+                    backgroundColor: palette.cardBackground,
+                  },
+                ]}
+              >
+                <View style={styles.sellerSnapshotText}>
+                  <ThemedText style={styles.sellerSnapshotTitle}>
+                    {LL.invoices.sellerSnapshotNoticeTitle()}
+                  </ThemedText>
+                  <ThemedText
+                    style={[styles.sellerSnapshotDescription, { color: palette.textSecondary }]}
+                  >
+                    {refreshSellerSnapshot
+                      ? LL.invoices.sellerSnapshotRefreshPending()
+                      : LL.invoices.sellerSnapshotNoticeDescription()}
+                  </ThemedText>
+                </View>
+                <Pressable
+                  style={[
+                    styles.sellerSnapshotButton,
+                    {
+                      borderColor: refreshSellerSnapshot ? palette.success : palette.tint,
+                      backgroundColor: refreshSellerSnapshot
+                        ? palette.buttonNeutralBackground
+                        : palette.cardBackground,
+                      opacity: refreshSellerSnapshot || isSaving ? 0.72 : 1,
+                    },
+                  ]}
+                  onPress={confirmRefreshSellerSnapshot}
+                  disabled={refreshSellerSnapshot || isSaving}
+                  accessibilityRole="button"
+                  accessibilityLabel={
+                    refreshSellerSnapshot
+                      ? LL.invoices.sellerSnapshotRefreshPendingShort()
+                      : LL.invoices.refreshSellerSnapshotAction()
+                  }
+                >
+                  <IconSymbol
+                    name={
+                      refreshSellerSnapshot
+                        ? 'checkmark.circle.fill'
+                        : 'arrow.triangle.2.circlepath'
+                    }
+                    size={16}
+                    color={refreshSellerSnapshot ? palette.success : palette.tint}
+                  />
+                  <ThemedText
+                    style={[
+                      styles.sellerSnapshotButtonText,
+                      { color: refreshSellerSnapshot ? palette.success : palette.tint },
+                    ]}
+                  >
+                    {refreshSellerSnapshot
+                      ? LL.invoices.sellerSnapshotRefreshPendingShort()
+                      : LL.invoices.refreshSellerSnapshotAction()}
+                  </ThemedText>
+                </Pressable>
+              </View>
+            ) : null}
           </View>
 
           <CrossPlatformDatePicker
             visible={activeDateField !== null}
             value={pickerDate}
-            title={LL.invoices.issueDate()}
+            title={
+              activeDateField === 'due'
+                ? LL.invoices.dueDate()
+                : activeDateField === 'taxable'
+                  ? LL.invoices.taxableSupplyDate()
+                  : LL.invoices.issueDate()
+            }
             cancelLabel={LL.common.cancel()}
             confirmLabel={LL.common.save()}
             onCancel={closeDatePicker}
@@ -1802,6 +1977,38 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 16,
+  },
+  sellerSnapshotCard: {
+    borderWidth: 1,
+    borderRadius: 12,
+    padding: 12,
+    gap: 10,
+  },
+  sellerSnapshotText: {
+    gap: 3,
+  },
+  sellerSnapshotTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  sellerSnapshotDescription: {
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  sellerSnapshotButton: {
+    minHeight: 40,
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  sellerSnapshotButtonText: {
+    fontSize: 13,
+    fontWeight: '700',
   },
   label: {
     fontSize: 13,

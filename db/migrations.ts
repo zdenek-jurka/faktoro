@@ -1093,5 +1093,14 @@ export default schemaMigrations({
         }),
       ],
     },
+    {
+      toVersion: 56,
+      steps: [
+        addColumns({
+          table: 'invoice',
+          columns: [{ name: 'buyer_reference', type: 'string', isOptional: true }],
+        }),
+      ],
+    },
   ],
 });

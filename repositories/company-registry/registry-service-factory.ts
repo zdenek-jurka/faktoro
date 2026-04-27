@@ -4,6 +4,10 @@ import { BrregCompanyRegistryService } from './brreg-company-registry';
 import { normalizeCompanyRegistryCompany } from './company-result-normalizer';
 import { CompaniesHouseRegistryService } from './companies-house-registry';
 import { CustomCompanyRegistryService } from './custom-company-registry';
+import {
+  buildCustomConnectorAuthFromSettings,
+  getCustomConnectorTokenCacheStorageKey,
+} from './custom-connector-settings';
 import { InseeSireneRegistryService } from './insee-sirene-registry';
 import { CompanyRegistryKey } from './registry-options';
 import { CompanyRegistryService } from './types';
@@ -50,8 +54,8 @@ function createBaseService(
   if (registryKey === 'custom_connector') {
     return new CustomCompanyRegistryService({
       url: runtimeSettings?.url,
-      headerKey: runtimeSettings?.header_key,
-      headerValue: runtimeSettings?.header_value,
+      auth: buildCustomConnectorAuthFromSettings(runtimeSettings ?? {}),
+      tokenCacheStorageKey: getCustomConnectorTokenCacheStorageKey(),
     });
   }
   return null;

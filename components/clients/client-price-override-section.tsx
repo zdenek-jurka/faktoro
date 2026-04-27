@@ -173,6 +173,7 @@ export function ClientPriceOverrideSection({ client }: ClientPriceOverrideSectio
         onDelete={(override: ClientPriceOverrideModel) => handleDelete(override.id)}
         onEdit={(override: ClientPriceOverrideModel) => handleOpenModal(override)}
         keyExtractor={(override: ClientPriceOverrideModel) => override.id}
+        swipeHintKey="clients.price-overrides"
         renderItem={(override: ClientPriceOverrideModel) => {
           const item = getPriceListItem(override.priceListItemId);
           if (!item) return null;

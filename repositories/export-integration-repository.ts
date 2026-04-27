@@ -1,4 +1,18 @@
 import { getConfigValue, setConfigValue } from '@/repositories/config-storage-repository';
+import {
+  clearHttpAuthCachedToken,
+  clearHttpAuthSecrets,
+  extractHttpAuthSecrets,
+  hasHttpAuthSecretFields,
+  type HttpAuth,
+  type HttpAuthSecrets,
+  loadHttpAuthSecrets,
+  mergeHttpAuthSecrets,
+  parseSecureOrLocalHttpUrl,
+  resolveHttpAuthHeaders,
+  saveHttpAuthSecrets,
+  stripHttpAuthSecrets,
+} from '@/utils/http-auth';
 
 const CONFIG_KEY = 'export_integrations.list';
 const LEGACY_TOKEN_CACHE_PREFIX = 'oauth2_token_cache.';
@@ -13,12 +27,8 @@ const XSLT_NAMESPACE = 'http://www.w3.org/1999/XSL/Transform';
 
 export type ExportIntegrationDocumentType = 'timesheet' | 'invoice';
 
-export type WebhookAuth =
-  | { type: 'none' }
-  | { type: 'bearer'; token: string }
-  | { type: 'api_key'; headerName: string; value: string }
-  | { type: 'basic'; username: string; password: string }
-  | { type: 'oauth2_cc'; tokenUrl: string; clientId: string; clientSecret: string; scope: string };
+export type WebhookAuth = HttpAuth;
+type ExportIntegrationSecrets = HttpAuthSecrets;
 
 export type WebhookHeader = { key: string; value: string };
 
@@ -44,25 +54,6 @@ export type ExportIntegration = {
   createdAt: number;
 };
 
-// --- Token cache ---
-
-type CachedToken = { accessToken: string; expiresAt: number };
-type ExportIntegrationSecrets = {
-  bearerToken?: string;
-  apiKeyValue?: string;
-  basicPassword?: string;
-  oauth2ClientSecret?: string;
-};
-
-function getSecureStoreModule(): any {
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    return require('expo-secure-store');
-  } catch {
-    throw new Error('expo-secure-store is not installed.');
-  }
-}
-
 function getClipboardModule(): any {
   try {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -82,20 +73,6 @@ function getClipboardModule(): any {
   }
 }
 
-async function getSecureValue(key: string): Promise<string | null> {
-  const SecureStore = getSecureStoreModule();
-  return SecureStore.getItemAsync(key);
-}
-
-async function setSecureValue(key: string, value: string | null): Promise<void> {
-  const SecureStore = getSecureStoreModule();
-  if (value?.trim()) {
-    await SecureStore.setItemAsync(key, value);
-    return;
-  }
-  await SecureStore.deleteItemAsync(key);
-}
-
 function getTokenCacheStorageKey(integrationId: string): string {
   return `${TOKEN_CACHE_PREFIX}${integrationId}`;
 }
@@ -105,62 +82,28 @@ function getSecretStorageKey(integrationId: string): string {
 }
 
 async function loadIntegrationSecrets(integrationId: string): Promise<ExportIntegrationSecrets> {
-  const raw = await getSecureValue(getSecretStorageKey(integrationId));
-  if (!raw) return {};
-  try {
-    return JSON.parse(raw) as ExportIntegrationSecrets;
-  } catch {
-    return {};
-  }
+  return loadHttpAuthSecrets(getSecretStorageKey(integrationId));
 }
 
 async function saveIntegrationSecrets(
   integrationId: string,
   secrets: ExportIntegrationSecrets,
 ): Promise<void> {
-  const hasSecrets = Object.values(secrets).some((value) => !!value?.trim());
-  await setSecureValue(
-    getSecretStorageKey(integrationId),
-    hasSecrets ? JSON.stringify(secrets) : null,
-  );
+  await saveHttpAuthSecrets(getSecretStorageKey(integrationId), secrets);
 }
 
 async function clearIntegrationSecrets(integrationId: string): Promise<void> {
-  await setSecureValue(getSecretStorageKey(integrationId), null);
+  await clearHttpAuthSecrets(getSecretStorageKey(integrationId));
 }
 
 function extractDeliverySecrets(delivery: ExportIntegrationDelivery): ExportIntegrationSecrets {
   if (delivery.type !== 'webhook') return {};
-
-  switch (delivery.auth.type) {
-    case 'bearer':
-      return { bearerToken: delivery.auth.token };
-    case 'api_key':
-      return { apiKeyValue: delivery.auth.value };
-    case 'basic':
-      return { basicPassword: delivery.auth.password };
-    case 'oauth2_cc':
-      return { oauth2ClientSecret: delivery.auth.clientSecret };
-    default:
-      return {};
-  }
+  return extractHttpAuthSecrets(delivery.auth);
 }
 
 function stripDeliverySecrets(delivery: ExportIntegrationDelivery): ExportIntegrationDelivery {
   if (delivery.type !== 'webhook') return delivery;
-
-  const auth =
-    delivery.auth.type === 'bearer'
-      ? { ...delivery.auth, token: '' }
-      : delivery.auth.type === 'api_key'
-        ? { ...delivery.auth, value: '' }
-        : delivery.auth.type === 'basic'
-          ? { ...delivery.auth, password: '' }
-          : delivery.auth.type === 'oauth2_cc'
-            ? { ...delivery.auth, clientSecret: '' }
-            : delivery.auth;
-
-  return { ...delivery, auth };
+  return { ...delivery, auth: stripHttpAuthSecrets(delivery.auth) };
 }
 
 function mergeDeliverySecrets(
@@ -168,38 +111,12 @@ function mergeDeliverySecrets(
   secrets: ExportIntegrationSecrets,
 ): ExportIntegrationDelivery {
   if (delivery.type !== 'webhook') return delivery;
-
-  const auth =
-    delivery.auth.type === 'bearer'
-      ? { ...delivery.auth, token: secrets.bearerToken ?? delivery.auth.token }
-      : delivery.auth.type === 'api_key'
-        ? { ...delivery.auth, value: secrets.apiKeyValue ?? delivery.auth.value }
-        : delivery.auth.type === 'basic'
-          ? { ...delivery.auth, password: secrets.basicPassword ?? delivery.auth.password }
-          : delivery.auth.type === 'oauth2_cc'
-            ? {
-                ...delivery.auth,
-                clientSecret: secrets.oauth2ClientSecret ?? delivery.auth.clientSecret,
-              }
-            : delivery.auth;
-
-  return { ...delivery, auth };
+  return { ...delivery, auth: mergeHttpAuthSecrets(delivery.auth, secrets) };
 }
 
 function hasUrlSecretFields(delivery: ExportIntegrationDelivery): boolean {
   if (delivery.type !== 'webhook') return false;
-  switch (delivery.auth.type) {
-    case 'bearer':
-      return !!delivery.auth.token.trim();
-    case 'api_key':
-      return !!delivery.auth.value.trim();
-    case 'basic':
-      return !!delivery.auth.password.trim();
-    case 'oauth2_cc':
-      return !!delivery.auth.clientSecret.trim();
-    default:
-      return false;
-  }
+  return hasHttpAuthSecretFields(delivery.auth);
 }
 
 function getSampleXml(documentType: ExportIntegrationDocumentType): string {
@@ -208,6 +125,7 @@ function getSampleXml(documentType: ExportIntegrationDocumentType): string {
 <Invoice xmlns="${INVOICE_XML_NAMESPACE}">
   <Id>test-invoice</Id>
   <Number>2026-001</Number>
+  <BuyerReference>PO-2026-42</BuyerReference>
   <ClientId>client-1</ClientId>
   <IssueDate>2026-03-22</IssueDate>
   <DueDate>2026-04-05</DueDate>
@@ -507,112 +425,26 @@ async function executeHttpRequest(
 }
 
 function parseEndpointUrl(value: string, context: string): URL {
-  let parsed: URL;
-  try {
-    parsed = new URL(value);
-  } catch {
-    throw new Error(`${context}: invalid URL`);
-  }
-
-  const isLocalhost =
-    parsed.hostname === 'localhost' || parsed.hostname === '127.0.0.1' || parsed.hostname === '::1';
-
-  if (parsed.protocol !== 'https:' && !(parsed.protocol === 'http:' && isLocalhost)) {
-    throw new Error(`${context}: HTTPS is required`);
-  }
-
-  return parsed;
-}
-
-async function loadCachedToken(integrationId: string): Promise<CachedToken | null> {
-  const storageKey = getTokenCacheStorageKey(integrationId);
-  let raw = await getSecureValue(storageKey);
-  if (!raw) {
-    const legacyRaw = await getConfigValue(`${LEGACY_TOKEN_CACHE_PREFIX}${integrationId}`);
-    if (legacyRaw) {
-      raw = legacyRaw;
-      await setSecureValue(storageKey, legacyRaw);
-      await setConfigValue(`${LEGACY_TOKEN_CACHE_PREFIX}${integrationId}`, null);
-    }
-  }
-  if (!raw) return null;
-  try {
-    return JSON.parse(raw) as CachedToken;
-  } catch {
-    return null;
-  }
-}
-
-async function saveCachedToken(integrationId: string, token: CachedToken): Promise<void> {
-  await setSecureValue(getTokenCacheStorageKey(integrationId), JSON.stringify(token));
+  return parseSecureOrLocalHttpUrl(value, context);
 }
 
 async function clearCachedToken(integrationId: string): Promise<void> {
-  await setSecureValue(getTokenCacheStorageKey(integrationId), null);
-}
-
-async function getOAuth2CCToken(
-  integrationId: string,
-  auth: Extract<WebhookAuth, { type: 'oauth2_cc' }>,
-): Promise<string> {
-  const cached = await loadCachedToken(integrationId);
-  if (cached && cached.expiresAt > Date.now() + 60_000) {
-    return cached.accessToken;
-  }
-
-  parseEndpointUrl(auth.tokenUrl, 'OAuth2 token URL');
-  const body = new URLSearchParams({
-    grant_type: 'client_credentials',
-    client_id: auth.clientId,
-    client_secret: auth.clientSecret,
-    ...(auth.scope ? { scope: auth.scope } : {}),
-  });
-
-  const resp = await executeHttpRequest(
-    auth.tokenUrl,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: body.toString(),
-    },
-    {
-      timeoutMs: TOKEN_REQUEST_TIMEOUT_MS,
-      context: 'OAuth2 token request',
-    },
+  await clearHttpAuthCachedToken(
+    getTokenCacheStorageKey(integrationId),
+    `${LEGACY_TOKEN_CACHE_PREFIX}${integrationId}`,
   );
-
-  const json = (await resp.json()) as { access_token: string; expires_in?: number };
-  const accessToken = json.access_token;
-  const expiresIn = json.expires_in ?? 3600;
-
-  await saveCachedToken(integrationId, {
-    accessToken,
-    expiresAt: Date.now() + expiresIn * 1000,
-  });
-
-  return accessToken;
 }
 
 async function resolveAuthHeaders(
   integrationId: string,
   auth: WebhookAuth,
 ): Promise<Record<string, string>> {
-  switch (auth.type) {
-    case 'bearer':
-      return { Authorization: `Bearer ${auth.token}` };
-    case 'api_key':
-      return { [auth.headerName]: auth.value };
-    case 'basic': {
-      const encoded = btoa(`${auth.username}:${auth.password}`);
-      return { Authorization: `Basic ${encoded}` };
-    }
-    case 'oauth2_cc': {
-      const token = await getOAuth2CCToken(integrationId, auth);
-      return { Authorization: `Bearer ${token}` };
-    }
-    default:
-      return {};
-  }
+  return resolveHttpAuthHeaders(auth, {
+    tokenCacheStorageKey: getTokenCacheStorageKey(integrationId),
+    legacyTokenCacheConfigKey: `${LEGACY_TOKEN_CACHE_PREFIX}${integrationId}`,
+    tokenRequestTimeoutMs: TOKEN_REQUEST_TIMEOUT_MS,
+    maxHttpAttempts: MAX_HTTP_ATTEMPTS,
+  });
 }
 
 // --- CRUD ---

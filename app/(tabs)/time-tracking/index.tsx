@@ -4,7 +4,6 @@ import { ThemedView } from '@/components/themed-view';
 import { ClientTimeGroup } from '@/components/time-tracking/client-time-group';
 import { PauseStopTimerControl } from '@/components/time-tracking/pause-stop-timer-control';
 import { StartTimerModal } from '@/components/time-tracking/start-timer-modal';
-import { TimeEntryFormModal } from '@/components/time-tracking/time-entry-form-modal';
 import { ActionEmptyState } from '@/components/ui/action-empty-state';
 import { HeaderActions } from '@/components/ui/header-actions';
 import { IconButton } from '@/components/ui/icon-button';
@@ -18,7 +17,6 @@ import { useHeaderSearch } from '@/hooks/use-header-search';
 import { useI18nContext } from '@/i18n/i18n-react';
 import { normalizeIntlLocale } from '@/i18n/locale-options';
 import { ClientModel, PriceListItemModel, TimeEntryModel } from '@/model';
-import { getEffectivePriceDetails } from '@/repositories/client-price-override-repository';
 import {
   getDeviceSyncSettings,
   observeDeviceSyncSettings,
@@ -30,7 +28,6 @@ import {
   pauseTimeEntry,
   resumeTimeEntry,
   stopTimeEntry,
-  updateTimeEntry,
 } from '@/repositories/time-entry-repository';
 import { buildClientIdentitySearchClause } from '@/utils/client-search';
 import { isAndroid, isIos } from '@/utils/platform';
@@ -61,12 +58,6 @@ export default function TimeTrackingScreen() {
 
   // Form state
   const [showStartModal, setShowStartModal] = useState(false);
-
-  // Edit form state
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [editingEntry, setEditingEntry] = useState<TimeEntryModel | null>(null);
-  const [editDescription, setEditDescription] = useState('');
-  const [editPriceListItemId, setEditPriceListItemId] = useState<string>('');
 
   const getControlErrorMessage = (fallback: string, error: unknown) => {
     if (error instanceof Error && error.message === 'TIME_ENTRY_REMOTE_CONTROL_FORBIDDEN') {
@@ -264,10 +255,7 @@ export default function TimeTrackingScreen() {
 
   const handleEditRunningEntry = () => {
     if (!currentEntry || !canControlCurrentEntry) return;
-    setEditingEntry(currentEntry);
-    setEditDescription(currentEntry.description ?? '');
-    setEditPriceListItemId(currentEntry.priceListItemId || '');
-    setShowEditModal(true);
+    router.push(`/time-tracking/entry/${currentEntry.id}/edit`);
   };
 
   const handleDeleteRunningEntry = () => {
@@ -285,53 +273,12 @@ export default function TimeTrackingScreen() {
             console.error('Error deleting running entry:', error);
             Alert.alert(
               LL.common.error(),
-              getControlErrorMessage(LL.timeTracking.errorStopTimer(), error),
+              getControlErrorMessage(LL.timeTracking.errorDeleteEntry(), error),
             );
           }
         },
       },
     ]);
-  };
-
-  const handleUpdateEntry = async () => {
-    if (!editingEntry) {
-      Alert.alert(LL.common.error(), LL.timeTracking.errorSelectClient());
-      return;
-    }
-
-    try {
-      let rate: number | null = null;
-      let rateCurrency: string | null = null;
-
-      // If a price list item is selected, get the effective price
-      if (editPriceListItemId) {
-        const effectiveRate = await getEffectivePriceDetails(
-          editingEntry.clientId,
-          editPriceListItemId,
-        );
-        rate = effectiveRate.price;
-        rateCurrency = effectiveRate.currency;
-      }
-
-      await updateTimeEntry({
-        id: editingEntry.id,
-        description: editDescription.trim() || undefined,
-        priceListItemId: editPriceListItemId || null,
-        rate,
-        rateCurrency,
-      });
-
-      setShowEditModal(false);
-      setEditingEntry(null);
-      setEditDescription('');
-      setEditPriceListItemId('');
-    } catch (error) {
-      console.error('Error updating entry:', error);
-      Alert.alert(
-        LL.common.error(),
-        getControlErrorMessage(LL.timeTracking.errorUpdateEntry(), error),
-      );
-    }
   };
 
   // Group time entries by client
@@ -562,28 +509,6 @@ export default function TimeTrackingScreen() {
         clients={clients}
         priceListItems={priceListItems}
         addClientReturnTo="timeTracking"
-      />
-
-      <TimeEntryFormModal
-        visible={showEditModal}
-        mode="edit"
-        title={LL.timeTracking.editTimer()}
-        submitLabel={LL.common.save()}
-        onClose={() => setShowEditModal(false)}
-        onSubmit={handleUpdateEntry}
-        clients={clients}
-        selectedClientId={editingEntry?.clientId}
-        fixedClientName={
-          editingEntry
-            ? (clients.find((c) => c.id === editingEntry.clientId)?.name ?? '')
-            : undefined
-        }
-        description={editDescription}
-        onDescriptionChange={setEditDescription}
-        priceListItems={priceListItems}
-        selectedPriceListItemId={editPriceListItemId}
-        onPriceListItemChange={setEditPriceListItemId}
-        disableSubmit={!editingEntry}
       />
     </ThemedView>
   );

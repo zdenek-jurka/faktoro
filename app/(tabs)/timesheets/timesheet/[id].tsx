@@ -38,6 +38,7 @@ import {
 import { buildCopyFileName } from '@/utils/file-name-utils';
 import { openLocalFile } from '@/utils/open-local-file';
 import { buildPdfLogoHtml } from '@/utils/pdf-logo';
+import { printHtmlToPdfCacheFile } from '@/utils/pdf-export-file';
 import { isIos } from '@/utils/platform';
 import {
   type ExportIntegration,
@@ -513,11 +514,6 @@ export default function TimesheetDetailScreen() {
       throw new Error(LLExport.timesheets.savePdfError());
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const Print = require('expo-print');
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const FileSystemLegacy = require('expo-file-system/legacy');
-
     const rows = buildExportRows();
     const htmlRows = rows
       .map(
@@ -581,21 +577,11 @@ export default function TimesheetDetailScreen() {
       </html>
     `;
 
-    const pdfResult = await Print.printToFileAsync({ html });
-    const cacheDirectory: string | undefined = FileSystemLegacy.cacheDirectory;
-    if (!cacheDirectory) {
-      throw new Error(LLExport.timesheets.savePdfError());
-    }
-
-    const fileName = `${getExportFilenameBase()}.pdf`;
-    const targetUri = `${cacheDirectory}${fileName}`;
-    await FileSystemLegacy.deleteAsync(targetUri, { idempotent: true });
-    await FileSystemLegacy.copyAsync({
-      from: pdfResult.uri,
-      to: targetUri,
+    return printHtmlToPdfCacheFile({
+      html,
+      fileName: `${getExportFilenameBase()}.pdf`,
+      errorMessage: LLExport.timesheets.savePdfError(),
     });
-
-    return { fileName, uri: targetUri };
   };
 
   const saveTimesheetPdf = async (prebuiltPdfFile?: TimesheetPdfExportResult) => {

@@ -1,12 +1,14 @@
 import type { ClientModel, InvoiceItemModel, InvoiceModel } from '@/model';
 import type { BuyerSnapshot, InvoiceXmlFormat, SellerSnapshot } from '@/templates/invoice/xml';
 import { splitStreetAndBuildingNumber } from '@/utils/address-building-number';
+import { resolveUneceUnitCode } from '@/utils/e-invoice-unit-code';
 
 export type StructuredInvoiceExportFixTarget = 'buyer' | 'invoice' | 'invoiceDefaults' | 'seller';
 
 export type StructuredInvoiceExportField =
   | 'address'
   | 'bankAccount'
+  | 'buyerReference'
   | 'city'
   | 'companyId'
   | 'companyName'
@@ -53,9 +55,8 @@ export type StructuredInvoiceExportIssue =
         | 'buyerReference'
         | 'electronicAddressScheme'
         | 'paymentInstructions'
-        | 'sellerPostalAddress'
+        | 'sellerContactName'
         | 'taxBreakdown'
-        | 'taxScheme'
         | 'unitCode';
       fixTarget?: StructuredInvoiceExportFixTarget;
       lineIndex?: number;
@@ -97,13 +98,6 @@ function hasBankPaymentDetails(seller: SellerSnapshot): boolean {
 
 function isBankTransfer(paymentMethod?: string): boolean {
   return !paymentMethod || paymentMethod === 'bank_transfer';
-}
-
-function isSupportedLocalUnit(unit?: string): boolean {
-  const normalized = (unit || '').trim().toLowerCase();
-  return (
-    ['day', 'hour', 'manday', 'unit'].includes(normalized) || /^[A-Z0-9]{2,3}$/.test(unit || '')
-  );
 }
 
 function addPartyIssues(
@@ -227,48 +221,54 @@ export function getStructuredInvoiceExportIssues(
         fixTarget: 'invoice',
       });
     }
-    if (format !== 'isdoc') {
+    if (format !== 'isdoc' && !resolveUneceUnitCode(item.unit)) {
       issues.push({
         kind: 'unsupportedRequirement',
         format,
         requirement: 'unitCode',
         lineIndex: index,
-        fixTarget: !hasText(item.unit) || !isSupportedLocalUnit(item.unit) ? 'invoice' : undefined,
+        fixTarget: 'invoice',
       });
     }
   });
 
   if (format === 'peppol' || format === 'xrechnung') {
-    issues.push({
-      kind: 'unsupportedRequirement',
-      format,
-      requirement: 'buyerReference',
-    });
+    const hasZeroOrMissingVatCategory = items.some((item) => Number(item.vatRate ?? 0) <= 0);
+
+    if (!hasText(invoice.buyerReference)) {
+      issues.push({
+        kind: 'missingField',
+        scope: 'invoice',
+        field: 'buyerReference',
+        fixTarget: 'invoice',
+      });
+    }
 
     issues.push({
       kind: 'unsupportedRequirement',
       format,
       requirement: 'electronicAddressScheme',
+      fixTarget: !hasText(seller.email)
+        ? 'seller'
+        : !hasText(buyer.email)
+          ? buyerFixTarget
+          : undefined,
     });
 
-    issues.push({
-      kind: 'unsupportedRequirement',
-      format,
-      requirement: 'taxBreakdown',
-    });
+    if (hasZeroOrMissingVatCategory) {
+      issues.push({
+        kind: 'unsupportedRequirement',
+        format,
+        requirement: 'taxBreakdown',
+      });
+    }
 
-    issues.push({
-      kind: 'unsupportedRequirement',
-      format,
-      requirement: 'taxScheme',
-    });
-
-    if (isBankTransfer(invoice.paymentMethod)) {
+    if (isBankTransfer(invoice.paymentMethod) && !hasBankPaymentDetails(seller)) {
       issues.push({
         kind: 'unsupportedRequirement',
         format,
         requirement: 'paymentInstructions',
-        fixTarget: hasBankPaymentDetails(seller) ? undefined : 'invoiceDefaults',
+        fixTarget: 'invoiceDefaults',
       });
     }
   }
@@ -277,7 +277,7 @@ export function getStructuredInvoiceExportIssues(
     issues.push({
       kind: 'unsupportedRequirement',
       format,
-      requirement: 'sellerPostalAddress',
+      requirement: 'sellerContactName',
     });
 
     if (!hasText(seller.email)) {

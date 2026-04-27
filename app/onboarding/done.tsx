@@ -1,5 +1,6 @@
 import { ThemedText } from '@/components/themed-text';
 import { IconSymbol } from '@/components/ui/icon-symbol';
+import { isSyncEnabled } from '@/constants/features';
 import { usePalette } from '@/hooks/use-palette';
 import { useI18nContext } from '@/i18n/i18n-react';
 import { getVatRates } from '@/repositories/vat-rate-repository';
@@ -60,6 +61,16 @@ export default function OnboardingDoneScreen() {
   async function handleGoToVatSettings() {
     await setOnboardingCompleted();
     router.replace('/(tabs)/settings/vat');
+  }
+
+  async function handleGoToBackup() {
+    await setOnboardingCompleted();
+    router.replace('/(tabs)/settings/offline-backup');
+  }
+
+  async function handleGoToSync() {
+    await setOnboardingCompleted();
+    router.replace('/(tabs)/settings/online-sync');
   }
 
   return (
@@ -145,6 +156,50 @@ export default function OnboardingDoneScreen() {
             </View>
             <IconSymbol name="chevron.right" size={18} color={palette.icon} />
           </Pressable>
+
+          <Pressable
+            style={({ pressed }) => [
+              styles.actionCard,
+              { backgroundColor: palette.cardBackground, borderColor: palette.border },
+              pressed && styles.actionCardPressed,
+            ]}
+            onPress={handleGoToBackup}
+            android_ripple={{ color: palette.border }}
+          >
+            <View style={[styles.actionCardIcon, { backgroundColor: palette.backgroundSubtle }]}>
+              <IconSymbol name="archivebox" size={24} color={palette.tint} />
+            </View>
+            <View style={styles.actionCardText}>
+              <ThemedText type="defaultSemiBold">{LL.onboarding.doneBackup()}</ThemedText>
+              <ThemedText style={[styles.actionCardDesc, { color: palette.textSecondary }]}>
+                {LL.onboarding.doneBackupDesc()}
+              </ThemedText>
+            </View>
+            <IconSymbol name="chevron.right" size={18} color={palette.icon} />
+          </Pressable>
+
+          {isSyncEnabled ? (
+            <Pressable
+              style={({ pressed }) => [
+                styles.actionCard,
+                { backgroundColor: palette.cardBackground, borderColor: palette.border },
+                pressed && styles.actionCardPressed,
+              ]}
+              onPress={handleGoToSync}
+              android_ripple={{ color: palette.border }}
+            >
+              <View style={[styles.actionCardIcon, { backgroundColor: palette.backgroundSubtle }]}>
+                <IconSymbol name="arrow.triangle.2.circlepath" size={24} color={palette.tint} />
+              </View>
+              <View style={styles.actionCardText}>
+                <ThemedText type="defaultSemiBold">{LL.onboarding.doneSync()}</ThemedText>
+                <ThemedText style={[styles.actionCardDesc, { color: palette.textSecondary }]}>
+                  {LL.onboarding.doneSyncDesc()}
+                </ThemedText>
+              </View>
+              <IconSymbol name="chevron.right" size={18} color={palette.icon} />
+            </Pressable>
+          ) : null}
         </View>
 
         {/* Primary CTA */}

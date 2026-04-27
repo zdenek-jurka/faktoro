@@ -7,6 +7,7 @@ import {
   getRegistrySetting,
   getRegistrySettings,
 } from '@/repositories/registry-settings-repository';
+import { loadCustomConnectorRuntimeSettings } from '@/repositories/company-registry/custom-connector-settings';
 import { Alert } from 'react-native';
 
 export const COMPANY_REGISTRY_OPTIONS: CompanyRegistryKey[] = [
@@ -95,6 +96,10 @@ export async function loadRegistrySettingsForLookup(
 ): Promise<Record<string, string>> {
   const requiredKeys = getRequiredCompanyRegistrySettingKeys(registryKey);
   try {
+    if (registryKey === 'custom_connector') {
+      return await loadCustomConnectorRuntimeSettings();
+    }
+
     const loaded = await getRegistrySettings(registryKey);
     if (requiredKeys.length === 0) return loaded;
 

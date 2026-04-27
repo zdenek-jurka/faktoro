@@ -3,8 +3,9 @@ import { ThemedView } from '@/components/themed-view';
 import { CreateTimesheetModal } from '@/components/time-tracking/create-timesheet-modal';
 import { PauseStopTimerControl } from '@/components/time-tracking/pause-stop-timer-control';
 import { StartTimerModal } from '@/components/time-tracking/start-timer-modal';
-import { TimeEntryFormModal } from '@/components/time-tracking/time-entry-form-modal';
 import { ActionEmptyState } from '@/components/ui/action-empty-state';
+import { HeaderActions } from '@/components/ui/header-actions';
+import { IconButton } from '@/components/ui/icon-button';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { SwipeableList } from '@/components/ui/swipeable-list';
 import database from '@/db';
@@ -13,7 +14,6 @@ import { useDefaultInvoiceCurrency } from '@/hooks/use-default-invoice-currency'
 import { useI18nContext } from '@/i18n/i18n-react';
 import { normalizeIntlLocale } from '@/i18n/locale-options';
 import { ClientModel, PriceListItemModel, TimeEntryModel } from '@/model';
-import { getEffectivePriceDetails } from '@/repositories/client-price-override-repository';
 import {
   getDeviceSyncSettings,
   observeDeviceSyncSettings,
@@ -25,7 +25,6 @@ import {
   pauseTimeEntry,
   resumeTimeEntry,
   stopTimeEntry,
-  updateTimeEntry,
 } from '@/repositories/time-entry-repository';
 import { createTimesheetFromPeriod } from '@/repositories/timesheet-repository';
 import { isAndroid } from '@/utils/platform';
@@ -41,9 +40,14 @@ import { Alert, StyleSheet, Pressable, Text, View } from 'react-native';
 type Props = {
   clientId: string;
   backToClientId?: string;
+  editBasePath?: 'time-tracking' | 'clients';
 };
 
-export function ClientTimeEntriesContent({ clientId, backToClientId }: Props) {
+export function ClientTimeEntriesContent({
+  clientId,
+  backToClientId,
+  editBasePath = 'time-tracking',
+}: Props) {
   const router = useRouter();
   const palette = usePalette();
   const { LL, locale } = useI18nContext();
@@ -60,11 +64,7 @@ export function ClientTimeEntriesContent({ clientId, backToClientId }: Props) {
   const [nowMs, setNowMs] = useState(Date.now());
 
   const [showStartModal, setShowStartModal] = useState(false);
-  const [showEditModal, setShowEditModal] = useState(false);
   const [showTimesheetModal, setShowTimesheetModal] = useState(false);
-  const [editingEntry, setEditingEntry] = useState<TimeEntryModel | null>(null);
-  const [editDescription, setEditDescription] = useState('');
-  const [editPriceListItemId, setEditPriceListItemId] = useState<string>('');
 
   const getControlErrorMessage = (fallback: string, error: unknown) => {
     if (error instanceof Error && error.message === 'TIME_ENTRY_REMOTE_CONTROL_FORBIDDEN') {
@@ -199,6 +199,7 @@ export function ClientTimeEntriesContent({ clientId, backToClientId }: Props) {
   const canControlRunningEntry =
     !!runningEntry &&
     (!runningEntry.runningDeviceId || runningEntry.runningDeviceId === localDeviceId);
+  const canStartTimer = !runningEntry && !hasRunningEntryElsewhere;
 
   const localRunningEntry = useMemo(() => {
     if (!runningEntry) return null;
@@ -249,43 +250,11 @@ export function ClientTimeEntriesContent({ clientId, backToClientId }: Props) {
   };
 
   const handleEditEntry = (entry: TimeEntryModel) => {
-    setEditingEntry(entry);
-    setEditDescription(entry.description ?? '');
-    setEditPriceListItemId(entry.priceListItemId || '');
-    setShowEditModal(true);
-  };
-
-  const handleUpdateEntry = async () => {
-    if (!editingEntry || !client) return;
-
-    try {
-      let rate: number | null = null;
-      let rateCurrency: string | null = null;
-      if (editPriceListItemId) {
-        const effectiveRate = await getEffectivePriceDetails(client.id, editPriceListItemId);
-        rate = effectiveRate.price;
-        rateCurrency = effectiveRate.currency;
-      }
-
-      await updateTimeEntry({
-        id: editingEntry.id,
-        description: editDescription.trim() || undefined,
-        priceListItemId: editPriceListItemId || null,
-        rate,
-        rateCurrency,
-      });
-
-      setShowEditModal(false);
-      setEditingEntry(null);
-      setEditDescription('');
-      setEditPriceListItemId('');
-    } catch (error) {
-      console.error('Error updating entry:', error);
-      Alert.alert(
-        LL.common.error(),
-        getControlErrorMessage(LL.timeTracking.errorUpdateEntry(), error),
-      );
+    if (editBasePath === 'clients') {
+      router.push(`/clients/time-entry/${entry.id}/edit`);
+      return;
     }
+    router.push(`/time-tracking/entry/${entry.id}/edit`);
   };
 
   const handlePauseResumeAction = async () => {
@@ -368,6 +337,16 @@ export function ClientTimeEntriesContent({ clientId, backToClientId }: Props) {
       <Stack.Screen
         options={{
           title: `${client.name} – ${LL.timeTracking.title()}`,
+          headerRight: () => (
+            <HeaderActions>
+              <IconButton
+                iconName="person.3.fill"
+                iconSize={18}
+                onPress={() => router.push(`/clients/detail/${client.id}`)}
+                accessibilityLabel={LL.timeTracking.clientDetail()}
+              />
+            </HeaderActions>
+          ),
           headerLeft: backToClientId
             ? () => (
                 <Pressable
@@ -402,11 +381,20 @@ export function ClientTimeEntriesContent({ clientId, backToClientId }: Props) {
               maxWidth={380}
             />
           ) : (
-            <Pressable
-              style={[styles.startActionButton, { backgroundColor: palette.textSecondary }]}
+            <View
+              style={[
+                styles.timerStatusPanel,
+                {
+                  backgroundColor: palette.cardBackground,
+                  borderColor: palette.border,
+                },
+              ]}
             >
-              <IconSymbol name="lock.fill" size={18} color={palette.onTint} />
-              <ThemedText style={[styles.startActionButtonText, { color: palette.onTint }]}>
+              <IconSymbol name="lock.fill" size={18} color={palette.textSecondary} />
+              <ThemedText
+                style={[styles.timerStatusText, { color: palette.textSecondary }]}
+                numberOfLines={2}
+              >
                 {LL.timeTracking.runningOnOtherDevice({
                   device:
                     runningEntry.runningDeviceName ||
@@ -414,20 +402,38 @@ export function ClientTimeEntriesContent({ clientId, backToClientId }: Props) {
                     LL.timeTracking.unknownDevice(),
                 })}
               </ThemedText>
-            </Pressable>
+            </View>
           )
+        ) : hasRunningEntryElsewhere ? (
+          <View
+            style={[
+              styles.timerStatusPanel,
+              {
+                backgroundColor: palette.cardBackground,
+                borderColor: palette.border,
+              },
+            ]}
+          >
+            <IconSymbol name="lock.fill" size={18} color={palette.textSecondary} />
+            <ThemedText
+              style={[styles.timerStatusText, { color: palette.textSecondary }]}
+              numberOfLines={2}
+            >
+              {LL.timeTracking.errorRunningTimerAlreadyExists()}
+            </ThemedText>
+          </View>
         ) : (
           <Pressable
-            style={[
+            style={({ pressed }) => [
               styles.startActionButton,
-              { backgroundColor: hasRunningEntryElsewhere ? palette.textSecondary : palette.tint },
+              { backgroundColor: palette.tint },
+              pressed && styles.actionPressed,
             ]}
             onPress={() => setShowStartModal(true)}
-            disabled={hasRunningEntryElsewhere}
             accessibilityRole="button"
             accessibilityLabel={LL.timeTracking.startTimer()}
           >
-            <IconSymbol name="play.fill" size={18} color={palette.onTint} />
+            <IconSymbol name="play.fill" size={20} color={palette.onTint} />
             <ThemedText style={[styles.startActionButtonText, { color: palette.onTint }]}>
               {LL.timeTracking.startTimer()}
             </ThemedText>
@@ -438,34 +444,20 @@ export function ClientTimeEntriesContent({ clientId, backToClientId }: Props) {
       <View style={styles.toolbar}>
         <Pressable
           style={({ pressed }) => [
-            styles.toolbarButtonPrimary,
-            { backgroundColor: palette.tint, opacity: pressed ? 0.82 : 1 },
-          ]}
-          onPress={() => setShowTimesheetModal(true)}
-          accessibilityRole="button"
-          accessibilityLabel={LL.timesheets.createToolbarAction()}
-        >
-          <IconSymbol name="doc.badge.plus" size={16} color={palette.onTint} />
-          <ThemedText style={[styles.toolbarButtonPrimaryText, { color: palette.onTint }]}>
-            {LL.timesheets.createToolbarAction()}
-          </ThemedText>
-        </Pressable>
-        <Pressable
-          style={({ pressed }) => [
-            styles.toolbarButtonSecondary,
+            styles.timesheetActionButton,
             {
               backgroundColor: palette.cardBackground,
               borderColor: palette.border,
               opacity: pressed ? 0.72 : 1,
             },
           ]}
-          onPress={() => router.push(`/clients/detail/${client.id}`)}
+          onPress={() => setShowTimesheetModal(true)}
           accessibilityRole="button"
-          accessibilityLabel={LL.timeTracking.clientDetail()}
+          accessibilityLabel={LL.timesheets.createToolbarAction()}
         >
-          <IconSymbol name="person.3.fill" size={16} color={palette.timeHighlight} />
-          <ThemedText style={[styles.toolbarButtonSecondaryText, { color: palette.timeHighlight }]}>
-            {LL.timeTracking.clientDetail()}
+          <IconSymbol name="doc.badge.plus" size={16} color={palette.tint} />
+          <ThemedText style={[styles.timesheetActionText, { color: palette.tint }]}>
+            {LL.timesheets.createToolbarAction()}
           </ThemedText>
         </Pressable>
       </View>
@@ -478,11 +470,15 @@ export function ClientTimeEntriesContent({ clientId, backToClientId }: Props) {
         onEdit={handleEditEntry}
         keyExtractor={(item) => item.id}
         emptyText={LL.timeTracking.noEntries()}
+        swipeHintKey="time-tracking.entries"
+        swipeHintText={LL.timeTracking.swipeActionsHint()}
         emptyState={
           <ActionEmptyState
             iconName="clock.fill"
             title={LL.common.nothingHereYetTitle()}
             description={LL.timeTracking.noEntries()}
+            actionLabel={canStartTimer ? LL.timeTracking.startTimer() : undefined}
+            onActionPress={canStartTimer ? () => setShowStartModal(true) : undefined}
           />
         }
         showAddButton={false}
@@ -563,24 +559,6 @@ export function ClientTimeEntriesContent({ clientId, backToClientId }: Props) {
         }}
       />
 
-      <TimeEntryFormModal
-        visible={showEditModal}
-        mode="edit"
-        title={LL.timeTracking.editTimer()}
-        submitLabel={LL.common.save()}
-        onClose={() => setShowEditModal(false)}
-        onSubmit={handleUpdateEntry}
-        clients={[client]}
-        selectedClientId={client.id}
-        fixedClientName={client.name}
-        description={editDescription}
-        onDescriptionChange={setEditDescription}
-        priceListItems={priceListItems}
-        selectedPriceListItemId={editPriceListItemId}
-        onPriceListItemChange={setEditPriceListItemId}
-        disableSubmit={!editingEntry}
-      />
-
       <CreateTimesheetModal
         visible={showTimesheetModal}
         clientName={client.name}
@@ -602,19 +580,9 @@ export function ClientTimeEntriesContent({ clientId, backToClientId }: Props) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, paddingHorizontal: 16, paddingTop: 16 },
-  toolbar: { flexDirection: 'row', gap: 8, marginBottom: 8 },
-  toolbarButtonPrimary: {
+  toolbar: { flexDirection: 'row', gap: 8, marginBottom: 12 },
+  timesheetActionButton: {
     flex: 1,
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 11,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 7,
-  },
-  toolbarButtonPrimaryText: { fontSize: 14, fontWeight: '600' },
-  toolbarButtonSecondary: {
     borderRadius: 12,
     paddingHorizontal: 14,
     paddingVertical: 11,
@@ -624,19 +592,35 @@ const styles = StyleSheet.create({
     gap: 7,
     borderWidth: 1,
   },
-  toolbarButtonSecondaryText: { fontSize: 14, fontWeight: '600' },
+  timesheetActionText: { fontSize: 14, fontWeight: '600' },
   headerBackButton: { flexDirection: 'row', alignItems: 'center', gap: 3, maxWidth: 160 },
   headerBackLabel: { fontSize: 17 },
-  timerActionSection: { marginTop: 12, marginBottom: 8, alignItems: 'center' },
+  timerActionSection: { marginTop: 12, marginBottom: 10 },
   startActionButton: {
+    width: '100%',
+    minHeight: 56,
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     gap: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 10,
+    paddingHorizontal: 18,
+    paddingVertical: 13,
+    borderRadius: 12,
   },
-  startActionButtonText: { fontSize: 15, fontWeight: '600' },
+  actionPressed: { opacity: 0.82 },
+  startActionButtonText: { fontSize: 16, fontWeight: '700' },
+  timerStatusPanel: {
+    width: '100%',
+    minHeight: 56,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  timerStatusText: { flex: 1, fontSize: 14, fontWeight: '600', lineHeight: 20 },
   itemContent: {
     flexDirection: 'row',
     justifyContent: 'space-between',

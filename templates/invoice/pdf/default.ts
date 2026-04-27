@@ -94,6 +94,10 @@ export function buildDefaultInvoicePdfHtml(input: BuildDefaultInvoicePdfHtmlInpu
 
   const variableSymbol =
     input.variableSymbol || input.invoiceNumber.replace(/\D/g, '').slice(0, 10) || '-';
+  const buyerReference = input.buyerReference?.trim();
+  const buyerReferenceHtml = buyerReference
+    ? buildLabeledPartyValueHtml(input.labels.buyerReference, buyerReference)
+    : '';
 
   const invoiceMetaHtml = input.includeVat
     ? `
@@ -250,6 +254,7 @@ export function buildDefaultInvoicePdfHtml(input: BuildDefaultInvoicePdfHtmlInpu
             <div class="party-title">${escapeHtml(input.labels.buyer)}</div>
             <div class="party-name">${escapeHtml(input.buyer.name || '-')}</div>
             ${buildPartyAddressHtml(input.buyer) || '<div class="party-line">-</div>'}
+            ${buyerReferenceHtml}
             ${buildLabeledPartyValueHtml(input.labels.companyId, input.buyer.companyId)}
             ${buildLabeledPartyValueHtml(input.labels.vatNumber, input.buyer.vatNumber)}
             ${input.buyer.email ? `<div class="party-line">${escapeHtml(input.buyer.email)}</div>` : ''}

@@ -22,6 +22,7 @@ export default function ClientsStackLayout() {
       <Stack.Screen name="timesheets/[id]" />
       <Stack.Screen name="timesheets/detail/[id]" />
       <Stack.Screen name="time-tracking/[id]" />
+      <Stack.Screen name="time-entry/[id]/edit" />
       <Stack.Screen name="invoices/[id]" />
       <Stack.Screen name="invoices/detail/[id]" />
     </Stack>

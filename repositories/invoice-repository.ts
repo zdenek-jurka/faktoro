@@ -15,6 +15,7 @@ import { getDeviceSyncSettings } from '@/repositories/device-sync-settings-repos
 import { getSettings } from '@/repositories/settings-repository';
 import type { BuyerSnapshot, SellerSnapshot } from '@/templates/invoice/xml';
 import { DEFAULT_CURRENCY_CODE, normalizeCurrencyCode } from '@/utils/currency-utils';
+import { buildSellerSnapshotFromSettings } from '@/utils/invoice-seller-snapshot';
 import { normalizeBuyerSnapshot } from '@/utils/invoice-buyer';
 import { isInvoiceVatPayer, type InvoiceCancellationMode } from '@/utils/invoice-status';
 import { calculateLineItemTotals } from '@/utils/money';
@@ -39,6 +40,7 @@ export type CreateInvoiceInput = {
   clientId: string;
   buyerSnapshot?: BuyerSnapshot;
   invoiceNumber: string;
+  buyerReference?: string;
   issuedAt: number;
   taxableAt?: number;
   dueAt?: number;
@@ -51,6 +53,7 @@ export type CreateInvoiceInput = {
 
 export type UpdateIssuedInvoiceInput = CreateInvoiceInput & {
   id: string;
+  refreshSellerSnapshot?: boolean;
 };
 
 export type CancelInvoiceInput = {
@@ -76,6 +79,7 @@ type ResolvedInvoiceWriteData = {
   };
   normalizedCurrency: string;
   normalizedPaymentMethod?: string;
+  normalizedBuyerReference?: string;
   normalizedHeaderNote?: string;
   normalizedFooterNote?: string;
 };
@@ -195,27 +199,8 @@ async function resolveInvoiceWriteData(
     throw new Error(INVOICE_TAXABLE_DATE_REQUIRED_ERROR);
   }
 
-  const effectiveQrType = client?.invoiceQrType || settings?.invoiceQrType || 'none';
   const isVatPayer = !!settings?.isVatPayer;
-  const sellerSnapshot: SellerSnapshot = {
-    companyName: settings?.invoiceCompanyName,
-    address: settings?.invoiceAddress,
-    street2: settings?.invoiceStreet2,
-    city: settings?.invoiceCity,
-    postalCode: settings?.invoicePostalCode,
-    country: settings?.invoiceCountry,
-    companyId: settings?.invoiceCompanyId,
-    vatNumber: isVatPayer ? settings?.invoiceVatNumber : undefined,
-    registrationNote: settings?.invoiceRegistrationNote,
-    email: settings?.invoiceEmail,
-    phone: settings?.invoicePhone,
-    website: settings?.invoiceWebsite,
-    bankAccount: settings?.invoiceBankAccount,
-    iban: settings?.invoiceIban,
-    swift: settings?.invoiceSwift,
-    logoUri: settings?.invoiceLogoUri,
-    qrType: effectiveQrType,
-  };
+  const sellerSnapshot = buildSellerSnapshotFromSettings(settings, client);
   const buyerSnapshot: BuyerSnapshot = client
     ? {
         name: client.name,
@@ -330,6 +315,7 @@ async function resolveInvoiceWriteData(
       settings?.defaultInvoiceCurrency || DEFAULT_CURRENCY_CODE,
     ),
     normalizedPaymentMethod: input.paymentMethod?.trim() || undefined,
+    normalizedBuyerReference: input.buyerReference?.trim() || undefined,
     normalizedHeaderNote: input.headerNote?.trim() || undefined,
     normalizedFooterNote: input.footerNote?.trim() || undefined,
   };
@@ -379,6 +365,7 @@ export async function createInvoice(input: CreateInvoiceInput): Promise<InvoiceM
     const invoice = await invoiceCollection.create((item: InvoiceModel) => {
       item.clientId = input.clientId.trim();
       item.invoiceNumber = invoiceNumber;
+      item.buyerReference = resolved.normalizedBuyerReference;
       item.issuedAt = input.issuedAt;
       item.taxableAt = input.taxableAt;
       item.dueAt = input.dueAt;
@@ -427,6 +414,7 @@ export async function updateIssuedInvoice(input: UpdateIssuedInvoiceInput): Prom
 
       item.clientId = normalizedClientId;
       item.invoiceNumber = invoiceNumber;
+      item.buyerReference = resolved.normalizedBuyerReference;
       item.issuedAt = input.issuedAt;
       item.taxableAt = input.taxableAt;
       item.dueAt = input.dueAt;
@@ -436,7 +424,9 @@ export async function updateIssuedInvoice(input: UpdateIssuedInvoiceInput): Prom
       item.headerNote = resolved.normalizedHeaderNote;
       item.footerNote = resolved.normalizedFooterNote;
       item.sellerSnapshotJson =
-        invoice.sellerSnapshotJson || JSON.stringify(resolved.sellerSnapshot);
+        input.refreshSellerSnapshot || !invoice.sellerSnapshotJson
+          ? JSON.stringify(resolved.sellerSnapshot)
+          : invoice.sellerSnapshotJson;
       item.buyerSnapshotJson =
         normalizedClientId && invoice.clientId === normalizedClientId && invoice.buyerSnapshotJson
           ? invoice.buyerSnapshotJson
@@ -539,6 +529,7 @@ export async function cancelInvoice(input: CancelInvoiceInput): Promise<InvoiceM
     const cancellationInvoice = await invoiceCollection.create((item: InvoiceModel) => {
       item.clientId = invoice.clientId;
       item.invoiceNumber = nextInvoiceNumber;
+      item.buyerReference = invoice.buyerReference;
       item.issuedAt = issuedAt;
       item.taxableAt = taxableAt;
       item.dueAt = dueAt;

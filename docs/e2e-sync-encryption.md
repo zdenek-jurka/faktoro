@@ -1,150 +1,267 @@
-# End-to-End Encryption for Faktoro Sync
+# Sync encryption
 
-## Goal
-- Ensure only end clients can read synced business data.
-- Keep server-side sync orchestration (pairing, transport, fan-out, conflict transport), but never plaintext data.
-- Preserve current online sync and snapshot backup capabilities with encrypted payloads.
+This document describes the current encryption behavior for online sync and
+snapshot backups. It is not the ideal end-to-end design. It documents the real
+state of the application and `../faktoro-server` as of 2026-04-26.
 
-## Non-Goals
-- Server-side querying/reporting over business fields (not possible on ciphertext).
-- Recovering data without user-controlled key material.
-- "Transparent" encryption where server can still resolve field-level semantic conflicts.
+## Short summary
 
-## Threat Model
-- Protect against database dump leakage and server operator access to data.
-- Protect data in transit (TLS) and at rest (ciphertext in DB).
-- Out of scope:
-  - fully compromised client device
-  - user sharing recovery secret intentionally
-  - metadata leakage (table names, record IDs, timestamps) unless explicitly minimized
+The current implementation encrypts business payloads before sending them to the
+server with a symmetric `instanceKey`. The server stores online records and
+snapshots as encrypted JSON envelopes unless the instance is running in plaintext
+fallback mode.
 
-## High-Level Architecture
-- App encrypts record payloads before sending to server.
-- Server stores and relays only encrypted blobs.
-- App decrypts pulled changes locally.
-- Key material is generated and kept on clients; server stores only encrypted key envelopes if needed.
+There is an important security limitation: the recovery flow stores the
+`instanceKey` on the server in `instance_recovery_bootstraps`. The current state
+is therefore not a strict E2E model against a compromised server or database
+dump. It is client-side payload encryption with server-side key escrow for
+recovery.
 
-## Crypto Profile (Recommended)
-- Symmetric data encryption: `XChaCha20-Poly1305` (AEAD).
-- KDF for passphrase/recovery secret: `Argon2id`.
-- Device key exchange / wrapping: `X25519` + `HKDF-SHA256` (or libsodium sealed boxes).
-- Hashing/fingerprints: `SHA-256`.
-- Randomness: CSPRNG from platform secure APIs.
+## Current implementation goals
 
-## Key Hierarchy
-- `IK` (Instance Key, 256-bit): master key for one client instance.
-- `DK` (Device Key Pair): per-device asymmetric key pair for wrapping/unwrapping `IK`.
-- `RK` (Recovery Key): key derived from user recovery passphrase or recovery payload secret.
+- Avoid storing business data in server-side business columns.
+- Keep the server sync transport simple and independent of the application
+  schema.
+- Allow device recovery without manual pairing by using the existing recovery
+  payload.
+- Preserve plaintext fallback for platforms without available secure
+  cryptography.
 
-Suggested usage:
-- Business payload encryption uses `IK`.
-- New device enrollment receives `IK` encrypted for that device using device public key.
-- Recovery flow rehydrates `IK` using `RK`-protected envelope.
+## What is not implemented
 
-## Pairing and Device Enrollment (Updated)
-1. App scans server bootstrap QR (`/api/pair/bootstrap`).
-2. App requests pairing init (`/api/pairing/init`) with email/device name.
-3. App creates or reuses device key pair.
-4. App registers (`/api/devices/register-from-scan`) and uploads device public key.
-5. If this is the first device in instance:
-   - App generates `IK`.
-   - App creates recovery package (email QR payload or passphrase-wrapped envelope).
-6. If instance already has devices:
-   - Existing trusted device approves and shares `IK` envelope for new device.
-   - Server relays envelope but cannot decrypt it.
+- `XChaCha20-Poly1305`
+- `Argon2id`
+- `X25519` key exchange
+- per-device asymmetric envelopes for the instance key
+- storing the key in the OS Keychain/Keystore
+- passphrase-wrapped recovery secret
+- key rotation
+- encrypted-only server mode without plaintext fallback
 
-## Recovery Flow
-- Email QR should not contain plaintext `IK`.
-- Email QR should contain either:
-  - encrypted `IK` envelope + metadata, or
-  - one-time token to fetch encrypted envelope (still useless without recovery secret).
-- Recovery endpoint restores access by proving possession of recovery secret and/or trusted device approval.
+The server database schema contains `device_public_keys` and
+`instance_key_envelopes`, and OpenAPI declares `/api/crypto/*`, but the
+application does not use these flows and the `/api/crypto/*` routes are not
+wired in the current `main.rs`.
 
-## Encrypted Sync Payload Format
-For each record `raw`:
+## Crypto profile
+
+Current algorithm:
+
+- records: `AES-GCM` with a 256-bit key
+- snapshot: `AES-GCM` with a 256-bit key
+- IV: 12 random bytes
+- key: base64 value of 32 bytes
+- implementation:
+  - Web Crypto `crypto.subtle`, when available,
+  - fallback through `@noble/ciphers/aes`,
+  - randomness through `crypto.getRandomValues` or `expo-crypto`.
+
+The algorithm identifier in payloads is `aes-256-gcm`.
+
+## Instance key
+
+`instanceKey` is one symmetric key for the whole sync instance. The application:
+
+- generates it during pairing when secure crypto exists and a key is not yet
+  available,
+- stores it locally in `config_storage` as `device_sync.instance_key`,
+- uses it to encrypt online records and snapshots,
+- can export it as a manual key backup payload.
+
+Local storage is not OS-secure storage today. The key is stored in the local
+database inside configuration storage. `device_sync.*` keys are not included in
+snapshot backups.
+
+## Online record payload
+
+An encrypted record has this shape:
+
 ```json
 {
   "id": "record_id",
   "_enc_v": 1,
-  "_enc_alg": "xchacha20poly1305",
-  "_enc_nonce": "base64...",
-  "_enc_ct": "base64...",
-  "_enc_aad": {
-    "table": "client",
-    "record_id": "record_id",
-    "instance_id": "..."
-  }
+  "_enc_alg": "aes-256-gcm",
+  "_enc_iv": "base64...",
+  "_enc_ct": "base64..."
 }
 ```
 
-Notes:
-- AAD binds ciphertext to table/record/instance to prevent swap attacks.
-- Server must treat `_enc_*` fields as opaque and never parse plaintext model fields.
+The plaintext JSON of the original WatermelonDB raw record is encrypted as a
+whole.
 
-## Conflict Handling with E2E
-- Server can detect structural conflicts (same record changed/deleted), but not semantic field differences.
-- Recommended:
-  - server marks conflict candidates by version/vector metadata only,
-  - client decrypts both versions and performs field-level conflict UI.
-- Existing `sync_conflict` local table remains the right place for user-facing conflict resolution.
+AAD is not stored in the payload. It is computed deterministically during
+encryption and decryption:
 
-## Server Changes
-- Keep current endpoints, but treat record payloads as opaque encrypted blobs.
-- Do not validate business schema of `raw` beyond required transport fields (`id` and encryption envelope keys, if enforced).
-- Persist optional crypto metadata:
-  - `instance_public_params` (algorithm/version policies)
-  - per-device public keys
-  - key envelopes (encrypted `IK` per device)
+```text
+<instanceId>|<table>|<recordId>
+```
 
-## App Changes
-- Add crypto module abstraction:
-  - `encryptRecord(table, recordId, plaintext, IK) -> encryptedRaw`
-  - `decryptRecord(table, recordId, encryptedRaw, IK) -> plaintext`
-- Hook encryption before `pushChanges`.
-- Hook decryption after `pullChanges`, before applying to WatermelonDB.
-- Store keys in OS-secure storage (Keychain/Keystore), not plain DB.
+During decryption the client verifies:
 
-## Deployment Strategy (Encrypted-Only)
-1. Enable encrypted payload contract from day one.
-2. Reject plaintext writes on server immediately.
-3. Keep a single payload format (`_enc_*`) across all clients.
-4. Require key setup during pairing before first sync push.
-5. Fail fast on missing/invalid encryption envelope fields.
+- version and algorithm,
+- AES-GCM tag,
+- that the decrypted `id` matches the envelope `id`.
 
-## DB and Schema Notes
-- App DB schema (`database.dbml`) remains mostly unchanged for business tables.
-- Sync transport records (`online_records_shared.raw`) carry encrypted payload format.
-- Add server tables for device keys / key envelopes (new migration).
+## Snapshot payload
 
-## Operational Recommendations
-- Keep TLS termination in reverse proxy (Traefik/Nginx/Caddy).
-- Rotate tokens independently from encryption keys.
-- Add key rotation plan for `IK` (versioned keys and lazy re-encryption).
-- Log only metadata; never log ciphertext payload bodies at debug level in production.
+An encrypted snapshot has this shape:
 
-## Testing Plan
-- Unit tests:
-  - encrypt/decrypt roundtrip
-  - AAD mismatch rejection
-  - wrong key and tampered ciphertext rejection
-- Integration tests:
-  - online push/pull with encrypted payloads
-  - multi-device conflict detection + local resolution
-  - recovery path from email payload
-- Chaos tests:
-  - out-of-order sync packets
-  - duplicate deliveries
-  - partial migration states (plaintext/encrypted mix)
+```json
+{
+  "_enc_snapshot_v": 1,
+  "_enc_snapshot_alg": "aes-256-gcm",
+  "_enc_snapshot_iv": "base64...",
+  "_enc_snapshot_ct": "base64..."
+}
+```
 
-## Implementation Backlog (Suggested)
-1. Add crypto abstraction module in app (no endpoint change yet).
-2. Add server support for device public keys and key envelopes.
-3. Add encrypted payload validation contract (`_enc_v`, `_enc_alg`, `_enc_nonce`, `_enc_ct`).
-4. Enforce encrypted-only writes for all instances.
-5. Add strict startup check that disables sync if key material is missing.
-6. Add key rotation and envelope refresh flows.
+Snapshot AAD:
 
-## Compatibility Decision
-- New deployments: start directly in encrypted mode.
-- Backward compatibility with plaintext sync is not required.
-- Plaintext fallback is not supported.
+```text
+<instanceId>|snapshot
+```
+
+## Plaintext fallback
+
+If the platform does not have an available secure crypto API, the application
+offers an explicit plaintext fallback during pairing. In that mode:
+
+- `device_sync.allow_plaintext = true`
+- `device_sync.instance_key` is empty
+- online records and snapshots are sent as plaintext JSON
+- the server accepts plaintext payloads when `_enc_v` or `_enc_snapshot_v` is
+  missing or is `0`
+
+If a device with a key encounters a plaintext payload during pull, the
+application switches the instance locally into plaintext mode so compatibility
+with older or unencrypted clients is not blocked.
+
+The maintenance UI includes an action to switch back to encrypted mode. After
+switching back, all devices in the same instance must support secure crypto and
+share the same `instanceKey`.
+
+## Server validation
+
+For online push and snapshot push the server:
+
+- sanitizes plaintext WatermelonDB metadata `_status` and `_changed`,
+- checks required envelope fields for encrypted records,
+- accepts only `_enc_v = 1` and `_enc_alg = "aes-256-gcm"`,
+- accepts only `_enc_snapshot_v = 1` and
+  `_enc_snapshot_alg = "aes-256-gcm"` for encrypted snapshots,
+- does not decrypt ciphertext.
+
+The server does not verify the AES-GCM tag or AAD because it is not expected to
+perform regular payload decryption.
+
+## Recovery bootstrap
+
+After successful pairing the application calls:
+
+```text
+POST /api/sync/recovery-bootstrap
+```
+
+In encrypted mode it sends:
+
+```json
+{
+  "device_id": "...",
+  "auth_token": "...",
+  "allow_plaintext": false,
+  "instance_key": "base64..."
+}
+```
+
+The server stores `instance_key` in the `instance_recovery_bootstraps` table.
+During `POST /api/devices/recover-from-code` it returns the key to the client.
+
+This simplifies recovery, but it means the recovery bootstrap is key escrow.
+Without changing this flow, the system cannot claim that the server or a
+database dump never has the material required for decryption.
+
+## Add-device payload
+
+A registered device generates a `faktoro_add_device_v1` payload. If it has a
+local `instanceKey`, it includes it in the payload:
+
+```json
+{
+  "kind": "faktoro_add_device_v1",
+  "serverUrl": "https://...",
+  "instanceId": "...",
+  "instanceKey": "base64...",
+  "allowPlaintext": false
+}
+```
+
+The payload can be wrapped into PEM and shown as a QR code. Today the QR image
+is generated through the server endpoint:
+
+```text
+GET /api/pair/qr?payload=...
+```
+
+If the payload contains `instanceKey`, the server receives it in the query
+parameter while rendering the QR code. This is practical for the current pairing
+flow, but it is not a strictly E2E-safe key exchange.
+
+## Key backup payload
+
+The maintenance UI can create a local key backup:
+
+```json
+{
+  "kind": "faktoro_instance_key_backup_v1",
+  "instanceId": "...",
+  "key": "base64..."
+}
+```
+
+During restore the user can paste either this JSON payload or the raw base64 key
+value. The payload is not encrypted with a passphrase.
+
+## Conflicts with encrypted data
+
+The server does not perform field-level content comparison. It stores and
+returns raw payloads.
+
+After pull the client:
+
+1. decrypts records,
+2. passes them to WatermelonDB,
+3. locally compares an incoming `updated` record with the locally edited
+   version,
+4. stores any conflict in `sync_conflict`.
+
+Field-level merge is therefore a local client feature, not server logic.
+
+## Actual threat model
+
+The current state mainly prevents the sync server from routinely working with
+plaintext business payloads in `online_records_shared` and
+`sync_snapshots_shared`.
+
+It does not fully protect against:
+
+- device compromise,
+- server database compromise when it contains
+  `instance_recovery_bootstraps.instance_key`,
+- server logs or proxy logs when a QR payload containing `instanceKey` passes
+  through `/api/pair/qr`,
+- a user sharing the key backup or add-device payload outside a trusted channel.
+
+## What strict E2E would require
+
+For real E2E protection against the server, the implementation would need to:
+
+1. Stop sending `instanceKey` to the server in the recovery bootstrap.
+2. Stop generating QR codes containing `instanceKey` through a server query
+   parameter.
+3. Store `instanceKey` in the OS Keychain/Keystore.
+4. Implement per-device public keys and key envelopes in the application and
+   server routes.
+5. Handle recovery through a user-held recovery secret or trusted-device
+   approval, not server-side key escrow.
+6. After migration, reject plaintext payloads on the server for encrypted
+   instances.

@@ -17,6 +17,8 @@ const de = {
     success: 'Erfolg',
     ok: 'OK',
     continueAction: 'Weiter',
+    dismiss: 'Ausblenden',
+    swipeActionsHint: 'Tipp: Wische eine Zeile zur Seite, um Schnellaktionen anzuzeigen.',
     discard: 'Änderungen verwerfen',
     continueEditing: 'Bearbeiten Sie weiter',
     unsavedChanges: 'Nicht gespeicherte Änderungen',
@@ -165,8 +167,8 @@ const de = {
       piece: 'Stück',
       project: 'Projekt',
       day: 'Tag',
-      manday: 'Man-day (8h)',
-      custom: 'Brauch',
+      manday: 'Personentag (8h)',
+      custom: 'Benutzerdefiniert',
     },
     errorRequiredFields: 'Bitte füllen Sie alle erforderlichen Felder aus',
     errorInvalidPrice: 'Bitte geben Sie einen gültigen Preis ein',
@@ -174,7 +176,7 @@ const de = {
     priceOverrides: 'Preisüberschreibungen',
     customPrice: 'Benutzerdefinierter Preis',
     defaultLabel: 'Standard',
-    customLabel: 'Brauch',
+    customLabel: 'Benutzerdefiniert',
     currencyInherited: 'Währung vom Eintrag übernommen: {currency}',
     noOverride: 'Keine Überschreibung',
     setOverride: 'Überschreiben festlegen',
@@ -203,6 +205,7 @@ const de = {
     startTimer: 'Timer starten',
     editEntry: 'Eintrag bearbeiten',
     editTimer: 'Zeiteintrag bearbeiten',
+    backWithoutChanges: 'Ohne Änderungen zurück',
     client: 'Kunde:',
     activity: 'Aktivität:',
     activityPlaceholder: 'Woran arbeitest du?',
@@ -221,6 +224,7 @@ const de = {
     errorPauseTimer: 'Der Timer konnte nicht angehalten werden',
     errorResumeTimer: 'Timer konnte nicht fortgesetzt werden',
     errorUpdateEntry: 'Eintrag konnte nicht aktualisiert werden',
+    errorDeleteEntry: 'Eintrag konnte nicht gelöscht werden',
     errorControlOtherDevice:
       'Dieser Timer kann nur auf dem Gerät gesteuert werden, auf dem er läuft.',
     clientDetail: 'Kundendetails',
@@ -231,6 +235,30 @@ const de = {
     priceListItem: 'Preislistenartikel (optional):',
     noPriceListLink: 'Ohne Preislistenbezug',
     selectPriceItem: 'Preisartikel auswählen...',
+    swipeActionsHint: 'Tipp: Wische einen Eintrag zur Seite, um ihn zu bearbeiten oder zu löschen.',
+    timeAndBilling: 'Zeit und Abrechnung',
+    timeAndBillingHint: 'Zeit, Dauer und Satz prüfen',
+    timeDetails: 'Zeitangaben',
+    startDate: 'Startdatum',
+    startTime: 'Startzeit',
+    endDate: 'Enddatum',
+    endTime: 'Endzeit',
+    durationMinutes: 'Dauer (Minuten)',
+    workDurationMinutes: 'Arbeitsdauer (Minuten)',
+    pausedDuration: 'Pausenzeit',
+    workDurationExcludesPausesHint: 'Die Arbeitsdauer ist die erfasste Zeit ohne Pausen.',
+    billingRoundingInfo:
+      'Die Abrechnungsrundung ist aktiv. Dieser Eintrag wird mit {duration} bei einem Intervall von {interval} Min. abgerechnet.',
+    rateDetails: 'Satzangaben',
+    rateSourcePriceList: 'Preisliste',
+    rateSourceManual: 'Manueller Satz',
+    manualRate: 'Satz',
+    rateCurrency: 'Währung',
+    errorInvalidTimeInput: 'Geben Sie Start- und Enddatum/-zeit in einem gültigen Format ein.',
+    errorInvalidDuration: 'Die Dauer muss größer als null sein und das Ende nach dem Start liegen.',
+    errorPausedDurationExceedsRange:
+      'Der Zeitraum muss lang genug für die Arbeitsdauer und gespeicherte Pausen sein.',
+    errorInvalidRate: 'Geben Sie einen gültigen Satz ein.',
     timerSoftLimitReachedTitle: 'Soft-Limit des Timers erreicht',
     timerSoftLimitReachedMessage:
       'Der Timer für {clientName} hat das Soft-Limit von {hours} h erreicht. Prüfe, ob er weiterlaufen soll.',
@@ -307,7 +335,7 @@ const de = {
     periodThisWeek: 'Diese Woche',
     periodLastWeek: 'Letzte Woche',
     periodLast7Days: 'Letzte 7 Tage',
-    periodCustom: 'Benutzerdefiniertes Sortiment',
+    periodCustom: 'Benutzerdefinierter Zeitraum',
     dateFrom: 'Aus',
     dateTo: 'Zu',
     labelOptional: 'Etikett (optional)',
@@ -376,6 +404,8 @@ const de = {
     invoiceNumber: 'Rechnungsnummer',
     buyerModeSavedClient: 'Gespeicherter Kunde',
     buyerModeOneOff: 'Einmaliger Käufer',
+    buyerReference: 'Käuferreferenz / Leitweg-ID',
+    buyerReferencePlaceholder: 'Vom Käufer geforderte Referenz',
     invoiceNumberPlaceholder: 'z.B. 2026-001',
     issueDate: 'Ausgabedatum',
     taxableSupplyDate: 'Steuerpflichtiges Lieferdatum',
@@ -385,12 +415,38 @@ const de = {
       'Das Ausstellungsdatum liegt mehr als 15 Tage nach dem steuerpflichtigen Leistungsdatum. Bitte prüfen Sie, ob der Beleg der üblichen Frist für Steuerdokumente entspricht.',
     dueDatePastWarning:
       'Das Fälligkeitsdatum liegt bereits in der Vergangenheit. Bitte prüfen Sie, ob die Rechnung wirklich mit diesem Fälligkeitsdatum ausgestellt werden soll.',
+    dueDateBeforeIssueWarning:
+      'Das Fälligkeitsdatum liegt vor dem Ausstellungsdatum. Prüfen Sie die Zahlungsbedingungen vor dem Speichern.',
     currency: 'Währung',
     paymentMethod: 'Zahlungsart',
     paymentMethodBankTransfer: 'Banküberweisung',
     paymentMethodCash: 'Kasse',
     paymentMethodCard: 'Karte',
     paymentMethodCardNfc: 'Karte (NFC)',
+    paymentQrAction: 'Zahlungs-QR anzeigen',
+    paymentQrTitle: 'Zahlungs-QR',
+    paymentQrClose: 'Schließen',
+    paymentQrUnavailableTitle: 'Zahlungs-QR kann nicht angezeigt werden',
+    paymentQrBuildFailed:
+      'Die QR-Zahlungsdaten konnten aus der aktuellen Rechnung nicht erstellt werden.',
+    paymentQrRenderError: 'Das QR-Bild konnte auf diesem Gerät nicht gerendert werden.',
+    paymentQrCopyPayload: 'Zahlungsdaten kopieren',
+    paymentQrCopySuccess: 'Zahlungsdaten wurden in die Zwischenablage kopiert.',
+    paymentQrCopyError: 'Zahlungsdaten konnten nicht kopiert werden.',
+    paymentQrAmount: 'Betrag',
+    paymentQrReceiver: 'Empfänger',
+    paymentQrReference: 'Referenz',
+    sellerSnapshotNoticeTitle: 'Lieferantendaten sind in dieser Rechnung gespeichert',
+    sellerSnapshotNoticeDescription:
+      'Nutzen Sie dies, wenn Sie das Unternehmensprofil geändert haben und diese Rechnung die aktuellen Lieferantendaten einschließlich Bankkonto, IBAN, SWIFT, QR-Zahlung und Logo verwenden soll.',
+    refreshSellerSnapshotAction: 'Lieferantendaten aktualisieren',
+    refreshSellerSnapshotConfirmTitle: 'Lieferantendaten aktualisieren?',
+    refreshSellerSnapshotConfirmMessage:
+      'Diese Rechnung verwendet die aktuellen Lieferantendaten aus dem Unternehmensprofil. Rechnungsnummer, Käufer, Daten, Notizen und Positionen bleiben unverändert.',
+    refreshSellerSnapshotConfirmAction: 'Daten aktualisieren',
+    sellerSnapshotRefreshPending:
+      'Die Lieferantendaten werden beim Speichern der Rechnung aus dem aktuellen Unternehmensprofil aktualisiert.',
+    sellerSnapshotRefreshPendingShort: 'Aktualisierung vorbereitet',
     vatCode: 'MwSt.-Code',
     selectVatCode: 'Wählen Sie den Mehrwertsteuercode aus',
     next: 'Nächste',
@@ -451,21 +507,21 @@ const de = {
     cancelRecommendedBadge: 'Empfohlen',
     cancelModeVoidTitle: 'Vor Versand entwerten',
     cancelModeVoidDescription:
-      'Use this if the document has not yet been delivered to the customer and should not enter circulation. The original document stays in the records as voided.',
+      'Verwenden Sie dies, wenn das Dokument dem Kunden noch nicht zugestellt wurde und nicht in Umlauf kommen soll. Das Originaldokument bleibt als entwertet in den Unterlagen.',
     cancelModeVoidDescriptionWithTimesheets:
-      'Use this if the document has not yet been delivered to the customer and should not enter circulation. The original document stays in the records as voided and linked timesheets become billable again.',
+      'Verwenden Sie dies, wenn das Dokument dem Kunden noch nicht zugestellt wurde und nicht in Umlauf kommen soll. Das Originaldokument bleibt als entwertet in den Unterlagen und verknüpfte Timesheets werden wieder abrechenbar.',
     cancelModeCorrectionVatTitle: 'Storno-Gutschrift ausstellen',
     cancelModeCorrectionNonVatTitle: 'Stornodokument ausstellen',
     cancelModeCorrectionVatDescription:
-      'Use this if the document has already been delivered to the customer or exported. A new corrective tax document will be created to fully offset the original invoice.',
+      'Verwenden Sie dies, wenn das Dokument dem Kunden bereits zugestellt oder exportiert wurde. Es wird ein neuer Korrektur-Steuerbeleg erstellt, der die ursprüngliche Rechnung vollständig ausgleicht.',
     cancelModeCorrectionVatDescriptionWithTimesheets:
-      'Use this if the document has already been delivered to the customer or exported. A new corrective tax document will be created to fully offset the original invoice. Linked timesheets remain attached to the original invoice.',
+      'Verwenden Sie dies, wenn das Dokument dem Kunden bereits zugestellt oder exportiert wurde. Es wird ein neuer Korrektur-Steuerbeleg erstellt, der die ursprüngliche Rechnung vollständig ausgleicht. Verknüpfte Timesheets bleiben mit der ursprünglichen Rechnung verbunden.',
     cancelModeCorrectionNonVatDescription:
-      'Use this if the document has already been delivered to the customer or exported. A new cancellation document will be created to fully offset the original invoice.',
+      'Verwenden Sie dies, wenn das Dokument dem Kunden bereits zugestellt oder exportiert wurde. Es wird ein neues Stornodokument erstellt, das die ursprüngliche Rechnung vollständig ausgleicht.',
     cancelModeCorrectionNonVatDescriptionWithTimesheets:
-      'Use this if the document has already been delivered to the customer or exported. A new cancellation document will be created to fully offset the original invoice. Linked timesheets remain attached to the original invoice.',
-    cancelRecommendationVoid: 'Recommended because the document has not been exported yet.',
-    cancelRecommendationCorrection: 'Recommended because the document has already been exported.',
+      'Verwenden Sie dies, wenn das Dokument dem Kunden bereits zugestellt oder exportiert wurde. Es wird ein neues Stornodokument erstellt, das die ursprüngliche Rechnung vollständig ausgleicht. Verknüpfte Timesheets bleiben mit der ursprünglichen Rechnung verbunden.',
+    cancelRecommendationVoid: 'Empfohlen, weil das Dokument noch nicht exportiert wurde.',
+    cancelRecommendationCorrection: 'Empfohlen, weil das Dokument bereits exportiert wurde.',
     cancelReasonLabel: 'Stornogrund',
     cancelReasonPlaceholder: 'Beschreiben Sie kurz, warum das Dokument storniert wird',
     cancelReasonRequired: 'Geben Sie einen Stornogrund ein.',
@@ -527,6 +583,7 @@ const de = {
     exportCancellationDocumentTitle: 'Stornodokument',
     exportCancellationTaxDocumentTitle: 'Korrektur-Steuerbeleg',
     exportInvoiceNumberLabel: 'Rechnungsnummer',
+    exportBuyerReferenceLabel: 'Käuferreferenz',
     exportVat: 'MwSt',
     exportVatPercent: 'MwSt. %',
     exportTaxBase: 'Steuerbemessungsgrundlage',
@@ -594,19 +651,20 @@ const de = {
       '{party}: building number could not be inferred from the address.',
     structuredExportIssueUnsupportedRequirement: '{format}: {requirement}.',
     structuredExportRequirementBuyerReference:
-      'buyer reference / Leitweg-ID is not stored on this invoice',
+      'Käuferreferenz / Leitweg-ID oder Bestellreferenz ist in dieser Rechnung nicht erfasst',
     structuredExportRequirementElectronicAddress:
-      'electronic address endpoint ID and scheme are not stored separately',
+      'electronic address endpoint ID and schemeID are inferred from email when available, not stored separately',
     structuredExportRequirementPaymentInstructions:
       'bank transfer export needs an IBAN or bank account',
     structuredExportRequirementSellerPostalAddress:
       'seller postal address is not exported in XRechnung',
+    structuredExportRequirementSellerContactName: 'seller contact name is not stored separately',
     structuredExportRequirementTaxBreakdown:
-      'tax totals and tax categories are not exported completely',
+      'zero or missing VAT rates use an inferred tax category without an exemption reason',
     structuredExportRequirementTaxScheme:
       'party tax scheme identifiers are missing required scheme metadata',
     structuredExportRequirementUnitCode:
-      'line {line} quantity is exported without a required e-invoicing unit code',
+      'line {line} unit is not mapped to a UNECE unit code and will fall back to C62',
     structuredExportPartySeller: 'Seller',
     structuredExportPartyBuyer: 'Buyer',
   },
@@ -860,7 +918,7 @@ const de = {
       'Konfigurieren Sie Ihren eigenen Endpunkt mithilfe einer URL und einem optionalen benutzerdefinierten Header.',
     companyRegistryConnectorUrlLabel: 'Connector-URL',
     companyRegistryConnectorUrlHelp:
-      'Verwenden Sie die vollständige URL. Platzhalter-Token „companyId“ wird unterstützt; andernfalls wird die Firmen-ID angehängt.',
+      'Verwenden Sie die vollständige HTTPS-URL. Unverschlüsseltes HTTP ist nur für localhost erlaubt. Platzhalter-Token „companyId“ wird unterstützt; andernfalls wird die Firmen-ID angehängt.',
     companyRegistryConnectorHeaderKeyLabel: 'Kopfzeilenschlüssel',
     companyRegistryConnectorHeaderValueLabel: 'Header-Wert',
     companyRegistryConnectorHeaderHelp:
@@ -944,8 +1002,29 @@ const de = {
     invoiceQrTypeSwiss: 'Schweizer QR-Rechnung',
     invoiceQrBankRequiredSpayd:
       'Geben Sie für tschechisches SPAYD die IBAN oder das Bankkonto ein.',
-    invoiceQrBankRequiredEpc: 'Geben Sie für EPC QR IBAN und SWIFT/BIC ein.',
-    invoiceQrBankRequiredSwiss: 'Geben Sie für die Schweizer QR-Rechnung die IBAN ein.',
+    invoiceQrBankRequiredEpc: 'Geben Sie für EPC QR eine gültige IBAN und SWIFT/BIC ein.',
+    invoiceQrBankRequiredSwiss:
+      'Geben Sie für die Schweizer QR-Rechnung eine gültige CH/LI-IBAN ein.',
+    invoiceQrBankRequiredSwissStandardIban:
+      'Verwenden Sie für die Schweizer QR-Rechnung eine normale CH/LI-IBAN. QR-IBAN erfordert eine QR-Referenz, die diese Rechnung noch nicht speichern kann.',
+    invoiceQrSellerAddressRequiredSwiss:
+      'Geben Sie für die Schweizer QR-Rechnung den Firmennamen und die vollständige Adresse des Verkäufers einschließlich zweistelligem ISO-Ländercode ein.',
+    invoiceQrCurrencyRequiredEpc: 'EPC QR kann nur für Rechnungen in EUR verwendet werden.',
+    invoiceQrCurrencyRequiredSwiss:
+      'Die Schweizer QR-Rechnung kann nur für Rechnungen in CHF oder EUR verwendet werden.',
+    invoiceQrAmountInvalid:
+      'Der Rechnungsbetrag muss zwischen 0,01 und dem Limit des ausgewählten QR-Formats liegen.',
+    invoiceQrPayloadTooLongEpc:
+      'Die EPC-QR-Daten sind zu lang. Kürzen Sie den Firmennamen oder die Rechnungsreferenz.',
+    invoiceQrProfileWarningTitle: 'Angaben für Zahlungs-QR fehlen',
+    invoiceQrProfileWarningDescription:
+      'Der ausgewählte Typ wird gespeichert, aber der QR-Code wird erst in das Rechnungs-PDF eingefügt, wenn die Angaben vollständig sind.',
+    invoiceQrProfileCta: 'Im Unternehmensprofil ergänzen',
+    invoiceQrPdfWarningTitle: 'Zahlungs-QR wird ausgelassen',
+    invoiceQrPdfWarningMessage:
+      'Der QR-Code konnte nicht erstellt werden: {reason}\n\nSie können ohne QR-Code fortfahren oder die fehlenden Angaben ergänzen.',
+    invoiceQrContinueWithoutQr: 'Ohne QR fortfahren',
+    invoiceQrEditInvoice: 'Rechnung bearbeiten',
     invoiceDefaultExportFormat: 'Standard-XML-Exportformat',
     invoiceDefaultExportFormatNone: 'Keine (bei Export erfragen)',
     invoiceSeriesTitle: 'Rechnungsnummerierungsserie',
@@ -1288,6 +1367,12 @@ const de = {
     startSetup: 'Einrichtung starten',
     skipGuide: 'Anleitung überspringen',
     startTitle: 'Wie möchtest du beginnen?',
+    offlineFirstTitle: 'Ihre Daten bleiben auf diesem Gerät',
+    offlineFirstDescription:
+      'Faktoro funktioniert ohne Konto. Online-Synchronisierung ist optional, und Backups sind der sicherste Schutz für lokale Daten.',
+    offlineFirstBackup: 'Erstellen Sie regelmäßig Backups und speichern Sie sie sicher.',
+    offlineFirstSync:
+      'Nutzen Sie Sync nur, wenn Sie einen eigenen Server oder ein weiteres Gerät verbinden möchten.',
     startNewTitle: 'Neu starten',
     startNewDesc: 'Neues Unternehmen, keine bestehenden Daten.',
     startDeviceTitle: 'Dieses Gerät hinzufügen oder wiederherstellen',
@@ -1302,6 +1387,13 @@ const de = {
     profileNote: 'Den Rest kannst du jederzeit unter Einstellungen → Unternehmensprofil ergänzen.',
     profileCountryLabel: 'Land',
     profileRegistryLabel: 'Register für Firmennummernsuche',
+    invoiceProfileTitle: 'Rechnungsangaben',
+    invoiceProfileSubtitle:
+      'Ergänzen Sie optionale Kontakt- und Zahlungsdaten jetzt oder überspringen Sie diesen Schritt.',
+    invoiceProfileOptionalNote:
+      'Diese Angaben verbessern PDF-Rechnungen, Zahlungs-QR-Codes und strukturierte Exporte.',
+    invoiceProfileSaveContinue: 'Speichern und fortfahren',
+    invoiceProfileSkip: 'Jetzt nicht',
     vatTitle: 'MwSt.-Sätze',
     vatSubtitle:
       'Die App benötigt aktuelle MwSt.-Sätze, um die Steuer auf Rechnungen korrekt zu berechnen.',
@@ -1334,6 +1426,10 @@ const de = {
     donePriceList: 'Preisliste einrichten',
     donePriceListDesc:
       'Lege Leistungen mit Preisen an — das spart später Arbeit bei Zeiterfassung und Rechnungen.',
+    doneBackup: 'Backup erstellen',
+    doneBackupDesc: 'Speichern Sie ein Offline-Backup, bevor Sie sich auf lokale Daten verlassen.',
+    doneSync: 'Synchronisierung einrichten',
+    doneSyncDesc: 'Verbinden Sie dieses Gerät mit Ihrem selbst gehosteten Faktoro Sync-Server.',
     doneGoToApp: 'Zur App',
     connectTitle: 'Dieses Gerät hinzufügen oder wiederherstellen',
     connectSubtitle:
@@ -1377,6 +1473,7 @@ const de = {
     invoicedRevenue: 'Fakturiert',
     unbilledEstimate: 'Unfakt. Schätzung',
     timeByClient: 'Zeit nach Kunden',
+    billableTimeByClient: 'Abrechenbare Zeit nach Kunden',
     revenueByClient: 'Umsatz nach Kunden',
     noData: 'Keine Daten für den ausgewählten Zeitraum.',
     nextStepsTitle: 'Nächste Schritte',

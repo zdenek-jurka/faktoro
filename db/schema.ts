@@ -7,7 +7,7 @@ export enum AddressType {
 }
 
 export default appSchema({
-  version: 55,
+  version: 56,
   tables: [
     tableSchema({
       name: 'app_settings',
@@ -248,6 +248,7 @@ export default appSchema({
       columns: [
         { name: 'client_id', type: 'string', isIndexed: true },
         { name: 'invoice_number', type: 'string', isIndexed: true },
+        { name: 'buyer_reference', type: 'string', isOptional: true },
         { name: 'issued_at', type: 'number', isIndexed: true },
         { name: 'taxable_at', type: 'number', isOptional: true, isIndexed: true },
         { name: 'due_at', type: 'number', isOptional: true },

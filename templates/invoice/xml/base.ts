@@ -30,6 +30,7 @@ function resolveInvoiceDocumentType(input: InvoiceXmlBuildInput): string {
 export function buildBaseInvoiceXml(input: InvoiceXmlBuildInput): string {
   const { invoice, items, client, seller, buyer } = input;
   const documentType = resolveInvoiceDocumentType(input);
+  const buyerReferenceXml = buildOptionalElement('  ', 'BuyerReference', invoice.buyerReference);
   const taxableSupplyDateXml = buildOptionalElement(
     '  ',
     'TaxableSupplyDate',
@@ -97,7 +98,7 @@ export function buildBaseInvoiceXml(input: InvoiceXmlBuildInput): string {
 <Invoice xmlns="https://faktoro.app/xml/invoice/1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="https://faktoro.app/xml/invoice/1.0 invoice.xsd">
   <Id>${escapeXml(invoice.id)}</Id>
   <Number>${escapeXml(invoice.invoiceNumber)}</Number>
-  <ClientId>${escapeXml(invoice.clientId)}</ClientId>
+${buyerReferenceXml}  <ClientId>${escapeXml(invoice.clientId)}</ClientId>
   <IssueDate>${escapeXml(isoDateFromMs(invoice.issuedAt))}</IssueDate>
 ${taxableSupplyDateXml}${dueDateXml}  <Currency>${escapeXml(invoice.currency)}</Currency>
 ${paymentMethodXml}  <Status>${escapeXml(invoice.status)}</Status>

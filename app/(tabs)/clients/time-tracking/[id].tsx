@@ -4,5 +4,5 @@ import React from 'react';
 
 export default function ClientTimeEntriesInClientsTab() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  return <ClientTimeEntriesContent clientId={id} />;
+  return <ClientTimeEntriesContent clientId={id} editBasePath="clients" />;
 }

@@ -21,6 +21,13 @@ export default function TimeTrackingStackLayout() {
           headerBackTitle: LL.tabs.time(),
         }}
       />
+      <Stack.Screen
+        name="entry/[id]/edit"
+        options={{
+          title: LL.timeTracking.editTimer(),
+          headerBackTitle: LL.tabs.time(),
+        }}
+      />
     </Stack>
   );
 }

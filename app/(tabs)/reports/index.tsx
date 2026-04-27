@@ -21,6 +21,7 @@ import { getSettings, observeSettings } from '@/repositories/settings-repository
 import { normalizeCurrencyCode } from '@/utils/currency-utils';
 import { getBuyerDisplayName, parseBuyerSnapshotJson } from '@/utils/invoice-buyer';
 import { formatPrice } from '@/utils/price-utils';
+import { roundTimeByInterval } from '@/utils/time-utils';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -36,8 +37,10 @@ interface ClientStat {
 
 interface ReportData {
   totalSeconds: number;
+  totalBillableSeconds: number;
   invoicedRevenueByCurrency: { currency: string; total: number }[];
   unbilledSeconds: number;
+  unbilledBillableSeconds: number;
   unbilledEstimateByCurrency: { currency: string; total: number }[];
   avgRateByCurrency: { currency: string; avg: number }[];
   unbilledEntriesCount: number;
@@ -111,17 +114,14 @@ export default function ReportsScreen() {
             .get<TimeEntryModel>(TimeEntryModel.table)
             .query(Q.where('is_running', false), Q.where('end_time', Q.notEq(null)));
 
-      // All completed entries (any period) — for unbilled count
-      const allUnbilledQuery = database
-        .get<TimeEntryModel>(TimeEntryModel.table)
-        .query(
-          Q.where('is_running', false),
-          Q.where('end_time', Q.notEq(null)),
-          Q.where('timesheet_id', Q.eq(null)),
-        );
-
-      // All timesheets + invoice items referencing timesheets (to compute uninvoiced count)
-      const allTimesheetsQuery = database.get<TimesheetModel>(TimesheetModel.table).query();
+      const timesheetsQuery = range
+        ? database
+            .get<TimesheetModel>(TimesheetModel.table)
+            .query(
+              Q.where('period_from', Q.lte(range.end)),
+              Q.where('period_to', Q.gte(range.start)),
+            )
+        : database.get<TimesheetModel>(TimesheetModel.table).query();
       const timesheetInvoiceItemsQuery = database
         .get<InvoiceItemModel>(InvoiceItemModel.table)
         .query(Q.where('source_kind', 'timesheet'));
@@ -133,36 +133,56 @@ export default function ReportsScreen() {
             .query(Q.where('issued_at', Q.gte(range.start)), Q.where('issued_at', Q.lte(range.end)))
         : database.get<InvoiceModel>(InvoiceModel.table).query();
 
-      const [entries, allUnbilled, allTimesheets, timesheetInvoiceItems, invoices, clients] =
-        await Promise.all([
-          rangedEntryQuery.fetch(),
-          allUnbilledQuery.fetch(),
-          allTimesheetsQuery.fetch(),
-          timesheetInvoiceItemsQuery.fetch(),
-          invoicesQuery.fetch(),
-          database.get<ClientModel>(ClientModel.table).query().fetch(),
-        ]);
+      const [entries, timesheets, timesheetInvoiceItems, invoices, clients] = await Promise.all([
+        rangedEntryQuery.fetch(),
+        timesheetsQuery.fetch(),
+        timesheetInvoiceItemsQuery.fetch(),
+        invoicesQuery.fetch(),
+        database.get<ClientModel>(ClientModel.table).query().fetch(),
+      ]);
 
       const invoicedTimesheetIds = new Set(timesheetInvoiceItems.map((ii) => ii.sourceId));
-      const uninvoicedTimesheetsCount = allTimesheets.filter(
+      const uninvoicedTimesheetsCount = timesheets.filter(
         (ts) => !invoicedTimesheetIds.has(ts.id),
       ).length;
 
       const clientMap = new Map(clients.map((c) => [c.id, c]));
 
-      // Aggregations
-      const totalSeconds = entries.reduce((sum, e) => sum + (e.duration ?? 0), 0);
       const defaultCurrency = normalizeCurrencyCode(settings.defaultInvoiceCurrency);
+      const getEntryDuration = (entry: TimeEntryModel) => entry.duration ?? 0;
+      const getEntryBillableDuration = (entry: TimeEntryModel) =>
+        entry.timesheetDuration ??
+        roundTimeByInterval(
+          getEntryDuration(entry),
+          clientMap.get(entry.clientId),
+          settings.defaultBillingInterval,
+        );
 
-      const unbilledInPeriod = range ? entries.filter((e) => !e.timesheetId) : allUnbilled;
-      const unbilledSeconds = unbilledInPeriod.reduce((sum, e) => sum + (e.duration ?? 0), 0);
+      // Aggregations
+      const totalSeconds = entries.reduce((sum, entry) => sum + getEntryDuration(entry), 0);
+      const totalBillableSeconds = entries.reduce(
+        (sum, entry) => sum + getEntryBillableDuration(entry),
+        0,
+      );
+
+      const unbilledInPeriod = entries.filter((e) => !e.timesheetId);
+      const unbilledSeconds = unbilledInPeriod.reduce(
+        (sum, entry) => sum + getEntryDuration(entry),
+        0,
+      );
+      const unbilledBillableSeconds = unbilledInPeriod.reduce(
+        (sum, entry) => sum + getEntryBillableDuration(entry),
+        0,
+      );
       const unbilledEstimateByCurrencyMap = new Map<string, number>();
       unbilledInPeriod.forEach((entry) => {
-        if (!entry.rate || !entry.duration) return;
+        const billableDuration = getEntryBillableDuration(entry);
+        if (!entry.rate || billableDuration <= 0) return;
         const currency = normalizeCurrencyCode(entry.rateCurrency, defaultCurrency);
         unbilledEstimateByCurrencyMap.set(
           currency,
-          (unbilledEstimateByCurrencyMap.get(currency) ?? 0) + (entry.duration / 3600) * entry.rate,
+          (unbilledEstimateByCurrencyMap.get(currency) ?? 0) +
+            (billableDuration / 3600) * entry.rate,
         );
       });
       const unbilledEstimateByCurrency = [...unbilledEstimateByCurrencyMap.entries()]
@@ -182,24 +202,34 @@ export default function ReportsScreen() {
         .sort((a, b) => a.currency.localeCompare(b.currency));
       const hasMultipleInvoiceCurrencies = invoicedRevenueByCurrency.length > 1;
 
-      // Average rate (only from entries with a rate)
-      const avgRateByCurrencyMap = new Map<string, { totalRate: number; count: number }>();
+      // Average rate weighted by billable duration.
+      const avgRateByCurrencyMap = new Map<
+        string,
+        { weightedRateTotal: number; durationSeconds: number }
+      >();
       entries.forEach((entry) => {
-        if (!entry.rate || entry.rate <= 0 || (entry.duration ?? 0) <= 0) return;
+        const durationSeconds = getEntryBillableDuration(entry);
+        if (!entry.rate || entry.rate <= 0 || durationSeconds <= 0) return;
         const currency = normalizeCurrencyCode(entry.rateCurrency, defaultCurrency);
-        const current = avgRateByCurrencyMap.get(currency) ?? { totalRate: 0, count: 0 };
-        current.totalRate += entry.rate;
-        current.count += 1;
+        const current = avgRateByCurrencyMap.get(currency) ?? {
+          weightedRateTotal: 0,
+          durationSeconds: 0,
+        };
+        current.weightedRateTotal += entry.rate * durationSeconds;
+        current.durationSeconds += durationSeconds;
         avgRateByCurrencyMap.set(currency, current);
       });
       const avgRateByCurrency = [...avgRateByCurrencyMap.entries()]
-        .map(([currency, current]) => ({ currency, avg: current.totalRate / current.count }))
+        .map(([currency, current]) => ({
+          currency,
+          avg: current.weightedRateTotal / current.durationSeconds,
+        }))
         .sort((a, b) => a.currency.localeCompare(b.currency));
 
       // Hours by client
       const hoursByClientMap = new Map<string, number>();
       entries.forEach((e) => {
-        const h = (e.duration ?? 0) / 3600;
+        const h = getEntryBillableDuration(e) / 3600;
         hoursByClientMap.set(e.clientId, (hoursByClientMap.get(e.clientId) ?? 0) + h);
       });
       const hoursByClient: ClientStat[] = [...hoursByClientMap.entries()]
@@ -246,11 +276,13 @@ export default function ReportsScreen() {
 
       setData({
         totalSeconds,
+        totalBillableSeconds,
         invoicedRevenueByCurrency,
         unbilledSeconds,
+        unbilledBillableSeconds,
         unbilledEstimateByCurrency,
         avgRateByCurrency,
-        unbilledEntriesCount: allUnbilled.length,
+        unbilledEntriesCount: unbilledInPeriod.length,
         uninvoicedTimesheetsCount,
         hoursByClient,
         revenueByClient,
@@ -297,6 +329,7 @@ export default function ReportsScreen() {
           'end_time',
           'timesheet_id',
           'duration',
+          'timesheet_duration',
           'rate',
           'rate_currency',
           'client_id',
@@ -332,14 +365,14 @@ export default function ReportsScreen() {
       const subscription = database
         .get<ClientModel>(ClientModel.table)
         .query()
-        .observeWithColumns(['name'])
+        .observeWithColumns(['name', 'billing_interval_enabled', 'billing_interval_minutes'])
         .subscribe(onChange);
       return () => subscription.unsubscribe();
     });
     subscribeAfterInitialEmission((onChange) =>
       observeSettings(() => {
         onChange();
-      }, ['default_invoice_currency']),
+      }, ['default_invoice_currency', 'default_billing_interval']),
     );
 
     return () => {
@@ -368,7 +401,7 @@ export default function ReportsScreen() {
   const unbilledEstimateValue = useMemo(() => {
     if (!data) return '';
     if (data.unbilledEstimateByCurrency.length === 0) {
-      return formatHours(data.unbilledSeconds);
+      return formatHours(data.unbilledBillableSeconds);
     }
     return data.unbilledEstimateByCurrency
       .map((entry) => formatPrice(entry.total, entry.currency, intlLocale))
@@ -447,6 +480,11 @@ export default function ReportsScreen() {
             <KpiCard
               label={LL.reports.trackedHours()}
               value={formatHours(data?.totalSeconds ?? 0)}
+              subValue={
+                data && data.totalBillableSeconds !== data.totalSeconds
+                  ? `${LL.timeTracking.billableTime()}: ${formatHours(data.totalBillableSeconds)}`
+                  : undefined
+              }
               palette={palette}
             />
             <KpiCard
@@ -457,6 +495,11 @@ export default function ReportsScreen() {
             <KpiCard
               label={LL.reports.unbilledEstimate()}
               value={unbilledEstimateValue}
+              subValue={
+                data && data.unbilledBillableSeconds !== data.unbilledSeconds
+                  ? `${LL.timeTracking.actualTime()}: ${formatHours(data.unbilledSeconds)}`
+                  : undefined
+              }
               palette={palette}
               highlight={(data?.unbilledSeconds ?? 0) > 0}
             />
@@ -524,7 +567,7 @@ export default function ReportsScreen() {
 
           {/* ── Time by client ── */}
           {data!.hoursByClient.length > 0 && (
-            <Section title={LL.reports.timeByClient()} palette={palette}>
+            <Section title={LL.reports.billableTimeByClient()} palette={palette}>
               <BarList
                 items={data!.hoursByClient}
                 formatValue={(item) => `${item.value.toFixed(1)} ${LL.reports.hoursUnit()}`}

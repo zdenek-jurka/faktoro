@@ -9,11 +9,7 @@ import {
 } from '@/components/ui/select';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import {
-  canConvertCzBankAccountToIban,
-  isIbanLike,
-} from '@/components/settings/invoice-settings-shared';
-import { getSwitchColors } from '@/constants/theme';
+import { getSwitchColors, withOpacity } from '@/constants/theme';
 import { useBottomSafeAreaStyle } from '@/hooks/use-bottom-safe-area-style';
 import { usePalette } from '@/hooks/use-palette';
 import { useCurrencySettings } from '@/hooks/use-currency-settings';
@@ -36,12 +32,17 @@ import {
   parseTimerLimitHoursInput,
   validateTimerLimitOrder,
 } from '@/utils/timer-limit-utils';
+import {
+  getPaymentQrBusinessProfileRequirement,
+  normalizePaymentQrType,
+  type PaymentQrProfileRequirement,
+} from '@/utils/payment-qr-requirements';
 import { parseBillingIntervalMinutesInput } from '@/utils/time-utils';
 import { getLocalizedVatCodeName, resolvePreferredVatCodeId } from '@/utils/vat-code-utils';
 import { formatVatRatePercent, resolveVatRateForDate } from '@/utils/vat-rate-utils';
 import { useHeaderHeight } from '@react-navigation/elements';
-import { Stack } from 'expo-router';
-import React, { useEffect, useMemo, useState } from 'react';
+import { Stack, useFocusEffect, useRouter } from 'expo-router';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
   Alert,
   KeyboardAvoidingView,
@@ -56,6 +57,7 @@ import {
 export default function SettingsInvoiceDefaultsScreen() {
   const palette = usePalette();
   const { LL } = useI18nContext();
+  const router = useRouter();
   const headerHeight = useHeaderHeight();
   const contentStyle = useBottomSafeAreaStyle(styles.content);
   const currencies = useCurrencySettings();
@@ -79,6 +81,11 @@ export default function SettingsInvoiceDefaultsScreen() {
   const [timerHardLimitHours, setTimerHardLimitHours] = useState(
     formatTimerLimitHours(DEFAULT_TIMER_HARD_LIMIT_MINUTES),
   );
+  const [invoiceCompanyName, setInvoiceCompanyName] = useState('');
+  const [invoiceAddress, setInvoiceAddress] = useState('');
+  const [invoiceCity, setInvoiceCity] = useState('');
+  const [invoicePostalCode, setInvoicePostalCode] = useState('');
+  const [invoiceCountry, setInvoiceCountry] = useState('');
   const [invoiceBankAccount, setInvoiceBankAccount] = useState('');
   const [invoiceIban, setInvoiceIban] = useState('');
   const [invoiceSwift, setInvoiceSwift] = useState('');
@@ -121,67 +128,97 @@ export default function SettingsInvoiceDefaultsScreen() {
     return labels;
   }, [LL, displayVatCodes, vatRates]);
 
-  useEffect(() => {
-    const loadSettings = async () => {
-      try {
-        const settings = await getSettings();
-        setDefaultInvoiceCurrency(normalizeCurrencyCode(settings.defaultInvoiceCurrency));
-        setDefaultInvoicePaymentMethod(
-          normalizeInvoicePaymentMethod(settings.defaultInvoicePaymentMethod),
-        );
-        setDefaultInvoiceDueDays(
-          String(settings.defaultInvoiceDueDays ?? DEFAULT_INVOICE_DUE_DAYS),
-        );
-        setInvoiceQrType(settings.invoiceQrType || 'none');
-        const savedFormat = settings.invoiceDefaultExportFormat;
-        setInvoiceDefaultExportFormat(
-          savedFormat === 'none' ||
-            savedFormat === 'isdoc' ||
-            savedFormat === 'peppol' ||
-            savedFormat === 'xrechnung'
-            ? savedFormat
-            : 'none',
-        );
-        const interval = settings.defaultBillingInterval;
-        setUseBillingInterval(interval !== undefined && interval !== null);
-        setDefaultBillingInterval(interval?.toString() || '15');
-        setTimerSoftLimitEnabled(settings.timerSoftLimitEnabled !== false);
-        setTimerSoftLimitHours(
-          formatTimerLimitHours(settings.timerSoftLimitMinutes ?? DEFAULT_TIMER_SOFT_LIMIT_MINUTES),
-        );
-        setTimerHardLimitEnabled(settings.timerHardLimitEnabled !== false);
-        setTimerHardLimitHours(
-          formatTimerLimitHours(settings.timerHardLimitMinutes ?? DEFAULT_TIMER_HARD_LIMIT_MINUTES),
-        );
-        setInvoiceBankAccount(settings.invoiceBankAccount || '');
-        setInvoiceIban(settings.invoiceIban || '');
-        setInvoiceSwift(settings.invoiceSwift || '');
-        const vatPayer = !!settings.isVatPayer;
-        setIsVatPayer(vatPayer);
+  const loadSettings = useCallback(async () => {
+    try {
+      const settings = await getSettings();
+      setDefaultInvoiceCurrency(normalizeCurrencyCode(settings.defaultInvoiceCurrency));
+      setDefaultInvoicePaymentMethod(
+        normalizeInvoicePaymentMethod(settings.defaultInvoicePaymentMethod),
+      );
+      setDefaultInvoiceDueDays(String(settings.defaultInvoiceDueDays ?? DEFAULT_INVOICE_DUE_DAYS));
+      setInvoiceQrType(settings.invoiceQrType || 'none');
+      const savedFormat = settings.invoiceDefaultExportFormat;
+      setInvoiceDefaultExportFormat(
+        savedFormat === 'none' ||
+          savedFormat === 'isdoc' ||
+          savedFormat === 'peppol' ||
+          savedFormat === 'xrechnung'
+          ? savedFormat
+          : 'none',
+      );
+      const interval = settings.defaultBillingInterval;
+      setUseBillingInterval(interval !== undefined && interval !== null);
+      setDefaultBillingInterval(interval?.toString() || '15');
+      setTimerSoftLimitEnabled(settings.timerSoftLimitEnabled !== false);
+      setTimerSoftLimitHours(
+        formatTimerLimitHours(settings.timerSoftLimitMinutes ?? DEFAULT_TIMER_SOFT_LIMIT_MINUTES),
+      );
+      setTimerHardLimitEnabled(settings.timerHardLimitEnabled !== false);
+      setTimerHardLimitHours(
+        formatTimerLimitHours(settings.timerHardLimitMinutes ?? DEFAULT_TIMER_HARD_LIMIT_MINUTES),
+      );
+      setInvoiceCompanyName(settings.invoiceCompanyName || '');
+      setInvoiceAddress(settings.invoiceAddress || '');
+      setInvoiceCity(settings.invoiceCity || '');
+      setInvoicePostalCode(settings.invoicePostalCode || '');
+      setInvoiceCountry(settings.invoiceCountry || '');
+      setInvoiceBankAccount(settings.invoiceBankAccount || '');
+      setInvoiceIban(settings.invoiceIban || '');
+      setInvoiceSwift(settings.invoiceSwift || '');
+      const vatPayer = !!settings.isVatPayer;
+      setIsVatPayer(vatPayer);
 
-        if (!vatPayer) {
-          setVatCodes([]);
-          setVatRates([]);
-          setDefaultInvoiceVatCodeId(settings.defaultInvoiceVatCodeId || '');
-          return;
-        }
-
-        const [allVatCodes, allVatRates] = await Promise.all([
-          getVatCodes().fetch(),
-          getVatRates().fetch(),
-        ]);
-        setVatCodes(allVatCodes);
-        setVatRates(allVatRates);
-        setDefaultInvoiceVatCodeId(
-          resolvePreferredVatCodeId(allVatCodes, settings.defaultInvoiceVatCodeId),
-        );
-      } catch (error) {
-        console.error('Error loading invoice defaults:', error);
+      if (!vatPayer) {
+        setVatCodes([]);
+        setVatRates([]);
+        setDefaultInvoiceVatCodeId(settings.defaultInvoiceVatCodeId || '');
+        return;
       }
-    };
 
-    void loadSettings();
+      const [allVatCodes, allVatRates] = await Promise.all([
+        getVatCodes().fetch(),
+        getVatRates().fetch(),
+      ]);
+      setVatCodes(allVatCodes);
+      setVatRates(allVatRates);
+      setDefaultInvoiceVatCodeId(
+        resolvePreferredVatCodeId(allVatCodes, settings.defaultInvoiceVatCodeId),
+      );
+    } catch (error) {
+      console.error('Error loading invoice defaults:', error);
+    }
   }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      void loadSettings();
+    }, [loadSettings]),
+  );
+
+  const paymentQrProfileRequirement = useMemo(
+    () =>
+      getPaymentQrBusinessProfileRequirement(normalizePaymentQrType(invoiceQrType), {
+        companyName: invoiceCompanyName,
+        address: invoiceAddress,
+        city: invoiceCity,
+        postalCode: invoicePostalCode,
+        country: invoiceCountry,
+        bankAccount: invoiceBankAccount,
+        iban: invoiceIban,
+        swift: invoiceSwift,
+      }),
+    [
+      invoiceAddress,
+      invoiceBankAccount,
+      invoiceCity,
+      invoiceCompanyName,
+      invoiceCountry,
+      invoiceIban,
+      invoicePostalCode,
+      invoiceQrType,
+      invoiceSwift,
+    ],
+  );
 
   const handleSave = async () => {
     const billingInterval = useBillingInterval
@@ -195,26 +232,6 @@ export default function SettingsInvoiceDefaultsScreen() {
     const invoiceDueDays = parseInvoiceDueDaysInput(defaultInvoiceDueDays);
     if (invoiceDueDays === undefined) {
       Alert.alert(LL.common.error(), LL.common.errorInvoiceDueDaysInvalid());
-      return;
-    }
-    if (invoiceQrType === 'spayd' && !invoiceIban.trim() && !invoiceBankAccount.trim()) {
-      Alert.alert(LL.common.error(), LL.settings.invoiceQrBankRequiredSpayd());
-      return;
-    }
-    if (invoiceQrType === 'spayd') {
-      const ibanValid = isIbanLike(invoiceIban.trim());
-      const bankAccountConvertible = canConvertCzBankAccountToIban(invoiceBankAccount.trim());
-      if (!ibanValid && !bankAccountConvertible) {
-        Alert.alert(LL.common.error(), LL.settings.invoiceQrBankRequiredSpayd());
-        return;
-      }
-    }
-    if (invoiceQrType === 'epc' && (!invoiceIban.trim() || !invoiceSwift.trim())) {
-      Alert.alert(LL.common.error(), LL.settings.invoiceQrBankRequiredEpc());
-      return;
-    }
-    if (invoiceQrType === 'swiss' && !invoiceIban.trim()) {
-      Alert.alert(LL.common.error(), LL.settings.invoiceQrBankRequiredSwiss());
       return;
     }
     const timerSoftLimitMinutes = timerSoftLimitEnabled
@@ -279,6 +296,22 @@ export default function SettingsInvoiceDefaultsScreen() {
     if (value === 'epc') return LL.settings.invoiceQrTypeEpc();
     if (value === 'swiss') return LL.settings.invoiceQrTypeSwiss();
     return LL.settings.invoiceQrTypeNone();
+  };
+
+  const getPaymentQrRequirementLabel = (requirement: PaymentQrProfileRequirement) => {
+    switch (requirement) {
+      case 'epcIban':
+      case 'epcSwift':
+        return LL.settings.invoiceQrBankRequiredEpc();
+      case 'spaydAccount':
+        return LL.settings.invoiceQrBankRequiredSpayd();
+      case 'swissAddress':
+        return LL.settings.invoiceQrSellerAddressRequiredSwiss();
+      case 'swissIban':
+        return LL.settings.invoiceQrBankRequiredSwiss();
+      case 'swissQrIbanReference':
+        return LL.settings.invoiceQrBankRequiredSwissStandardIban();
+    }
   };
 
   const getInvoiceXmlFormatLabel = (value: string) => {
@@ -531,6 +564,40 @@ export default function SettingsInvoiceDefaultsScreen() {
                 </SelectGroup>
               </SelectContent>
             </Select>
+            {paymentQrProfileRequirement ? (
+              <View
+                style={[
+                  styles.warningBox,
+                  {
+                    backgroundColor: withOpacity(palette.timerPause, 0.12),
+                    borderColor: withOpacity(palette.timerPause, 0.4),
+                  },
+                ]}
+              >
+                <ThemedText type="defaultSemiBold" style={styles.warningTitle}>
+                  {LL.settings.invoiceQrProfileWarningTitle()}
+                </ThemedText>
+                <ThemedText style={[styles.warningText, { color: palette.textSecondary }]}>
+                  {getPaymentQrRequirementLabel(paymentQrProfileRequirement)}
+                  {'\n'}
+                  {LL.settings.invoiceQrProfileWarningDescription()}
+                </ThemedText>
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.warningButton,
+                    { borderColor: palette.tint },
+                    pressed && styles.pressed,
+                  ]}
+                  onPress={() => router.push('/settings/business-profile')}
+                  accessibilityRole="button"
+                  accessibilityLabel={LL.settings.invoiceQrProfileCta()}
+                >
+                  <ThemedText style={[styles.warningButtonText, { color: palette.tint }]}>
+                    {LL.settings.invoiceQrProfileCta()}
+                  </ThemedText>
+                </Pressable>
+              </View>
+            ) : null}
 
             <ThemedText style={styles.label}>{LL.settings.invoiceDefaultExportFormat()}</ThemedText>
             <Select
@@ -616,6 +683,32 @@ const styles = StyleSheet.create({
     padding: 12,
     fontSize: 16,
     marginBottom: 12,
+  },
+  warningBox: {
+    borderWidth: 1,
+    borderRadius: 8,
+    padding: 12,
+    gap: 8,
+    marginTop: 12,
+    marginBottom: 12,
+  },
+  warningTitle: {
+    fontSize: 14,
+  },
+  warningText: {
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  warningButton: {
+    alignSelf: 'flex-start',
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  warningButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
   },
   switchRow: {
     flexDirection: 'row',

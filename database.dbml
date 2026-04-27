@@ -253,6 +253,7 @@ Table invoice {
   id string [pk, note: 'WatermelonDB auto-generated ID']
   client_id string [not null, ref: > client.id, note: 'Billed client']
   invoice_number string [not null, note: 'Invoice number visible to customer']
+  buyer_reference string [null, note: 'Buyer reference / Leitweg-ID for structured invoice routing']
   issued_at number [not null, note: 'Issue date (Unix ms)']
   taxable_at number [null, note: 'Taxable supply date / DUZP (Unix ms), required for VAT payer']
   due_at number [null, note: 'Due date (Unix ms)']

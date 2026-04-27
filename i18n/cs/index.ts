@@ -17,6 +17,8 @@ const cs = {
     success: 'Úspěch',
     ok: 'OK',
     continueAction: 'Pokračovat',
+    dismiss: 'Skrýt',
+    swipeActionsHint: 'Tip: Přejetím položky do strany zobrazíte rychlé akce.',
     discard: 'Zahodit změny',
     continueEditing: 'Pokračovat v úpravách',
     unsavedChanges: 'Neuložené změny',
@@ -195,6 +197,7 @@ const cs = {
     startTimer: 'Spustit časovač',
     editEntry: 'Upravit záznam',
     editTimer: 'Upravit časový záznam',
+    backWithoutChanges: 'Zpět beze změny',
     client: 'Klient:',
     activity: 'Činnost:',
     activityPlaceholder: 'Co děláte?',
@@ -212,6 +215,7 @@ const cs = {
     errorPauseTimer: 'Nepodařilo se pozastavit časovač',
     errorResumeTimer: 'Nepodařilo se obnovit časovač',
     errorUpdateEntry: 'Nepodařilo se upravit záznam',
+    errorDeleteEntry: 'Nepodařilo se smazat záznam',
     errorControlOtherDevice: 'Tento časovač lze ovládat jen na zařízení, na kterém právě běží.',
     clientDetail: 'Detail klienta',
     addClientFirst: 'Pro pokračování nejdřív přidejte klienta.',
@@ -221,6 +225,30 @@ const cs = {
     priceListItem: 'Položka ceníku (volitelně):',
     noPriceListLink: 'Bez vazby na ceník',
     selectPriceItem: 'Vyberte položku ceníku...',
+    swipeActionsHint: 'Tip: Přejetím záznamu do strany ho upravíte nebo smažete.',
+    timeAndBilling: 'Čas a fakturace',
+    timeAndBillingHint: 'Zkontrolujte čas, délku a sazbu',
+    timeDetails: 'Časové údaje',
+    startDate: 'Datum začátku',
+    startTime: 'Čas začátku',
+    endDate: 'Datum konce',
+    endTime: 'Čas konce',
+    durationMinutes: 'Délka (minuty)',
+    workDurationMinutes: 'Délka práce (minuty)',
+    pausedDuration: 'Pauzy',
+    workDurationExcludesPausesHint: 'Délka práce je čistý čas bez pauz.',
+    billingRoundingInfo:
+      'Je aktivní zaokrouhlení fakturovaného času. Tento záznam se bude počítat jako {duration} podle intervalu {interval} min.',
+    rateDetails: 'Sazba',
+    rateSourcePriceList: 'Z ceníku',
+    rateSourceManual: 'Ruční sazba',
+    manualRate: 'Sazba',
+    rateCurrency: 'Měna',
+    errorInvalidTimeInput: 'Zadejte platné datum a čas začátku i konce.',
+    errorInvalidDuration: 'Délka musí být větší než nula a konec musí být po začátku.',
+    errorPausedDurationExceedsRange:
+      'Časový rozsah musí být dostatečně dlouhý pro délku práce a uložené pauzy.',
+    errorInvalidRate: 'Zadejte platnou sazbu.',
     timerSoftLimitReachedTitle: 'Dosažen soft limit časovače',
     timerSoftLimitReachedMessage:
       'Časovač pro {clientName} dosáhl soft limitu {hours} h. Zkontroluj, jestli má běžet dál.',
@@ -360,6 +388,8 @@ const cs = {
     invoiceNumber: 'Číslo faktury',
     buyerModeSavedClient: 'Uložený klient',
     buyerModeOneOff: 'Jednorázový odběratel',
+    buyerReference: 'Reference odběratele / Leitweg-ID',
+    buyerReferencePlaceholder: 'Reference požadovaná odběratelem',
     invoiceNumberPlaceholder: 'např. 2026-001',
     issueDate: 'Datum vystavení',
     taxableSupplyDate: 'Datum uskutečnění zdanitelného plnění',
@@ -369,12 +399,37 @@ const cs = {
       'Datum vystavení je více než 15 dnů po DUZP. Zkontrolujte, zda doklad odpovídá obvyklému pravidlu pro vystavení daňového dokladu.',
     dueDatePastWarning:
       'Datum splatnosti je už v minulosti. Zkontrolujte, zda má být faktura opravdu vystavená s tímto datem splatnosti.',
+    dueDateBeforeIssueWarning:
+      'Datum splatnosti je před datem vystavení. Před uložením zkontrolujte platební podmínky.',
     currency: 'Měna',
     paymentMethod: 'Způsob platby',
     paymentMethodBankTransfer: 'Bankovním převodem',
     paymentMethodCash: 'Hotově',
     paymentMethodCard: 'Kartou',
     paymentMethodCardNfc: 'Kartou (NFC)',
+    paymentQrAction: 'Zobrazit platební QR',
+    paymentQrTitle: 'Platební QR',
+    paymentQrClose: 'Zavřít',
+    paymentQrUnavailableTitle: 'Platební QR nelze zobrazit',
+    paymentQrBuildFailed: 'Z aktuální faktury se nepodařilo vytvořit QR platební data.',
+    paymentQrRenderError: 'QR obrázek se na tomto zařízení nepodařilo vykreslit.',
+    paymentQrCopyPayload: 'Zkopírovat platební data',
+    paymentQrCopySuccess: 'Platební data byla zkopírována do schránky.',
+    paymentQrCopyError: 'Platební data se nepodařilo zkopírovat.',
+    paymentQrAmount: 'Částka',
+    paymentQrReceiver: 'Příjemce',
+    paymentQrReference: 'Reference',
+    sellerSnapshotNoticeTitle: 'Údaje dodavatele jsou uložené ve faktuře',
+    sellerSnapshotNoticeDescription:
+      'Použijte to, když jste změnili firemní profil a chcete v této faktuře použít aktuální údaje dodavatele včetně bankovního účtu, IBAN, SWIFT, QR platby a loga.',
+    refreshSellerSnapshotAction: 'Obnovit údaje dodavatele',
+    refreshSellerSnapshotConfirmTitle: 'Obnovit údaje dodavatele?',
+    refreshSellerSnapshotConfirmMessage:
+      'Tato faktura použije aktuální firemní profil pro údaje dodavatele. Číslo faktury, odběratel, data, poznámky a položky se nezmění.',
+    refreshSellerSnapshotConfirmAction: 'Obnovit údaje',
+    sellerSnapshotRefreshPending:
+      'Údaje dodavatele se při uložení faktury obnoví z aktuálního firemního profilu.',
+    sellerSnapshotRefreshPendingShort: 'Obnova připravena',
     vatCode: 'Kód DPH',
     selectVatCode: 'Vyberte kód DPH',
     next: 'Pokračovat',
@@ -509,6 +564,7 @@ const cs = {
     exportCancellationDocumentTitle: 'Storno doklad',
     exportCancellationTaxDocumentTitle: 'Opravný daňový doklad',
     exportInvoiceNumberLabel: 'Evidenční číslo daňového dokladu',
+    exportBuyerReferenceLabel: 'Reference odběratele',
     exportVat: 'DPH',
     exportVatPercent: 'DPH %',
     exportTaxBase: 'Základ',
@@ -575,18 +631,20 @@ const cs = {
       '{party}: z adresy se nepodařilo odhadnout číslo domu.',
     structuredExportIssueUnsupportedRequirement: '{format}: {requirement}.',
     structuredExportRequirementBuyerReference:
-      'buyer reference / Leitweg-ID není u faktury evidované',
+      'reference odběratele / Leitweg-ID ani reference objednávky nejsou u faktury evidované',
     structuredExportRequirementElectronicAddress:
-      'elektronická adresa endpoint ID a schemeID nejsou evidované samostatně',
+      'elektronická adresa endpoint ID a schemeID se při dostupném e-mailu odvozují, nejsou evidované samostatně',
     structuredExportRequirementPaymentInstructions:
       'bankovní export potřebuje IBAN nebo bankovní účet',
     structuredExportRequirementSellerPostalAddress: 'adresa dodavatele se v XRechnung neexportuje',
+    structuredExportRequirementSellerContactName:
+      'kontaktní osoba dodavatele není evidovaná samostatně',
     structuredExportRequirementTaxBreakdown:
-      'souhrny DPH a daňové kategorie se neexportují kompletně',
+      'nulové nebo chybějící sazby DPH používají odhadnutou daňovou kategorii bez důvodu osvobození',
     structuredExportRequirementTaxScheme:
       'daňové identifikace stran nemají vyplněná povinná scheme metadata',
     structuredExportRequirementUnitCode:
-      'množství na řádku {line} se exportuje bez povinného e-invoicing kódu jednotky',
+      'jednotka na řádku {line} nejde namapovat na UNECE kód a použije fallback C62',
     structuredExportPartySeller: 'Dodavatel',
     structuredExportPartyBuyer: 'Odběratel',
   },
@@ -833,7 +891,7 @@ const cs = {
       'Nastavte vlastní endpoint přes URL a volitelný vlastní header.',
     companyRegistryConnectorUrlLabel: 'URL konektoru',
     companyRegistryConnectorUrlHelp:
-      'Použijte plnou URL. Placeholder token "companyId" je podporovaný, jinak se IČ připojí na konec.',
+      'Použijte plnou HTTPS URL. Nešifrované HTTP je povolené jen pro localhost. Placeholder token "companyId" je podporovaný, jinak se IČ připojí na konec.',
     companyRegistryConnectorHeaderKeyLabel: 'Header klíč',
     companyRegistryConnectorHeaderValueLabel: 'Header hodnota',
     companyRegistryConnectorHeaderHelp:
@@ -914,8 +972,27 @@ const cs = {
     invoiceQrTypeEpc: 'EPC QR',
     invoiceQrTypeSwiss: 'Švýcarský QR-Bill',
     invoiceQrBankRequiredSpayd: 'Pro Český SPAYD vyplňte IBAN nebo bankovní účet.',
-    invoiceQrBankRequiredEpc: 'Pro EPC QR vyplňte IBAN a SWIFT/BIC.',
-    invoiceQrBankRequiredSwiss: 'Pro Swiss QR-Bill vyplňte IBAN.',
+    invoiceQrBankRequiredEpc: 'Pro EPC QR vyplňte platný IBAN a SWIFT/BIC.',
+    invoiceQrBankRequiredSwiss: 'Pro Swiss QR-Bill vyplňte platný CH/LI IBAN.',
+    invoiceQrBankRequiredSwissStandardIban:
+      'Pro Swiss QR-Bill použijte standardní CH/LI IBAN. QR-IBAN vyžaduje QR referenci, kterou faktura zatím neukládá.',
+    invoiceQrSellerAddressRequiredSwiss:
+      'Pro Swiss QR-Bill vyplňte název firmy a úplnou adresu dodavatele včetně země jako dvoupísmenného ISO kódu.',
+    invoiceQrCurrencyRequiredEpc: 'EPC QR lze použít jen u faktur v EUR.',
+    invoiceQrCurrencyRequiredSwiss: 'Swiss QR-Bill lze použít jen u faktur v CHF nebo EUR.',
+    invoiceQrAmountInvalid:
+      'Celková částka faktury musí být mezi 0,01 a limitem vybraného QR formátu.',
+    invoiceQrPayloadTooLongEpc:
+      'Data EPC QR jsou příliš dlouhá. Zkraťte název firmy nebo referenci faktury.',
+    invoiceQrProfileWarningTitle: 'Chybí údaje pro QR platbu',
+    invoiceQrProfileWarningDescription:
+      'Zvolený typ se uloží, ale QR kód se do PDF faktury nevloží, dokud údaje nedoplníte.',
+    invoiceQrProfileCta: 'Doplnit ve firemním profilu',
+    invoiceQrPdfWarningTitle: 'QR platba nebude ve faktuře',
+    invoiceQrPdfWarningMessage:
+      'QR kód se nepodařilo vytvořit: {reason}\n\nMůžete pokračovat bez QR kódu, nebo doplnit chybějící údaje.',
+    invoiceQrContinueWithoutQr: 'Pokračovat bez QR',
+    invoiceQrEditInvoice: 'Upravit fakturu',
     invoiceDefaultExportFormat: 'Výchozí XML formát exportu',
     invoiceDefaultExportFormatNone: 'Žádný (zeptat se při exportu)',
     invoiceSeriesTitle: 'Číselná řada faktur',
@@ -1245,6 +1322,12 @@ const cs = {
     startSetup: 'Začít nastavení',
     skipGuide: 'Přeskočit průvodce',
     startTitle: 'Jak chcete začít?',
+    offlineFirstTitle: 'Data zůstávají na tomto zařízení',
+    offlineFirstDescription:
+      'Faktoro funguje bez účtu. Online synchronizace je volitelná a zálohy jsou nejjistější způsob ochrany lokálních dat.',
+    offlineFirstBackup: 'Zálohy vytvářejte pravidelně a ukládejte je na bezpečné místo.',
+    offlineFirstSync:
+      'Sync použijte jen tehdy, když chcete připojit vlastní server nebo další zařízení.',
     startNewTitle: 'Začínám od nuly',
     startNewDesc: 'Nová firma, žádná existující data.',
     startDeviceTitle: 'Přidat / obnovit toto zařízení',
@@ -1259,6 +1342,13 @@ const cs = {
     profileNote: 'Zbytek vyplníte kdykoliv v Nastavení → Profil firmy.',
     profileCountryLabel: 'Země',
     profileRegistryLabel: 'Registr pro dohledání podle IČ',
+    invoiceProfileTitle: 'Fakturační údaje',
+    invoiceProfileSubtitle:
+      'Doplňte volitelné kontaktní a platební údaje teď, nebo tento krok přeskočte a vraťte se k nim později.',
+    invoiceProfileOptionalNote:
+      'Tyto údaje zlepší PDF faktury, platební QR kódy a strukturované exporty.',
+    invoiceProfileSaveContinue: 'Uložit a pokračovat',
+    invoiceProfileSkip: 'Teď ne',
     vatTitle: 'Sazby DPH',
     vatSubtitle: 'Aplikace potřebuje aktuální sazby DPH pro správný výpočet daně na fakturách.',
     vatAutoLoadHint:
@@ -1288,6 +1378,10 @@ const cs = {
     donePriceList: 'Nastavit ceník',
     donePriceListDesc:
       'Definujte služby se sazbami — při sledování času a fakturaci pak stačí jen vybrat.',
+    doneBackup: 'Vytvořit zálohu',
+    doneBackupDesc: 'Uložte offline zálohu dřív, než se začnete spoléhat na lokální data.',
+    doneSync: 'Nastavit synchronizaci',
+    doneSyncDesc: 'Připojte toto zařízení k vlastnímu Faktoro sync serveru.',
     doneGoToApp: 'Přejít do aplikace',
     connectTitle: 'Přidat nebo obnovit toto zařízení',
     connectSubtitle:
@@ -1331,6 +1425,7 @@ const cs = {
     invoicedRevenue: 'Fakturováno',
     unbilledEstimate: 'Nefakt. odhad',
     timeByClient: 'Čas podle klientů',
+    billableTimeByClient: 'Fakturovaný čas podle klientů',
     revenueByClient: 'Tržby podle klientů',
     noData: 'Žádná data pro vybrané období.',
     nextStepsTitle: 'Další kroky',

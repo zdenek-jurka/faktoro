@@ -48,12 +48,13 @@ function buildTimesheetNumberFromSettings(
     syncDeviceName?: string;
     syncDeviceId?: string;
   },
+  nextNumberOverride?: number,
 ): string {
   return buildSeriesIdentifier({
     pattern: settings?.timesheetSeriesPattern,
     fallbackPattern: 'TS-YY-####',
     prefix: settings?.timesheetSeriesPrefix,
-    nextNumber: settings?.timesheetSeriesNextNumber,
+    nextNumber: nextNumberOverride ?? settings?.timesheetSeriesNextNumber,
     padding: settings?.timesheetSeriesPadding,
     perDevice: settings?.timesheetSeriesPerDevice,
     deviceCode: settings?.timesheetSeriesDeviceCode,
@@ -63,6 +64,36 @@ function buildTimesheetNumberFromSettings(
   });
 }
 
+function getCurrentTimesheetSeriesNextNumber(settings?: AppSettingsModel): number {
+  return Math.max(1, Math.floor(settings?.timesheetSeriesNextNumber || 1));
+}
+
+async function resolveNextAvailableTimesheetNumber(
+  timesheetCollection: ReturnType<typeof database.get<TimesheetModel>>,
+  settings?: AppSettingsModel,
+  deviceSettings?: {
+    syncDeviceName?: string;
+    syncDeviceId?: string;
+  },
+): Promise<{ timesheetNumber: string; nextNumberUsed: number }> {
+  let nextNumber = getCurrentTimesheetSeriesNextNumber(settings);
+
+  for (let attempt = 0; attempt < 500; attempt += 1) {
+    const candidate = buildTimesheetNumberFromSettings(settings, deviceSettings, nextNumber);
+    const existing = await timesheetCollection
+      .query(Q.where('timesheet_number', candidate), Q.take(1))
+      .fetch();
+
+    if (existing.length === 0) {
+      return { timesheetNumber: candidate, nextNumberUsed: nextNumber };
+    }
+
+    nextNumber += 1;
+  }
+
+  throw new Error('timesheet.number_generation_failed');
+}
+
 export function getTimesheets() {
   return database.get<TimesheetModel>(TimesheetModel.table).query(Q.sortBy('created_at', Q.desc));
 }
@@ -70,7 +101,13 @@ export function getTimesheets() {
 export async function getSuggestedTimesheetNumber(): Promise<string> {
   const settings = await getSettings();
   const deviceSettings = await getDeviceSyncSettings(settings);
-  return buildTimesheetNumberFromSettings(settings, deviceSettings);
+  const timesheetCollection = database.get<TimesheetModel>(TimesheetModel.table);
+  const { timesheetNumber } = await resolveNextAvailableTimesheetNumber(
+    timesheetCollection,
+    settings,
+    deviceSettings,
+  );
+  return timesheetNumber;
 }
 
 function getEntryEffectiveEndTime(entry: TimeEntryModel): number {
@@ -100,7 +137,6 @@ export async function createTimesheetFromPeriod(
 
   return database.write(async () => {
     const client = await clientCollection.find(input.clientId);
-    const timesheetNumber = buildTimesheetNumberFromSettings(settings, deviceSettings);
     const baseQuery = [
       Q.where('client_id', input.clientId),
       Q.where('timesheet_id', null),
@@ -126,6 +162,12 @@ export async function createTimesheetFromPeriod(
     if (entries.length === 0) {
       return { timesheet: null, entriesCount: 0 };
     }
+
+    const { timesheetNumber, nextNumberUsed } = await resolveNextAvailableTimesheetNumber(
+      timesheetCollection,
+      settings,
+      deviceSettings,
+    );
 
     const resolvedPeriodFrom =
       input.periodType === 'all'
@@ -157,8 +199,7 @@ export async function createTimesheetFromPeriod(
     }
 
     await settings.update((currentSettings: AppSettingsModel) => {
-      const current = Math.max(1, Math.floor(currentSettings.timesheetSeriesNextNumber || 1));
-      currentSettings.timesheetSeriesNextNumber = current + 1;
+      currentSettings.timesheetSeriesNextNumber = nextNumberUsed + 1;
     });
 
     return { timesheet, entriesCount: entries.length };

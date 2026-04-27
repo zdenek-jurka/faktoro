@@ -4,6 +4,7 @@ import ClientModel from '@/model/ClientModel';
 import TimeEntryModel from '@/model/TimeEntryModel';
 import { getLocalDeviceContext } from '@/repositories/device-sync-settings-repository';
 import { DEFAULT_CURRENCY_CODE, normalizeCurrencyCode } from '@/utils/currency-utils';
+import { requestAutoSync } from '@/utils/auto-sync-request';
 import {
   normalizeTimerLimitMode,
   sanitizeTimerLimitMinutes,
@@ -139,11 +140,13 @@ export async function markTimeEntrySoftLimitNotified(
       e.softLimitNotifiedAt = notifiedAt;
     });
   });
+  requestAutoSync('time-entry-soft-limit-notified');
 }
 
 export type UpdateTimeEntryInput = {
   id: string;
   description?: string;
+  startTime?: number;
   endTime?: number;
   duration?: number;
   isRunning?: boolean;
@@ -157,7 +160,7 @@ export async function createTimeEntry(input: CreateTimeEntryInput): Promise<Time
   const { deviceId, deviceName } = await getCurrentDeviceContext();
   const resolvedTimerLimits = await getEffectiveTimerLimitsForClient(input.clientId);
 
-  return await database.write(async () => {
+  const createdEntry = await database.write(async () => {
     const runningEntriesForDevice = await getRunningEntriesForDevice(timeEntries, deviceId);
     if (runningEntriesForDevice.length > 0) {
       throw new Error(TIME_ENTRY_LOCAL_RUNNING_EXISTS);
@@ -181,6 +184,9 @@ export async function createTimeEntry(input: CreateTimeEntryInput): Promise<Time
       entry.runningDeviceName = deviceName;
     });
   });
+
+  requestAutoSync('time-entry-created');
+  return createdEntry;
 }
 
 export async function updateTimeEntry(input: UpdateTimeEntryInput): Promise<void> {
@@ -193,6 +199,7 @@ export async function updateTimeEntry(input: UpdateTimeEntryInput): Promise<void
     }
     await entry.update((e: TimeEntryModel) => {
       if (input.description !== undefined) e.description = input.description;
+      if (input.startTime !== undefined) e.startTime = input.startTime;
       if (input.endTime !== undefined) e.endTime = input.endTime;
       if (input.duration !== undefined) e.duration = input.duration;
       if (input.isRunning !== undefined) e.isRunning = input.isRunning;
@@ -213,6 +220,7 @@ export async function updateTimeEntry(input: UpdateTimeEntryInput): Promise<void
       }
     });
   });
+  requestAutoSync('time-entry-updated');
 }
 
 export async function stopTimeEntry(id: string, endTimeOverride?: number): Promise<void> {
@@ -246,6 +254,7 @@ export async function stopTimeEntry(id: string, endTimeOverride?: number): Promi
       e.softLimitNotifiedAt = undefined;
     });
   });
+  requestAutoSync('time-entry-stopped');
 }
 
 export async function deleteTimeEntry(id: string): Promise<void> {
@@ -258,6 +267,7 @@ export async function deleteTimeEntry(id: string): Promise<void> {
     }
     await entry.markAsDeleted();
   });
+  requestAutoSync('time-entry-deleted');
 }
 
 export async function pauseTimeEntry(id: string): Promise<void> {
@@ -277,10 +287,12 @@ export async function pauseTimeEntry(id: string): Promise<void> {
       e.duration = duration;
     });
   });
+  requestAutoSync('time-entry-paused');
 }
 
 export async function resumeTimeEntry(id: string): Promise<void> {
   const timeEntries = database.get<TimeEntryModel>(TimeEntryModel.table);
+  let didResume = false;
 
   await database.write(async () => {
     const entry = await timeEntries.find(id);
@@ -296,8 +308,13 @@ export async function resumeTimeEntry(id: string): Promise<void> {
         e.pausedAt = undefined;
         e.totalPausedDuration = totalPausedDuration;
       });
+      didResume = true;
     }
   });
+
+  if (didResume) {
+    requestAutoSync('time-entry-resumed');
+  }
 }
 
 export async function updateRunningEntryDuration(id: string, duration: number): Promise<void> {
@@ -329,11 +346,13 @@ export async function stopRunningEntriesByDevice(targetDeviceId: string): Promis
   if (!trimmedDeviceId) return;
 
   const timeEntries = database.get<TimeEntryModel>(TimeEntryModel.table);
+  let stoppedCount = 0;
 
   await database.write(async () => {
     const runningEntries = await timeEntries
       .query(Q.where('is_running', true), Q.where('running_device_id', trimmedDeviceId))
       .fetch();
+    stoppedCount = runningEntries.length;
 
     const endTime = Date.now();
     for (const entry of runningEntries) {
@@ -358,6 +377,10 @@ export async function stopRunningEntriesByDevice(targetDeviceId: string): Promis
       });
     }
   });
+
+  if (stoppedCount > 0) {
+    requestAutoSync('time-entry-bulk-stopped');
+  }
 }
 
 export async function emergencyStopLocalRunningEntries(): Promise<number> {
@@ -365,7 +388,7 @@ export async function emergencyStopLocalRunningEntries(): Promise<number> {
   const normalizedDeviceId = normalizeDeviceId(deviceId);
   const timeEntries = database.get<TimeEntryModel>(TimeEntryModel.table);
 
-  return database.write(async () => {
+  const stoppedCount = await database.write(async () => {
     const runningEntries = await timeEntries.query(Q.where('is_running', true)).fetch();
     const stoppableEntries = runningEntries.filter((entry) => {
       const entryDeviceId = normalizeDeviceId(entry.runningDeviceId);
@@ -402,6 +425,12 @@ export async function emergencyStopLocalRunningEntries(): Promise<number> {
 
     return stoppableEntries.length;
   });
+
+  if (stoppedCount > 0) {
+    requestAutoSync('time-entry-bulk-stopped');
+  }
+
+  return stoppedCount;
 }
 
 export function getTimeEntryHardLimitStopTime(
@@ -443,11 +472,13 @@ export async function linkMissingTimesheetEntriesToPriceListItem(input: {
   rateCurrency?: string;
 }): Promise<void> {
   const timeEntries = database.get<TimeEntryModel>(TimeEntryModel.table);
+  let updatedCount = 0;
 
   await database.write(async () => {
     const entries = await timeEntries
       .query(Q.where('timesheet_id', input.timesheetId), Q.where('price_list_item_id', null))
       .fetch();
+    updatedCount = entries.length;
 
     for (const entry of entries) {
       await entry.update((e: TimeEntryModel) => {
@@ -459,6 +490,10 @@ export async function linkMissingTimesheetEntriesToPriceListItem(input: {
       });
     }
   });
+
+  if (updatedCount > 0) {
+    requestAutoSync('time-entry-linked');
+  }
 }
 
 export async function linkTimesheetEntryToPriceListItem(input: {
@@ -479,6 +514,7 @@ export async function linkTimesheetEntryToPriceListItem(input: {
       }
     });
   });
+  requestAutoSync('time-entry-linked');
 }
 
 export async function setTimesheetEntryRate(input: {
@@ -499,4 +535,5 @@ export async function setTimesheetEntryRate(input: {
       }
     });
   });
+  requestAutoSync('time-entry-rate-updated');
 }

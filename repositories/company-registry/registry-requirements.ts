@@ -4,6 +4,16 @@ export type CompanyRegistrySettingKey =
   | 'api_key'
   | 'api_token'
   | 'url'
+  | 'auth_type'
+  | 'bearer_token'
+  | 'api_key_header'
+  | 'api_key_value'
+  | 'basic_username'
+  | 'basic_password'
+  | 'oauth2_token_url'
+  | 'oauth2_client_id'
+  | 'oauth2_client_secret'
+  | 'oauth2_scope'
   | 'header_key'
   | 'header_value';
 

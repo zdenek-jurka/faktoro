@@ -2,6 +2,7 @@ export type InvoicePdfTemplateLabels = {
   title: string;
   taxDocumentTitle: string;
   invoiceNumber: string;
+  buyerReference: string;
   issueDate: string;
   taxableSupplyDate: string;
   dueDate: string;
@@ -58,6 +59,7 @@ export type BuildDefaultInvoicePdfHtmlInput = {
   includeVat: boolean;
   watermarkText?: string;
   invoiceNumber: string;
+  buyerReference?: string;
   issueAt?: number;
   taxableAt?: number;
   dueAt?: number;

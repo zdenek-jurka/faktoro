@@ -1,6 +1,7 @@
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { getPriceListUnitLabel } from '@/components/price-list/unit-options';
+import { PaymentQrModal } from '@/components/invoices/payment-qr-modal';
 import { IconSymbol, type IconSymbolName } from '@/components/ui/icon-symbol';
 import { OptionSheetModal } from '@/components/ui/option-sheet-modal';
 import {
@@ -70,7 +71,16 @@ import {
   isInvoiceCancellationDocument,
   isInvoiceVatPayer,
 } from '@/utils/invoice-status';
+import {
+  getPaymentQrExportRequirement,
+  isPaymentQrProfileRequirement,
+  normalizePaymentQrType,
+  type PaymentQrExportRequirement,
+  type PaymentQrType,
+} from '@/utils/payment-qr-requirements';
+import { buildPaymentQrPayload, type PaymentQrPayloadLabels } from '@/utils/payment-qr-payload';
 import { buildPdfLogoHtml } from '@/utils/pdf-logo';
+import { printHtmlToPdfCacheFile } from '@/utils/pdf-export-file';
 import { formatPrice } from '@/utils/price-utils';
 import { isIos } from '@/utils/platform';
 import { Q } from '@nozbe/watermelondb';
@@ -89,7 +99,6 @@ type LastInvoiceExportAction =
   | `structured:${InvoiceXmlFormat}`
   | `integration:${string}`;
 
-type PaymentQrType = 'none' | 'spayd' | 'epc' | 'swiss';
 type StructuredExportFormat = 'none' | InvoiceXmlFormat;
 type PendingExportSheetAction =
   | 'pdf'
@@ -100,11 +109,6 @@ type PendingExportSheetAction =
   | `structured:${InvoiceXmlFormat}`
   | `integration:${string}`
   | null;
-type PaymentQrLabels = {
-  receiverFallback: string;
-  invoiceReference: string;
-};
-
 type InvoicePdfExportResult = {
   fileName: string;
   uri: string;
@@ -124,6 +128,7 @@ type HeaderDraft = {
   buyerMode?: InvoiceDraftBuyerMode;
   buyerSnapshot?: BuyerSnapshot;
   invoiceNumber: string;
+  buyerReference?: string;
   issuedDate: string;
   taxableDate?: string;
   dueDate: string;
@@ -145,6 +150,8 @@ function getStructuredExportFieldLabel(
       return LL.settings.address();
     case 'bankAccount':
       return LL.settings.bankAccount();
+    case 'buyerReference':
+      return LL.invoices.buyerReference();
     case 'city':
       return LL.clients.city();
     case 'companyId':
@@ -195,12 +202,10 @@ function getStructuredExportRequirementLabel(
       return LL.invoices.structuredExportRequirementElectronicAddress();
     case 'paymentInstructions':
       return LL.invoices.structuredExportRequirementPaymentInstructions();
-    case 'sellerPostalAddress':
-      return LL.invoices.structuredExportRequirementSellerPostalAddress();
+    case 'sellerContactName':
+      return LL.invoices.structuredExportRequirementSellerContactName();
     case 'taxBreakdown':
       return LL.invoices.structuredExportRequirementTaxBreakdown();
-    case 'taxScheme':
-      return LL.invoices.structuredExportRequirementTaxScheme();
     case 'unitCode':
       return LL.invoices.structuredExportRequirementUnitCode({
         line: (issue.lineIndex ?? 0) + 1,
@@ -261,6 +266,33 @@ function getFirstStructuredExportFixTarget(
   return issues.find((issue) => issue.fixTarget)?.fixTarget ?? null;
 }
 
+function formatPaymentQrRequirement(
+  LL: TranslationFunctions,
+  requirement: PaymentQrExportRequirement,
+): string {
+  switch (requirement) {
+    case 'epcCurrency':
+      return LL.settings.invoiceQrCurrencyRequiredEpc();
+    case 'epcPayloadTooLong':
+      return LL.settings.invoiceQrPayloadTooLongEpc();
+    case 'epcIban':
+    case 'epcSwift':
+      return LL.settings.invoiceQrBankRequiredEpc();
+    case 'paymentAmount':
+      return LL.settings.invoiceQrAmountInvalid();
+    case 'spaydAccount':
+      return LL.settings.invoiceQrBankRequiredSpayd();
+    case 'swissAddress':
+      return LL.settings.invoiceQrSellerAddressRequiredSwiss();
+    case 'swissCurrency':
+      return LL.settings.invoiceQrCurrencyRequiredSwiss();
+    case 'swissIban':
+      return LL.settings.invoiceQrBankRequiredSwiss();
+    case 'swissQrIbanReference':
+      return LL.settings.invoiceQrBankRequiredSwissStandardIban();
+  }
+}
+
 function addDaysToLocalISODate(baseDate: string, days: number): string {
   const normalizedDays = Math.max(0, Math.floor(days));
   const [year, month, day] = baseDate.split('-').map(Number);
@@ -286,180 +318,11 @@ function getPaymentMethodLabel(
   return LL.invoices.paymentMethodBankTransfer();
 }
 
-function sanitizeText(value?: string): string {
-  return (value || '').replaceAll('*', '').replaceAll('\n', ' ').trim();
-}
-
-function normalizeIban(iban?: string): string {
-  return (iban || '').replace(/\s+/g, '').toUpperCase();
-}
-
-function mod97(value: string): number {
-  let remainder = 0;
-  for (const char of value) {
-    const digit = Number(char);
-    if (!Number.isFinite(digit)) continue;
-    remainder = (remainder * 10 + digit) % 97;
-  }
-  return remainder;
-}
-
-function toIbanNumeric(countryCode: string): string {
-  return countryCode
-    .toUpperCase()
-    .split('')
-    .map((char) => String(char.charCodeAt(0) - 55))
-    .join('');
-}
-
-function convertCzechBankAccountToIban(bankAccount?: string): string | null {
-  if (!bankAccount) return null;
-  const compact = bankAccount.replace(/\s+/g, '');
-  const [accountPartRaw, bankCodeRaw] = compact.split('/');
-  if (!accountPartRaw || !bankCodeRaw) return null;
-
-  const bankCode = bankCodeRaw.replace(/\D/g, '');
-  if (bankCode.length !== 4) return null;
-
-  const [prefixRaw, numberRawMaybe] = accountPartRaw.split('-');
-  const numberRaw = numberRawMaybe ?? prefixRaw;
-  const prefix = numberRawMaybe ? prefixRaw : '';
-
-  const prefixDigits = prefix.replace(/\D/g, '');
-  const numberDigits = numberRaw.replace(/\D/g, '');
-  if (!numberDigits || prefixDigits.length > 6 || numberDigits.length > 10) return null;
-
-  const bban = `${bankCode}${prefixDigits.padStart(6, '0')}${numberDigits.padStart(10, '0')}`;
-  const checkInput = `${bban}${toIbanNumeric('CZ')}00`;
-  const checkDigits = String(98 - mod97(checkInput)).padStart(2, '0');
-  return `CZ${checkDigits}${bban}`;
-}
-
-function resolveSpaydAccount(seller: SellerSnapshot): string | null {
-  const iban = normalizeIban(seller.iban);
-  if (/^[A-Z]{2}\d{13,32}$/.test(iban)) {
-    return iban;
-  }
-
-  const converted = convertCzechBankAccountToIban(seller.bankAccount);
-  if (converted) return converted;
-
-  const normalizedBankAccount = normalizeIban(seller.bankAccount);
-  if (/^[A-Z]{2}\d{13,32}$/.test(normalizedBankAccount)) {
-    return normalizedBankAccount;
-  }
-  return null;
-}
-
-function normalizeAmount(value: number): string {
-  return value.toFixed(2);
-}
-
-function buildSpaydPayload(
-  invoice: InvoiceModel,
-  seller: SellerSnapshot,
-  labels: PaymentQrLabels,
-): string | null {
-  const account = resolveSpaydAccount(seller);
-  if (!account) return null;
-  const amount = normalizeAmount(invoice.total);
-  const currency = normalizeCurrencyCode(invoice.currency).toUpperCase();
-  const variableSymbol = invoice.invoiceNumber.replace(/\D/g, '').slice(0, 10);
-  const parts = [
-    'SPD*1.0',
-    `ACC:${account}`,
-    `AM:${amount}`,
-    `CC:${currency}`,
-    `MSG:${sanitizeText(labels.invoiceReference)}`,
-  ];
-  if (variableSymbol) {
-    parts.push(`X-VS:${variableSymbol}`);
-  }
-  return parts.join('*');
-}
-
-function buildEpcPayload(
-  invoice: InvoiceModel,
-  seller: SellerSnapshot,
-  labels: PaymentQrLabels,
-): string | null {
-  const iban = normalizeIban(seller.iban);
-  if (!iban) return null;
-  if (normalizeCurrencyCode(invoice.currency).toUpperCase() !== 'EUR') return null;
-
-  const bic = (seller.swift || '').replace(/\s+/g, '').toUpperCase();
-  const name = sanitizeText(seller.companyName || labels.receiverFallback).slice(0, 70);
-  const amount = normalizeAmount(invoice.total);
-  const reference = sanitizeText(labels.invoiceReference).slice(0, 140);
-
-  return ['BCD', '002', '1', 'SCT', bic, name, iban, `EUR${amount}`, '', '', reference].join('\n');
-}
-
-function buildSwissPayload(
-  invoice: InvoiceModel,
-  seller: SellerSnapshot,
-  labels: PaymentQrLabels,
-): string | null {
-  const iban = normalizeIban(seller.iban);
-  if (!iban || (!iban.startsWith('CH') && !iban.startsWith('LI'))) return null;
-  const currency = normalizeCurrencyCode(invoice.currency).toUpperCase();
-  if (currency !== 'CHF' && currency !== 'EUR') return null;
-
-  const name = sanitizeText(seller.companyName);
-  const address = sanitizeText(seller.address);
-  const city = sanitizeText(seller.city);
-  const postal = sanitizeText(seller.postalCode);
-  const country = sanitizeText(seller.country || 'CH').toUpperCase();
-  if (!name || !address || !city || !postal || !country) return null;
-
-  const amount = normalizeAmount(invoice.total);
-  const message = sanitizeText(labels.invoiceReference).slice(0, 140);
-
-  return [
-    'SPC',
-    '0200',
-    '1',
-    iban,
-    'K',
-    name,
-    address,
-    `${postal} ${city}`.trim(),
-    '',
-    '',
-    country,
-    '',
-    '',
-    '',
-    '',
-    '',
-    '',
-    '',
-    amount,
-    currency,
-    '',
-    '',
-    '',
-    '',
-    '',
-    '',
-    '',
-    'NON',
-    '',
-    message,
-    'EPD',
-  ].join('\n');
-}
-
-function buildPaymentQrPayload(
-  qrType: PaymentQrType,
-  invoice: InvoiceModel,
-  seller: SellerSnapshot,
-  labels: PaymentQrLabels,
-): string | null {
-  if (qrType === 'spayd') return buildSpaydPayload(invoice, seller, labels);
-  if (qrType === 'epc') return buildEpcPayload(invoice, seller, labels);
-  if (qrType === 'swiss') return buildSwissPayload(invoice, seller, labels);
-  return null;
+function getPaymentQrTypeLabel(LL: TranslationFunctions, qrType: PaymentQrType): string {
+  if (qrType === 'spayd') return LL.settings.invoiceQrTypeSpayd();
+  if (qrType === 'epc') return LL.settings.invoiceQrTypeEpc();
+  if (qrType === 'swiss') return LL.settings.invoiceQrTypeSwiss();
+  return LL.settings.invoiceQrTypeNone();
 }
 
 async function buildPaymentQrHtmlEmbedded(
@@ -511,6 +374,7 @@ export default function InvoiceDetailScreen() {
   const [exportingTarget, setExportingTarget] = useState<
     'pdf' | 'open_pdf' | 'save_pdf' | 'html' | 'xml' | null
   >(null);
+  const [isPaymentQrModalVisible, setIsPaymentQrModalVisible] = useState(false);
   const [structuredExportFormat, setStructuredExportFormat] =
     useState<StructuredExportFormat>('none');
   const [isExportFormatSheetVisible, setIsExportFormatSheetVisible] = useState(false);
@@ -775,6 +639,7 @@ export default function InvoiceDetailScreen() {
       buyerMode: invoice.clientId ? 'client' : 'one_off',
       buyerSnapshot: buyer,
       invoiceNumber: invoice.invoiceNumber,
+      buyerReference: invoice.buyerReference || '',
       issuedDate: toLocalISODate(invoice.issuedAt),
       taxableDate: invoice.taxableAt ? toLocalISODate(invoice.taxableAt) : undefined,
       dueDate: invoice.dueAt ? toLocalISODate(invoice.dueAt) : toLocalISODate(invoice.issuedAt),
@@ -826,6 +691,73 @@ export default function InvoiceDetailScreen() {
     }
 
     openEditInvoiceDraft();
+  };
+
+  const getPaymentQrLabels = (): PaymentQrPayloadLabels => ({
+    receiverFallback: LLExport.invoices.exportReceiverFallback(),
+    invoiceReference: LLExport.invoices.exportInvoiceNote({
+      invoiceNumber: invoice?.invoiceNumber || '',
+    }),
+  });
+
+  const showPaymentQrExportWarning = (
+    requirement: PaymentQrExportRequirement,
+  ): Promise<'cancel' | 'continue' | 'fix'> => {
+    const reason = formatPaymentQrRequirement(LLExport, requirement);
+    const fixText = isPaymentQrProfileRequirement(requirement)
+      ? LLExport.settings.invoiceQrProfileCta()
+      : LLExport.settings.invoiceQrEditInvoice();
+
+    return new Promise((resolve) => {
+      Alert.alert(
+        LLExport.settings.invoiceQrPdfWarningTitle(),
+        LLExport.settings.invoiceQrPdfWarningMessage({ reason }),
+        [
+          {
+            text: LLExport.common.cancel(),
+            style: 'cancel',
+            onPress: () => resolve('cancel'),
+          },
+          {
+            text: LLExport.settings.invoiceQrContinueWithoutQr(),
+            onPress: () => resolve('continue'),
+          },
+          {
+            text: fixText,
+            onPress: () => resolve('fix'),
+          },
+        ],
+        {
+          cancelable: true,
+          onDismiss: () => resolve('cancel'),
+        },
+      );
+    });
+  };
+
+  const confirmPaymentQrExport = async (): Promise<boolean> => {
+    if (!invoice) return false;
+
+    const qrType = normalizePaymentQrType(seller.qrType);
+    const paymentQrLabels = getPaymentQrLabels();
+    const requirement = getPaymentQrExportRequirement(qrType, seller, {
+      invoiceCurrency: invoice.currency,
+      totalAmount: invoice.total,
+      receiverName: paymentQrLabels.receiverFallback,
+      invoiceReference: paymentQrLabels.invoiceReference,
+    });
+    if (!requirement) return true;
+
+    const decision = await showPaymentQrExportWarning(requirement);
+    if (decision === 'continue') return true;
+    if (decision === 'fix') {
+      if (isPaymentQrProfileRequirement(requirement)) {
+        router.push('/settings/business-profile');
+      } else {
+        handleEditInvoice();
+      }
+    }
+    return false;
   };
 
   const buildCopyItemsDraft = (
@@ -883,6 +815,7 @@ export default function InvoiceDetailScreen() {
       buyerMode: invoice.clientId ? 'client' : 'one_off',
       buyerSnapshot: buyer,
       invoiceNumber: nextInvoiceNumber,
+      buyerReference: invoice.buyerReference || '',
       issuedDate: today,
       taxableDate: includeTaxableDate ? today : undefined,
       dueDate,
@@ -997,13 +930,8 @@ export default function InvoiceDetailScreen() {
         maxHeight: null,
       },
     );
-    const qrType = (seller.qrType || 'none') as PaymentQrType;
-    const paymentQrLabels: PaymentQrLabels = {
-      receiverFallback: LLExport.invoices.exportReceiverFallback(),
-      invoiceReference: LLExport.invoices.exportInvoiceNote({
-        invoiceNumber: invoice.invoiceNumber,
-      }),
-    };
+    const qrType = normalizePaymentQrType(seller.qrType);
+    const paymentQrLabels = getPaymentQrLabels();
     const paymentQrPayload = buildPaymentQrPayload(qrType, invoice, seller, paymentQrLabels);
     const paymentQrHtml = await buildPaymentQrHtmlEmbedded(
       qrType,
@@ -1068,6 +996,7 @@ export default function InvoiceDetailScreen() {
       includeVat,
       watermarkText,
       invoiceNumber: invoice.invoiceNumber,
+      buyerReference: invoice.buyerReference,
       issueAt: invoice.issuedAt,
       taxableAt: invoice.taxableAt,
       dueAt: invoice.dueAt,
@@ -1083,6 +1012,7 @@ export default function InvoiceDetailScreen() {
         title: documentTitle,
         taxDocumentTitle: documentTitle,
         invoiceNumber: LLExport.invoices.exportInvoiceNumberLabel(),
+        buyerReference: LLExport.invoices.exportBuyerReferenceLabel(),
         issueDate: LLExport.invoices.issueDate(),
         taxableSupplyDate: LLExport.invoices.taxableSupplyDate(),
         dueDate: LLExport.invoices.dueDate(),
@@ -1153,28 +1083,12 @@ export default function InvoiceDetailScreen() {
   };
 
   const buildInvoicePdfFile = async (): Promise<InvoicePdfExportResult> => {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const FileSystemLegacy = require('expo-file-system/legacy');
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const Print = require('expo-print');
-
-    const cacheDirectory: string | undefined = FileSystemLegacy.cacheDirectory;
-    if (!cacheDirectory) {
-      throw new Error(LLExport.invoices.exportError());
-    }
-
     const html = await buildInvoiceHtmlDocument();
-
-    const pdfResult = await Print.printToFileAsync({ html });
-    const fileName = `${getInvoiceExportFileBaseName()}.pdf`;
-    const targetUri = `${cacheDirectory}${fileName}`;
-    await FileSystemLegacy.deleteAsync(targetUri, { idempotent: true });
-    await FileSystemLegacy.copyAsync({
-      from: pdfResult.uri,
-      to: targetUri,
+    return printHtmlToPdfCacheFile({
+      html,
+      fileName: `${getInvoiceExportFileBaseName()}.pdf`,
+      errorMessage: LLExport.invoices.exportError(),
     });
-
-    return { fileName, uri: targetUri };
   };
 
   const buildInvoiceHtmlFile = async (): Promise<InvoiceHtmlExportResult> => {
@@ -1198,6 +1112,7 @@ export default function InvoiceDetailScreen() {
 
   const exportInvoicePdf = async (prebuiltPdfFile?: InvoicePdfExportResult) => {
     if (!invoice) return;
+    if (!prebuiltPdfFile && !(await confirmPaymentQrExport())) return;
 
     try {
       setExportingTarget('pdf');
@@ -1260,6 +1175,7 @@ export default function InvoiceDetailScreen() {
 
   const handleOpenPdf = async () => {
     if (!invoice) return;
+    if (!(await confirmPaymentQrExport())) return;
 
     let pdfFile: InvoicePdfExportResult | null = null;
     try {
@@ -1312,6 +1228,7 @@ export default function InvoiceDetailScreen() {
 
   const saveInvoicePdf = async (prebuiltPdfFile?: InvoicePdfExportResult) => {
     if (!invoice) return;
+    if (!prebuiltPdfFile && !(await confirmPaymentQrExport())) return;
 
     try {
       setExportingTarget('save_pdf');
@@ -1719,6 +1636,44 @@ export default function InvoiceDetailScreen() {
           }
         : null
     : null;
+  const paymentQrType = normalizePaymentQrType(seller.qrType);
+  const paymentQrLabels = getPaymentQrLabels();
+  const paymentQrRequirement = invoice
+    ? getPaymentQrExportRequirement(paymentQrType, seller, {
+        invoiceCurrency: invoice.currency,
+        totalAmount: invoice.total,
+        receiverName: paymentQrLabels.receiverFallback,
+        invoiceReference: paymentQrLabels.invoiceReference,
+      })
+    : null;
+  const paymentQrPayload =
+    invoice && paymentQrType !== 'none' && !paymentQrRequirement
+      ? buildPaymentQrPayload(paymentQrType, invoice, seller, paymentQrLabels)
+      : null;
+  const paymentQrTypeLabel = getPaymentQrTypeLabel(LL, paymentQrType);
+  const paymentQrUnavailableReason =
+    paymentQrType !== 'none'
+      ? paymentQrRequirement
+        ? formatPaymentQrRequirement(LL, paymentQrRequirement)
+        : invoice && !paymentQrPayload
+          ? LL.invoices.paymentQrBuildFailed()
+          : null
+      : null;
+  const paymentQrFixLabel = paymentQrRequirement
+    ? isPaymentQrProfileRequirement(paymentQrRequirement)
+      ? LL.settings.invoiceQrProfileCta()
+      : LL.settings.invoiceQrEditInvoice()
+    : null;
+
+  const handlePaymentQrFix = () => {
+    if (!paymentQrRequirement) return;
+    setIsPaymentQrModalVisible(false);
+    if (isPaymentQrProfileRequirement(paymentQrRequirement)) {
+      router.push('/settings/business-profile');
+      return;
+    }
+    handleEditInvoice();
+  };
 
   return (
     <ThemedView style={styles.container}>
@@ -1807,6 +1762,11 @@ export default function InvoiceDetailScreen() {
                 style={[styles.metaText, styles.statusText, { color: palette.destructive }]}
               >
                 {statusLabel}
+              </ThemedText>
+            ) : null}
+            {invoice.buyerReference ? (
+              <ThemedText style={styles.metaText}>
+                {LL.invoices.buyerReference()}: {invoice.buyerReference}
               </ThemedText>
             ) : null}
             <ThemedText style={styles.metaText}>
@@ -1930,6 +1890,43 @@ export default function InvoiceDetailScreen() {
               </Pressable>
             </View>
           </View>
+          {paymentQrType !== 'none' ? (
+            <Pressable
+              style={({ pressed }) => [
+                styles.paymentQrCta,
+                {
+                  backgroundColor: palette.cardBackground,
+                  borderColor: palette.border,
+                  opacity: pressed ? 0.72 : 1,
+                },
+              ]}
+              onPress={() => setIsPaymentQrModalVisible(true)}
+              accessibilityRole="button"
+              accessibilityLabel={LL.invoices.paymentQrAction()}
+            >
+              <View
+                style={[
+                  styles.paymentQrCtaIcon,
+                  { backgroundColor: withOpacity(palette.timeHighlight, 0.12) },
+                ]}
+              >
+                <IconSymbol name="qrcode.viewfinder" size={18} color={palette.timeHighlight} />
+              </View>
+              <View style={styles.paymentQrCtaText}>
+                <ThemedText style={styles.paymentQrCtaTitle} numberOfLines={1}>
+                  {LL.invoices.paymentQrAction()}
+                </ThemedText>
+                <ThemedText
+                  style={[styles.paymentQrCtaMeta, { color: palette.textSecondary }]}
+                  numberOfLines={1}
+                >
+                  {paymentQrTypeLabel} -{' '}
+                  {formatPrice(invoice.total, normalizeCurrencyCode(invoice.currency), intlLocale)}
+                </ThemedText>
+              </View>
+              <IconSymbol name="chevron.right" size={17} color={palette.textMuted} />
+            </Pressable>
+          ) : null}
           <FlatList
             data={items}
             keyExtractor={(item) => item.id}
@@ -2050,6 +2047,22 @@ export default function InvoiceDetailScreen() {
               ];
             })()}
           />
+          <PaymentQrModal
+            visible={isPaymentQrModalVisible}
+            payload={paymentQrPayload}
+            qrTypeLabel={paymentQrTypeLabel}
+            amountLabel={formatPrice(
+              invoice.total,
+              normalizeCurrencyCode(invoice.currency),
+              intlLocale,
+            )}
+            receiverName={seller.companyName || paymentQrLabels.receiverFallback}
+            reference={paymentQrLabels.invoiceReference}
+            unavailableReason={paymentQrUnavailableReason}
+            fixLabel={paymentQrFixLabel}
+            onClose={() => setIsPaymentQrModalVisible(false)}
+            onFix={handlePaymentQrFix}
+          />
         </>
       ) : (
         <ThemedView style={styles.emptyState}>
@@ -2137,6 +2150,36 @@ const styles = StyleSheet.create({
     marginRight: -6,
   },
   exportRow: { flexDirection: 'row', gap: 8, marginBottom: 12, alignItems: 'stretch' },
+  paymentQrCta: {
+    minHeight: 54,
+    borderRadius: 12,
+    borderWidth: 1,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    marginBottom: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  paymentQrCtaIcon: {
+    width: 30,
+    height: 30,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  paymentQrCtaText: {
+    flex: 1,
+    minWidth: 0,
+  },
+  paymentQrCtaTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  paymentQrCtaMeta: {
+    marginTop: 1,
+    fontSize: 12,
+  },
   listContent: { paddingBottom: 24 },
   row: { paddingHorizontal: 14, paddingVertical: 12, position: 'relative' },
   rowFirst: { borderTopLeftRadius: 10, borderTopRightRadius: 10 },

@@ -4,6 +4,7 @@ import { BorderRadius, FontSizes, Spacing } from '@/constants/theme';
 import { usePalette } from '@/hooks/use-palette';
 import React, { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
+import { DismissibleSwipeHint } from './dismissible-swipe-hint';
 import { IconButton } from './icon-button';
 import { IconSymbol, IconSymbolName } from './icon-symbol';
 import { SwipeableRow } from './swipeable-row';
@@ -33,6 +34,10 @@ interface SwipeableListProps<T> {
   itemBackgroundColor?: string;
   /** Show add button in header */
   showAddButton?: boolean;
+  /** Persisted key for a dismissible swipe-actions hint. */
+  swipeHintKey?: string;
+  /** Optional custom text for the dismissible swipe-actions hint. */
+  swipeHintText?: string;
 }
 
 export function SwipeableList<T>({
@@ -48,6 +53,8 @@ export function SwipeableList<T>({
   emptyState,
   itemBackgroundColor,
   showAddButton = true,
+  swipeHintKey,
+  swipeHintText,
 }: SwipeableListProps<T>) {
   const palette = usePalette();
   const backgroundColor = itemBackgroundColor || palette.cardBackground;
@@ -77,6 +84,13 @@ export function SwipeableList<T>({
           />
         )}
       </View>
+
+      <DismissibleSwipeHint
+        hintKey={swipeHintKey}
+        text={swipeHintText}
+        visible={items.length > 0}
+        style={styles.swipeHint}
+      />
 
       {/* List */}
       {items.length === 0 ? (
@@ -154,6 +168,9 @@ const styles = StyleSheet.create({
   countText: {
     fontSize: 13,
     fontWeight: '600',
+  },
+  swipeHint: {
+    marginBottom: Spacing.md,
   },
   emptyText: {
     fontSize: 14,

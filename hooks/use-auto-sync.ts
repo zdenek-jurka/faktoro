@@ -18,6 +18,8 @@ import {
   SYNC_TABLES,
 } from '@/repositories/sync-repository';
 import { getCurrentDeviceRunningTimeEntry } from '@/repositories/time-entry-repository';
+import { subscribeToAutoSyncRequests } from '@/utils/auto-sync-request';
+import { Q } from '@nozbe/watermelondb';
 import { useEffect, useRef } from 'react';
 import { AppState } from 'react-native';
 
@@ -25,6 +27,7 @@ const AUTO_SYNC_INTERVAL_MS = 30000;
 const WS_SAFETY_SYNC_INTERVAL_MS = 180000;
 const HEALTH_TIMEOUT_MS = 4500;
 const LOCAL_PUSH_DEBOUNCE_MS = 1200;
+const POST_SYNC_DIRTY_CHECK_DELAY_MS = 150;
 // Remote WS events only tell peers to pull after another device has already pushed.
 // We therefore watch every syncable local table here so newly created records do not
 // sit on the originating device until the next poll/foreground/manual sync.
@@ -62,10 +65,32 @@ async function isServerReachable(serverUrl: string): Promise<boolean> {
   }
 }
 
+async function hasPendingLocalPushChanges(): Promise<boolean> {
+  try {
+    for (const table of LOCAL_SYNC_TRIGGER_TABLES) {
+      const dirtyRows = await database
+        .get(table)
+        .query(
+          Q.or(Q.where('_status', Q.notEq('synced')), Q.where('_changed', Q.notEq(''))),
+          Q.take(1),
+        )
+        .fetch();
+      if (dirtyRows.length > 0) {
+        return true;
+      }
+    }
+  } catch (error) {
+    console.error('[auto-sync] failed to inspect pending local changes', error);
+  }
+
+  return false;
+}
+
 export function useAutoSync(): void {
   const syncRunningRef = useRef(false);
   const pendingSyncRef = useRef(false);
   const suppressLocalChangeSchedulingRef = useRef(false);
+  const localChangeDuringSuppressionRef = useRef(false);
   const localChangesInitializedRef = useRef(false);
   const lastReachableRef = useRef(false);
   const lastSuccessfulSyncAtRef = useRef(0);
@@ -193,14 +218,19 @@ export function useAutoSync(): void {
         return;
       }
 
+      let syncCompleted = false;
       syncRunningRef.current = true;
       suppressLocalChangeSchedulingRef.current = true;
       try {
         await runOnlineSyncSafely(appSettings);
+        syncCompleted = true;
         lastSuccessfulSyncAtRef.current = Date.now();
       } catch (error) {
         console.error(`[auto-sync:${reason}] failed`, error);
       } finally {
+        const shouldCheckSuppressedLocalChanges =
+          syncCompleted && localChangeDuringSuppressionRef.current;
+        localChangeDuringSuppressionRef.current = false;
         syncRunningRef.current = false;
         // Watermelon synchronize() mutates local rows and their sync metadata.
         // Those changes are not user edits and must not immediately schedule
@@ -210,7 +240,18 @@ export function useAutoSync(): void {
         }, 0);
         if (pendingSyncRef.current) {
           pendingSyncRef.current = false;
-          void runSyncCycle('event');
+          void runSyncCycle('local');
+        } else if (shouldCheckSuppressedLocalChanges) {
+          setTimeout(() => {
+            if (disposed || syncRunningRef.current) {
+              return;
+            }
+            void hasPendingLocalPushChanges().then((hasPendingChanges) => {
+              if (!disposed && hasPendingChanges && !syncRunningRef.current) {
+                scheduleLocalPush();
+              }
+            });
+          }, POST_SYNC_DIRTY_CHECK_DELAY_MS);
         }
       }
     };
@@ -225,17 +266,47 @@ export function useAutoSync(): void {
       }, LOCAL_PUSH_DEBOUNCE_MS);
     };
 
-    void runSyncCycle('startup');
-    const intervalId = setInterval(() => {
+    const syncRequestSubscription = subscribeToAutoSyncRequests(() => {
+      if (disposed) {
+        return;
+      }
+
+      if (syncRunningRef.current) {
+        pendingSyncRef.current = true;
+        return;
+      }
+
+      scheduleLocalPush();
+    });
+
+    const runDirtyAwarePoll = async () => {
       if (!pollingEnabledRef.current) {
         return;
       }
-      if (transportModeRef.current === 'ws') {
-        if (Date.now() - lastSuccessfulSyncAtRef.current < WS_SAFETY_SYNC_INTERVAL_MS) {
+
+      if (
+        transportModeRef.current === 'ws' &&
+        Date.now() - lastSuccessfulSyncAtRef.current < WS_SAFETY_SYNC_INTERVAL_MS
+      ) {
+        if (syncRunningRef.current) {
           return;
         }
+
+        const hasPendingPush = await hasPendingLocalPushChanges();
+        if (!hasPendingPush) {
+          return;
+        }
+
+        void runSyncCycle('local');
+        return;
       }
+
       void runSyncCycle('poll');
+    };
+
+    void runSyncCycle('startup');
+    const intervalId = setInterval(() => {
+      void runDirtyAwarePoll();
     }, AUTO_SYNC_INTERVAL_MS);
 
     if (lastSuccessfulSyncAtRef.current === 0) {
@@ -263,10 +334,12 @@ export function useAutoSync(): void {
             }
 
             if (suppressLocalChangeSchedulingRef.current) {
+              localChangeDuringSuppressionRef.current = true;
               return;
             }
 
             if (syncRunningRef.current) {
+              pendingSyncRef.current = true;
               return;
             }
             scheduleLocalPush();
@@ -286,6 +359,7 @@ export function useAutoSync(): void {
       clearInterval(intervalId);
       appStateSubscription.remove();
       settingsSubscription();
+      syncRequestSubscription();
       localDataSubscription?.unsubscribe();
     };
   }, []);

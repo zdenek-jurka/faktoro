@@ -60,6 +60,33 @@ export default function OnboardingStartScreen() {
           </ThemedText>
         </View>
 
+        <View
+          style={[
+            styles.infoCard,
+            { backgroundColor: palette.cardBackground, borderColor: palette.border },
+          ]}
+        >
+          <View style={[styles.infoIcon, { backgroundColor: palette.backgroundSubtle }]}>
+            <IconSymbol name="archivebox" size={22} color={palette.tint} />
+          </View>
+          <View style={styles.infoText}>
+            <ThemedText type="defaultSemiBold" style={styles.infoTitle}>
+              {LL.onboarding.offlineFirstTitle()}
+            </ThemedText>
+            <ThemedText style={[styles.infoDescription, { color: palette.textSecondary }]}>
+              {LL.onboarding.offlineFirstDescription()}
+            </ThemedText>
+            <View style={styles.infoBullets}>
+              <ThemedText style={[styles.infoBullet, { color: palette.textSecondary }]}>
+                {LL.onboarding.offlineFirstBackup()}
+              </ThemedText>
+              <ThemedText style={[styles.infoBullet, { color: palette.textSecondary }]}>
+                {LL.onboarding.offlineFirstSync()}
+              </ThemedText>
+            </View>
+          </View>
+        </View>
+
         <View style={styles.choices}>
           {choices.map((choice, index) => (
             <Pressable
@@ -122,6 +149,41 @@ const styles = StyleSheet.create({
   },
   choices: {
     gap: 12,
+  },
+  infoCard: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    borderRadius: 14,
+    borderWidth: 1,
+    padding: 14,
+    gap: 12,
+    marginBottom: 16,
+  },
+  infoIcon: {
+    width: 42,
+    height: 42,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  infoText: {
+    flex: 1,
+    gap: 5,
+  },
+  infoTitle: {
+    fontSize: 15,
+  },
+  infoDescription: {
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  infoBullets: {
+    gap: 2,
+    marginTop: 2,
+  },
+  infoBullet: {
+    fontSize: 12,
+    lineHeight: 17,
   },
   choiceCard: {
     flexDirection: 'row',

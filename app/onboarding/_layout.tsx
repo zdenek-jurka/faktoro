@@ -7,6 +7,7 @@ export default function OnboardingLayout() {
       <Stack.Screen name="start" />
       <Stack.Screen name="language" />
       <Stack.Screen name="profile" />
+      <Stack.Screen name="invoice-profile" />
       <Stack.Screen name="vat" />
       <Stack.Screen name="currency" />
       <Stack.Screen name="done" />
