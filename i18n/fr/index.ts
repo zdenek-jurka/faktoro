@@ -694,12 +694,14 @@ const fr = {
     brandingSubtitle: 'Logo et apparence visuelle des factures et exportations.',
     numberingTitle: 'Numérotation des documents',
     numberingSubtitle: 'Séries de numérotation des factures et feuilles de temps.',
-    advancedTitle: 'Fonctionnalités bêta',
-    advancedSubtitle:
-      'Fonctionnalités expérimentales et accès anticipé aux nouvelles possibilités.',
+    advancedTitle: 'Fonctionnalités avancées',
+    advancedSubtitle: 'Paramètres avancés et accès anticipé aux nouvelles possibilités.',
     advancedSyncFeatureTitle: 'Activer la synchronisation en ligne',
     advancedSyncFeatureDescription:
       'Permet de synchroniser les données entre appareils via un serveur Faktoro auto-hébergé. Expérimental — nécessite Docker.',
+    advancedSyncStatusIndicatorTitle: 'Indicateur de synchronisation',
+    advancedSyncStatusIndicatorDescription:
+      'Affiche un petit état de synchronisation au-dessus de la navigation inférieure sur les écrans principaux.',
     advancedTimerWidgetsTitle: 'Widget du minuteur et activités en direct',
     advancedTimerWidgetsDescription:
       'Active le widget du minuteur et les activités en direct sur cet appareil. S’ils causent des problèmes, vous pouvez les désactiver ici.',
@@ -708,7 +710,7 @@ const fr = {
       'Active les exportations XML personnalisées basées sur XSLT dans les exports de feuilles de temps et dans Paramètres > Services externes.',
     advancedInvoiceDeletionTitle: 'Activer la suppression des factures',
     advancedInvoiceDeletionDescription:
-      'Permet de supprimer définitivement des factures depuis le détail du document. Il s’agit d’une fonctionnalité bêta avec un impact irréversible, y compris sur les documents exportés.',
+      'Permet de supprimer définitivement des factures depuis le détail du document. Il s’agit d’une option avancée avec un impact irréversible, y compris sur les documents exportés.',
     advancedDangerousResetDataTitle: "Réinitialiser toutes les données locales de l'application",
     advancedDangerousResetDataDescription:
       "Supprime toutes les données locales de Faktoro sur cet appareil et relance l'onboarding. À utiliser uniquement pour les tests ou une réinitialisation locale complète.",
@@ -1161,6 +1163,14 @@ const fr = {
     syncStatusActive: 'Synchronisation active',
     syncStatusPaused: 'Synchronisation automatique en pause',
     syncStatusNotConfigured: 'Non configuré',
+    syncRuntimeLive: 'Live',
+    syncRuntimeInterval: 'Intervalle',
+    syncRuntimeSyncing: 'Synchronisation...',
+    syncRuntimePending: 'Modifications en attente',
+    syncRuntimeOffline: 'Hors ligne',
+    syncRuntimePaused: 'En pause',
+    syncRuntimeChecking: 'Vérification...',
+    syncRuntimeOpenDetails: 'Ouvrir les détails de synchronisation',
     syncStatusRegistered: 'Enregistré',
     syncStatusNotRegistered: 'Non enregistré',
     syncStatusAvailable: 'Disponible',

@@ -682,11 +682,14 @@ const pl = {
     brandingSubtitle: 'Logo i wygląd faktur oraz eksportów.',
     numberingTitle: 'Numeracja dokumentów',
     numberingSubtitle: 'Serie numeracji faktur i timesheetów.',
-    advancedTitle: 'Funkcje beta',
-    advancedSubtitle: 'Funkcje eksperymentalne i wcześniejszy dostęp do nowych możliwości.',
+    advancedTitle: 'Funkcje zaawansowane',
+    advancedSubtitle: 'Ustawienia zaawansowane i wcześniejszy dostęp do nowych możliwości.',
     advancedSyncFeatureTitle: 'Włącz synchronizację online',
     advancedSyncFeatureDescription:
       'Umożliwia synchronizację danych między urządzeniami przez samodzielnie hostowany serwer Faktoro Sync. Funkcja eksperymentalna — wymaga Dockera.',
+    advancedSyncStatusIndicatorTitle: 'Wskaźnik synchronizacji',
+    advancedSyncStatusIndicatorDescription:
+      'Pokazuje mały status synchronizacji nad dolną nawigacją na głównych ekranach.',
     advancedTimerWidgetsTitle: 'Widget timera i Live Activities',
     advancedTimerWidgetsDescription:
       'Włącza widget timera i Live Activities na tym urządzeniu. Jeśli powodują problemy, możesz je tutaj wyłączyć.',
@@ -695,7 +698,7 @@ const pl = {
       'Włącza własne eksporty XML oparte na XSLT w eksporcie timesheetów i w Ustawienia > Usługi zewnętrzne.',
     advancedInvoiceDeletionTitle: 'Włącz usuwanie faktur',
     advancedInvoiceDeletionDescription:
-      'Umożliwia trwałe usuwanie faktur z widoku szczegółów dokumentu. To funkcja beta o nieodwracalnym wpływie, także na wyeksportowane dokumenty.',
+      'Umożliwia trwałe usuwanie faktur z widoku szczegółów dokumentu. To opcja zaawansowana o nieodwracalnym wpływie, także na wyeksportowane dokumenty.',
     advancedDangerousResetDataTitle: 'Wyczyść wszystkie lokalne dane aplikacji',
     advancedDangerousResetDataDescription:
       'Usuwa wszystkie lokalne dane Faktoro z tego urządzenia i ponownie otwiera onboarding. Używaj tylko do testów albo pełnego lokalnego resetu.',
@@ -1134,6 +1137,14 @@ const pl = {
     syncStatusActive: 'Synchronizacja aktywna',
     syncStatusPaused: 'Automatyczna synchronizacja wstrzymana',
     syncStatusNotConfigured: 'Nie skonfigurowano',
+    syncRuntimeLive: 'Live',
+    syncRuntimeInterval: 'Interwał',
+    syncRuntimeSyncing: 'Synchronizuję...',
+    syncRuntimePending: 'Oczekujące zmiany',
+    syncRuntimeOffline: 'Offline',
+    syncRuntimePaused: 'Wstrzymano',
+    syncRuntimeChecking: 'Sprawdzam...',
+    syncRuntimeOpenDetails: 'Otwórz szczegóły synchronizacji',
     syncStatusRegistered: 'Zarejestrowany',
     syncStatusNotRegistered: 'Niezarejestrowany',
     syncStatusAvailable: 'Dostępny',

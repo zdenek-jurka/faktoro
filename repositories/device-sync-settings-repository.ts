@@ -15,6 +15,7 @@ const SYNC_INSTANCE_KEY_KEY = `${KEY_PREFIX}instance_key`;
 const SYNC_ALLOW_PLAINTEXT_KEY = `${KEY_PREFIX}allow_plaintext`;
 const SYNC_FEATURE_ENABLED_KEY = `${KEY_PREFIX}feature_enabled`;
 const TIMER_WIDGETS_ENABLED_KEY = `${KEY_PREFIX}timer_widgets_enabled`;
+const SYNC_STATUS_INDICATOR_ENABLED_KEY = `${KEY_PREFIX}status_indicator_enabled`;
 
 const ALL_KEYS = [
   SYNC_SERVER_URL_KEY,
@@ -29,6 +30,7 @@ const ALL_KEYS = [
   SYNC_ALLOW_PLAINTEXT_KEY,
   SYNC_FEATURE_ENABLED_KEY,
   TIMER_WIDGETS_ENABLED_KEY,
+  SYNC_STATUS_INDICATOR_ENABLED_KEY,
 ] as const;
 
 export type DeviceSyncSettings = {
@@ -44,6 +46,7 @@ export type DeviceSyncSettings = {
   syncAllowPlaintext: boolean;
   syncFeatureEnabled: boolean;
   timerWidgetsEnabled: boolean;
+  syncStatusIndicatorEnabled: boolean;
 };
 
 export type UpdateDeviceSyncSettingsInput = {
@@ -59,6 +62,7 @@ export type UpdateDeviceSyncSettingsInput = {
   syncAllowPlaintext?: boolean;
   syncFeatureEnabled?: boolean;
   timerWidgetsEnabled?: boolean;
+  syncStatusIndicatorEnabled?: boolean;
 };
 
 const DEFAULT_DEVICE_SYNC_SETTINGS: DeviceSyncSettings = {
@@ -74,6 +78,7 @@ const DEFAULT_DEVICE_SYNC_SETTINGS: DeviceSyncSettings = {
   syncAllowPlaintext: false,
   syncFeatureEnabled: false,
   timerWidgetsEnabled: true,
+  syncStatusIndicatorEnabled: false,
 };
 
 function normalizeString(value: string | null | undefined): string {
@@ -114,6 +119,10 @@ function hydrateDeviceSyncSettings(values: Record<string, string>): DeviceSyncSe
       values[TIMER_WIDGETS_ENABLED_KEY],
       DEFAULT_DEVICE_SYNC_SETTINGS.timerWidgetsEnabled,
     ),
+    syncStatusIndicatorEnabled: parseBoolean(
+      values[SYNC_STATUS_INDICATOR_ENABLED_KEY],
+      DEFAULT_DEVICE_SYNC_SETTINGS.syncStatusIndicatorEnabled,
+    ),
   };
 }
 
@@ -131,6 +140,7 @@ async function persistDeviceSyncSettings(settings: DeviceSyncSettings): Promise<
     [SYNC_ALLOW_PLAINTEXT_KEY, String(settings.syncAllowPlaintext)],
     [SYNC_FEATURE_ENABLED_KEY, String(settings.syncFeatureEnabled)],
     [TIMER_WIDGETS_ENABLED_KEY, String(settings.timerWidgetsEnabled)],
+    [SYNC_STATUS_INDICATOR_ENABLED_KEY, String(settings.syncStatusIndicatorEnabled)],
   ];
 
   // Read existing records before the write so the observer fires only once
@@ -232,6 +242,10 @@ export async function updateDeviceSyncSettings(
       input.timerWidgetsEnabled !== undefined
         ? input.timerWidgetsEnabled
         : current.timerWidgetsEnabled,
+    syncStatusIndicatorEnabled:
+      input.syncStatusIndicatorEnabled !== undefined
+        ? input.syncStatusIndicatorEnabled
+        : current.syncStatusIndicatorEnabled,
   };
 
   await persistDeviceSyncSettings(next);

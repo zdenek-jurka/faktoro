@@ -278,8 +278,9 @@ export function TimeEntryFormModal({
     <Modal visible={visible} animationType="fade" transparent={true} onRequestClose={onClose}>
       <KeyboardAvoidingView
         style={[styles.modalOverlay, { backgroundColor: palette.overlayBackdrop }]}
-        behavior={isIos ? 'padding' : 'height'}
+        behavior={isIos ? 'padding' : undefined}
         keyboardVerticalOffset={isIos ? 24 : 0}
+        enabled={isIos}
       >
         <Pressable style={styles.modalBackdrop} onPress={onClose} />
         <ThemedView style={modalContentStyle}>

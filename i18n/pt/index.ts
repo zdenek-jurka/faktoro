@@ -687,11 +687,14 @@ const pt = {
     brandingSubtitle: 'Logótipo e aparência visual de faturas e exportações.',
     numberingTitle: 'Numeração de documentos',
     numberingSubtitle: 'Séries de numeração de faturas e folhas de horas.',
-    advancedTitle: 'Funcionalidades beta',
-    advancedSubtitle: 'Funcionalidades experimentais e acesso antecipado a novas opções.',
+    advancedTitle: 'Funcionalidades avançadas',
+    advancedSubtitle: 'Definições avançadas e acesso antecipado a novas opções.',
     advancedSyncFeatureTitle: 'Ativar sincronização online',
     advancedSyncFeatureDescription:
       'Permite sincronizar dados entre dispositivos através de um servidor Faktoro autoalojado. Experimental — requer Docker.',
+    advancedSyncStatusIndicatorTitle: 'Indicador de sincronização',
+    advancedSyncStatusIndicatorDescription:
+      'Mostra um pequeno estado de sincronização acima da navegação inferior nos ecrãs principais.',
     advancedTimerWidgetsTitle: 'Widget do temporizador e Live Activities',
     advancedTimerWidgetsDescription:
       'Ativa o widget do temporizador e as Live Activities neste dispositivo. Se causarem problemas, pode desativá-los aqui.',
@@ -700,7 +703,7 @@ const pt = {
       'Ativa exportações XML personalizadas baseadas em XSLT nas exportações de folhas de horas e em Definições > Serviços externos.',
     advancedInvoiceDeletionTitle: 'Ativar eliminação de faturas',
     advancedInvoiceDeletionDescription:
-      'Permite apagar faturas permanentemente a partir do detalhe do documento. Esta é uma funcionalidade beta com impacto irreversível, incluindo em documentos exportados.',
+      'Permite apagar faturas permanentemente a partir do detalhe do documento. Esta é uma opção avançada com impacto irreversível, incluindo em documentos exportados.',
     advancedDangerousResetDataTitle: 'Redefinir todos os dados locais do app',
     advancedDangerousResetDataDescription:
       'Apaga todos os dados locais do Faktoro neste dispositivo e abre o onboarding novamente. Use apenas para testes ou para um reset local completo.',
@@ -1149,6 +1152,14 @@ const pt = {
     syncStatusActive: 'Sincronização ativa',
     syncStatusPaused: 'Sincronização automática em pausa',
     syncStatusNotConfigured: 'Não configurado',
+    syncRuntimeLive: 'Live',
+    syncRuntimeInterval: 'Intervalo',
+    syncRuntimeSyncing: 'Sincronizando...',
+    syncRuntimePending: 'Alterações pendentes',
+    syncRuntimeOffline: 'Offline',
+    syncRuntimePaused: 'Pausado',
+    syncRuntimeChecking: 'Verificando...',
+    syncRuntimeOpenDetails: 'Abrir detalhes de sincronização',
     syncStatusRegistered: 'Registrado',
     syncStatusNotRegistered: 'Não registrado',
     syncStatusAvailable: 'Disponível',

@@ -695,11 +695,14 @@ const de = {
     brandingSubtitle: 'Logo und Erscheinungsbild für Rechnungen und Exporte.',
     numberingTitle: 'Belegnummerierung',
     numberingSubtitle: 'Nummernreihen für Rechnungen und Timesheets.',
-    advancedTitle: 'Beta-Funktionen',
-    advancedSubtitle: 'Experimentelle Funktionen und früher Zugriff auf neue Möglichkeiten.',
+    advancedTitle: 'Erweiterte Funktionen',
+    advancedSubtitle: 'Erweiterte Einstellungen und früher Zugriff auf neue Möglichkeiten.',
     advancedSyncFeatureTitle: 'Online-Synchronisierung aktivieren',
     advancedSyncFeatureDescription:
       'Ermöglicht die Synchronisierung von Daten zwischen Geräten über einen selbst gehosteten Faktoro-Sync-Server. Experimentell — Docker erforderlich.',
+    advancedSyncStatusIndicatorTitle: 'Synchronisierungsstatus',
+    advancedSyncStatusIndicatorDescription:
+      'Zeigt auf Hauptbildschirmen einen kleinen Synchronisierungsstatus oberhalb der unteren Navigation an.',
     advancedTimerWidgetsTitle: 'Timer-Widget und Live-Aktivitäten',
     advancedTimerWidgetsDescription:
       'Aktiviert das Timer-Widget und Live-Aktivitäten auf diesem Gerät. Wenn sie Probleme verursachen, können Sie sie hier deaktivieren.',
@@ -708,7 +711,7 @@ const de = {
       'Aktiviert benutzerdefinierte XML-Exporte auf Basis von XSLT in Stundenzettel-Exporten und im Bereich Einstellungen > Externe Dienste.',
     advancedInvoiceDeletionTitle: 'Löschen von Rechnungen aktivieren',
     advancedInvoiceDeletionDescription:
-      'Ermöglicht das dauerhafte Löschen von Rechnungen aus der Belegdetailansicht. Dies ist eine Beta-Funktion mit irreversiblen Auswirkungen, auch auf exportierte Belege.',
+      'Ermöglicht das dauerhafte Löschen von Rechnungen aus der Belegdetailansicht. Dies ist eine erweiterte Option mit irreversiblen Auswirkungen, auch auf exportierte Belege.',
     advancedDangerousResetDataTitle: 'Alle lokalen App-Daten zurücksetzen',
     advancedDangerousResetDataDescription:
       'Löscht alle lokalen Faktoro-Daten auf diesem Gerät und startet das Onboarding erneut. Nur für Tests oder einen vollständigen lokalen Reset verwenden.',
@@ -1161,6 +1164,14 @@ const de = {
     syncStatusActive: 'Synchronisierung aktiv',
     syncStatusPaused: 'Automatische Synchronisierung pausiert',
     syncStatusNotConfigured: 'Nicht konfiguriert',
+    syncRuntimeLive: 'Live',
+    syncRuntimeInterval: 'Intervall',
+    syncRuntimeSyncing: 'Synchronisiere...',
+    syncRuntimePending: 'Ausstehende Änderungen',
+    syncRuntimeOffline: 'Offline',
+    syncRuntimePaused: 'Pausiert',
+    syncRuntimeChecking: 'Prüfe...',
+    syncRuntimeOpenDetails: 'Synchronisierungsdetails öffnen',
     syncStatusRegistered: 'Registriert',
     syncStatusNotRegistered: 'Nicht registriert',
     syncStatusAvailable: 'Verfügbar',

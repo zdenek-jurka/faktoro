@@ -29,6 +29,7 @@ function SettingsAdvancedScreenContent() {
   const contentStyle = useBottomSafeAreaStyle(styles.content);
 
   const [syncFeatureEnabled, setSyncFeatureEnabled] = useState(false);
+  const [syncStatusIndicatorEnabled, setSyncStatusIndicatorEnabled] = useState(false);
   const [timerWidgetsEnabled, setTimerWidgetsEnabled] = useState(true);
   const [exportIntegrationsEnabled, setExportIntegrationsEnabled] = useState(false);
   const [invoiceDeletionEnabled, setInvoiceDeletionEnabled] = useState(false);
@@ -37,6 +38,7 @@ function SettingsAdvancedScreenContent() {
   useEffect(() => {
     const unsub = observeDeviceSyncSettings((settings) => {
       setSyncFeatureEnabled(settings.syncFeatureEnabled);
+      setSyncStatusIndicatorEnabled(settings.syncStatusIndicatorEnabled);
       setTimerWidgetsEnabled(settings.timerWidgetsEnabled !== false);
     });
     return unsub;
@@ -68,6 +70,11 @@ function SettingsAdvancedScreenContent() {
   const handleToggleTimerWidgets = async (value: boolean) => {
     setTimerWidgetsEnabled(value);
     await updateDeviceSyncSettings({ timerWidgetsEnabled: value });
+  };
+
+  const handleToggleSyncStatusIndicator = async (value: boolean) => {
+    setSyncStatusIndicatorEnabled(value);
+    await updateDeviceSyncSettings({ syncStatusIndicatorEnabled: value });
   };
 
   const handleDangerousResetAppData = async () => {
@@ -115,6 +122,26 @@ function SettingsAdvancedScreenContent() {
               />
             </View>
           ) : null}
+          {isSyncEnabled ? (
+            <>
+              <View style={[styles.divider, { backgroundColor: palette.border }]} />
+              <View style={styles.row}>
+                <View style={styles.rowText}>
+                  <ThemedText type="defaultSemiBold" style={styles.rowTitle}>
+                    {LL.settings.advancedSyncStatusIndicatorTitle()}
+                  </ThemedText>
+                  <ThemedText style={[styles.rowDescription, { color: palette.textSecondary }]}>
+                    {LL.settings.advancedSyncStatusIndicatorDescription()}
+                  </ThemedText>
+                </View>
+                <Switch
+                  value={syncStatusIndicatorEnabled}
+                  onValueChange={(value) => void handleToggleSyncStatusIndicator(value)}
+                  {...getSwitchColors(palette)}
+                />
+              </View>
+            </>
+          ) : null}
           {isIos ? (
             <>
               {isSyncEnabled ? (
@@ -137,6 +164,8 @@ function SettingsAdvancedScreenContent() {
               </View>
               <View style={[styles.divider, { backgroundColor: palette.border }]} />
             </>
+          ) : isSyncEnabled ? (
+            <View style={[styles.divider, { backgroundColor: palette.border }]} />
           ) : null}
           <View style={styles.row}>
             <View style={styles.rowText}>

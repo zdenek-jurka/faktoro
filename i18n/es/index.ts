@@ -690,11 +690,14 @@ const es = {
     brandingSubtitle: 'Logotipo y aspecto visual de facturas y exportaciones.',
     numberingTitle: 'Numeración de documentos',
     numberingSubtitle: 'Series de numeración para facturas y hojas de tiempo.',
-    advancedTitle: 'Funciones beta',
-    advancedSubtitle: 'Funciones experimentales y acceso anticipado a nuevas opciones.',
+    advancedTitle: 'Funciones avanzadas',
+    advancedSubtitle: 'Ajustes avanzados y acceso anticipado a nuevas opciones.',
     advancedSyncFeatureTitle: 'Habilitar sincronización online',
     advancedSyncFeatureDescription:
       'Permite sincronizar datos entre dispositivos mediante un servidor Faktoro autoalojado. Experimental — requiere Docker.',
+    advancedSyncStatusIndicatorTitle: 'Indicador de sincronización',
+    advancedSyncStatusIndicatorDescription:
+      'Muestra un pequeño estado de sincronización sobre la navegación inferior en las pantallas principales.',
     advancedTimerWidgetsTitle: 'Widget del temporizador y actividades en vivo',
     advancedTimerWidgetsDescription:
       'Activa el widget del temporizador y las actividades en vivo en este dispositivo. Si causan problemas, puedes desactivarlos aquí.',
@@ -703,7 +706,7 @@ const es = {
       'Activa exportaciones XML personalizadas basadas en XSLT en las exportaciones de hojas de horas y en Ajustes > Servicios externos.',
     advancedInvoiceDeletionTitle: 'Habilitar eliminación de facturas',
     advancedInvoiceDeletionDescription:
-      'Permite eliminar facturas permanentemente desde el detalle del documento. Esta es una función beta con impacto irreversible, incluso en documentos exportados.',
+      'Permite eliminar facturas permanentemente desde el detalle del documento. Es una opción avanzada con impacto irreversible, incluso en documentos exportados.',
     advancedDangerousResetDataTitle: 'Restablecer todos los datos locales de la app',
     advancedDangerousResetDataDescription:
       'Elimina todos los datos locales de Faktoro en este dispositivo y vuelve a abrir el onboarding. Úsalo solo para pruebas o para un reinicio local completo.',
@@ -1152,6 +1155,14 @@ const es = {
     syncStatusActive: 'Sincronización activa',
     syncStatusPaused: 'Sincronización automática en pausa',
     syncStatusNotConfigured: 'No configurado',
+    syncRuntimeLive: 'En vivo',
+    syncRuntimeInterval: 'Intervalo',
+    syncRuntimeSyncing: 'Sincronizando...',
+    syncRuntimePending: 'Cambios pendientes',
+    syncRuntimeOffline: 'Sin conexión',
+    syncRuntimePaused: 'Pausado',
+    syncRuntimeChecking: 'Comprobando...',
+    syncRuntimeOpenDetails: 'Abrir detalles de sincronización',
     syncStatusRegistered: 'Registrado',
     syncStatusNotRegistered: 'No registrado',
     syncStatusAvailable: 'Disponible',

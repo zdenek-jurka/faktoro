@@ -22,6 +22,11 @@ import { subscribeToAutoSyncRequests } from '@/utils/auto-sync-request';
 import { Q } from '@nozbe/watermelondb';
 import { useEffect, useRef } from 'react';
 import { AppState } from 'react-native';
+import {
+  resetSyncRuntimeStatus,
+  setSyncRuntimeStatus,
+  type SyncTransportMode,
+} from '@/utils/sync-runtime-status';
 
 const AUTO_SYNC_INTERVAL_MS = 30000;
 const WS_SAFETY_SYNC_INTERVAL_MS = 180000;
@@ -93,14 +98,17 @@ export function useAutoSync(): void {
   const localChangeDuringSuppressionRef = useRef(false);
   const localChangesInitializedRef = useRef(false);
   const lastReachableRef = useRef(false);
+  const reachabilityKnownRef = useRef(false);
   const lastSuccessfulSyncAtRef = useRef(0);
+  const pendingLocalChangesRef = useRef(false);
   const pollingEnabledRef = useRef(false);
-  const transportModeRef = useRef<'ws' | 'polling'>('polling');
+  const transportModeRef = useRef<SyncTransportMode>('polling');
   const eventsUnsubscribeRef = useRef<(() => void) | null>(null);
   const eventsSubscriptionKeyRef = useRef('');
 
   useEffect(() => {
     if (!isSyncEnabled || !isAutoSyncEnabled) {
+      resetSyncRuntimeStatus();
       return;
     }
 
@@ -122,14 +130,27 @@ export function useAutoSync(): void {
       const deviceSettings = await getDeviceSyncSettings(appSettings);
       const serverUrl = normalizeServerUrl(deviceSettings.syncServerUrl);
       const autoSyncEnabled = deviceSettings.syncAutoEnabled !== false;
+      const syncStatusIndicatorEnabled = deviceSettings.syncStatusIndicatorEnabled === true;
+      const isRegistered = !!deviceSettings.syncFeatureEnabled && !!deviceSettings.syncIsRegistered;
       const isConfigured =
         autoSyncEnabled &&
-        !!deviceSettings.syncFeatureEnabled &&
-        !!deviceSettings.syncIsRegistered &&
+        isRegistered &&
         !!serverUrl &&
         !!deviceSettings.syncDeviceId.trim() &&
         !!deviceSettings.syncAuthToken.trim();
       pollingEnabledRef.current = isConfigured;
+
+      setSyncRuntimeStatus({
+        isRegistered,
+        isConfigured,
+        autoEnabled: autoSyncEnabled,
+        indicatorEnabled: syncStatusIndicatorEnabled,
+        serverReachable: reachabilityKnownRef.current ? lastReachableRef.current : null,
+        syncRunning: syncRunningRef.current,
+        pendingLocalChanges: pendingLocalChangesRef.current,
+        transportMode: transportModeRef.current,
+        lastSuccessfulSyncAt: lastSuccessfulSyncAtRef.current || null,
+      });
 
       if (!isConfigured) {
         if (eventsUnsubscribeRef.current) {
@@ -139,6 +160,18 @@ export function useAutoSync(): void {
         }
         transportModeRef.current = 'polling';
         lastReachableRef.current = false;
+        reachabilityKnownRef.current = false;
+        pendingLocalChangesRef.current = false;
+        setSyncRuntimeStatus({
+          isRegistered,
+          isConfigured: false,
+          autoEnabled: autoSyncEnabled,
+          indicatorEnabled: syncStatusIndicatorEnabled,
+          serverReachable: null,
+          syncRunning: false,
+          pendingLocalChanges: false,
+          transportMode: 'polling',
+        });
         return;
       }
 
@@ -179,6 +212,7 @@ export function useAutoSync(): void {
               },
               onTransportModeChange: (mode) => {
                 transportModeRef.current = mode;
+                setSyncRuntimeStatus({ transportMode: mode });
               },
             },
             {
@@ -193,11 +227,17 @@ export function useAutoSync(): void {
         eventsUnsubscribeRef.current = null;
         eventsSubscriptionKeyRef.current = '';
         transportModeRef.current = 'polling';
+        setSyncRuntimeStatus({ transportMode: 'polling' });
       }
 
       const reachable = await isServerReachable(serverUrl);
       const wasReachable = lastReachableRef.current;
       lastReachableRef.current = reachable;
+      reachabilityKnownRef.current = true;
+      setSyncRuntimeStatus({
+        serverReachable: reachable,
+        transportMode: transportModeRef.current,
+      });
 
       if (!reachable) {
         return;
@@ -221,17 +261,33 @@ export function useAutoSync(): void {
       let syncCompleted = false;
       syncRunningRef.current = true;
       suppressLocalChangeSchedulingRef.current = true;
+      setSyncRuntimeStatus({
+        syncRunning: true,
+        serverReachable: true,
+        transportMode: transportModeRef.current,
+        pendingLocalChanges: pendingLocalChangesRef.current,
+      });
       try {
         await runOnlineSyncSafely(appSettings);
         syncCompleted = true;
         lastSuccessfulSyncAtRef.current = Date.now();
       } catch (error) {
         console.error(`[auto-sync:${reason}] failed`, error);
+        setSyncRuntimeStatus({ lastErrorAt: Date.now() });
       } finally {
         const shouldCheckSuppressedLocalChanges =
           syncCompleted && localChangeDuringSuppressionRef.current;
+        if (syncCompleted) {
+          pendingLocalChangesRef.current = await hasPendingLocalPushChanges();
+        }
         localChangeDuringSuppressionRef.current = false;
         syncRunningRef.current = false;
+        setSyncRuntimeStatus({
+          syncRunning: false,
+          pendingLocalChanges: pendingLocalChangesRef.current,
+          lastSuccessfulSyncAt: lastSuccessfulSyncAtRef.current || null,
+          transportMode: transportModeRef.current,
+        });
         // Watermelon synchronize() mutates local rows and their sync metadata.
         // Those changes are not user edits and must not immediately schedule
         // another sync cycle, otherwise we can end up in a self-triggered loop.
@@ -258,6 +314,8 @@ export function useAutoSync(): void {
 
     let localPushTimer: ReturnType<typeof setTimeout> | null = null;
     const scheduleLocalPush = () => {
+      pendingLocalChangesRef.current = true;
+      setSyncRuntimeStatus({ pendingLocalChanges: true });
       if (localPushTimer) {
         clearTimeout(localPushTimer);
       }
@@ -293,6 +351,8 @@ export function useAutoSync(): void {
         }
 
         const hasPendingPush = await hasPendingLocalPushChanges();
+        pendingLocalChangesRef.current = hasPendingPush;
+        setSyncRuntimeStatus({ pendingLocalChanges: hasPendingPush });
         if (!hasPendingPush) {
           return;
         }
@@ -339,6 +399,8 @@ export function useAutoSync(): void {
             }
 
             if (syncRunningRef.current) {
+              pendingLocalChangesRef.current = true;
+              setSyncRuntimeStatus({ pendingLocalChanges: true });
               pendingSyncRef.current = true;
               return;
             }

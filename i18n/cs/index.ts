@@ -656,11 +656,14 @@ const cs = {
     dataSectionTitle: 'Záloha a synchronizace',
     integrationsSectionTitle: 'Externí služby',
     advancedSectionTitle: 'Pokročilé',
-    advancedTitle: 'Beta funkce',
-    advancedSubtitle: 'Experimentální funkce a předběžný přístup k novým možnostem.',
+    advancedTitle: 'Pokročilé funkce',
+    advancedSubtitle: 'Rozšířená nastavení a předběžný přístup k novým možnostem.',
     advancedSyncFeatureTitle: 'Povolit online synchronizaci',
     advancedSyncFeatureDescription:
       'Umožňuje synchronizovat data mezi zařízeními přes vlastní server. Experimentální — vyžaduje Docker.',
+    advancedSyncStatusIndicatorTitle: 'Indikátor synchronizace',
+    advancedSyncStatusIndicatorDescription:
+      'Zobrazí malý stav synchronizace nad spodní navigací na hlavních obrazovkách.',
     advancedTimerWidgetsTitle: 'Časovač na ploše a živé aktivity',
     advancedTimerWidgetsDescription:
       'Povolí widget časovače a živé aktivity na tomto zařízení. Pokud způsobují problémy, můžete je tady vypnout.',
@@ -669,7 +672,7 @@ const cs = {
       'Zapne vlastní XML exporty přes XSLT v detailu timesheetu a v sekci Nastavení > Externí služby.',
     advancedInvoiceDeletionTitle: 'Povolit mazání faktur',
     advancedInvoiceDeletionDescription:
-      'Zpřístupní mazání faktur z detailu dokladu. Jde o beta funkci s nevratným dopadem i na exportované doklady.',
+      'Zpřístupní mazání faktur z detailu dokladu. Jde o pokročilou volbu s nevratným dopadem i na exportované doklady.',
     advancedDangerousResetDataTitle: 'Smazat všechna lokální data aplikace',
     advancedDangerousResetDataDescription:
       'Smaže všechna lokální data Faktoro na tomto zařízení a znovu otevře onboarding. Používejte jen pro testování nebo úplný lokální reset.',
@@ -1017,6 +1020,14 @@ const cs = {
     syncStatusActive: 'Synchronizace aktivní',
     syncStatusPaused: 'Automatická synchronizace pozastavena',
     syncStatusNotConfigured: 'Není nakonfigurováno',
+    syncRuntimeLive: 'Live',
+    syncRuntimeInterval: 'Interval',
+    syncRuntimeSyncing: 'Synchronizuji...',
+    syncRuntimePending: 'Čekají změny',
+    syncRuntimeOffline: 'Offline',
+    syncRuntimePaused: 'Pozastaveno',
+    syncRuntimeChecking: 'Kontroluji...',
+    syncRuntimeOpenDetails: 'Otevřít detail synchronizace',
     syncStatusSection: 'Stav',
     syncOptionsSection: 'Možnosti',
     syncServerUrl: 'URL sync serveru (např. http://192.168.1.10:8080)',

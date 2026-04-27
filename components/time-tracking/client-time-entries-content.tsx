@@ -2,6 +2,7 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { CreateTimesheetModal } from '@/components/time-tracking/create-timesheet-modal';
 import { PauseStopTimerControl } from '@/components/time-tracking/pause-stop-timer-control';
+import { RemoteRunningTimerStatus } from '@/components/time-tracking/remote-running-timer-status';
 import { StartTimerModal } from '@/components/time-tracking/start-timer-modal';
 import { ActionEmptyState } from '@/components/ui/action-empty-state';
 import { HeaderActions } from '@/components/ui/header-actions';
@@ -57,7 +58,7 @@ export function ClientTimeEntriesContent({
   const [client, setClient] = useState<ClientModel | null>(null);
   const [entries, setEntries] = useState<TimeEntryModel[]>([]);
   const [priceListItems, setPriceListItems] = useState<PriceListItemModel[]>([]);
-  const [runningEntry, setRunningEntry] = useState<TimeEntryModel | null>(null);
+  const [runningEntriesForClient, setRunningEntriesForClient] = useState<TimeEntryModel[]>([]);
   const [hasRunningEntryElsewhere, setHasRunningEntryElsewhere] = useState(false);
   const [localDeviceId, setLocalDeviceId] = useState<string | null>(null);
   const [defaultBillingInterval, setDefaultBillingInterval] = useState<number | undefined>();
@@ -167,18 +168,9 @@ export function ClientTimeEntriesContent({
         });
         setHasRunningEntryElsewhere(runningInOtherClient);
 
-        const runningForCurrentClient = allRunningEntries.filter(
-          (entry) => entry.clientId === clientId,
+        setRunningEntriesForClient(
+          allRunningEntries.filter((entry) => entry.clientId === clientId),
         );
-        if (runningForCurrentClient.length === 0) {
-          setRunningEntry(null);
-          return;
-        }
-        const localEntry = runningForCurrentClient.find(
-          (entry) =>
-            !entry.runningDeviceId || (!!localDeviceId && entry.runningDeviceId === localDeviceId),
-        );
-        setRunningEntry(localEntry || runningForCurrentClient[0]);
       });
 
     return () => subscription.unsubscribe();
@@ -196,16 +188,23 @@ export function ClientTimeEntriesContent({
     return () => clearInterval(interval);
   }, [entries]);
 
-  const canControlRunningEntry =
-    !!runningEntry &&
-    (!runningEntry.runningDeviceId || runningEntry.runningDeviceId === localDeviceId);
-  const canStartTimer = !runningEntry && !hasRunningEntryElsewhere;
-
   const localRunningEntry = useMemo(() => {
-    if (!runningEntry) return null;
-    if (!runningEntry.runningDeviceId) return runningEntry;
-    return runningEntry.runningDeviceId === localDeviceId ? runningEntry : null;
-  }, [localDeviceId, runningEntry]);
+    if (!localDeviceId) {
+      return runningEntriesForClient.find((entry) => !entry.runningDeviceId) ?? null;
+    }
+    return runningEntriesForClient.find((entry) => entry.runningDeviceId === localDeviceId) ?? null;
+  }, [localDeviceId, runningEntriesForClient]);
+
+  const remoteRunningEntry = useMemo(
+    () =>
+      runningEntriesForClient.find((entry) => {
+        if (!entry.runningDeviceId) return false;
+        return !localDeviceId || entry.runningDeviceId !== localDeviceId;
+      }) ?? null,
+    [localDeviceId, runningEntriesForClient],
+  );
+
+  const canStartTimer = !localRunningEntry && !hasRunningEntryElsewhere;
 
   const formatTime = (seconds: number): string => {
     const hours = Math.floor(seconds / 3600);
@@ -228,6 +227,33 @@ export function ClientTimeEntriesContent({
     priceListItems.forEach((item) => map.set(item.id, item));
     return map;
   }, [priceListItems]);
+
+  const localPriceListItem = localRunningEntry?.priceListItemId
+    ? priceListById.get(localRunningEntry.priceListItemId)
+    : undefined;
+
+  const localTimerDetail = (() => {
+    if (!localRunningEntry) return '';
+    const details: string[] = [];
+    if (localRunningEntry.description) details.push(localRunningEntry.description);
+    if (localPriceListItem) {
+      const rateText =
+        localRunningEntry.rate !== undefined
+          ? ` · ${formatPrice(
+              localRunningEntry.rate,
+              normalizeCurrencyCode(
+                localRunningEntry.rateCurrency,
+                localPriceListItem.defaultPriceCurrency || defaultInvoiceCurrency,
+              ),
+              intlLocale,
+            )}`
+          : '';
+      details.push(
+        `${localPriceListItem.name}${rateText} / ${getUnitLabel(localPriceListItem.unit)}`,
+      );
+    }
+    return details.join(' · ');
+  })();
 
   const handleDeleteEntry = (entry: TimeEntryModel) => {
     Alert.alert(LL.timeTracking.deleteEntry(), LL.timeTracking.deleteMessage(), [
@@ -258,18 +284,18 @@ export function ClientTimeEntriesContent({
   };
 
   const handlePauseResumeAction = async () => {
-    if (!runningEntry || !canControlRunningEntry) return;
+    if (!localRunningEntry) return;
     try {
-      if (runningEntry.isPaused) {
-        await resumeTimeEntry(runningEntry.id);
+      if (localRunningEntry.isPaused) {
+        await resumeTimeEntry(localRunningEntry.id);
       } else {
-        await pauseTimeEntry(runningEntry.id);
+        await pauseTimeEntry(localRunningEntry.id);
       }
     } catch (error) {
       Alert.alert(
         LL.common.error(),
         getControlErrorMessage(
-          runningEntry.isPaused
+          localRunningEntry.isPaused
             ? LL.timeTracking.errorResumeTimer()
             : LL.timeTracking.errorPauseTimer(),
           error,
@@ -279,9 +305,9 @@ export function ClientTimeEntriesContent({
   };
 
   const handleStopAction = async () => {
-    if (!runningEntry || !canControlRunningEntry) return;
+    if (!localRunningEntry) return;
     try {
-      await stopTimeEntry(runningEntry.id);
+      await stopTimeEntry(localRunningEntry.id);
     } catch (error) {
       Alert.alert(
         LL.common.error(),
@@ -370,40 +396,17 @@ export function ClientTimeEntriesContent({
       />
 
       <View style={styles.timerActionSection}>
-        {runningEntry ? (
-          canControlRunningEntry ? (
-            <PauseStopTimerControl
-              entry={runningEntry}
-              client={localRunningEntry ? client : undefined}
-              defaultBillingInterval={defaultBillingInterval}
-              onPauseResume={handlePauseResumeAction}
-              onStop={handleStopAction}
-              maxWidth={380}
-            />
-          ) : (
-            <View
-              style={[
-                styles.timerStatusPanel,
-                {
-                  backgroundColor: palette.cardBackground,
-                  borderColor: palette.border,
-                },
-              ]}
-            >
-              <IconSymbol name="lock.fill" size={18} color={palette.textSecondary} />
-              <ThemedText
-                style={[styles.timerStatusText, { color: palette.textSecondary }]}
-                numberOfLines={2}
-              >
-                {LL.timeTracking.runningOnOtherDevice({
-                  device:
-                    runningEntry.runningDeviceName ||
-                    runningEntry.runningDeviceId ||
-                    LL.timeTracking.unknownDevice(),
-                })}
-              </ThemedText>
-            </View>
-          )
+        {localRunningEntry ? (
+          <PauseStopTimerControl
+            entry={localRunningEntry}
+            client={client}
+            defaultBillingInterval={defaultBillingInterval}
+            title={client.name}
+            detail={localTimerDetail}
+            onPauseResume={handlePauseResumeAction}
+            onStop={handleStopAction}
+            maxWidth={380}
+          />
         ) : hasRunningEntryElsewhere ? (
           <View
             style={[
@@ -439,6 +442,18 @@ export function ClientTimeEntriesContent({
             </ThemedText>
           </Pressable>
         )}
+
+        {remoteRunningEntry ? (
+          <RemoteRunningTimerStatus
+            label={LL.timeTracking.runningOnOtherDevice({
+              device:
+                remoteRunningEntry.runningDeviceName ||
+                remoteRunningEntry.runningDeviceId ||
+                LL.timeTracking.unknownDevice(),
+            })}
+            duration={formatTime(getDisplayedTimeEntryDuration(remoteRunningEntry, nowMs))}
+          />
+        ) : null}
       </View>
 
       <View style={styles.toolbar}>
@@ -470,6 +485,7 @@ export function ClientTimeEntriesContent({
         onEdit={handleEditEntry}
         keyExtractor={(item) => item.id}
         emptyText={LL.timeTracking.noEntries()}
+        itemBackgroundColor={palette.cardBackground}
         swipeHintKey="time-tracking.entries"
         swipeHintText={LL.timeTracking.swipeActionsHint()}
         emptyState={
@@ -484,12 +500,11 @@ export function ClientTimeEntriesContent({
         showAddButton={false}
         renderItem={(item) => {
           const duration = getDisplayedTimeEntryDuration(item, nowMs);
-          const billableDuration = roundTimeByInterval(duration, client, defaultBillingInterval);
-          const showBillingTime =
-            hasEffectiveBillingInterval(client, defaultBillingInterval) &&
-            billableDuration !== duration;
-          const date = new Date(item.startTime);
-          const linkedPriceItem = item.priceListItemId
+          const billableDuration =
+            !item.isRunning && hasEffectiveBillingInterval(client, defaultBillingInterval)
+              ? roundTimeByInterval(duration, client, defaultBillingInterval)
+              : duration;
+          const selectedPriceListItem = item.priceListItemId
             ? priceListById.get(item.priceListItemId)
             : undefined;
 
@@ -498,10 +513,10 @@ export function ClientTimeEntriesContent({
               <View style={styles.itemMain}>
                 <View style={styles.itemTitleRow}>
                   <ThemedText
-                    type="defaultSemiBold"
-                    style={!item.description ? styles.mutedTitle : undefined}
+                    style={[styles.itemTitle, item.isRunning && styles.mutedTitle]}
+                    numberOfLines={1}
                   >
-                    {item.description || '-'}
+                    {item.description || LL.timeTracking.noDescription()}
                   </ThemedText>
                   {item.isRunning && (
                     <View
@@ -514,36 +529,34 @@ export function ClientTimeEntriesContent({
                         },
                       ]}
                     >
-                      <ThemedText style={[styles.statusText, { color: palette.onTint }]}>
+                      <ThemedText style={[styles.statusText, { color: palette.onHighlight }]}>
                         {item.isPaused ? LL.timeTracking.paused() : LL.timeTracking.running()}
                       </ThemedText>
                     </View>
                   )}
                 </View>
-
-                {linkedPriceItem && item.rate !== undefined && (
-                  <ThemedText style={styles.metaText}>
-                    {linkedPriceItem.name} •{' '}
-                    {formatPrice(
-                      item.rate,
-                      normalizeCurrencyCode(
-                        item.rateCurrency,
-                        linkedPriceItem.defaultPriceCurrency || defaultInvoiceCurrency,
-                      ),
-                      intlLocale,
-                    )}{' '}
-                    / {getUnitLabel(linkedPriceItem.unit)}
+                {!!selectedPriceListItem && (
+                  <ThemedText style={[styles.metaText, { color: palette.textSecondary }]}>
+                    {selectedPriceListItem.name}
+                    {item.rate !== undefined
+                      ? ` · ${formatPrice(
+                          item.rate,
+                          normalizeCurrencyCode(
+                            item.rateCurrency,
+                            selectedPriceListItem.defaultPriceCurrency || defaultInvoiceCurrency,
+                          ),
+                          intlLocale,
+                        )}`
+                      : ''}
+                    {` / ${getUnitLabel(selectedPriceListItem.unit)}`}
                   </ThemedText>
                 )}
-
-                <ThemedText style={styles.metaText}>
-                  {date.toLocaleDateString(intlLocale)}{' '}
-                  {date.toLocaleTimeString(intlLocale, { hour: '2-digit', minute: '2-digit' })}
+                <ThemedText style={[styles.metaText, { color: palette.textSecondary }]}>
+                  {new Date(item.startTime).toLocaleDateString(intlLocale)}
                 </ThemedText>
               </View>
-
               <View style={styles.durationWrap}>
-                {showBillingTime ? (
+                {!item.isRunning && billableDuration !== duration ? (
                   <>
                     <ThemedText style={[styles.durationText, { color: palette.timeHighlight }]}>
                       {formatTime(billableDuration)}
@@ -595,7 +608,7 @@ const styles = StyleSheet.create({
   timesheetActionText: { fontSize: 14, fontWeight: '600' },
   headerBackButton: { flexDirection: 'row', alignItems: 'center', gap: 3, maxWidth: 160 },
   headerBackLabel: { fontSize: 17 },
-  timerActionSection: { marginTop: 12, marginBottom: 10 },
+  timerActionSection: { marginTop: 12, marginBottom: 10, gap: 8 },
   startActionButton: {
     width: '100%',
     minHeight: 56,
@@ -629,6 +642,7 @@ const styles = StyleSheet.create({
   },
   itemMain: { flex: 1, gap: 2 },
   itemTitleRow: { flexDirection: 'row', gap: 8, alignItems: 'center', flexWrap: 'wrap' },
+  itemTitle: { flexShrink: 1, fontSize: 15, fontWeight: '600' },
   mutedTitle: { opacity: 0.55 },
   statusBadge: { paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 },
   statusText: { fontSize: 10, fontWeight: '700' },

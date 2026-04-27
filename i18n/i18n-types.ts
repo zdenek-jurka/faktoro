@@ -2399,11 +2399,11 @@ type RootTranslation = {
 		 */
 		advancedSectionTitle: string
 		/**
-		 * B​e​t​a​ ​f​e​a​t​u​r​e​s
+		 * A​d​v​a​n​c​e​d​ ​f​e​a​t​u​r​e​s
 		 */
 		advancedTitle: string
 		/**
-		 * E​x​p​e​r​i​m​e​n​t​a​l​ ​f​e​a​t​u​r​e​s​ ​a​n​d​ ​e​a​r​l​y​ ​a​c​c​e​s​s​ ​s​e​t​t​i​n​g​s​.
+		 * A​d​v​a​n​c​e​d​ ​s​e​t​t​i​n​g​s​ ​a​n​d​ ​e​a​r​l​y​ ​a​c​c​e​s​s​ ​o​p​t​i​o​n​s​.
 		 */
 		advancedSubtitle: string
 		/**
@@ -2414,6 +2414,14 @@ type RootTranslation = {
 		 * A​l​l​o​w​s​ ​s​y​n​c​i​n​g​ ​d​a​t​a​ ​b​e​t​w​e​e​n​ ​d​e​v​i​c​e​s​ ​v​i​a​ ​a​ ​s​e​l​f​-​h​o​s​t​e​d​ ​F​a​k​t​o​r​o​ ​s​y​n​c​ ​s​e​r​v​e​r​.​ ​E​x​p​e​r​i​m​e​n​t​a​l​ ​—​ ​r​e​q​u​i​r​e​s​ ​D​o​c​k​e​r​ ​s​e​t​u​p​.
 		 */
 		advancedSyncFeatureDescription: string
+		/**
+		 * S​y​n​c​ ​s​t​a​t​u​s​ ​i​n​d​i​c​a​t​o​r
+		 */
+		advancedSyncStatusIndicatorTitle: string
+		/**
+		 * S​h​o​w​s​ ​a​ ​s​m​a​l​l​ ​s​y​n​c​ ​s​t​a​t​u​s​ ​a​b​o​v​e​ ​t​h​e​ ​b​o​t​t​o​m​ ​n​a​v​i​g​a​t​i​o​n​ ​o​n​ ​m​a​i​n​ ​s​c​r​e​e​n​s​.
+		 */
+		advancedSyncStatusIndicatorDescription: string
 		/**
 		 * H​o​m​e​ ​s​c​r​e​e​n​ ​t​i​m​e​r​ ​w​i​d​g​e​t​ ​a​n​d​ ​l​i​v​e​ ​a​c​t​i​v​i​t​i​e​s
 		 */
@@ -2435,7 +2443,7 @@ type RootTranslation = {
 		 */
 		advancedInvoiceDeletionTitle: string
 		/**
-		 * A​l​l​o​w​s​ ​i​n​v​o​i​c​e​s​ ​t​o​ ​b​e​ ​p​e​r​m​a​n​e​n​t​l​y​ ​d​e​l​e​t​e​d​ ​f​r​o​m​ ​t​h​e​ ​i​n​v​o​i​c​e​ ​d​e​t​a​i​l​ ​s​c​r​e​e​n​.​ ​T​h​i​s​ ​i​s​ ​a​ ​b​e​t​a​ ​f​e​a​t​u​r​e​ ​w​i​t​h​ ​i​r​r​e​v​e​r​s​i​b​l​e​ ​i​m​p​a​c​t​,​ ​i​n​c​l​u​d​i​n​g​ ​o​n​ ​e​x​p​o​r​t​e​d​ ​d​o​c​u​m​e​n​t​s​.
+		 * A​l​l​o​w​s​ ​i​n​v​o​i​c​e​s​ ​t​o​ ​b​e​ ​p​e​r​m​a​n​e​n​t​l​y​ ​d​e​l​e​t​e​d​ ​f​r​o​m​ ​t​h​e​ ​i​n​v​o​i​c​e​ ​d​e​t​a​i​l​ ​s​c​r​e​e​n​.​ ​T​h​i​s​ ​i​s​ ​a​n​ ​a​d​v​a​n​c​e​d​ ​o​p​t​i​o​n​ ​w​i​t​h​ ​i​r​r​e​v​e​r​s​i​b​l​e​ ​i​m​p​a​c​t​,​ ​i​n​c​l​u​d​i​n​g​ ​o​n​ ​e​x​p​o​r​t​e​d​ ​d​o​c​u​m​e​n​t​s​.
 		 */
 		advancedInvoiceDeletionDescription: string
 		/**
@@ -3199,7 +3207,7 @@ type RootTranslation = {
 		 */
 		companyRegistryConnectorUrlLabel: string
 		/**
-		 * U​s​e​ ​f​u​l​l​ ​U​R​L​.​ ​P​l​a​c​e​h​o​l​d​e​r​ ​t​o​k​e​n​ ​"​c​o​m​p​a​n​y​I​d​"​ ​i​s​ ​s​u​p​p​o​r​t​e​d​;​ ​o​t​h​e​r​w​i​s​e​ ​c​o​m​p​a​n​y​ ​I​D​ ​i​s​ ​a​p​p​e​n​d​e​d​.
+		 * U​s​e​ ​f​u​l​l​ ​H​T​T​P​S​ ​U​R​L​.​ ​P​l​a​i​n​ ​H​T​T​P​ ​i​s​ ​a​l​l​o​w​e​d​ ​o​n​l​y​ ​f​o​r​ ​l​o​c​a​l​h​o​s​t​.​ ​P​l​a​c​e​h​o​l​d​e​r​ ​t​o​k​e​n​ ​"​c​o​m​p​a​n​y​I​d​"​ ​i​s​ ​s​u​p​p​o​r​t​e​d​;​ ​o​t​h​e​r​w​i​s​e​ ​c​o​m​p​a​n​y​ ​I​D​ ​i​s​ ​a​p​p​e​n​d​e​d​.
 		 */
 		companyRegistryConnectorUrlHelp: string
 		/**
@@ -3630,6 +3638,38 @@ type RootTranslation = {
 		 * N​o​t​ ​c​o​n​f​i​g​u​r​e​d
 		 */
 		syncStatusNotConfigured: string
+		/**
+		 * L​i​v​e
+		 */
+		syncRuntimeLive: string
+		/**
+		 * I​n​t​e​r​v​a​l
+		 */
+		syncRuntimeInterval: string
+		/**
+		 * S​y​n​c​i​n​g​.​.​.
+		 */
+		syncRuntimeSyncing: string
+		/**
+		 * P​e​n​d​i​n​g​ ​c​h​a​n​g​e​s
+		 */
+		syncRuntimePending: string
+		/**
+		 * O​f​f​l​i​n​e
+		 */
+		syncRuntimeOffline: string
+		/**
+		 * P​a​u​s​e​d
+		 */
+		syncRuntimePaused: string
+		/**
+		 * C​h​e​c​k​i​n​g​.​.​.
+		 */
+		syncRuntimeChecking: string
+		/**
+		 * O​p​e​n​ ​s​y​n​c​ ​d​e​t​a​i​l​s
+		 */
+		syncRuntimeOpenDetails: string
 		/**
 		 * S​t​a​t​u​s
 		 */
@@ -7423,11 +7463,11 @@ export type TranslationFunctions = {
 		 */
 		advancedSectionTitle: () => LocalizedString
 		/**
-		 * Beta features
+		 * Advanced features
 		 */
 		advancedTitle: () => LocalizedString
 		/**
-		 * Experimental features and early access settings.
+		 * Advanced settings and early access options.
 		 */
 		advancedSubtitle: () => LocalizedString
 		/**
@@ -7438,6 +7478,14 @@ export type TranslationFunctions = {
 		 * Allows syncing data between devices via a self-hosted Faktoro sync server. Experimental — requires Docker setup.
 		 */
 		advancedSyncFeatureDescription: () => LocalizedString
+		/**
+		 * Sync status indicator
+		 */
+		advancedSyncStatusIndicatorTitle: () => LocalizedString
+		/**
+		 * Shows a small sync status above the bottom navigation on main screens.
+		 */
+		advancedSyncStatusIndicatorDescription: () => LocalizedString
 		/**
 		 * Home screen timer widget and live activities
 		 */
@@ -7459,7 +7507,7 @@ export type TranslationFunctions = {
 		 */
 		advancedInvoiceDeletionTitle: () => LocalizedString
 		/**
-		 * Allows invoices to be permanently deleted from the invoice detail screen. This is a beta feature with irreversible impact, including on exported documents.
+		 * Allows invoices to be permanently deleted from the invoice detail screen. This is an advanced option with irreversible impact, including on exported documents.
 		 */
 		advancedInvoiceDeletionDescription: () => LocalizedString
 		/**
@@ -8219,7 +8267,7 @@ export type TranslationFunctions = {
 		 */
 		companyRegistryConnectorUrlLabel: () => LocalizedString
 		/**
-		 * Use full URL. Placeholder token "companyId" is supported; otherwise company ID is appended.
+		 * Use full HTTPS URL. Plain HTTP is allowed only for localhost. Placeholder token "companyId" is supported; otherwise company ID is appended.
 		 */
 		companyRegistryConnectorUrlHelp: () => LocalizedString
 		/**
@@ -8644,6 +8692,38 @@ export type TranslationFunctions = {
 		 * Not configured
 		 */
 		syncStatusNotConfigured: () => LocalizedString
+		/**
+		 * Live
+		 */
+		syncRuntimeLive: () => LocalizedString
+		/**
+		 * Interval
+		 */
+		syncRuntimeInterval: () => LocalizedString
+		/**
+		 * Syncing...
+		 */
+		syncRuntimeSyncing: () => LocalizedString
+		/**
+		 * Pending changes
+		 */
+		syncRuntimePending: () => LocalizedString
+		/**
+		 * Offline
+		 */
+		syncRuntimeOffline: () => LocalizedString
+		/**
+		 * Paused
+		 */
+		syncRuntimePaused: () => LocalizedString
+		/**
+		 * Checking...
+		 */
+		syncRuntimeChecking: () => LocalizedString
+		/**
+		 * Open sync details
+		 */
+		syncRuntimeOpenDetails: () => LocalizedString
 		/**
 		 * Status
 		 */

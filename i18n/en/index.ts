@@ -657,11 +657,14 @@ const en = {
     dataSectionTitle: 'Backup & Sync',
     integrationsSectionTitle: 'External services',
     advancedSectionTitle: 'Advanced',
-    advancedTitle: 'Beta features',
-    advancedSubtitle: 'Experimental features and early access settings.',
+    advancedTitle: 'Advanced features',
+    advancedSubtitle: 'Advanced settings and early access options.',
     advancedSyncFeatureTitle: 'Enable online sync',
     advancedSyncFeatureDescription:
       'Allows syncing data between devices via a self-hosted Faktoro sync server. Experimental — requires Docker setup.',
+    advancedSyncStatusIndicatorTitle: 'Sync status indicator',
+    advancedSyncStatusIndicatorDescription:
+      'Shows a small sync status above the bottom navigation on main screens.',
     advancedTimerWidgetsTitle: 'Home screen timer widget and live activities',
     advancedTimerWidgetsDescription:
       'Enables the timer widget and live activities on this device. If they cause problems, you can turn them off here.',
@@ -670,7 +673,7 @@ const en = {
       'Enables custom XSLT-based XML export integrations in timesheet exports and the Settings > External services section.',
     advancedInvoiceDeletionTitle: 'Enable invoice deletion',
     advancedInvoiceDeletionDescription:
-      'Allows invoices to be permanently deleted from the invoice detail screen. This is a beta feature with irreversible impact, including on exported documents.',
+      'Allows invoices to be permanently deleted from the invoice detail screen. This is an advanced option with irreversible impact, including on exported documents.',
     advancedDangerousResetDataTitle: 'Reset all local app data',
     advancedDangerousResetDataDescription:
       'Deletes all local Faktoro data on this device and opens onboarding again. Use only for testing or a full local reset.',
@@ -1010,6 +1013,14 @@ const en = {
     syncStatusActive: 'Sync active',
     syncStatusPaused: 'Auto-sync paused',
     syncStatusNotConfigured: 'Not configured',
+    syncRuntimeLive: 'Live',
+    syncRuntimeInterval: 'Interval',
+    syncRuntimeSyncing: 'Syncing...',
+    syncRuntimePending: 'Pending changes',
+    syncRuntimeOffline: 'Offline',
+    syncRuntimePaused: 'Paused',
+    syncRuntimeChecking: 'Checking...',
+    syncRuntimeOpenDetails: 'Open sync details',
     syncStatusSection: 'Status',
     syncOptionsSection: 'Options',
     syncServerUrl: 'Sync server URL (e.g. http://192.168.1.10:8080)',

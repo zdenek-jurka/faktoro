@@ -3,6 +3,7 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { ClientTimeGroup } from '@/components/time-tracking/client-time-group';
 import { PauseStopTimerControl } from '@/components/time-tracking/pause-stop-timer-control';
+import { RemoteRunningTimerStatus } from '@/components/time-tracking/remote-running-timer-status';
 import { StartTimerModal } from '@/components/time-tracking/start-timer-modal';
 import { ActionEmptyState } from '@/components/ui/action-empty-state';
 import { HeaderActions } from '@/components/ui/header-actions';
@@ -33,6 +34,7 @@ import { buildClientIdentitySearchClause } from '@/utils/client-search';
 import { isAndroid, isIos } from '@/utils/platform';
 import { normalizeCurrencyCode } from '@/utils/currency-utils';
 import { formatPrice } from '@/utils/price-utils';
+import { getDisplayedTimeEntryDuration } from '@/utils/time-entry-duration-utils';
 import { syncTimerToWidget } from '@/widgets/timer-widget-sync';
 import { Q } from '@nozbe/watermelondb';
 import { Stack, useRouter } from 'expo-router';
@@ -55,6 +57,7 @@ export default function TimeTrackingScreen() {
   const [localDeviceId, setLocalDeviceId] = useState<string | null>(null);
   const [defaultBillingInterval, setDefaultBillingInterval] = useState<number | undefined>();
   const listContentStyle = useBottomSafeAreaStyle(styles.listContent);
+  const [nowMs, setNowMs] = useState(Date.now());
 
   // Form state
   const [showStartModal, setShowStartModal] = useState(false);
@@ -157,6 +160,17 @@ export default function TimeTrackingScreen() {
     return () => subscription.unsubscribe();
   }, []);
 
+  useEffect(() => {
+    if (runningEntries.length === 0) return;
+
+    setNowMs(Date.now());
+    const interval = setInterval(() => {
+      setNowMs(Date.now());
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [runningEntries.length]);
+
   // Observe running entry
   useEffect(() => {
     const subscription = database
@@ -190,6 +204,15 @@ export default function TimeTrackingScreen() {
     if (!localRunningEntry) return undefined;
     return clients.find((client) => client.id === localRunningEntry.clientId);
   }, [localRunningEntry, clients]);
+
+  const remoteRunningEntry = useMemo(
+    () =>
+      runningEntries.find((entry) => {
+        if (!entry.runningDeviceId) return false;
+        return !localDeviceId || entry.runningDeviceId !== localDeviceId;
+      }) ?? null,
+    [localDeviceId, runningEntries],
+  );
 
   const currentEntry = useMemo(
     () => localRunningEntry ?? (runningEntries.length > 0 ? runningEntries[0] : null),
@@ -306,10 +329,10 @@ export default function TimeTrackingScreen() {
     return groupedEntries.filter(({ client }) => matchingClientIds.has(client.id));
   }, [groupedEntries, matchingClientIds]);
 
-  const currentClient = useMemo(() => {
-    if (!currentEntry) return undefined;
-    return clients.find((client) => client.id === currentEntry.clientId);
-  }, [currentEntry, clients]);
+  const remoteRunningClient = useMemo(() => {
+    if (!remoteRunningEntry) return undefined;
+    return clients.find((client) => client.id === remoteRunningEntry.clientId);
+  }, [clients, remoteRunningEntry]);
 
   // Keep the iOS widget in sync whenever the running entry or its client changes.
   // WatermelonDB reuses model instances (mutates fields in-place), so we must list
@@ -329,10 +352,57 @@ export default function TimeTrackingScreen() {
     localRunningClient?.name,
   ]);
 
-  const currentPriceListItem = useMemo(() => {
-    if (!currentEntry?.priceListItemId) return undefined;
-    return priceListItems.find((item) => item.id === currentEntry.priceListItemId);
-  }, [currentEntry, priceListItems]);
+  const localPriceListItem = useMemo(() => {
+    if (!localRunningEntry?.priceListItemId) return undefined;
+    return priceListItems.find((item) => item.id === localRunningEntry.priceListItemId);
+  }, [localRunningEntry, priceListItems]);
+
+  const localTimerDetail = useMemo(() => {
+    if (!localRunningEntry) return '';
+    const details: string[] = [];
+    if (localRunningEntry.description) details.push(localRunningEntry.description);
+    if (localPriceListItem) {
+      const rateText =
+        localRunningEntry.rate !== undefined
+          ? ` · ${formatPrice(
+              localRunningEntry.rate,
+              normalizeCurrencyCode(
+                localRunningEntry.rateCurrency,
+                localPriceListItem.defaultPriceCurrency || defaultInvoiceCurrency,
+              ),
+              intlLocale,
+            )}`
+          : '';
+      details.push(`${localPriceListItem.name}${rateText}`);
+    }
+    return details.join(' · ');
+  }, [defaultInvoiceCurrency, intlLocale, localPriceListItem, localRunningEntry]);
+
+  const remotePriceListItem = useMemo(() => {
+    if (!remoteRunningEntry?.priceListItemId) return undefined;
+    return priceListItems.find((item) => item.id === remoteRunningEntry.priceListItemId);
+  }, [priceListItems, remoteRunningEntry]);
+
+  const remoteTimerDetail = useMemo(() => {
+    if (!remoteRunningEntry) return '';
+    const details: string[] = [];
+    if (remoteRunningEntry.description) details.push(remoteRunningEntry.description);
+    if (remotePriceListItem) {
+      const rateText =
+        remoteRunningEntry.rate !== undefined
+          ? ` · ${formatPrice(
+              remoteRunningEntry.rate,
+              normalizeCurrencyCode(
+                remoteRunningEntry.rateCurrency,
+                remotePriceListItem.defaultPriceCurrency || defaultInvoiceCurrency,
+              ),
+              intlLocale,
+            )}`
+          : '';
+      details.push(`${remotePriceListItem.name}${rateText}`);
+    }
+    return details.join(' · ');
+  }, [defaultInvoiceCurrency, intlLocale, remotePriceListItem, remoteRunningEntry]);
 
   const renderClientGroup = ({
     item,
@@ -371,72 +441,13 @@ export default function TimeTrackingScreen() {
           ),
         }}
       />
-      <KeyboardAvoidingView style={styles.container} behavior={isIos ? 'padding' : undefined}>
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={isIos ? 'padding' : undefined}
+        enabled={isIos}
+      >
         {/* Timer Display */}
         <ThemedView style={styles.timerContainer}>
-          {currentEntry && (
-            <SwipeableRow
-              onEdit={canControlCurrentEntry ? handleEditRunningEntry : undefined}
-              onDelete={canControlCurrentEntry ? handleDeleteRunningEntry : undefined}
-              borderRadius={12}
-            >
-              <View
-                style={[
-                  styles.currentInfoCard,
-                  {
-                    backgroundColor: palette.cardBackground,
-                    borderColor: palette.border,
-                  },
-                ]}
-              >
-                <View style={styles.currentInfoRow}>
-                  <ThemedText style={styles.currentInfoClient} numberOfLines={1}>
-                    {currentClient?.name ?? '-'}
-                  </ThemedText>
-                  {(!!currentEntry.description || !!currentPriceListItem) && (
-                    <ThemedText style={styles.currentInfoSeparator}>·</ThemedText>
-                  )}
-                  {!!currentEntry.description && (
-                    <ThemedText style={styles.currentInfoMeta} numberOfLines={1}>
-                      {currentEntry.description}
-                    </ThemedText>
-                  )}
-                  {!!currentPriceListItem && (
-                    <>
-                      {!!currentEntry.description && (
-                        <ThemedText style={styles.currentInfoSeparator}>·</ThemedText>
-                      )}
-                      <IconSymbol name="tag.fill" size={11} color={palette.timeHighlight} />
-                      <ThemedText style={styles.currentInfoMeta} numberOfLines={1}>
-                        {currentPriceListItem.name}
-                        {currentEntry.rate !== undefined
-                          ? ` · ${formatPrice(
-                              currentEntry.rate,
-                              normalizeCurrencyCode(
-                                currentEntry.rateCurrency,
-                                currentPriceListItem.defaultPriceCurrency || defaultInvoiceCurrency,
-                              ),
-                              intlLocale,
-                            )}`
-                          : ''}
-                      </ThemedText>
-                    </>
-                  )}
-                </View>
-                {!canControlCurrentEntry && (
-                  <ThemedText style={styles.currentInfoRemote} numberOfLines={1}>
-                    {LL.timeTracking.runningOnOtherDevice({
-                      device:
-                        currentEntry.runningDeviceName ||
-                        currentEntry.runningDeviceId ||
-                        LL.timeTracking.unknownDevice(),
-                    })}
-                  </ThemedText>
-                )}
-              </View>
-            </SwipeableRow>
-          )}
-
           <View style={styles.timerButtons}>
             {!localRunningEntry ? (
               clients.length > 0 ? (
@@ -462,15 +473,37 @@ export default function TimeTrackingScreen() {
                 />
               )
             ) : (
-              <PauseStopTimerControl
-                entry={localRunningEntry}
-                client={localRunningClient}
-                defaultBillingInterval={defaultBillingInterval}
-                onPauseResume={localRunningEntry.isPaused ? handleResumeTimer : handlePauseTimer}
-                onStop={handleStopTimer}
-              />
+              <SwipeableRow
+                onEdit={canControlCurrentEntry ? handleEditRunningEntry : undefined}
+                onDelete={canControlCurrentEntry ? handleDeleteRunningEntry : undefined}
+                borderRadius={12}
+              >
+                <PauseStopTimerControl
+                  entry={localRunningEntry}
+                  client={localRunningClient}
+                  defaultBillingInterval={defaultBillingInterval}
+                  title={localRunningClient?.name}
+                  detail={localTimerDetail}
+                  onPauseResume={localRunningEntry.isPaused ? handleResumeTimer : handlePauseTimer}
+                  onStop={handleStopTimer}
+                />
+              </SwipeableRow>
             )}
           </View>
+
+          {remoteRunningEntry ? (
+            <RemoteRunningTimerStatus
+              title={remoteRunningClient?.name ?? '-'}
+              detail={remoteTimerDetail}
+              label={LL.timeTracking.runningOnOtherDevice({
+                device:
+                  remoteRunningEntry.runningDeviceName ||
+                  remoteRunningEntry.runningDeviceId ||
+                  LL.timeTracking.unknownDevice(),
+              })}
+              duration={formatTime(getDisplayedTimeEntryDuration(remoteRunningEntry, nowMs))}
+            />
+          ) : null}
         </ThemedView>
 
         {/* Time Entries List */}
@@ -524,38 +557,6 @@ const styles = StyleSheet.create({
     paddingTop: 12,
     paddingBottom: 8,
     gap: 8,
-  },
-  currentInfoCard: {
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 9,
-    overflow: 'hidden',
-    borderWidth: 1,
-    gap: 3,
-  },
-  currentInfoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flexWrap: 'wrap',
-    gap: 5,
-  },
-  currentInfoClient: {
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  currentInfoSeparator: {
-    fontSize: 12,
-    opacity: 0.35,
-  },
-  currentInfoMeta: {
-    fontSize: 13,
-    opacity: 0.6,
-    flexShrink: 1,
-  },
-  currentInfoRemote: {
-    fontSize: 11,
-    opacity: 0.5,
-    fontStyle: 'italic',
   },
   timerButtons: {
     width: '100%',

@@ -5,6 +5,7 @@ import { PhoneLink } from '@/components/phone-link';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { PauseStopTimerControl } from '@/components/time-tracking/pause-stop-timer-control';
+import { RemoteRunningTimerStatus } from '@/components/time-tracking/remote-running-timer-status';
 import { StartTimerModal } from '@/components/time-tracking/start-timer-modal';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { IconButton } from '@/components/ui/icon-button';
@@ -32,6 +33,7 @@ import {
   resumeTimeEntry,
   stopTimeEntry,
 } from '@/repositories/time-entry-repository';
+import { getDisplayedTimeEntryDuration } from '@/utils/time-entry-duration-utils';
 import { Q } from '@nozbe/watermelondb';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
@@ -46,13 +48,14 @@ export default function ClientDetailScreen() {
   const [client, setClient] = useState<ClientModel | null>(null);
   const [showStartModal, setShowStartModal] = useState(false);
   const [priceListItems, setPriceListItems] = useState<PriceListItemModel[]>([]);
-  const [runningEntry, setRunningEntry] = useState<TimeEntryModel | null>(null);
+  const [runningEntriesForClient, setRunningEntriesForClient] = useState<TimeEntryModel[]>([]);
   const [hasRunningEntryElsewhere, setHasRunningEntryElsewhere] = useState(false);
   const [localDeviceId, setLocalDeviceId] = useState<string | null>(null);
   const [defaultBillingInterval, setDefaultBillingInterval] = useState<number | undefined>();
   const [timesheetCount, setTimesheetCount] = useState<number>(0);
   const [timeEntryCount, setTimeEntryCount] = useState<number>(0);
   const [invoiceCount, setInvoiceCount] = useState<number>(0);
+  const [nowMs, setNowMs] = useState(Date.now());
   const contentStyle = useBottomSafeAreaStyle(styles.content);
   const [headerTitle, setHeaderTitle] = useState('');
   const nameSectionHeight = useRef(0);
@@ -174,6 +177,17 @@ export default function ClientDetailScreen() {
   }, [id, localDeviceId]);
 
   useEffect(() => {
+    if (runningEntriesForClient.length === 0) return;
+
+    setNowMs(Date.now());
+    const interval = setInterval(() => {
+      setNowMs(Date.now());
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [runningEntriesForClient.length]);
+
+  useEffect(() => {
     const subscription = getPriceListItems(false)
       .observeWithColumns(['name', 'default_price', 'default_price_currency', 'unit', 'is_active'])
       .subscribe(setPriceListItems);
@@ -193,30 +207,33 @@ export default function ClientDetailScreen() {
         'running_device_id',
         'running_device_name',
       ])
-      .subscribe((entries) => {
-        if (entries.length === 0) {
-          setRunningEntry(null);
-          return;
-        }
-        const localEntry = entries.find(
-          (entry) =>
-            !entry.runningDeviceId || (!!localDeviceId && entry.runningDeviceId === localDeviceId),
-        );
-        setRunningEntry(localEntry || entries[0]);
-      });
+      .subscribe(setRunningEntriesForClient);
 
     return () => subscription.unsubscribe();
   }, [id, localDeviceId]);
 
-  const canControlRunningEntry =
-    !!runningEntry &&
-    (!runningEntry.runningDeviceId || runningEntry.runningDeviceId === localDeviceId);
-
   const localRunningEntry = useMemo(() => {
-    if (!runningEntry) return null;
-    if (!runningEntry.runningDeviceId) return runningEntry;
-    return runningEntry.runningDeviceId === localDeviceId ? runningEntry : null;
-  }, [localDeviceId, runningEntry]);
+    if (!localDeviceId) {
+      return runningEntriesForClient.find((entry) => !entry.runningDeviceId) ?? null;
+    }
+    return runningEntriesForClient.find((entry) => entry.runningDeviceId === localDeviceId) ?? null;
+  }, [localDeviceId, runningEntriesForClient]);
+
+  const remoteRunningEntry = useMemo(
+    () =>
+      runningEntriesForClient.find((entry) => {
+        if (!entry.runningDeviceId) return false;
+        return !localDeviceId || entry.runningDeviceId !== localDeviceId;
+      }) ?? null,
+    [localDeviceId, runningEntriesForClient],
+  );
+
+  const formatTime = (seconds: number): string => {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
 
   const handleMainTimerAction = async () => {
     if (hasRunningEntryElsewhere) return;
@@ -224,20 +241,20 @@ export default function ClientDetailScreen() {
   };
 
   const handlePauseResumeAction = async () => {
-    if (!runningEntry || !canControlRunningEntry) return;
+    if (!localRunningEntry) return;
 
     try {
-      if (runningEntry.isPaused) {
-        await resumeTimeEntry(runningEntry.id);
+      if (localRunningEntry.isPaused) {
+        await resumeTimeEntry(localRunningEntry.id);
       } else {
-        await pauseTimeEntry(runningEntry.id);
+        await pauseTimeEntry(localRunningEntry.id);
       }
     } catch (error) {
       console.error('Error toggling pause from client detail:', error);
       Alert.alert(
         LL.common.error(),
         getControlErrorMessage(
-          runningEntry.isPaused
+          localRunningEntry.isPaused
             ? LL.timeTracking.errorResumeTimer()
             : LL.timeTracking.errorPauseTimer(),
           error,
@@ -247,10 +264,10 @@ export default function ClientDetailScreen() {
   };
 
   const handleStopAction = async () => {
-    if (!runningEntry || !canControlRunningEntry) return;
+    if (!localRunningEntry) return;
 
     try {
-      await stopTimeEntry(runningEntry.id);
+      await stopTimeEntry(localRunningEntry.id);
     } catch (error) {
       console.error('Error stopping timer from client detail:', error);
       Alert.alert(
@@ -347,33 +364,16 @@ export default function ClientDetailScreen() {
         </View>
 
         <View style={styles.startActionSection}>
-          {runningEntry ? (
-            canControlRunningEntry ? (
-              <PauseStopTimerControl
-                entry={runningEntry}
-                client={localRunningEntry ? client : undefined}
-                defaultBillingInterval={defaultBillingInterval}
-                onPauseResume={handlePauseResumeAction}
-                onStop={handleStopAction}
-                maxWidth={380}
-              />
-            ) : (
-              <Pressable
-                style={[styles.startActionButton, { backgroundColor: palette.textSecondary }]}
-              >
-                <IconSymbol name="lock.fill" size={18} color={palette.onTint} />
-                <View style={styles.startActionButtonTextBlock}>
-                  <ThemedText style={[styles.startActionButtonText, { color: palette.onTint }]}>
-                    {LL.timeTracking.runningOnOtherDevice({
-                      device:
-                        runningEntry.runningDeviceName ||
-                        runningEntry.runningDeviceId ||
-                        LL.timeTracking.unknownDevice(),
-                    })}
-                  </ThemedText>
-                </View>
-              </Pressable>
-            )
+          {localRunningEntry ? (
+            <PauseStopTimerControl
+              entry={localRunningEntry}
+              client={client}
+              defaultBillingInterval={defaultBillingInterval}
+              title={client.name}
+              onPauseResume={handlePauseResumeAction}
+              onStop={handleStopAction}
+              maxWidth={380}
+            />
           ) : (
             <Pressable
               style={[
@@ -404,6 +404,19 @@ export default function ClientDetailScreen() {
               </View>
             </Pressable>
           )}
+
+          {remoteRunningEntry ? (
+            <RemoteRunningTimerStatus
+              style={styles.remoteTimerStatus}
+              label={LL.timeTracking.runningOnOtherDevice({
+                device:
+                  remoteRunningEntry.runningDeviceName ||
+                  remoteRunningEntry.runningDeviceId ||
+                  LL.timeTracking.unknownDevice(),
+              })}
+              duration={formatTime(getDisplayedTimeEntryDuration(remoteRunningEntry, nowMs))}
+            />
+          ) : null}
         </View>
 
         <View style={[styles.toolbar, { backgroundColor: palette.cardBackground }]}>
@@ -612,6 +625,7 @@ const styles = StyleSheet.create({
   startActionSection: {
     paddingHorizontal: Spacing.lg,
     alignItems: 'center',
+    gap: Spacing.sm,
   },
   toolbar: {
     marginHorizontal: Spacing.lg,
@@ -667,6 +681,7 @@ const styles = StyleSheet.create({
   disabledStartButtonContent: {
     opacity: Opacity.muted,
   },
+  remoteTimerStatus: { maxWidth: 380 },
   section: {
     marginTop: Spacing.lg,
     paddingHorizontal: Spacing.lg,
