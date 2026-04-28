@@ -24,6 +24,8 @@ export default class TimeEntryModel extends Model {
   @field('total_paused_duration') totalPausedDuration?: number; // in seconds
   @field('running_device_id') runningDeviceId?: string;
   @text('running_device_name') runningDeviceName?: string;
+  @field('source_device_id') sourceDeviceId?: string;
+  @text('source_device_name') sourceDeviceName?: string;
   @field('timesheet_id') timesheetId?: string;
   @field('timesheet_duration') timesheetDuration?: number; // frozen rounded seconds for timesheet exports/views
   @field('price_list_item_id') priceListItemId?: string;

@@ -300,6 +300,11 @@ const pl = {
     exportErrorXlsx: 'Nie udało się wyeksportować pliku XLSX.',
     startLabel: 'Start',
     durationLabel: 'Czas trwania',
+    sourceDeviceLabel: 'Urządzenie źródłowe',
+    amountLabel: 'Kwota',
+    billingTotalLabel: 'Suma rozliczana',
+    unpricedEntriesNotice:
+      'Niektóre wpisy nie mają stawki i nie są uwzględnione w sumach rozliczeniowych.',
     createForClient: 'Nowy grafik dla {client}',
     createButton: 'Tworzyć',
     periodType: 'Okres',

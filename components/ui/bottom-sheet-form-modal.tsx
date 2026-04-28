@@ -1,7 +1,8 @@
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { AppButton } from '@/components/ui/app-button';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Colors, FontSizes, Spacing } from '@/constants/theme';
+import { Colors, Spacing } from '@/constants/theme';
 import { useBottomSafeAreaStyle } from '@/hooks/use-bottom-safe-area-style';
 import { usePalette } from '@/hooks/use-palette';
 import { useI18nContext } from '@/i18n/i18n-react';
@@ -120,22 +121,18 @@ function ModalContent({
             <View style={styles.formContent}>{children}</View>
 
             <View style={styles.actions}>
-              <Pressable
-                style={[styles.button, { backgroundColor: palette.buttonNeutralBackground }]}
+              <AppButton
+                label={LL.common.cancel()}
                 onPress={onClose}
-              >
-                <ThemedText style={[styles.cancelButtonText, { color: palette.textMuted }]}>
-                  {LL.common.cancel()}
-                </ThemedText>
-              </Pressable>
-              <Pressable
-                style={[styles.button, { backgroundColor: palette.tint }]}
+                variant="secondary"
+                style={styles.actionButton}
+              />
+              <AppButton
+                label={LL.common.save()}
                 onPress={onSave}
-              >
-                <ThemedText style={[styles.saveButtonText, { color: palette.onTint }]}>
-                  {LL.common.save()}
-                </ThemedText>
-              </Pressable>
+                variant="primary"
+                style={styles.actionButton}
+              />
             </View>
           </ScrollView>
         </ThemedView>
@@ -175,20 +172,7 @@ const styles = StyleSheet.create({
     gap: Spacing.sm,
     marginTop: 24,
   },
-  button: {
+  actionButton: {
     flex: 1,
-    padding: 12,
-    minHeight: 48,
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  cancelButtonText: {
-    fontSize: FontSizes.md,
-    fontWeight: '600',
-  },
-  saveButtonText: {
-    fontSize: FontSizes.md,
-    fontWeight: '600',
   },
 });

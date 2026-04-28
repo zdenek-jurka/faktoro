@@ -309,6 +309,11 @@ const de = {
     exportErrorXlsx: 'XLSX konnte nicht exportiert werden.',
     startLabel: 'Start',
     durationLabel: 'Dauer',
+    sourceDeviceLabel: 'Quellgerät',
+    amountLabel: 'Betrag',
+    billingTotalLabel: 'Abrechenbar gesamt',
+    unpricedEntriesNotice:
+      'Einige Einträge haben keinen Satz und sind nicht in den abrechenbaren Summen enthalten.',
     createForClient: 'Neue Arbeitszeittabelle für {client}',
     createButton: 'Erstellen',
     periodType: 'Zeitraum',

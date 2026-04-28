@@ -1102,5 +1102,23 @@ export default schemaMigrations({
         }),
       ],
     },
+    {
+      toVersion: 57,
+      steps: [
+        addColumns({
+          table: 'time_entry',
+          columns: [
+            { name: 'source_device_id', type: 'string', isOptional: true, isIndexed: true },
+            { name: 'source_device_name', type: 'string', isOptional: true },
+          ],
+        }),
+        unsafeExecuteSql(`
+          update "time_entry"
+          set "source_device_id" = coalesce(nullif("source_device_id", ''), nullif("running_device_id", '')),
+              "source_device_name" = coalesce(nullif("source_device_name", ''), nullif("running_device_name", ''))
+          where coalesce(nullif("running_device_id", ''), nullif("running_device_name", '')) is not null;
+        `),
+      ],
+    },
   ],
 });

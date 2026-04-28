@@ -297,6 +297,11 @@ const en = {
     exportErrorXlsx: 'Failed to export XLSX.',
     startLabel: 'Start',
     durationLabel: 'Duration',
+    sourceDeviceLabel: 'Source device',
+    amountLabel: 'Amount',
+    billingTotalLabel: 'Billable total',
+    unpricedEntriesNotice:
+      'Some entries do not have a rate and are not included in billing totals.',
     createForClient: 'New timesheet for {client}',
     createButton: 'Create',
     periodType: 'Period',

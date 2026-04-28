@@ -1,8 +1,8 @@
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { ActionEmptyState } from '@/components/ui/action-empty-state';
+import { GroupedListRow } from '@/components/ui/grouped-list';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Colors } from '@/constants/theme';
 import database from '@/db';
 import { useBottomSafeAreaStyle } from '@/hooks/use-bottom-safe-area-style';
 import { usePalette } from '@/hooks/use-palette';
@@ -243,63 +243,60 @@ export function ClientTimesheetsList({ clientId, backToClientId, onTimesheetPres
         renderItem={({ item, index }) => {
           const isLast = index === items.length - 1;
           return (
-            <Pressable
-              style={({ pressed }) => [
-                styles.row,
-                { backgroundColor: palette.cardBackground },
-                index === 0 && styles.rowFirst,
-                isLast && styles.rowLast,
-                pressed && styles.rowPressed,
-              ]}
+            <GroupedListRow
+              isFirst={index === 0}
+              isLast={isLast}
+              style={isLast && styles.rowLastSpacing}
               onPress={() =>
                 onTimesheetPress
                   ? onTimesheetPress(item.timesheet.id)
                   : router.push(`/timesheets/timesheet/${item.timesheet.id}`)
               }
-              android_ripple={{ color: palette.border }}
-              accessibilityRole="button"
               accessibilityLabel={[
                 getTimesheetTitle(item.timesheet),
                 getTimesheetSubtitle(item.timesheet),
               ]
                 .filter(Boolean)
                 .join(', ')}
-            >
-              <View style={styles.rowMain}>
-                <ThemedText type="defaultSemiBold" style={styles.rowTitle}>
-                  {getTimesheetTitle(item.timesheet)}
-                </ThemedText>
-                {getTimesheetSubtitle(item.timesheet) ? (
-                  <ThemedText style={styles.rowMeta}>
-                    {getTimesheetSubtitle(item.timesheet)}
-                  </ThemedText>
-                ) : null}
-                <ThemedText style={styles.rowMeta}>
-                  {formatDate(item.timesheet.periodFrom)} - {formatDate(item.timesheet.periodTo)}
-                </ThemedText>
-                <ThemedText style={styles.rowMeta}>
-                  {LL.timesheets.entriesCount({ count: item.entriesCount })}
-                </ThemedText>
-                {linkedInvoiceByTimesheetId.has(item.timesheet.id) && (
-                  <View style={[styles.invoiceBadge, { borderColor: palette.border }]}>
-                    <ThemedText style={[styles.invoiceBadgeText, { color: palette.textSecondary }]}>
-                      {`${LL.invoices.title()}: ${linkedInvoiceByTimesheetId.get(item.timesheet.id)?.invoiceNumber}`}
+              showChevron
+              trailing={
+                <View style={styles.rowTrailingContent}>
+                  <View style={[styles.timeBadge, { backgroundColor: palette.timeHighlight }]}>
+                    <ThemedText
+                      style={[styles.timeBadgeText, { color: palette.onHighlight }]}
+                      numberOfLines={1}
+                    >
+                      {formatDuration(item.duration)}
                     </ThemedText>
                   </View>
-                )}
-              </View>
-
-              <View style={styles.rowRight}>
-                <View style={[styles.timeBadge, { backgroundColor: palette.timeHighlight }]}>
-                  <ThemedText style={[styles.timeBadgeText, { color: palette.onHighlight }]}>
-                    {formatDuration(item.duration)}
+                </View>
+              }
+            >
+              <ThemedText type="defaultSemiBold" style={styles.rowTitle} numberOfLines={1}>
+                {getTimesheetTitle(item.timesheet)}
+              </ThemedText>
+              {getTimesheetSubtitle(item.timesheet) ? (
+                <ThemedText style={styles.rowMeta} numberOfLines={1}>
+                  {getTimesheetSubtitle(item.timesheet)}
+                </ThemedText>
+              ) : null}
+              <ThemedText style={styles.rowMeta} numberOfLines={1}>
+                {formatDate(item.timesheet.periodFrom)} - {formatDate(item.timesheet.periodTo)}
+              </ThemedText>
+              <ThemedText style={styles.rowMeta} numberOfLines={1}>
+                {LL.timesheets.entriesCount({ count: item.entriesCount })}
+              </ThemedText>
+              {linkedInvoiceByTimesheetId.has(item.timesheet.id) && (
+                <View style={[styles.invoiceBadge, { borderColor: palette.border }]}>
+                  <ThemedText
+                    style={[styles.invoiceBadgeText, { color: palette.textSecondary }]}
+                    numberOfLines={1}
+                  >
+                    {`${LL.invoices.title()}: ${linkedInvoiceByTimesheetId.get(item.timesheet.id)?.invoiceNumber}`}
                   </ThemedText>
                 </View>
-                <IconSymbol name="chevron.right" size={20} color={palette.icon} />
-              </View>
-
-              {!isLast && <View style={styles.divider} />}
-            </Pressable>
+              )}
+            </GroupedListRow>
           );
         }}
         ListEmptyComponent={
@@ -321,11 +318,7 @@ const styles = StyleSheet.create({
   listContent: { paddingBottom: 24 },
   headerBackButton: { flexDirection: 'row', alignItems: 'center', gap: 3, maxWidth: 160 },
   headerBackLabel: { fontSize: 17 },
-  row: { paddingHorizontal: 14, paddingVertical: 12, position: 'relative' },
-  rowPressed: { opacity: 0.72 },
-  rowFirst: { borderTopLeftRadius: 10, borderTopRightRadius: 10 },
-  rowLast: { borderBottomLeftRadius: 10, borderBottomRightRadius: 10, marginBottom: 12 },
-  rowMain: { flex: 1, gap: 2, paddingRight: 96 },
+  rowLastSpacing: { marginBottom: 12 },
   rowTitle: { fontSize: 16 },
   rowMeta: { fontSize: 12, opacity: 0.65 },
   invoiceBadge: {
@@ -337,16 +330,8 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
   },
   invoiceBadgeText: { fontSize: 11, fontWeight: '600' },
-  rowRight: { position: 'absolute', right: 14, top: 14, alignItems: 'flex-end', gap: 4 },
+  rowTrailingContent: { alignItems: 'flex-end', gap: 4, minWidth: 0 },
   timeBadge: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12 },
   timeBadgeText: { fontSize: 12, fontWeight: '700', fontVariant: ['tabular-nums'] },
-  divider: {
-    position: 'absolute',
-    left: 14,
-    right: 14,
-    bottom: 0,
-    height: StyleSheet.hairlineWidth,
-    backgroundColor: Colors.light.borderStrong,
-  },
   emptyState: { alignItems: 'center', justifyContent: 'center', paddingVertical: 64 },
 });

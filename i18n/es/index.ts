@@ -306,6 +306,11 @@ const es = {
     exportErrorXlsx: 'No se pudo exportar XLSX.',
     startLabel: 'Comenzar',
     durationLabel: 'Duración',
+    sourceDeviceLabel: 'Dispositivo de origen',
+    amountLabel: 'Importe',
+    billingTotalLabel: 'Total facturable',
+    unpricedEntriesNotice:
+      'Algunas entradas no tienen tarifa y no se incluyen en los totales facturables.',
     createForClient: 'Nueva hoja de horas para {client}',
     createButton: 'Crear',
     periodType: 'Período',

@@ -304,6 +304,11 @@ const pt = {
     exportErrorXlsx: 'Falha ao exportar XLSX.',
     startLabel: 'Começar',
     durationLabel: 'Duração',
+    sourceDeviceLabel: 'Dispositivo de origem',
+    amountLabel: 'Valor',
+    billingTotalLabel: 'Total faturável',
+    unpricedEntriesNotice:
+      'Alguns registos não têm tarifa e não estão incluídos nos totais faturáveis.',
     createForClient: 'Nova planilha de horas para {client}',
     createButton: 'Criar',
     periodType: 'Período',

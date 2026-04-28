@@ -3,6 +3,7 @@ import {
   CrossPlatformDateTimePicker,
   type CrossPlatformDateTimePickerMode,
 } from '@/components/ui/cross-platform-date-picker';
+import { AppButton } from '@/components/ui/app-button';
 import { HeaderActions } from '@/components/ui/header-actions';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { LabeledAutoGrowTextArea } from '@/components/ui/labeled-auto-grow-textarea';
@@ -551,20 +552,11 @@ export function TimeEntryEditScreenContent({ entryId }: Props) {
           <ThemedText style={[styles.unavailableText, { color: palette.textSecondary }]}>
             {LL.clients.errorClientIdMissing()}
           </ThemedText>
-          <Pressable
-            style={[
-              styles.secondaryFooterButton,
-              {
-                borderColor: palette.border,
-                backgroundColor: palette.cardBackground,
-              },
-            ]}
+          <AppButton
+            label={LL.timeTracking.backWithoutChanges()}
             onPress={() => router.back()}
-          >
-            <ThemedText style={[styles.secondaryFooterButtonText, { color: palette.text }]}>
-              {LL.timeTracking.backWithoutChanges()}
-            </ThemedText>
-          </Pressable>
+            variant="secondary"
+          />
         </View>
       ) : (
         <KeyboardAvoidingView style={styles.container} behavior={isIos ? 'padding' : undefined}>
@@ -821,44 +813,19 @@ export function TimeEntryEditScreenContent({ entryId }: Props) {
             </View>
 
             <View style={styles.footerActions}>
-              <Pressable
-                style={[
-                  styles.primaryButton,
-                  {
-                    backgroundColor: canSave ? palette.tint : palette.border,
-                  },
-                ]}
+              <AppButton
+                label={isSaving ? LL.common.loading() : LL.common.save()}
                 onPress={handleSave}
                 disabled={!canSave}
-              >
-                <ThemedText
-                  style={[
-                    styles.primaryButtonText,
-                    {
-                      color: canSave ? palette.onTint : palette.icon,
-                    },
-                  ]}
-                >
-                  {isSaving ? LL.common.loading() : LL.common.save()}
-                </ThemedText>
-              </Pressable>
+                loading={isSaving}
+              />
 
-              <Pressable
-                style={[
-                  styles.secondaryFooterButton,
-                  {
-                    borderColor: palette.border,
-                    backgroundColor: palette.cardBackground,
-                    opacity: isSaving ? 0.6 : 1,
-                  },
-                ]}
+              <AppButton
+                label={LL.timeTracking.backWithoutChanges()}
                 onPress={() => router.back()}
                 disabled={isSubmitting}
-              >
-                <ThemedText style={[styles.secondaryFooterButtonText, { color: palette.text }]}>
-                  {LL.timeTracking.backWithoutChanges()}
-                </ThemedText>
-              </Pressable>
+                variant="secondary"
+              />
             </View>
             <CrossPlatformDateTimePicker
               visible={activeDateTimeField !== null}
@@ -1037,31 +1004,5 @@ const styles = StyleSheet.create({
     gap: 10,
     alignItems: 'stretch',
     paddingTop: 8,
-  },
-  primaryButton: {
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 15,
-    minHeight: 50,
-  },
-  primaryButtonText: {
-    fontSize: 16,
-    fontWeight: '700',
-    textAlign: 'center',
-  },
-  secondaryFooterButton: {
-    borderWidth: 1,
-    borderRadius: 12,
-    paddingVertical: 15,
-    paddingHorizontal: 14,
-    minHeight: 50,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  secondaryFooterButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    textAlign: 'center',
   },
 });

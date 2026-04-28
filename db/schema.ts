@@ -7,7 +7,7 @@ export enum AddressType {
 }
 
 export default appSchema({
-  version: 56,
+  version: 57,
   tables: [
     tableSchema({
       name: 'app_settings',
@@ -139,6 +139,8 @@ export default appSchema({
         { name: 'total_paused_duration', type: 'number', isOptional: true }, // in seconds
         { name: 'running_device_id', type: 'string', isOptional: true, isIndexed: true },
         { name: 'running_device_name', type: 'string', isOptional: true },
+        { name: 'source_device_id', type: 'string', isOptional: true, isIndexed: true },
+        { name: 'source_device_name', type: 'string', isOptional: true },
         { name: 'timesheet_id', type: 'string', isOptional: true, isIndexed: true },
         { name: 'timesheet_duration', type: 'number', isOptional: true }, // frozen rounded seconds at timesheet generation
         { name: 'price_list_item_id', type: 'string', isOptional: true, isIndexed: true },

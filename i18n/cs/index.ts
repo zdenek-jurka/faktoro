@@ -299,6 +299,11 @@ const cs = {
     exportErrorXlsx: 'Export XLSX selhal.',
     startLabel: 'Začátek',
     durationLabel: 'Doba',
+    sourceDeviceLabel: 'Zdrojové zařízení',
+    amountLabel: 'Částka',
+    billingTotalLabel: 'Fakturováno celkem',
+    unpricedEntriesNotice:
+      'Některé záznamy nemají nastavenou sazbu a nejsou zahrnuté do fakturovaných součtů.',
     createForClient: 'Nový timesheet pro {client}',
     createButton: 'Vytvořit',
     periodType: 'Období',

@@ -1,13 +1,12 @@
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import { SwipeableRow } from '@/components/ui/swipeable-row';
+import { GroupedListRow } from '@/components/ui/grouped-list';
 import { useBottomSafeAreaStyle } from '@/hooks/use-bottom-safe-area-style';
 import { usePalette } from '@/hooks/use-palette';
 import { useI18nContext } from '@/i18n/i18n-react';
 import React from 'react';
 import type { ReactNode } from 'react';
-import { FlatList, Pressable, StyleSheet, View } from 'react-native';
+import { FlatList, StyleSheet, View } from 'react-native';
 import { ClientTimesheetGroup } from './timesheets-clients-list-container';
 
 type TimesheetsClientListProps = {
@@ -47,67 +46,59 @@ export function TimesheetsClientList({
         const isLast = index === clients.length - 1;
 
         return (
-          <SwipeableRow>
-            <Pressable
-              style={({ pressed }) => [
-                styles.row,
-                { backgroundColor: palette.cardBackground },
-                index === 0 && styles.rowFirst,
-                isLast && styles.rowLast,
-                pressed && styles.rowPressed,
-              ]}
-              onPress={() => onClientPress(item.client.id)}
-              android_ripple={{ color: palette.border }}
-              accessibilityRole="button"
-              accessibilityLabel={item.client.name}
-            >
-              <View style={styles.rowMain}>
-                <View style={styles.rowNameWrap}>
-                  <ThemedText type="defaultSemiBold" style={styles.rowName}>
-                    {item.client.name}
-                  </ThemedText>
-                  {item.client.isCompany && (
-                    <ThemedView
-                      style={[
-                        styles.companyBadge,
-                        {
-                          backgroundColor: palette.cardBackground,
-                          borderColor: palette.border,
-                        },
-                      ]}
-                    >
-                      <ThemedText style={[styles.companyBadgeText, { color: palette.tint }]}>
-                        {LL.clients.company()}
-                      </ThemedText>
-                    </ThemedView>
-                  )}
-                </View>
-                {!!item.client.companyId && (
-                  <ThemedText style={styles.metaText}>
-                    {LL.clients.companyIdLabel()} {item.client.companyId}
-                  </ThemedText>
-                )}
-                <ThemedText style={styles.metaText}>
-                  {LL.timesheets.countLabel({ count: item.timesheetCount })} •{' '}
-                  {LL.timesheets.entriesCount({ count: item.entriesCount })}
-                </ThemedText>
-              </View>
-
-              <View style={styles.rowRight}>
+          <GroupedListRow
+            isFirst={index === 0}
+            isLast={isLast}
+            onPress={() => onClientPress(item.client.id)}
+            accessibilityLabel={item.client.name}
+            showChevron
+            style={isLast && styles.rowLastSpacing}
+            trailing={
+              <View style={styles.rowTrailingContent}>
                 <View style={[styles.timeBadge, { backgroundColor: palette.timeHighlight }]}>
                   <ThemedText style={[styles.timeBadgeText, { color: palette.onHighlight }]}>
                     {formatDuration(item.remainingDuration)}
                   </ThemedText>
                 </View>
-                <ThemedText style={styles.timeBadgeLabel}>
+                <ThemedText style={styles.timeBadgeLabel} numberOfLines={1}>
                   {LL.timesheets.remainingToInvoiceLabel()}
                 </ThemedText>
-                <IconSymbol name="chevron.right" size={20} color={palette.icon} />
               </View>
-
-              {!isLast && <View style={[styles.divider, { backgroundColor: palette.border }]} />}
-            </Pressable>
-          </SwipeableRow>
+            }
+          >
+            <View style={styles.rowNameWrap}>
+              <ThemedText type="defaultSemiBold" style={styles.rowName} numberOfLines={1}>
+                {item.client.name}
+              </ThemedText>
+              {item.client.isCompany && (
+                <ThemedView
+                  style={[
+                    styles.companyBadge,
+                    {
+                      backgroundColor: palette.cardBackground,
+                      borderColor: palette.border,
+                    },
+                  ]}
+                >
+                  <ThemedText
+                    style={[styles.companyBadgeText, { color: palette.tint }]}
+                    numberOfLines={1}
+                  >
+                    {LL.clients.company()}
+                  </ThemedText>
+                </ThemedView>
+              )}
+            </View>
+            {!!item.client.companyId && (
+              <ThemedText style={styles.metaText} numberOfLines={1}>
+                {LL.clients.companyIdLabel()} {item.client.companyId}
+              </ThemedText>
+            )}
+            <ThemedText style={styles.metaText} numberOfLines={1}>
+              {LL.timesheets.countLabel({ count: item.timesheetCount })} •{' '}
+              {LL.timesheets.entriesCount({ count: item.entriesCount })}
+            </ThemedText>
+          </GroupedListRow>
         );
       }}
       ListEmptyComponent={
@@ -133,27 +124,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingBottom: 24,
   },
-  row: {
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    position: 'relative',
-  },
-  rowPressed: {
-    opacity: 0.72,
-  },
-  rowFirst: {
-    borderTopLeftRadius: 10,
-    borderTopRightRadius: 10,
-  },
-  rowLast: {
-    borderBottomLeftRadius: 10,
-    borderBottomRightRadius: 10,
+  rowLastSpacing: {
     marginBottom: 12,
-  },
-  rowMain: {
-    flex: 1,
-    gap: 2,
-    paddingRight: 96,
   },
   rowNameWrap: {
     flexDirection: 'row',
@@ -178,12 +150,10 @@ const styles = StyleSheet.create({
     fontSize: 12,
     opacity: 0.65,
   },
-  rowRight: {
-    position: 'absolute',
-    right: 14,
-    top: 14,
+  rowTrailingContent: {
     alignItems: 'flex-end',
     gap: 4,
+    minWidth: 0,
   },
   timeBadge: {
     paddingHorizontal: 8,
@@ -198,13 +168,6 @@ const styles = StyleSheet.create({
   timeBadgeLabel: {
     fontSize: 10,
     opacity: 0.65,
-  },
-  divider: {
-    position: 'absolute',
-    left: 14,
-    right: 14,
-    bottom: 0,
-    height: StyleSheet.hairlineWidth,
   },
   emptyState: {
     alignItems: 'center',

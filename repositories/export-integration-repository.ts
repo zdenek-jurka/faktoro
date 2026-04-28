@@ -185,13 +185,31 @@ function getSampleXml(documentType: ExportIntegrationDocumentType): string {
     <TotalEntries>1</TotalEntries>
     <TotalDurationSeconds>3600</TotalDurationSeconds>
     <TotalDurationHours>1.0000</TotalDurationHours>
+    <BillingSummary>
+      <UnpricedEntries>0</UnpricedEntries>
+      <Totals>
+        <Total>
+          <Currency>EUR</Currency>
+          <Amount>120.00</Amount>
+        </Total>
+      </Totals>
+    </BillingSummary>
   </Summary>
   <Entries>
     <Entry>
       <Id>entry-1</Id>
       <Description>Consulting</Description>
+      <StartTime>2026-03-22T09:00:00+00:00</StartTime>
+      <EndTime>2026-03-22T10:00:00+00:00</EndTime>
       <DurationSeconds>3600</DurationSeconds>
       <DurationHours>1.0000</DurationHours>
+      <SourceDevice>
+        <Id>device-1</Id>
+        <Name>MacBook</Name>
+      </SourceDevice>
+      <Rate>120.00</Rate>
+      <RateCurrency>EUR</RateCurrency>
+      <Amount>120.00</Amount>
     </Entry>
   </Entries>
 </Timesheet>`;

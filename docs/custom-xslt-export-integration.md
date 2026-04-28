@@ -305,6 +305,12 @@ Common timesheet fields:
 - `Summary/TotalDurationSeconds`
 - `Summary/TotalDurationHours`
 
+Optional billing summary fields:
+
+- `Summary/BillingSummary/UnpricedEntries`
+- `Summary/BillingSummary/Totals/Total/Currency`
+- `Summary/BillingSummary/Totals/Total/Amount`
+
 Each time entry contains:
 
 - `Id`
@@ -314,12 +320,18 @@ Each time entry contains:
 - `DurationSeconds`
 - `DurationHours`
 
+Optional entry source-device fields:
+
+- `SourceDevice/Id`
+- `SourceDevice/Name`
+
 Optional entry billing fields:
 
 - `Rate`
 - `RateCurrency`
+- `Amount`
 
-### Minimal Timesheet XSLT Example
+### Timesheet XSLT Example
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -340,6 +352,18 @@ Optional entry billing fields:
       <TotalHours>
         <xsl:value-of select="ts:Summary/ts:TotalDurationHours"/>
       </TotalHours>
+      <BillableTotals>
+        <xsl:for-each select="ts:Summary/ts:BillingSummary/ts:Totals/ts:Total">
+          <Total>
+            <Currency>
+              <xsl:value-of select="ts:Currency"/>
+            </Currency>
+            <Amount>
+              <xsl:value-of select="ts:Amount"/>
+            </Amount>
+          </Total>
+        </xsl:for-each>
+      </BillableTotals>
       <Entries>
         <xsl:for-each select="ts:Entries/ts:Entry">
           <Entry>
@@ -355,6 +379,12 @@ Optional entry billing fields:
             <Hours>
               <xsl:value-of select="ts:DurationHours"/>
             </Hours>
+            <SourceDevice>
+              <xsl:value-of select="ts:SourceDevice/ts:Name"/>
+            </SourceDevice>
+            <Amount>
+              <xsl:value-of select="ts:Amount"/>
+            </Amount>
           </Entry>
         </xsl:for-each>
       </Entries>

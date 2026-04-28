@@ -6,6 +6,7 @@ import { useBottomSafeAreaStyle } from '@/hooks/use-bottom-safe-area-style';
 import { usePalette } from '@/hooks/use-palette';
 import { isAndroid } from '@/utils/platform';
 
+import { AppButton } from './app-button';
 import { ThemedText } from '../themed-text';
 import { ThemedView } from '../themed-view';
 
@@ -113,18 +114,17 @@ export function CrossPlatformDateTimePicker({
             {...dateBounds}
           />
           <View style={styles.actions}>
-            <Pressable
-              style={[styles.actionButton, { backgroundColor: palette.buttonNeutralBackground }]}
+            <AppButton
+              label={cancelLabel}
               onPress={onCancel}
-            >
-              <ThemedText style={{ color: palette.textMuted }}>{cancelLabel}</ThemedText>
-            </Pressable>
-            <Pressable
-              style={[styles.actionButton, { backgroundColor: palette.tint }]}
+              variant="secondary"
+              style={styles.actionButton}
+            />
+            <AppButton
+              label={confirmLabel}
               onPress={() => onConfirm(draftValue)}
-            >
-              <ThemedText style={{ color: palette.onTint }}>{confirmLabel}</ThemedText>
-            </Pressable>
+              style={styles.actionButton}
+            />
           </View>
         </ThemedView>
       </View>
@@ -165,9 +165,5 @@ const styles = StyleSheet.create({
   },
   actionButton: {
     flex: 1,
-    minHeight: 48,
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
 });

@@ -5,6 +5,7 @@ import { PauseStopTimerControl } from '@/components/time-tracking/pause-stop-tim
 import { RemoteRunningTimerStatus } from '@/components/time-tracking/remote-running-timer-status';
 import { StartTimerModal } from '@/components/time-tracking/start-timer-modal';
 import { ActionEmptyState } from '@/components/ui/action-empty-state';
+import { AppButton } from '@/components/ui/app-button';
 import { HeaderActions } from '@/components/ui/header-actions';
 import { IconButton } from '@/components/ui/icon-button';
 import { IconSymbol } from '@/components/ui/icon-symbol';
@@ -451,21 +452,13 @@ export function ClientTimeEntriesContent({
               </ThemedText>
             </View>
           ) : (
-            <Pressable
-              style={({ pressed }) => [
-                styles.startActionButton,
-                { backgroundColor: palette.tint },
-                pressed && styles.actionPressed,
-              ]}
+            <AppButton
+              label={LL.timeTracking.startTimer()}
+              iconName="play.fill"
               onPress={() => setShowStartModal(true)}
-              accessibilityRole="button"
               accessibilityLabel={LL.timeTracking.startTimer()}
-            >
-              <IconSymbol name="play.fill" size={20} color={palette.onTint} />
-              <ThemedText style={[styles.startActionButtonText, { color: palette.onTint }]}>
-                {LL.timeTracking.startTimer()}
-              </ThemedText>
-            </Pressable>
+              style={styles.startActionButton}
+            />
           )}
 
           {remoteRunningEntry ? (
@@ -531,24 +524,19 @@ export function ClientTimeEntriesContent({
             emptyText={LL.timeTracking.noEntries()}
             itemBackgroundColor={palette.cardBackground}
             headerAction={
-              <Pressable
-                style={({ pressed }) => [
-                  styles.timesheetActionButton,
-                  {
-                    backgroundColor: palette.cardBackground,
-                    borderColor: palette.border,
-                    opacity: pressed ? 0.72 : 1,
-                  },
-                ]}
+              <AppButton
+                label={LL.timesheets.createToolbarAction()}
+                iconName="doc.badge.plus"
                 onPress={() => setShowTimesheetModal(true)}
-                accessibilityRole="button"
                 accessibilityLabel={LL.timesheets.createToolbarAction()}
-              >
-                <IconSymbol name="doc.badge.plus" size={15} color={palette.tint} />
-                <ThemedText style={[styles.timesheetActionText, { color: palette.tint }]}>
-                  {LL.timesheets.createToolbarAction()}
-                </ThemedText>
-              </Pressable>
+                variant="ghost"
+                size="compact"
+                fullWidth={false}
+                style={[
+                  styles.timesheetActionButton,
+                  { backgroundColor: palette.cardBackground, borderColor: palette.border },
+                ]}
+              />
             }
             swipeHintKey="time-tracking.entries"
             swipeHintText={LL.timeTracking.swipeActionsHint()}
@@ -664,18 +652,8 @@ const styles = StyleSheet.create({
   entriesScroll: { flex: 1 },
   entriesScrollContent: { paddingBottom: 24 },
   timesheetActionButton: {
-    minHeight: 34,
     maxWidth: 190,
-    borderRadius: 10,
-    paddingHorizontal: 11,
-    paddingVertical: 7,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    borderWidth: 1,
   },
-  timesheetActionText: { minWidth: 0, flexShrink: 1, fontSize: 13, fontWeight: '700' },
   headerBackButton: { flexDirection: 'row', alignItems: 'center', gap: 3, maxWidth: 160 },
   headerBackLabel: { fontSize: 17 },
   timerActionSection: { marginTop: 12, marginBottom: 10, gap: 8 },
@@ -713,18 +691,8 @@ const styles = StyleSheet.create({
     width: StyleSheet.hairlineWidth,
   },
   startActionButton: {
-    width: '100%',
     minHeight: 56,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    paddingHorizontal: 18,
-    paddingVertical: 13,
-    borderRadius: 12,
   },
-  actionPressed: { opacity: 0.82 },
-  startActionButtonText: { fontSize: 16, fontWeight: '700' },
   timerStatusPanel: {
     width: '100%',
     minHeight: 56,

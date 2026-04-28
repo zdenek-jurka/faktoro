@@ -38,6 +38,27 @@
       <xs:element name="TotalEntries"         type="xs:nonNegativeInteger"/>
       <xs:element name="TotalDurationSeconds" type="xs:nonNegativeInteger"/>
       <xs:element name="TotalDurationHours"   type="xs:decimal"/>
+      <xs:element name="BillingSummary"       type="tns:BillingSummaryType" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="BillingSummaryType">
+    <xs:sequence>
+      <xs:element name="UnpricedEntries" type="xs:nonNegativeInteger" minOccurs="0"/>
+      <xs:element name="Totals" type="tns:BillingTotalsType" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="BillingTotalsType">
+    <xs:sequence>
+      <xs:element name="Total" type="tns:BillingTotalType" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="BillingTotalType">
+    <xs:sequence>
+      <xs:element name="Currency" type="xs:string"/>
+      <xs:element name="Amount"   type="xs:decimal"/>
     </xs:sequence>
   </xs:complexType>
 
@@ -55,8 +76,17 @@
       <xs:element name="EndTime"         type="xs:dateTime" minOccurs="0"/>
       <xs:element name="DurationSeconds" type="xs:nonNegativeInteger"/>
       <xs:element name="DurationHours"   type="xs:decimal"/>
+      <xs:element name="SourceDevice"    type="tns:SourceDeviceType" minOccurs="0"/>
       <xs:element name="Rate"            type="xs:decimal" minOccurs="0"/>
       <xs:element name="RateCurrency"    type="xs:string"  minOccurs="0"/>
+      <xs:element name="Amount"          type="xs:decimal" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="SourceDeviceType">
+    <xs:sequence>
+      <xs:element name="Id"   type="xs:string" minOccurs="0"/>
+      <xs:element name="Name" type="xs:string" minOccurs="0"/>
     </xs:sequence>
   </xs:complexType>
 

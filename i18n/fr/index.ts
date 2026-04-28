@@ -308,6 +308,11 @@ const fr = {
     exportErrorXlsx: "Échec de l'exportation de XLSX.",
     startLabel: 'Commencer',
     durationLabel: 'Durée',
+    sourceDeviceLabel: 'Appareil source',
+    amountLabel: 'Montant',
+    billingTotalLabel: 'Total facturable',
+    unpricedEntriesNotice:
+      'Certaines entrées n’ont pas de tarif et ne sont pas incluses dans les totaux facturables.',
     createForClient: 'Nouvelle feuille de temps pour {client}',
     createButton: 'Créer',
     periodType: 'Période',

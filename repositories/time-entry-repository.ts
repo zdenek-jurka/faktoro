@@ -182,6 +182,8 @@ export async function createTimeEntry(input: CreateTimeEntryInput): Promise<Time
       entry.totalPausedDuration = 0;
       entry.runningDeviceId = deviceId;
       entry.runningDeviceName = deviceName;
+      entry.sourceDeviceId = deviceId;
+      entry.sourceDeviceName = deviceName;
     });
   });
 

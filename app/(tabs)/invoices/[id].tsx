@@ -2,6 +2,7 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { getPriceListUnitLabel } from '@/components/price-list/unit-options';
 import { PaymentQrModal } from '@/components/invoices/payment-qr-modal';
+import { GroupedListRow } from '@/components/ui/grouped-list';
 import { IconSymbol, type IconSymbolName } from '@/components/ui/icon-symbol';
 import { OptionSheetModal } from '@/components/ui/option-sheet-modal';
 import {
@@ -1754,207 +1755,330 @@ export default function InvoiceDetailScreen() {
 
       {invoice ? (
         <>
-          <View style={styles.summaryCard}>
-            <ThemedText type="defaultSemiBold">{invoice.invoiceNumber}</ThemedText>
-            <ThemedText type="defaultSemiBold">{buyer.name || client?.name || '-'}</ThemedText>
-            {statusLabel ? (
-              <ThemedText
-                style={[styles.metaText, styles.statusText, { color: palette.destructive }]}
-              >
-                {statusLabel}
-              </ThemedText>
-            ) : null}
-            {invoice.buyerReference ? (
-              <ThemedText style={styles.metaText}>
-                {LL.invoices.buyerReference()}: {invoice.buyerReference}
-              </ThemedText>
-            ) : null}
-            <ThemedText style={styles.metaText}>
-              {LL.invoices.issueDate()}: {new Date(invoice.issuedAt).toLocaleDateString(intlLocale)}
-            </ThemedText>
-            <ThemedText style={styles.metaText}>
-              {LL.invoices.paymentMethod()}: {getPaymentMethodLabel(LL, invoice.paymentMethod)}
-            </ThemedText>
-            {invoice.taxableAt ? (
-              <ThemedText style={styles.metaText}>
-                {LL.invoices.taxableSupplyDateShort()}:{' '}
-                {new Date(invoice.taxableAt).toLocaleDateString(intlLocale)}
-              </ThemedText>
-            ) : null}
-            {invoice.dueAt ? (
-              <ThemedText style={styles.metaText}>
-                {LL.invoices.dueDate()}: {new Date(invoice.dueAt).toLocaleDateString(intlLocale)}
-              </ThemedText>
-            ) : null}
-            {invoice.cancellationReason ? (
-              <ThemedText style={styles.metaText}>
-                {LL.invoices.cancelReasonLabel()}: {invoice.cancellationReason}
-              </ThemedText>
-            ) : null}
-            {relatedInvoice ? (
-              <Pressable
-                onPress={() => router.push(`/invoices/${relatedInvoice.id}`)}
-                accessibilityRole="button"
-                accessibilityLabel={relatedInvoiceLabel || undefined}
-              >
-                <ThemedText
-                  style={[styles.metaText, styles.relatedInvoiceText, { color: palette.tint }]}
-                >
-                  {relatedInvoiceLabel}
-                </ThemedText>
-              </Pressable>
-            ) : null}
-            <ThemedText style={styles.totalText}>
-              {formatPrice(invoice.total, normalizeCurrencyCode(invoice.currency), intlLocale)}
-            </ThemedText>
-          </View>
-          {cancellationInfo ? (
-            <View
-              style={[
-                styles.cancellationInfoCard,
-                {
-                  backgroundColor: withOpacity(palette.destructive, 0.08),
-                  borderColor: withOpacity(palette.destructive, 0.22),
-                },
-              ]}
-            >
-              <View style={styles.cancellationInfoHeader}>
-                <IconSymbol name={cancellationInfo.icon} size={16} color={palette.destructive} />
-                <ThemedText style={[styles.cancellationInfoTitle, { color: palette.destructive }]}>
-                  {cancellationInfo.title}
-                </ThemedText>
-              </View>
-              <ThemedText style={styles.cancellationInfoDescription}>
-                {cancellationInfo.description}
-              </ThemedText>
-              {relatedInvoice ? (
-                <Pressable
-                  onPress={() => router.push(`/invoices/${relatedInvoice.id}`)}
-                  accessibilityRole="button"
-                  accessibilityLabel={relatedInvoiceLabel || undefined}
-                >
-                  <ThemedText style={[styles.cancellationInfoLink, { color: palette.tint }]}>
-                    {relatedInvoiceLabel}
-                  </ThemedText>
-                </Pressable>
-              ) : null}
-            </View>
-          ) : null}
-
-          <View style={styles.exportRow}>
-            <View
-              style={[
-                styles.exportSplit,
-                {
-                  backgroundColor: palette.cardBackground,
-                  borderColor: palette.border,
-                  opacity: exportingTarget !== null ? 0.72 : 1,
-                },
-              ]}
-            >
-              <Pressable
-                style={({ pressed }) => [
-                  styles.exportSplitPrimary,
-                  { opacity: pressed ? 0.72 : 1 },
-                ]}
-                onPress={primaryExportAction.onPress}
-                disabled={exportingTarget !== null}
-                accessibilityRole="button"
-                accessibilityLabel={primaryExportAction.label}
-              >
-                <View style={styles.exportFormatContent}>
-                  <IconSymbol
-                    name={primaryExportAction.icon}
-                    size={15}
-                    color={palette.timeHighlight}
-                  />
-                  <ThemedText
-                    style={[styles.exportButtonSecondaryText, { color: palette.timeHighlight }]}
-                    numberOfLines={1}
-                  >
-                    {exportingTarget !== null ? LL.common.loading() : primaryExportAction.label}
-                  </ThemedText>
-                </View>
-              </Pressable>
-              <Pressable
-                style={({ pressed }) => [
-                  styles.exportSplitArrow,
-                  { borderLeftColor: palette.border, opacity: pressed ? 0.72 : 1 },
-                ]}
-                onPress={openExportFormatMenu}
-                disabled={exportingTarget !== null}
-                accessibilityRole="button"
-                accessibilityLabel={LL.invoices.exportFormatSelect()}
-              >
-                <IconSymbol name="chevron.down" size={11} color={palette.timeHighlight} />
-              </Pressable>
-            </View>
-          </View>
-          {paymentQrType !== 'none' ? (
-            <Pressable
-              style={({ pressed }) => [
-                styles.paymentQrCta,
-                {
-                  backgroundColor: palette.cardBackground,
-                  borderColor: palette.border,
-                  opacity: pressed ? 0.72 : 1,
-                },
-              ]}
-              onPress={() => setIsPaymentQrModalVisible(true)}
-              accessibilityRole="button"
-              accessibilityLabel={LL.invoices.paymentQrAction()}
-            >
-              <View
-                style={[
-                  styles.paymentQrCtaIcon,
-                  { backgroundColor: withOpacity(palette.timeHighlight, 0.12) },
-                ]}
-              >
-                <IconSymbol name="qrcode.viewfinder" size={18} color={palette.timeHighlight} />
-              </View>
-              <View style={styles.paymentQrCtaText}>
-                <ThemedText style={styles.paymentQrCtaTitle} numberOfLines={1}>
-                  {LL.invoices.paymentQrAction()}
-                </ThemedText>
-                <ThemedText
-                  style={[styles.paymentQrCtaMeta, { color: palette.textSecondary }]}
-                  numberOfLines={1}
-                >
-                  {paymentQrTypeLabel} -{' '}
-                  {formatPrice(invoice.total, normalizeCurrencyCode(invoice.currency), intlLocale)}
-                </ThemedText>
-              </View>
-              <IconSymbol name="chevron.right" size={17} color={palette.textMuted} />
-            </Pressable>
-          ) : null}
           <FlatList
+            style={styles.list}
             data={items}
             keyExtractor={(item) => item.id}
             contentContainerStyle={listContentStyle}
+            ListHeaderComponent={
+              <>
+                <View style={[styles.summaryCard, { backgroundColor: palette.cardBackground }]}>
+                  <View style={styles.summaryTopRow}>
+                    <View style={styles.summaryIdentity}>
+                      <View style={styles.summaryTitleRow}>
+                        <ThemedText
+                          type="defaultSemiBold"
+                          style={styles.summaryInvoiceNumber}
+                          numberOfLines={1}
+                        >
+                          {invoice.invoiceNumber}
+                        </ThemedText>
+                        {statusLabel ? (
+                          <View
+                            style={[
+                              styles.summaryStatusBadge,
+                              { backgroundColor: withOpacity(palette.destructive, 0.14) },
+                            ]}
+                          >
+                            <ThemedText
+                              style={[styles.summaryStatusText, { color: palette.destructive }]}
+                              numberOfLines={1}
+                            >
+                              {statusLabel}
+                            </ThemedText>
+                          </View>
+                        ) : null}
+                      </View>
+                      <ThemedText style={styles.summaryBuyer} numberOfLines={1}>
+                        {buyer.name || client?.name || '-'}
+                      </ThemedText>
+                    </View>
+                    <View style={styles.summaryTotalBlock}>
+                      <ThemedText style={styles.summaryTotalLabel} numberOfLines={1}>
+                        {LL.invoices.total()}
+                      </ThemedText>
+                      <ThemedText
+                        style={[styles.summaryTotalValue, { color: palette.timeHighlight }]}
+                        numberOfLines={1}
+                        adjustsFontSizeToFit
+                        minimumFontScale={0.78}
+                      >
+                        {formatPrice(
+                          invoice.total,
+                          normalizeCurrencyCode(invoice.currency),
+                          intlLocale,
+                        )}
+                      </ThemedText>
+                    </View>
+                  </View>
+
+                  <View style={styles.summaryDetailsStack}>
+                    {invoice.buyerReference ? (
+                      <View style={[styles.summaryDetailItem, styles.summaryDetailWide]}>
+                        <ThemedText style={styles.summaryDetailLabel} numberOfLines={1}>
+                          {LL.invoices.buyerReference()}
+                        </ThemedText>
+                        <ThemedText style={styles.summaryDetailValue} numberOfLines={1}>
+                          {invoice.buyerReference}
+                        </ThemedText>
+                      </View>
+                    ) : null}
+                    <View style={styles.summaryDetailsRow}>
+                      <View style={styles.summaryDetailItem}>
+                        <ThemedText style={styles.summaryDetailLabel} numberOfLines={1}>
+                          {LL.invoices.issueDate()}
+                        </ThemedText>
+                        <ThemedText style={styles.summaryDetailValue} numberOfLines={1}>
+                          {new Date(invoice.issuedAt).toLocaleDateString(intlLocale)}
+                        </ThemedText>
+                      </View>
+                      {invoice.dueAt ? (
+                        <View style={[styles.summaryDetailItem, styles.summaryDetailRight]}>
+                          <ThemedText
+                            style={[styles.summaryDetailLabel, styles.summaryDetailTextRight]}
+                            numberOfLines={1}
+                          >
+                            {LL.invoices.dueDate()}
+                          </ThemedText>
+                          <ThemedText
+                            style={[styles.summaryDetailValue, styles.summaryDetailTextRight]}
+                            numberOfLines={1}
+                          >
+                            {new Date(invoice.dueAt).toLocaleDateString(intlLocale)}
+                          </ThemedText>
+                        </View>
+                      ) : null}
+                    </View>
+                    <View style={styles.summaryDetailsRow}>
+                      {invoice.taxableAt ? (
+                        <View style={styles.summaryDetailItem}>
+                          <ThemedText style={styles.summaryDetailLabel} numberOfLines={1}>
+                            {LL.invoices.taxableSupplyDateShort()}
+                          </ThemedText>
+                          <ThemedText style={styles.summaryDetailValue} numberOfLines={1}>
+                            {new Date(invoice.taxableAt).toLocaleDateString(intlLocale)}
+                          </ThemedText>
+                        </View>
+                      ) : (
+                        <View style={styles.summaryDetailItem} />
+                      )}
+                      <View style={[styles.summaryDetailItem, styles.summaryDetailRight]}>
+                        <ThemedText
+                          style={[styles.summaryDetailLabel, styles.summaryDetailTextRight]}
+                          numberOfLines={1}
+                        >
+                          {LL.invoices.paymentMethod()}
+                        </ThemedText>
+                        <ThemedText
+                          style={[styles.summaryDetailValue, styles.summaryDetailTextRight]}
+                          numberOfLines={1}
+                        >
+                          {getPaymentMethodLabel(LL, invoice.paymentMethod)}
+                        </ThemedText>
+                      </View>
+                    </View>
+                    {invoice.cancellationReason ? (
+                      <View style={[styles.summaryDetailItem, styles.summaryDetailWide]}>
+                        <ThemedText style={styles.summaryDetailLabel} numberOfLines={1}>
+                          {LL.invoices.cancelReasonLabel()}
+                        </ThemedText>
+                        <ThemedText style={styles.summaryDetailValue} numberOfLines={2}>
+                          {invoice.cancellationReason}
+                        </ThemedText>
+                      </View>
+                    ) : null}
+                    {relatedInvoice ? (
+                      <Pressable
+                        style={[styles.summaryDetailItem, styles.summaryDetailWide]}
+                        onPress={() => router.push(`/invoices/${relatedInvoice.id}`)}
+                        accessibilityRole="button"
+                        accessibilityLabel={relatedInvoiceLabel || undefined}
+                      >
+                        <ThemedText style={styles.summaryDetailLabel} numberOfLines={1}>
+                          {LL.invoices.title()}
+                        </ThemedText>
+                        <ThemedText
+                          style={[styles.summaryDetailValue, { color: palette.tint }]}
+                          numberOfLines={1}
+                        >
+                          {relatedInvoiceLabel}
+                        </ThemedText>
+                      </Pressable>
+                    ) : null}
+                  </View>
+                </View>
+
+                {cancellationInfo ? (
+                  <View
+                    style={[
+                      styles.cancellationInfoCard,
+                      {
+                        backgroundColor: withOpacity(palette.destructive, 0.08),
+                        borderColor: withOpacity(palette.destructive, 0.22),
+                      },
+                    ]}
+                  >
+                    <View style={styles.cancellationInfoHeader}>
+                      <IconSymbol
+                        name={cancellationInfo.icon}
+                        size={16}
+                        color={palette.destructive}
+                      />
+                      <ThemedText
+                        style={[styles.cancellationInfoTitle, { color: palette.destructive }]}
+                      >
+                        {cancellationInfo.title}
+                      </ThemedText>
+                    </View>
+                    <ThemedText style={styles.cancellationInfoDescription}>
+                      {cancellationInfo.description}
+                    </ThemedText>
+                    {relatedInvoice ? (
+                      <Pressable
+                        onPress={() => router.push(`/invoices/${relatedInvoice.id}`)}
+                        accessibilityRole="button"
+                        accessibilityLabel={relatedInvoiceLabel || undefined}
+                      >
+                        <ThemedText style={[styles.cancellationInfoLink, { color: palette.tint }]}>
+                          {relatedInvoiceLabel}
+                        </ThemedText>
+                      </Pressable>
+                    ) : null}
+                  </View>
+                ) : null}
+
+                <View style={styles.exportRow}>
+                  <View
+                    style={[
+                      styles.exportSplit,
+                      {
+                        backgroundColor: palette.cardBackground,
+                        borderColor: palette.border,
+                        opacity: exportingTarget !== null ? 0.72 : 1,
+                      },
+                    ]}
+                  >
+                    <Pressable
+                      style={({ pressed }) => [
+                        styles.exportSplitPrimary,
+                        { opacity: pressed ? 0.72 : 1 },
+                      ]}
+                      onPress={primaryExportAction.onPress}
+                      disabled={exportingTarget !== null}
+                      accessibilityRole="button"
+                      accessibilityLabel={primaryExportAction.label}
+                    >
+                      <View style={styles.exportFormatContent}>
+                        <IconSymbol
+                          name={primaryExportAction.icon}
+                          size={15}
+                          color={palette.timeHighlight}
+                        />
+                        <ThemedText
+                          style={[
+                            styles.exportButtonSecondaryText,
+                            { color: palette.timeHighlight },
+                          ]}
+                          numberOfLines={1}
+                        >
+                          {exportingTarget !== null
+                            ? LL.common.loading()
+                            : primaryExportAction.label}
+                        </ThemedText>
+                      </View>
+                    </Pressable>
+                    <Pressable
+                      style={({ pressed }) => [
+                        styles.exportSplitArrow,
+                        { borderLeftColor: palette.border, opacity: pressed ? 0.72 : 1 },
+                      ]}
+                      onPress={openExportFormatMenu}
+                      disabled={exportingTarget !== null}
+                      accessibilityRole="button"
+                      accessibilityLabel={LL.invoices.exportFormatSelect()}
+                    >
+                      <IconSymbol name="chevron.down" size={11} color={palette.timeHighlight} />
+                    </Pressable>
+                  </View>
+                </View>
+                {paymentQrType !== 'none' ? (
+                  <Pressable
+                    style={({ pressed }) => [
+                      styles.paymentQrCta,
+                      {
+                        backgroundColor: palette.cardBackground,
+                        borderColor: palette.border,
+                        opacity: pressed ? 0.72 : 1,
+                      },
+                    ]}
+                    onPress={() => setIsPaymentQrModalVisible(true)}
+                    accessibilityRole="button"
+                    accessibilityLabel={LL.invoices.paymentQrAction()}
+                  >
+                    <View
+                      style={[
+                        styles.paymentQrCtaIcon,
+                        { backgroundColor: withOpacity(palette.timeHighlight, 0.12) },
+                      ]}
+                    >
+                      <IconSymbol
+                        name="qrcode.viewfinder"
+                        size={18}
+                        color={palette.timeHighlight}
+                      />
+                    </View>
+                    <View style={styles.paymentQrCtaText}>
+                      <ThemedText style={styles.paymentQrCtaTitle} numberOfLines={1}>
+                        {LL.invoices.paymentQrAction()}
+                      </ThemedText>
+                      <ThemedText
+                        style={[styles.paymentQrCtaMeta, { color: palette.textSecondary }]}
+                        numberOfLines={1}
+                      >
+                        {paymentQrTypeLabel} -{' '}
+                        {formatPrice(
+                          invoice.total,
+                          normalizeCurrencyCode(invoice.currency),
+                          intlLocale,
+                        )}
+                      </ThemedText>
+                    </View>
+                    <IconSymbol name="chevron.right" size={17} color={palette.textMuted} />
+                  </Pressable>
+                ) : null}
+
+                <View style={styles.itemsSectionHeader}>
+                  <ThemedText type="subtitle" style={styles.itemsSectionTitle}>
+                    {LL.invoices.selectedItems()}
+                  </ThemedText>
+                  <ThemedText style={[styles.itemsSectionCount, { color: palette.textSecondary }]}>
+                    {items.length}
+                  </ThemedText>
+                </View>
+              </>
+            }
             renderItem={({ item, index }) => {
               const isLast = index === items.length - 1;
               return (
-                <View
-                  style={[
-                    styles.row,
-                    { backgroundColor: palette.cardBackground },
-                    index === 0 && styles.rowFirst,
-                    isLast && styles.rowLast,
-                  ]}
-                >
-                  <View style={styles.rowMain}>
-                    <ThemedText type="defaultSemiBold">{item.description}</ThemedText>
-                    <ThemedText style={styles.metaText}>
-                      {item.quantity} × {item.unitPrice.toFixed(2)}
+                <GroupedListRow
+                  isFirst={index === 0}
+                  isLast={isLast}
+                  trailing={
+                    <ThemedText
+                      style={[styles.lineTotal, { color: palette.timeHighlight }]}
+                      numberOfLines={1}
+                    >
+                      {item.totalPrice.toFixed(2)}
                     </ThemedText>
-                  </View>
-                  <ThemedText style={[styles.lineTotal, { color: palette.timeHighlight }]}>
-                    {item.totalPrice.toFixed(2)}
+                  }
+                >
+                  <ThemedText type="defaultSemiBold" numberOfLines={1}>
+                    {item.description}
                   </ThemedText>
-                  {!isLast && (
-                    <View style={[styles.divider, { backgroundColor: palette.borderStrong }]} />
-                  )}
-                </View>
+                  <ThemedText style={styles.metaText} numberOfLines={1}>
+                    {item.quantity} × {item.unitPrice.toFixed(2)}
+                  </ThemedText>
+                </GroupedListRow>
               );
             }}
           />
@@ -2075,11 +2199,97 @@ export default function InvoiceDetailScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, paddingHorizontal: 16, paddingTop: 16 },
-  summaryCard: { borderRadius: 10, padding: 12, gap: 2, marginBottom: 10 },
+  list: { flex: 1 },
+  summaryCard: {
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 13,
+    gap: 12,
+    marginBottom: 12,
+  },
+  summaryTopRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  summaryIdentity: {
+    flex: 1,
+    minWidth: 0,
+    gap: 4,
+  },
+  summaryTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    minWidth: 0,
+  },
+  summaryInvoiceNumber: {
+    flexShrink: 1,
+    minWidth: 0,
+    fontSize: 17,
+  },
+  summaryBuyer: {
+    fontSize: 13,
+    opacity: 0.72,
+  },
+  summaryStatusBadge: {
+    flexShrink: 0,
+    maxWidth: '52%',
+    borderRadius: 999,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
+  summaryStatusText: {
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  summaryTotalBlock: {
+    alignItems: 'flex-end',
+    flexShrink: 0,
+    maxWidth: '46%',
+    gap: 2,
+  },
+  summaryTotalLabel: {
+    fontSize: 11,
+    opacity: 0.62,
+  },
+  summaryTotalValue: {
+    fontSize: 20,
+    fontWeight: '800',
+    textAlign: 'right',
+    fontVariant: ['tabular-nums'],
+  },
+  summaryDetailsStack: {
+    gap: 8,
+  },
+  summaryDetailsRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  summaryDetailItem: {
+    flex: 1,
+    minWidth: 0,
+    gap: 2,
+  },
+  summaryDetailRight: {
+    alignItems: 'flex-end',
+  },
+  summaryDetailWide: {
+    width: '100%',
+  },
+  summaryDetailLabel: {
+    fontSize: 11,
+    opacity: 0.55,
+  },
+  summaryDetailValue: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  summaryDetailTextRight: {
+    textAlign: 'right',
+  },
   metaText: { fontSize: 12, opacity: 0.7 },
-  statusText: { marginTop: 2, fontWeight: '700', opacity: 1 },
-  relatedInvoiceText: { marginTop: 2, fontWeight: '600', opacity: 1 },
-  totalText: { marginTop: 4, fontSize: 15, fontWeight: '700' },
   cancellationInfoCard: {
     marginBottom: 12,
     borderRadius: 12,
@@ -2180,24 +2390,24 @@ const styles = StyleSheet.create({
     marginTop: 1,
     fontSize: 12,
   },
-  listContent: { paddingBottom: 24 },
-  row: { paddingHorizontal: 14, paddingVertical: 12, position: 'relative' },
-  rowFirst: { borderTopLeftRadius: 10, borderTopRightRadius: 10 },
-  rowLast: { borderBottomLeftRadius: 10, borderBottomRightRadius: 10 },
-  rowMain: { paddingRight: 90, gap: 2 },
-  lineTotal: {
-    position: 'absolute',
-    right: 14,
-    top: 14,
-    fontSize: 14,
+  itemsSectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  itemsSectionTitle: {
+    flex: 1,
+    minWidth: 0,
+  },
+  itemsSectionCount: {
+    fontSize: 12,
     fontWeight: '700',
   },
-  divider: {
-    position: 'absolute',
-    left: 14,
-    right: 14,
-    bottom: 0,
-    height: StyleSheet.hairlineWidth,
+  listContent: { paddingBottom: 24 },
+  lineTotal: {
+    fontSize: 14,
+    fontWeight: '700',
   },
   emptyState: { flex: 1, alignItems: 'center', justifyContent: 'center' },
 });

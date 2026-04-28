@@ -1121,6 +1121,22 @@ type RootTranslation = {
 		 */
 		durationLabel: string
 		/**
+		 * S​o​u​r​c​e​ ​d​e​v​i​c​e
+		 */
+		sourceDeviceLabel: string
+		/**
+		 * A​m​o​u​n​t
+		 */
+		amountLabel: string
+		/**
+		 * B​i​l​l​a​b​l​e​ ​t​o​t​a​l
+		 */
+		billingTotalLabel: string
+		/**
+		 * S​o​m​e​ ​e​n​t​r​i​e​s​ ​d​o​ ​n​o​t​ ​h​a​v​e​ ​a​ ​r​a​t​e​ ​a​n​d​ ​a​r​e​ ​n​o​t​ ​i​n​c​l​u​d​e​d​ ​i​n​ ​b​i​l​l​i​n​g​ ​t​o​t​a​l​s​.
+		 */
+		unpricedEntriesNotice: string
+		/**
 		 * N​e​w​ ​t​i​m​e​s​h​e​e​t​ ​f​o​r​ ​{​c​l​i​e​n​t​}
 		 * @param {unknown} client
 		 */
@@ -5980,6 +5996,22 @@ export type TranslationFunctions = {
 		 * Duration
 		 */
 		durationLabel: () => LocalizedString
+		/**
+		 * Source device
+		 */
+		sourceDeviceLabel: () => LocalizedString
+		/**
+		 * Amount
+		 */
+		amountLabel: () => LocalizedString
+		/**
+		 * Billable total
+		 */
+		billingTotalLabel: () => LocalizedString
+		/**
+		 * Some entries do not have a rate and are not included in billing totals.
+		 */
+		unpricedEntriesNotice: () => LocalizedString
 		/**
 		 * New timesheet for {client}
 		 */

@@ -1,6 +1,7 @@
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { ActionEmptyState } from '@/components/ui/action-empty-state';
+import { GroupedListRow } from '@/components/ui/grouped-list';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { OptionSheetModal } from '@/components/ui/option-sheet-modal';
 import { isPdfOpenEnabled, isPdfSaveEnabled } from '@/constants/features';
@@ -22,7 +23,9 @@ import {
 import { getSuggestedInvoiceNumber } from '@/repositories/invoice-repository';
 import { getSettings } from '@/repositories/settings-repository';
 import { TimesheetPreset } from '@/repositories/timesheet-repository';
+import { getDeviceSyncSettings } from '@/repositories/device-sync-settings-repository';
 import { normalizeCurrencyCode } from '@/utils/currency-utils';
+import { formatPrice, formatPriceValue } from '@/utils/price-utils';
 import {
   getErrorMessage,
   getExportIntegrationErrorMessage,
@@ -77,6 +80,22 @@ type PendingTimesheetExportSheetAction =
 type TimesheetPdfExportResult = {
   fileName: string;
   uri: string;
+};
+
+type TimesheetExportRow = {
+  activity: string;
+  start: string;
+  end: string;
+  duration: string;
+  sourceDevice?: string;
+  rate?: number;
+  currency?: string;
+  amount?: number;
+};
+
+type BillingTotal = {
+  currency: string;
+  amount: number;
 };
 
 function formatDuration(seconds: number): string {
@@ -182,6 +201,8 @@ export default function TimesheetDetailScreen() {
         'is_paused',
         'paused_at',
         'total_paused_duration',
+        'source_device_id',
+        'source_device_name',
         'price_list_item_id',
         'rate',
         'rate_currency',
@@ -414,12 +435,71 @@ export default function TimesheetDetailScreen() {
     )}`;
   };
 
-  const buildExportRows = () =>
-    entries.map((entry) => ({
-      activity: entry.description?.trim() || '-',
-      start: formatExportDateTime(entry.startTime),
-      duration: formatDuration(entry.timesheetDuration ?? entry.duration ?? 0),
-    }));
+  const shouldIncludeSourceDeviceInExport = async (): Promise<boolean> => {
+    const settings = await getDeviceSyncSettings();
+    return settings.syncIsRegistered;
+  };
+
+  const getEntrySourceDeviceLabel = (entry: TimeEntryModel): string => {
+    return (
+      entry.sourceDeviceName?.trim() ||
+      entry.sourceDeviceId?.trim() ||
+      entry.runningDeviceName?.trim() ||
+      entry.runningDeviceId?.trim() ||
+      LLExport.timeTracking.unknownDevice()
+    );
+  };
+
+  const buildExportRows = (includeSourceDevice: boolean): TimesheetExportRow[] =>
+    entries.map((entry) => {
+      const durationSeconds = entry.timesheetDuration ?? entry.duration ?? 0;
+      const rate = entry.rate;
+      const hasRate = rate != null && Number.isFinite(rate);
+      const currency = hasRate ? normalizeCurrencyCode(entry.rateCurrency) : undefined;
+      const amount = hasRate ? (durationSeconds / 3600) * rate : undefined;
+
+      return {
+        activity: entry.description?.trim() || '-',
+        start: formatExportDateTime(entry.startTime),
+        end: entry.endTime ? formatExportDateTime(entry.endTime) : '-',
+        duration: formatDuration(durationSeconds),
+        sourceDevice: includeSourceDevice ? getEntrySourceDeviceLabel(entry) : undefined,
+        rate: hasRate ? rate : undefined,
+        currency,
+        amount: amount != null && Number.isFinite(amount) ? amount : undefined,
+      };
+    });
+
+  const shouldIncludeBillingInExport = (rows: TimesheetExportRow[]): boolean => {
+    return rows.some((row) => row.rate != null);
+  };
+
+  const getBillingTotals = (rows: TimesheetExportRow[]): BillingTotal[] => {
+    const totalsByCurrency = new Map<string, number>();
+
+    for (const row of rows) {
+      if (row.amount == null || !row.currency) continue;
+      totalsByCurrency.set(row.currency, (totalsByCurrency.get(row.currency) ?? 0) + row.amount);
+    }
+
+    return Array.from(totalsByCurrency.entries())
+      .map(([currency, amount]) => ({ currency, amount }))
+      .sort((left, right) => left.currency.localeCompare(right.currency));
+  };
+
+  const countUnpricedRows = (rows: TimesheetExportRow[]): number => {
+    return rows.filter((row) => row.rate == null).length;
+  };
+
+  const formatBillingAmount = (amount: number, currency: string): string => {
+    return formatPrice(amount, currency, exportDateLocale);
+  };
+
+  const formatBillingNumber = (amount: number): string => {
+    return formatPriceValue(amount, exportDateLocale);
+  };
+
+  const roundExportAmount = (amount: number): number => Number(amount.toFixed(2));
 
   const rememberLastExportAction = async (action: LastTimesheetExportAction) => {
     setLastExportAction(action);
@@ -514,13 +594,52 @@ export default function TimesheetDetailScreen() {
       throw new Error(LLExport.timesheets.savePdfError());
     }
 
-    const rows = buildExportRows();
+    const includeSourceDevice = await shouldIncludeSourceDeviceInExport();
+    const rows = buildExportRows(includeSourceDevice);
+    const includeBilling = shouldIncludeBillingInExport(rows);
+    const billingTotals = getBillingTotals(rows);
+    const unpricedRowsCount = countUnpricedRows(rows);
     const htmlRows = rows
-      .map(
-        (row) =>
-          `<tr><td>${escapeHtml(row.activity)}</td><td>${escapeHtml(row.start)}</td><td style="text-align:right">${escapeHtml(row.duration)}</td></tr>`,
-      )
+      .map((row) => {
+        const sourceDeviceCellHtml = includeSourceDevice
+          ? `<td class="source-column">${escapeHtml(row.sourceDevice || LLExport.timeTracking.unknownDevice())}</td>`
+          : '';
+        const billingCellHtml = includeBilling
+          ? `
+            <td class="money-column">${escapeHtml(row.rate != null ? formatBillingNumber(row.rate) : '-')}</td>
+            <td class="currency-column">${escapeHtml(row.currency || '-')}</td>
+            <td class="money-column">${escapeHtml(row.amount != null ? formatBillingNumber(row.amount) : '-')}</td>
+          `
+          : '';
+
+        return `
+          <tr>
+            <td>${escapeHtml(row.activity)}</td>
+            <td class="date-column">${escapeHtml(row.start)}</td>
+            <td class="date-column">${escapeHtml(row.end)}</td>
+            ${sourceDeviceCellHtml}
+            <td class="duration-column">${escapeHtml(row.duration)}</td>
+            ${billingCellHtml}
+          </tr>
+        `;
+      })
       .join('');
+    const sourceDeviceHeaderHtml = includeSourceDevice
+      ? `<th class="source-column">${escapeHtml(LLExport.timesheets.sourceDeviceLabel())}</th>`
+      : '';
+    const billingHeaderHtml = includeBilling
+      ? `
+        <th class="money-column">${escapeHtml(LLExport.timeTracking.manualRate())}</th>
+        <th class="currency-column">${escapeHtml(LLExport.timeTracking.rateCurrency())}</th>
+        <th class="money-column">${escapeHtml(LLExport.timesheets.amountLabel())}</th>
+      `
+      : '';
+    const billingTotalsText =
+      billingTotals.length > 0
+        ? billingTotals
+            .map((total) => formatBillingAmount(total.amount, total.currency))
+            .join(' • ')
+        : '';
     const exportBodyColor = Colors.light.text;
     const exportMetaColor = Colors.light.textSecondary;
     const exportBorderColor = Colors.light.border;
@@ -546,8 +665,14 @@ export default function TimesheetDetailScreen() {
             h1 { margin: 0 0 8px; font-size: 20px; }
             .meta { margin: 2px 0; color: ${exportMetaColor}; font-size: 12px; }
             table { width: 100%; border-collapse: collapse; margin-top: 16px; }
-            th, td { border-bottom: 1px solid ${exportBorderColor}; padding: 8px 6px; font-size: 12px; }
+            th, td { border-bottom: 1px solid ${exportBorderColor}; padding: 8px 6px; font-size: ${includeBilling ? '10px' : '12px'}; }
             th { text-align: left; background: ${exportHeaderBackground}; }
+            .date-column { white-space: nowrap; width: ${includeBilling ? '13%' : '18%'}; }
+            .source-column { width: ${includeBilling ? '12%' : '18%'}; }
+            .duration-column { text-align: right; white-space: nowrap; width: ${includeBilling ? '9%' : '12%'}; }
+            .money-column { text-align: right; white-space: nowrap; width: 11%; }
+            .currency-column { white-space: nowrap; width: 7%; }
+            .notice { margin-top: 8px; color: ${exportMetaColor}; font-size: 11px; }
           </style>
         </head>
         <body>
@@ -560,6 +685,11 @@ export default function TimesheetDetailScreen() {
               <div class="meta">${escapeHtml(
                 `${LLExport.timesheets.entriesCount({ count: entries.length })} • ${LLExport.timesheets.totalDurationLabel()}: ${formatDuration(totalDuration)}`,
               )}</div>
+              ${
+                billingTotalsText
+                  ? `<div class="meta">${escapeHtml(LLExport.timesheets.billingTotalLabel())}: ${escapeHtml(billingTotalsText)}</div>`
+                  : ''
+              }
             </div>
             ${logoHtml ? `<div class="logo-box">${logoHtml}</div>` : ''}
           </div>
@@ -567,12 +697,20 @@ export default function TimesheetDetailScreen() {
             <thead>
               <tr>
                 <th>${escapeHtml(LLExport.timeTracking.activity())}</th>
-                <th>${escapeHtml(LLExport.timesheets.startLabel())}</th>
-                <th style="text-align:right">${escapeHtml(LLExport.timesheets.durationLabel())}</th>
+                <th class="date-column">${escapeHtml(LLExport.timesheets.startLabel())}</th>
+                <th class="date-column">${escapeHtml(LLExport.timeTracking.endTime())}</th>
+                ${sourceDeviceHeaderHtml}
+                <th class="duration-column">${escapeHtml(LLExport.timesheets.durationLabel())}</th>
+                ${billingHeaderHtml}
               </tr>
             </thead>
             <tbody>${htmlRows}</tbody>
           </table>
+          ${
+            includeBilling && unpricedRowsCount > 0
+              ? `<div class="notice">${escapeHtml(LLExport.timesheets.unpricedEntriesNotice())}</div>`
+              : ''
+          }
         </body>
       </html>
     `;
@@ -688,13 +826,65 @@ export default function TimesheetDetailScreen() {
       // eslint-disable-next-line @typescript-eslint/no-require-imports
       const Sharing = require('expo-sharing');
 
-      const rows = buildExportRows().map((row) => ({
-        [LLExport.timeTracking.activity()]: row.activity,
-        [LLExport.timesheets.startLabel()]: row.start,
-        [LLExport.timesheets.durationLabel()]: row.duration,
-      }));
+      const includeSourceDevice = await shouldIncludeSourceDeviceInExport();
+      const exportRows = buildExportRows(includeSourceDevice);
+      const includeBilling = shouldIncludeBillingInExport(exportRows);
+      const billingTotals = getBillingTotals(exportRows);
+      const unpricedRowsCount = countUnpricedRows(exportRows);
+      const headers = [
+        LLExport.timeTracking.activity(),
+        LLExport.timesheets.startLabel(),
+        LLExport.timeTracking.endTime(),
+        ...(includeSourceDevice ? [LLExport.timesheets.sourceDeviceLabel()] : []),
+        LLExport.timesheets.durationLabel(),
+        ...(includeBilling
+          ? [
+              LLExport.timeTracking.manualRate(),
+              LLExport.timeTracking.rateCurrency(),
+              LLExport.timesheets.amountLabel(),
+            ]
+          : []),
+      ];
+      const amountColumnIndex = headers.length - 1;
+      const rows = exportRows.map((row) => [
+        row.activity,
+        row.start,
+        row.end,
+        ...(includeSourceDevice ? [row.sourceDevice || LLExport.timeTracking.unknownDevice()] : []),
+        row.duration,
+        ...(includeBilling
+          ? [
+              row.rate != null ? roundExportAmount(row.rate) : '',
+              row.currency || '',
+              row.amount != null ? roundExportAmount(row.amount) : '',
+            ]
+          : []),
+      ]);
+      const sheetRows: unknown[][] = [headers, ...rows];
 
-      const sheet = XLSX.utils.json_to_sheet(rows);
+      if (includeBilling) {
+        sheetRows.push([]);
+        for (const total of billingTotals) {
+          const totalRow = new Array(headers.length).fill('');
+          totalRow[0] = `${LLExport.timesheets.billingTotalLabel()} ${total.currency}`;
+          totalRow[amountColumnIndex] = roundExportAmount(total.amount);
+          sheetRows.push(totalRow);
+        }
+        if (unpricedRowsCount > 0) {
+          sheetRows.push([LLExport.timesheets.unpricedEntriesNotice()]);
+        }
+      }
+
+      const sheet = XLSX.utils.aoa_to_sheet(sheetRows);
+      sheet['!cols'] = headers.map((header) => ({
+        wch:
+          header === LLExport.timeTracking.activity()
+            ? 34
+            : header === LLExport.timesheets.startLabel() ||
+                header === LLExport.timeTracking.endTime()
+              ? 18
+              : 16,
+      }));
       const workbook = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(workbook, sheet, LLExport.timesheets.title());
 
@@ -954,147 +1144,226 @@ export default function TimesheetDetailScreen() {
 
       {timesheet ? (
         <>
-          <View style={[styles.summaryCard, { backgroundColor: palette.cardBackground }]}>
-            <ThemedText type="defaultSemiBold" style={styles.summaryTitle}>
-              {getTimesheetTitle(timesheet, LL)}
-            </ThemedText>
-            {getTimesheetSubtitle(timesheet, LL) ? (
-              <ThemedText style={styles.summaryMeta}>
-                {getTimesheetSubtitle(timesheet, LL)}
-              </ThemedText>
-            ) : null}
-            <ThemedText style={styles.summaryMeta}>
-              {LL.timesheets.clientLabel()}: {client?.name ?? '-'}
-            </ThemedText>
-            <ThemedText style={styles.summaryMeta}>
-              {LL.timesheets.periodLabel()}: {formatDate(timesheet.periodFrom)} -{' '}
-              {formatDate(timesheet.periodTo)}
-            </ThemedText>
-            <ThemedText style={styles.summaryMeta}>
-              {LL.timesheets.entriesCount({ count: entries.length })} •{' '}
-              {LL.timesheets.totalDurationLabel()}: {formatDuration(totalDuration)}
-            </ThemedText>
-          </View>
-
-          <View style={styles.exportActions}>
-            <Pressable
-              style={({ pressed }) => [
-                styles.invoiceButtonPrimary,
-                {
-                  backgroundColor: isTimesheetLinkedToInvoice
-                    ? palette.buttonNeutralBackground
-                    : palette.tint,
-                  opacity: pressed || isPreparingInvoice ? 0.72 : 1,
-                },
-              ]}
-              onPress={() => void handleCreateInvoiceFromTimesheet()}
-              disabled={isPreparingInvoice}
-            >
-              <IconSymbol
-                name={isTimesheetLinkedToInvoice ? 'doc.text.fill' : 'doc.text'}
-                size={16}
-                color={isTimesheetLinkedToInvoice ? palette.tint : palette.onTint}
-              />
-              <ThemedText
-                style={[
-                  styles.invoiceButtonPrimaryText,
-                  { color: isTimesheetLinkedToInvoice ? palette.tint : palette.onTint },
-                ]}
-                numberOfLines={1}
-              >
-                {isPreparingInvoice
-                  ? LL.common.loading()
-                  : isTimesheetLinkedToInvoice
-                    ? `${LL.invoices.title()}: ${linkedInvoiceNumber || ''}`
-                    : LL.invoices.createInvoice()}
-              </ThemedText>
-              <IconSymbol
-                name="chevron.right"
-                size={13}
-                color={isTimesheetLinkedToInvoice ? palette.tint : palette.onTint}
-                style={styles.invoiceButtonChevron}
-              />
-            </Pressable>
-            <View
-              style={[
-                styles.exportSplit,
-                {
-                  backgroundColor: palette.cardBackground,
-                  borderColor: palette.border,
-                },
-              ]}
-            >
-              <Pressable
-                style={({ pressed }) => [
-                  styles.exportSplitPrimary,
-                  {
-                    opacity: pressed || isAnyExporting ? 0.72 : 1,
-                  },
-                ]}
-                onPress={primaryExportAction.onPress}
-                disabled={isAnyExporting}
-              >
-                <View style={styles.exportShortcutContent}>
-                  <IconSymbol name="arrow.down.doc" size={15} color={palette.timeHighlight} />
-                  <ThemedText
-                    style={[styles.exportButtonSecondaryText, { color: palette.timeHighlight }]}
-                    numberOfLines={1}
-                  >
-                    {isAnyExporting ? LL.common.loading() : primaryExportAction.label}
-                  </ThemedText>
-                </View>
-              </Pressable>
-              <Pressable
-                style={({ pressed }) => [
-                  styles.exportSplitArrow,
-                  {
-                    borderLeftColor: palette.border,
-                    opacity: pressed || isAnyExporting ? 0.72 : 1,
-                  },
-                ]}
-                onPress={() => setIsExportSheetVisible(true)}
-                disabled={isAnyExporting}
-              >
-                <IconSymbol name="chevron.down" size={14} color={palette.icon} />
-              </Pressable>
-            </View>
-          </View>
-
-          <ThemedText type="subtitle" style={styles.entriesTitle}>
-            {LL.timesheets.entriesSectionTitle()}
-          </ThemedText>
-
           <FlatList
+            style={styles.list}
             data={entries}
             keyExtractor={(item) => item.id}
             contentContainerStyle={entriesContentStyle}
+            ListHeaderComponent={
+              <>
+                <View style={[styles.summaryCard, { backgroundColor: palette.cardBackground }]}>
+                  <View style={styles.summaryTopRow}>
+                    <View style={styles.summaryIdentity}>
+                      <ThemedText
+                        type="defaultSemiBold"
+                        style={styles.summaryTitle}
+                        numberOfLines={1}
+                      >
+                        {getTimesheetTitle(timesheet, LL)}
+                      </ThemedText>
+                      {getTimesheetSubtitle(timesheet, LL) ? (
+                        <ThemedText style={styles.summarySubtitle} numberOfLines={1}>
+                          {getTimesheetSubtitle(timesheet, LL)}
+                        </ThemedText>
+                      ) : null}
+                      <ThemedText style={styles.summaryClient} numberOfLines={1}>
+                        {client?.name ?? '-'}
+                      </ThemedText>
+                    </View>
+                    <View style={styles.summaryTotalBlock}>
+                      <ThemedText style={styles.summaryTotalLabel} numberOfLines={1}>
+                        {LL.timesheets.totalDurationLabel()}
+                      </ThemedText>
+                      <ThemedText
+                        style={[styles.summaryTotalValue, { color: palette.timeHighlight }]}
+                        numberOfLines={1}
+                        adjustsFontSizeToFit
+                        minimumFontScale={0.78}
+                      >
+                        {formatDuration(totalDuration)}
+                      </ThemedText>
+                    </View>
+                  </View>
+
+                  <View style={styles.summaryDetailsStack}>
+                    <View style={styles.summaryDetailsRow}>
+                      <View style={styles.summaryDetailItem}>
+                        <ThemedText style={styles.summaryDetailLabel} numberOfLines={1}>
+                          {LL.timesheets.periodLabel()}
+                        </ThemedText>
+                        <ThemedText style={styles.summaryDetailValue} numberOfLines={1}>
+                          {formatDate(timesheet.periodFrom)} - {formatDate(timesheet.periodTo)}
+                        </ThemedText>
+                      </View>
+                      <View style={[styles.summaryDetailItem, styles.summaryDetailRight]}>
+                        <ThemedText
+                          style={[styles.summaryDetailLabel, styles.summaryDetailTextRight]}
+                          numberOfLines={1}
+                        >
+                          {LL.timesheets.entriesSectionTitle()}
+                        </ThemedText>
+                        <ThemedText
+                          style={[styles.summaryDetailValue, styles.summaryDetailTextRight]}
+                          numberOfLines={1}
+                        >
+                          {entries.length}
+                        </ThemedText>
+                      </View>
+                    </View>
+                    {isTimesheetLinkedToInvoice ? (
+                      <View style={styles.summaryDetailsRow}>
+                        <View style={styles.summaryDetailItem} />
+                        <Pressable
+                          style={[styles.summaryDetailItem, styles.summaryDetailRight]}
+                          onPress={() => void handleCreateInvoiceFromTimesheet()}
+                          accessibilityRole="button"
+                          accessibilityLabel={LL.timesheets.openLinkedInvoice()}
+                        >
+                          <ThemedText
+                            style={[styles.summaryDetailLabel, styles.summaryDetailTextRight]}
+                            numberOfLines={1}
+                          >
+                            {LL.invoices.title()}
+                          </ThemedText>
+                          <ThemedText
+                            style={[
+                              styles.summaryDetailValue,
+                              styles.summaryDetailTextRight,
+                              { color: palette.tint },
+                            ]}
+                            numberOfLines={1}
+                          >
+                            {linkedInvoiceNumber || '-'}
+                          </ThemedText>
+                        </Pressable>
+                      </View>
+                    ) : null}
+                  </View>
+                </View>
+
+                <View style={styles.exportActions}>
+                  <Pressable
+                    style={({ pressed }) => [
+                      styles.invoiceButtonPrimary,
+                      {
+                        backgroundColor: isTimesheetLinkedToInvoice
+                          ? palette.buttonNeutralBackground
+                          : palette.tint,
+                        opacity: pressed || isPreparingInvoice ? 0.72 : 1,
+                      },
+                    ]}
+                    onPress={() => void handleCreateInvoiceFromTimesheet()}
+                    disabled={isPreparingInvoice}
+                  >
+                    <IconSymbol
+                      name={isTimesheetLinkedToInvoice ? 'doc.text.fill' : 'doc.text'}
+                      size={16}
+                      color={isTimesheetLinkedToInvoice ? palette.tint : palette.onTint}
+                    />
+                    <ThemedText
+                      style={[
+                        styles.invoiceButtonPrimaryText,
+                        { color: isTimesheetLinkedToInvoice ? palette.tint : palette.onTint },
+                      ]}
+                      numberOfLines={1}
+                    >
+                      {isPreparingInvoice
+                        ? LL.common.loading()
+                        : isTimesheetLinkedToInvoice
+                          ? `${LL.invoices.title()}: ${linkedInvoiceNumber || ''}`
+                          : LL.invoices.createInvoice()}
+                    </ThemedText>
+                    <IconSymbol
+                      name="chevron.right"
+                      size={13}
+                      color={isTimesheetLinkedToInvoice ? palette.tint : palette.onTint}
+                      style={styles.invoiceButtonChevron}
+                    />
+                  </Pressable>
+                  <View
+                    style={[
+                      styles.exportSplit,
+                      {
+                        backgroundColor: palette.cardBackground,
+                        borderColor: palette.border,
+                      },
+                    ]}
+                  >
+                    <Pressable
+                      style={({ pressed }) => [
+                        styles.exportSplitPrimary,
+                        {
+                          opacity: pressed || isAnyExporting ? 0.72 : 1,
+                        },
+                      ]}
+                      onPress={primaryExportAction.onPress}
+                      disabled={isAnyExporting}
+                    >
+                      <View style={styles.exportShortcutContent}>
+                        <IconSymbol name="arrow.down.doc" size={15} color={palette.timeHighlight} />
+                        <ThemedText
+                          style={[
+                            styles.exportButtonSecondaryText,
+                            { color: palette.timeHighlight },
+                          ]}
+                          numberOfLines={1}
+                        >
+                          {isAnyExporting ? LL.common.loading() : primaryExportAction.label}
+                        </ThemedText>
+                      </View>
+                    </Pressable>
+                    <Pressable
+                      style={({ pressed }) => [
+                        styles.exportSplitArrow,
+                        {
+                          borderLeftColor: palette.border,
+                          opacity: pressed || isAnyExporting ? 0.72 : 1,
+                        },
+                      ]}
+                      onPress={() => setIsExportSheetVisible(true)}
+                      disabled={isAnyExporting}
+                    >
+                      <IconSymbol name="chevron.down" size={14} color={palette.icon} />
+                    </Pressable>
+                  </View>
+                </View>
+
+                <View style={styles.entriesSectionHeader}>
+                  <ThemedText type="subtitle" style={styles.entriesTitle}>
+                    {LL.timesheets.entriesSectionTitle()}
+                  </ThemedText>
+                  <ThemedText style={[styles.entriesCount, { color: palette.textSecondary }]}>
+                    {entries.length}
+                  </ThemedText>
+                </View>
+              </>
+            }
             renderItem={({ item, index }) => {
               const isLast = index === entries.length - 1;
               return (
-                <View
-                  style={[
-                    styles.entryRow,
-                    { backgroundColor: palette.cardBackground },
-                    index === 0 && styles.entryFirst,
-                    isLast && styles.entryLast,
-                  ]}
-                >
-                  <View style={styles.entryMain}>
+                <GroupedListRow
+                  isFirst={index === 0}
+                  isLast={isLast}
+                  trailing={
                     <ThemedText
-                      type="defaultSemiBold"
-                      style={!item.description ? styles.muted : undefined}
+                      style={[styles.entryDuration, { color: palette.timeHighlight }]}
+                      numberOfLines={1}
                     >
-                      {item.description || '-'}
+                      {formatDuration(item.timesheetDuration ?? item.duration ?? 0)}
                     </ThemedText>
-                    <ThemedText style={styles.entryMeta}>
-                      {formatDateTime(item.startTime)}
-                    </ThemedText>
-                  </View>
-                  <ThemedText style={styles.entryDuration}>
-                    {formatDuration(item.timesheetDuration ?? item.duration ?? 0)}
+                  }
+                >
+                  <ThemedText
+                    type="defaultSemiBold"
+                    style={!item.description ? styles.muted : undefined}
+                    numberOfLines={1}
+                  >
+                    {item.description || '-'}
                   </ThemedText>
-                  {!isLast && <View style={styles.divider} />}
-                </View>
+                  <ThemedText style={styles.entryMeta} numberOfLines={1}>
+                    {formatDateTime(item.startTime)}
+                  </ThemedText>
+                </GroupedListRow>
               );
             }}
             ListEmptyComponent={
@@ -1195,19 +1464,82 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 16,
   },
+  list: {
+    flex: 1,
+  },
   summaryCard: {
-    borderRadius: 10,
-    padding: 12,
-    gap: 2,
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 13,
+    gap: 12,
     marginBottom: 12,
   },
-  summaryTitle: {
-    fontSize: 16,
-    marginBottom: 4,
+  summaryTopRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: 12,
   },
-  summaryMeta: {
-    fontSize: 12,
-    opacity: 0.7,
+  summaryIdentity: {
+    flex: 1,
+    minWidth: 0,
+    gap: 4,
+  },
+  summaryTitle: {
+    flexShrink: 1,
+    minWidth: 0,
+    fontSize: 17,
+  },
+  summarySubtitle: {
+    fontSize: 13,
+    opacity: 0.72,
+  },
+  summaryClient: {
+    fontSize: 13,
+    opacity: 0.72,
+  },
+  summaryTotalBlock: {
+    alignItems: 'flex-end',
+    flexShrink: 0,
+    maxWidth: '46%',
+    gap: 2,
+  },
+  summaryTotalLabel: {
+    fontSize: 11,
+    opacity: 0.62,
+    textAlign: 'right',
+  },
+  summaryTotalValue: {
+    fontSize: 20,
+    fontWeight: '800',
+    textAlign: 'right',
+    fontVariant: ['tabular-nums'],
+  },
+  summaryDetailsStack: {
+    gap: 8,
+  },
+  summaryDetailsRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  summaryDetailItem: {
+    flex: 1,
+    minWidth: 0,
+    gap: 2,
+  },
+  summaryDetailRight: {
+    alignItems: 'flex-end',
+  },
+  summaryDetailLabel: {
+    fontSize: 11,
+    opacity: 0.55,
+  },
+  summaryDetailValue: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  summaryDetailTextRight: {
+    textAlign: 'right',
   },
   exportActions: {
     gap: 8,
@@ -1274,49 +1606,31 @@ const styles = StyleSheet.create({
   invoiceButtonChevron: {
     marginLeft: 'auto',
   },
-  entriesTitle: {
+  entriesSectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     marginBottom: 8,
+  },
+  entriesTitle: {
+    flex: 1,
+    minWidth: 0,
+  },
+  entriesCount: {
+    fontSize: 12,
+    fontWeight: '700',
   },
   entriesContent: {
     paddingBottom: 24,
-  },
-  entryRow: {
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    position: 'relative',
-  },
-  entryFirst: {
-    borderTopLeftRadius: 10,
-    borderTopRightRadius: 10,
-  },
-  entryLast: {
-    borderBottomLeftRadius: 10,
-    borderBottomRightRadius: 10,
-  },
-  entryMain: {
-    paddingRight: 90,
-    gap: 2,
   },
   entryMeta: {
     fontSize: 12,
     opacity: 0.65,
   },
   entryDuration: {
-    position: 'absolute',
-    right: 14,
-    top: 14,
     fontSize: 14,
     fontWeight: '700',
     fontVariant: ['tabular-nums'],
-    color: Colors.light.timeHighlight,
-  },
-  divider: {
-    position: 'absolute',
-    left: 14,
-    right: 14,
-    bottom: 0,
-    height: StyleSheet.hairlineWidth,
-    backgroundColor: Colors.light.borderStrong,
   },
   muted: {
     opacity: 0.55,

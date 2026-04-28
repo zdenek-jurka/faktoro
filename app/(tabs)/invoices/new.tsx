@@ -7,6 +7,7 @@ import { NoClientsRequiredNotice } from '@/components/clients/no-clients-require
 import { getPriceListUnitLabel } from '@/components/price-list/unit-options';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { AppButton } from '@/components/ui/app-button';
 import { CrossPlatformDatePicker } from '@/components/ui/cross-platform-date-picker';
 import { EntityPickerField } from '@/components/ui/entity-picker-field';
 import { IconSymbol } from '@/components/ui/icon-symbol';
@@ -1778,49 +1779,26 @@ export default function InvoiceDraftScreen() {
           </ThemedView>
 
           <View style={styles.footerActions}>
-            <Pressable
-              style={[
-                styles.primaryButton,
-                {
-                  backgroundColor: canCreate ? palette.tint : palette.border,
-                },
-              ]}
-              onPress={handleCreate}
-              disabled={!canCreate || isSaving}
-            >
-              <ThemedText
-                style={[
-                  styles.primaryButtonText,
-                  {
-                    color: canCreate ? palette.onTint : palette.icon,
-                  },
-                ]}
-              >
-                {isSaving
+            <AppButton
+              label={
+                isSaving
                   ? LL.common.loading()
                   : isEditingInvoice
                     ? LL.invoices.updateInvoice()
-                    : LL.invoices.createInvoice()}
-              </ThemedText>
-            </Pressable>
+                    : LL.invoices.createInvoice()
+              }
+              onPress={handleCreate}
+              disabled={!canCreate || isSaving}
+              loading={isSaving}
+            />
 
             {isEditingInvoice ? (
-              <Pressable
-                style={[
-                  styles.secondaryFooterButton,
-                  {
-                    borderColor: palette.border,
-                    backgroundColor: palette.cardBackground,
-                    opacity: isSaving ? 0.6 : 1,
-                  },
-                ]}
+              <AppButton
+                label={LL.invoices.backWithoutChanges()}
                 onPress={handleBackWithoutChanges}
                 disabled={isSaving}
-              >
-                <ThemedText style={[styles.secondaryFooterButtonText, { color: palette.text }]}>
-                  {LL.invoices.backWithoutChanges()}
-                </ThemedText>
-              </Pressable>
+                variant="secondary"
+              />
             ) : null}
 
             {shouldShowSellerSnapshotRefresh ? (
@@ -2129,29 +2107,5 @@ const styles = StyleSheet.create({
   footerActions: {
     gap: 10,
     alignItems: 'stretch',
-  },
-  secondaryFooterButton: {
-    borderWidth: 1,
-    borderRadius: 12,
-    paddingVertical: 15,
-    paddingHorizontal: 14,
-    minHeight: 50,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  secondaryFooterButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  primaryButton: {
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 15,
-    minHeight: 50,
-  },
-  primaryButtonText: {
-    fontSize: 16,
-    fontWeight: '700',
   },
 });

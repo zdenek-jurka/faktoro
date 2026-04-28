@@ -1,9 +1,10 @@
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { AppButton } from '@/components/ui/app-button';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { usePalette } from '@/hooks/use-palette';
 import React from 'react';
-import { Pressable, StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
+import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 
 type ActionEmptyStateProps = {
   iconName: React.ComponentProps<typeof IconSymbol>['name'];
@@ -48,18 +49,13 @@ export function ActionEmptyState({
       </View>
 
       {actionLabel && onActionPress ? (
-        <Pressable
-          style={({ pressed }) => [
-            styles.button,
-            { backgroundColor: palette.tint },
-            pressed && styles.buttonPressed,
-          ]}
+        <AppButton
+          label={actionLabel}
           onPress={onActionPress}
-        >
-          <ThemedText style={[styles.buttonText, { color: palette.onTint }]}>
-            {actionLabel}
-          </ThemedText>
-        </Pressable>
+          size="compact"
+          fullWidth={false}
+          style={styles.actionButton}
+        />
       ) : null}
     </ThemedView>
   );
@@ -98,19 +94,5 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     opacity: 0.75,
   },
-  button: {
-    alignSelf: 'flex-start',
-    minHeight: 48,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 10,
-    justifyContent: 'center',
-  },
-  buttonPressed: {
-    opacity: 0.82,
-  },
-  buttonText: {
-    fontSize: 15,
-    fontWeight: '600',
-  },
+  actionButton: { minHeight: 40 },
 });
