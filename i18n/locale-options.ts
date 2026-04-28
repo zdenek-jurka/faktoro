@@ -2,18 +2,6 @@ import type { Locales } from './i18n-types';
 import { isLocale } from './i18n-util';
 import * as Localization from 'expo-localization';
 
-export type LocaleLabelLocalization = {
-  settings: {
-    languageOptionEnglish: () => string;
-    languageOptionCzech: () => string;
-    languageOptionGerman: () => string;
-    languageOptionFrench: () => string;
-    languageOptionPortuguese: () => string;
-    languageOptionPolish: () => string;
-    languageOptionSpanish: () => string;
-  };
-};
-
 export const APP_LOCALE_OPTIONS: Locales[] = ['en', 'cs', 'de', 'fr', 'pt', 'pl', 'es'];
 export type AppLanguageSetting = Locales | 'system';
 export const APP_LANGUAGE_SETTING_OPTIONS: AppLanguageSetting[] = ['system', ...APP_LOCALE_OPTIONS];
@@ -58,18 +46,17 @@ const APP_LOCALE_INTL_TAGS: Record<Locales, string> = {
   es: 'es-ES',
 };
 
-export function getLocaleLabel(LL: LocaleLabelLocalization, locale: Locales): string {
-  void LL;
+export function getLocaleLabel(locale: Locales): string {
   return APP_LOCALE_NATIVE_LABELS[locale];
 }
 
-export function getLocaleOptions(LL: LocaleLabelLocalization): {
+export function getLocaleOptions(): {
   value: Locales;
   label: string;
 }[] {
   return APP_LOCALE_OPTIONS.map((option) => ({
     value: option,
-    label: getLocaleLabel(LL, option),
+    label: getLocaleLabel(option),
   }));
 }
 

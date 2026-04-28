@@ -462,7 +462,7 @@ export default function TimeTrackingScreen() {
                 >
                   <IconSymbol name="play.fill" size={22} color={palette.onTint} />
                   <ThemedText style={[styles.buttonText, { color: palette.onTint }]}>
-                    {LL.timeTracking.start()}
+                    {LL.timeTracking.startTimer()}
                   </ThemedText>
                 </Pressable>
               ) : (

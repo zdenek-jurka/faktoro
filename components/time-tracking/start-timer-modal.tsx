@@ -111,7 +111,7 @@ export function StartTimerModal({
       visible={visible}
       mode="create"
       title={LL.timeTracking.startTimer()}
-      submitLabel={LL.timeTracking.start()}
+      submitLabel={LL.timeTracking.startTimer()}
       onClose={onClose}
       onSubmit={handleStart}
       clients={clients}

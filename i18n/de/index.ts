@@ -19,10 +19,7 @@ const de = {
     continueAction: 'Weiter',
     dismiss: 'Ausblenden',
     swipeActionsHint: 'Tipp: Wische eine Zeile zur Seite, um Schnellaktionen anzuzeigen.',
-    discard: 'Änderungen verwerfen',
     continueEditing: 'Bearbeiten Sie weiter',
-    unsavedChanges: 'Nicht gespeicherte Änderungen',
-    unsavedChangesMessage: 'Sie haben nicht gespeicherte Änderungen. Möchten Sie sie verwerfen?',
   },
   tabs: {
     clients: 'Kunden',
@@ -119,8 +116,6 @@ const de = {
     companyRegistryConfigurationPrompt:
       'Die ausgewählte Registrierung erfordert vor der Suche eine Konfiguration. Jetzt Connector-Einstellungen öffnen?',
     companyRegistryOpenSettings: 'Öffnen Sie die Connector-Einstellungen',
-    companyRegistryConfigPrompt:
-      'Registrierung {registry} erfordert {field}. Geben Sie diesen Wert ein, um mit der Suche fortzufahren.',
     errorCompanyLookupFailed: 'Daten aus der Registrierung konnten nicht geladen werden',
     errorCompanyLookupAddressUnavailable:
       'Die Registrierung hat keine vollständige Adresse zum Importieren zurückgegeben',
@@ -159,7 +154,6 @@ const de = {
     vatRate: 'Mehrwertsteuersatz',
     vatName: 'Name des Mehrwertsteuersatzes',
     selectVatName: 'Wählen Sie den Namen des Mehrwertsteuersatzes aus...',
-    noVatName: 'Kein Name des Mehrwertsteuersatzes',
     noVatCodes:
       'Keine Namen für Mehrwertsteuersätze gefunden. Fügen Sie eine unter Einstellungen > Mehrwertsteuer hinzu.',
     units: {
@@ -182,7 +176,6 @@ const de = {
     setOverride: 'Überschreiben festlegen',
     clearOverride: 'Deaktivieren Sie Override',
     selectItem: 'Preiselement auswählen (optional)',
-    effectivePrice: 'Satz:',
     clientOverrides: 'Client-Überschreibungen',
     noClientOverrides: 'Noch keine Client-Überschreibungen',
     addOverride: 'Überschreibung hinzufügen',
@@ -194,7 +187,6 @@ const de = {
   },
   timeTracking: {
     title: 'Zeiterfassung',
-    start: 'Starten',
     stop: 'Stoppen',
     pause: 'Pausieren',
     resume: 'Wieder aufnehmen',
@@ -203,7 +195,6 @@ const de = {
     runningOnOtherDevice: 'Läuft am {device}',
     unknownDevice: 'unbekanntes Gerät',
     startTimer: 'Timer starten',
-    editEntry: 'Eintrag bearbeiten',
     editTimer: 'Zeiteintrag bearbeiten',
     backWithoutChanges: 'Ohne Änderungen zurück',
     client: 'Kunde:',
@@ -214,7 +205,6 @@ const de = {
     entries: 'Einträge',
     deleteEntry: 'Eintrag löschen',
     deleteMessage: 'Sind Sie sicher, dass Sie diesen Eintrag löschen möchten?',
-    errorNoClient: 'Bitte fügen Sie zuerst mindestens einen Kunden hinzu',
     errorSelectClient:
       'Bitte wählen Sie einen Kunden aus und geben Sie eine Aktivitätsbeschreibung ein',
     errorStartTimer: 'Der Timer konnte nicht gestartet werden',
@@ -234,7 +224,6 @@ const de = {
     noDescription: '(Keine Beschreibung)',
     priceListItem: 'Preislistenartikel (optional):',
     noPriceListLink: 'Ohne Preislistenbezug',
-    selectPriceItem: 'Preisartikel auswählen...',
     swipeActionsHint: 'Tipp: Wische einen Eintrag zur Seite, um ihn zu bearbeiten oder zu löschen.',
     timeAndBilling: 'Zeit und Abrechnung',
     timeAndBillingHint: 'Zeit, Dauer und Satz prüfen',
@@ -293,7 +282,6 @@ const de = {
     exportActionWithXml: 'Teilen',
     exportActionDescription: 'Wählen Sie aus, wie Sie diesen Stundenzettel teilen möchten.',
     exportXmlDescription: 'Wählen Sie das XML-Format oder die zu verwendende Integration.',
-    exportCustom: 'Benutzerdefinierter Export',
     exportErrorXml: 'XML-Export fehlgeschlagen.',
     exportSelectIntegration: 'Exportintegration auswählen',
     exportBaseXmlOption: 'Basis-XML (ohne Transformation)',
@@ -321,7 +309,6 @@ const de = {
     exportErrorXlsx: 'XLSX konnte nicht exportiert werden.',
     startLabel: 'Start',
     durationLabel: 'Dauer',
-    empty: 'Noch keine Stundenzettel.',
     createForClient: 'Neue Arbeitszeittabelle für {client}',
     createButton: 'Erstellen',
     periodType: 'Zeitraum',
@@ -370,9 +357,6 @@ const de = {
     draftNotesSection: 'Notizen',
     draftSummarySection: 'Zusammenfassung',
     changeClientClearsItemsTitle: 'Kunden ändern?',
-    changeClientClearsItemsMessage:
-      'Beim Ändern des Kunden werden die aktuellen Rechnungspositionen entfernt, damit sie nicht mit dem vorherigen Kunden verknüpft bleiben.',
-    changeClientClearsItemsConfirm: 'Kunden ändern',
     changeClientReviewTitle: 'Kunden zu {client} ändern?',
     changeClientReviewManualItems:
       '{count} manuell hinzugefügte Position(en) bleiben unverändert erhalten.',
@@ -398,9 +382,6 @@ const de = {
     emptyDescription:
       'Erstellen Sie Ihre erste Rechnung, dann erscheint sie hier übersichtlich an einem Ort.',
     searchPlaceholder: 'Rechnungen suchen...',
-    newHeaderTitle: 'Neue Rechnung: Kopfzeile',
-    newItemsTitle: 'Neue Rechnung: Artikel',
-    newFooterTitle: 'Neue Rechnung: Fußzeile',
     invoiceNumber: 'Rechnungsnummer',
     buyerModeSavedClient: 'Gespeicherter Kunde',
     buyerModeOneOff: 'Einmaliger Käufer',
@@ -449,7 +430,6 @@ const de = {
     sellerSnapshotRefreshPendingShort: 'Aktualisierung vorbereitet',
     vatCode: 'MwSt.-Code',
     selectVatCode: 'Wählen Sie den Mehrwertsteuercode aus',
-    next: 'Nächste',
     addFromTimesheets: 'Aus der Arbeitszeittabelle',
     addFromPriceList: 'Aus Preisliste',
     selectPriceListItem: 'Wählen Sie einen Preislistenartikel aus',
@@ -627,7 +607,6 @@ const de = {
     exportCustomXml: 'Benutzerdefinierter XML-Export',
     exportBaseXmlOption: 'Faktoro Basis-XML',
     exportFormatSelect: 'Wählen Sie das Exportformat',
-    exportFormatCurrent: 'Aktuelles Format',
     shareInvoice: 'Rechnung teilen',
     shareUnavailable: 'Die Freigabe ist auf diesem Gerät nicht verfügbar.',
     exportError: 'Rechnungs-PDF konnte nicht exportiert werden.',
@@ -656,13 +635,9 @@ const de = {
       'electronic address endpoint ID and schemeID are inferred from email when available, not stored separately',
     structuredExportRequirementPaymentInstructions:
       'bank transfer export needs an IBAN or bank account',
-    structuredExportRequirementSellerPostalAddress:
-      'seller postal address is not exported in XRechnung',
     structuredExportRequirementSellerContactName: 'seller contact name is not stored separately',
     structuredExportRequirementTaxBreakdown:
       'zero or missing VAT rates use an inferred tax category without an exemption reason',
-    structuredExportRequirementTaxScheme:
-      'party tax scheme identifiers are missing required scheme metadata',
     structuredExportRequirementUnitCode:
       'line {line} unit is not mapped to a UNECE unit code and will fall back to C62',
     structuredExportPartySeller: 'Seller',
@@ -670,7 +645,6 @@ const de = {
   },
   settings: {
     title: 'Einstellungen',
-    generalTitle: 'Allgemein',
     applicationSectionTitle: 'App',
     billingSectionTitle: 'Abrechnung',
     dataSectionTitle: 'Sicherung & Synchronisierung',
@@ -678,7 +652,6 @@ const de = {
     advancedSectionTitle: 'Erweitert',
     languageTitle: 'Sprache',
     languageSubtitle: 'App-Sprache und Lokalisierung der Oberfläche.',
-    invoicingTitle: 'Fakturierung',
     onlineSyncTitle: 'Geräte verbinden und Daten synchronisieren.',
     securityTitle: 'Sicherheit',
     securitySubtitle: 'App-Sperre und Biometrie',
@@ -776,15 +749,7 @@ const de = {
     offlineBackupStorageUnavailable: 'Backup storage is unavailable on this device.',
     vatTitle: 'MwSt',
     vatSubtitle: 'Preise und Gültigkeit',
-    modalTitle: 'Dialog',
     language: 'Sprache',
-    languageOptionEnglish: 'Englisch',
-    languageOptionCzech: 'Tschechisch',
-    languageOptionGerman: 'Deutsch',
-    languageOptionFrench: 'Französisch',
-    languageOptionPortuguese: 'Portugiesisch',
-    languageOptionPolish: 'Polnisch',
-    languageOptionSpanish: 'Spanisch',
     defaultBillingInterval: 'Standardabrechnungsintervall',
     defaultBillingIntervalDesc: 'Standardrundungsintervall für Neukunden (Minuten)',
     timerLimitsTitle: 'Sicherheitslimits für Timer',
@@ -922,19 +887,13 @@ const de = {
     companyRegistryConnectorUrlLabel: 'Connector-URL',
     companyRegistryConnectorUrlHelp:
       'Verwenden Sie die vollständige HTTPS-URL. Unverschlüsseltes HTTP ist nur für localhost erlaubt. Platzhalter-Token „companyId“ wird unterstützt; andernfalls wird die Firmen-ID angehängt.',
-    companyRegistryConnectorHeaderKeyLabel: 'Kopfzeilenschlüssel',
-    companyRegistryConnectorHeaderValueLabel: 'Header-Wert',
-    companyRegistryConnectorHeaderHelp:
-      'Optional. Wenn ein Header-Feld festgelegt ist, legen Sie sowohl den Schlüssel als auch den Wert fest.',
     companyRegistryCustomResponseTitle: 'Erwartete Antwortstruktur',
     companyRegistryCustomResponseDescription:
       'Der Connector muss JSON mit legalName und optional companyId, vatNumber und importAddresses[] zurückgeben.',
     companyRegistryCustomResponseDocHint:
       'Vollständige Spezifikation: docs/custom-company-registry-connector.md',
-    companyRegistrySaveAndRetry: 'Speichern und erneut versuchen',
     companyRegistryRequiredField: 'Das Feld „{field}“ ist erforderlich.',
     isVatPayer: 'Mehrwertsteuerzahler',
-    invoiceSettings: 'Rechnungseinstellungen',
     companyName: 'Name der Firma',
     address: 'Adresse',
     city: 'Stadt',
@@ -951,7 +910,6 @@ const de = {
     bankAccount: 'Bankkonto',
     iban: 'IBAN',
     swift: 'SWIFT/BIC',
-    logoUri: 'Logo-Bild-URL',
     invoiceLogo: 'Rechnungslogo',
     invoiceLogoHelp:
       'Wähle ein Bildlogo aus, das auf Rechnungen angezeigt und zwischen Geräten synchronisiert wird. Maximale Größe: {maxSize}.',
@@ -1032,7 +990,6 @@ const de = {
     invoiceDefaultExportFormatNone: 'Keine (bei Export erfragen)',
     invoiceSeriesTitle: 'Rechnungsnummerierungsserie',
     timesheetSeriesTitle: 'Stundenzettel-Nummernserie',
-    invoiceSeriesPrefix: 'Serienpräfix',
     invoiceSeriesPattern: 'Serienmuster (z. B. YY1####)',
     invoiceSeriesPatternHelp:
       'Verwenden Sie die Token YYYY, YY, MM, DD, DEV und # für die automatische Inkrementierung der Nummer (z. B. YY1####).',
@@ -1042,7 +999,6 @@ const de = {
     seriesNextNumberChangeConfirmMessage:
       'Das Ändern der nächsten Nummer beeinflusst neu erzeugte Dokumente und kann Lücken oder Duplikate verursachen. Nur fortfahren, wenn Sie die Auswirkung verstehen.',
     seriesNextNumberChangeConfirmContinue: 'Ja, nächste Nummer ändern',
-    invoiceSeriesPadding: 'Zahlenauffüllung',
     invoiceSeriesPerDevice: 'Separate Serie pro Gerät',
     invoiceSeriesDeviceCode: 'Gerätecode (optional)',
     syncTitle: 'Gerätesynchronisierung',
@@ -1053,8 +1009,6 @@ const de = {
     syncDeviceName: 'Gerätename',
     syncRecoveryEmail: 'Recovery-E-Mail für die Gerätekopplung',
     syncPreparePairing: 'Kopplung starten',
-    syncRegistered: 'Das Gerät ist registriert und bereit zur Synchronisierung.',
-    syncNotRegistered: 'Gerät ist noch nicht registriert.',
     syncServerUrlRequired: 'Bitte zuerst die URL des Sync-Servers eingeben.',
     syncRecoveryEmailRequired: 'Bitte zuerst eine gültige Recovery-E-Mail eingeben.',
     syncPairingReady:
@@ -1158,7 +1112,6 @@ const de = {
     syncDeviceNameLabel: 'Gerätename',
     syncDefaultDeviceName: 'Faktoro Device',
     syncAuthTokenLabel: 'Auth token',
-    syncRecoveryEmailLabel: 'Wiederherstellungs-E-Mail',
     syncDeviceStatusLabel: 'Gerätestatus',
     syncServerStatusLabel: 'Serverstatus',
     syncStatusActive: 'Synchronisierung aktiv',
@@ -1205,17 +1158,10 @@ const de = {
     syncAddDeviceRecoveryEmailHint:
       'Die Recovery-E-Mail muss ausgefüllt sein, bevor der Add-Device-QR gescannt wird.',
     syncAddDeviceGenerate: 'Add-Device-Payload erstellen',
-    syncAddDeviceScanQr: 'Add-Device-QR scannen',
     syncAddDeviceScanHint: 'Kamera auf den Add-Device-QR des registrierten Geräts richten.',
-    syncAddDeviceApply: 'Add-Device-Payload anwenden',
-    syncAddDevicePayloadLabel: 'Add-Device-Payload',
     syncAddDeviceMissingConfig:
       'Zum Erstellen der Add-Device-Payload werden Server-URL und Instanz-ID benötigt.',
-    syncAddDevicePayloadGenerated: 'Die Add-Device-Payload wurde erstellt.',
-    syncAddDevicePayloadRequired: 'Die Add-Device-Payload ist erforderlich.',
     syncAddDevicePayloadInvalid: 'Die Add-Device-Payload ist ungültig.',
-    syncAddDevicePayloadApplied:
-      'Die Add-Device-Payload wurde übernommen. Mit der Kopplung fortfahren.',
     syncAddDeviceDifferentInstanceConfirmTitle: 'Dieses Gerät mit einem anderen Konto verbinden?',
     syncAddDeviceDifferentInstanceConfirmMessage:
       'Dieser Add-Device-QR gehört zu einer anderen Sync-Instanz als der, mit der dieses Gerät derzeit verbunden ist. Wenn du fortfährst, wechselt dieses Gerät das Pairing-Ziel und du solltest die lokalen Daten vor der Synchronisierung prüfen.',
@@ -1279,13 +1225,10 @@ const de = {
     vatCodeDeleteTitle: 'Name des Mehrwertsteuersatzes löschen?',
     vatCodeDeleteMessage:
       'Dadurch werden der Tarifname und alle zugehörigen Tarifzeiträume gelöscht.',
-    vatCodeAddTitle: 'Neuer Name des Mehrwertsteuersatzes',
     vatCodeEditTitle: 'Bearbeiten Sie den Namen des Mehrwertsteuersatzes',
     vatCodeNameRequired: 'Preisname ist erforderlich.',
     vatCodeNameExists: 'Der Name des Mehrwertsteuersatzes ist bereits vorhanden.',
     vatCodeSaveError: 'Preisname konnte nicht gespeichert werden.',
-    vatCodeMissingForRate: 'Erstellen Sie zunächst einen Namen für den Mehrwertsteuersatz.',
-    selectVatCodeForRate: 'Wählen Sie den Satznamen für die neue Mehrwertsteuersatzzeile aus.',
     vatRateNameRequired: 'Preisname ist erforderlich.',
     vatRateInvalidRate: 'Der Mehrwertsteuersatz muss eine Zahl zwischen 0 und 100 sein.',
     vatRateValidFromInvalid: 'Das gültige Datum muss im Format JJJJ-MM-TT vorliegen.',
@@ -1365,10 +1308,6 @@ const de = {
     unlockPinRequired: 'PIN ist erforderlich.',
     unlockIncorrectPin: 'Falsche PIN.',
     unlockGenericError: 'PIN konnte nicht bestätigt werden.',
-    securityDisableConfirmTitle: 'App-Sperre deaktivieren?',
-    securityDisableConfirmDescription:
-      'Bestätigen Sie mit PIN oder Biometrie, um die App-Sperre zu deaktivieren.',
-    securityDisableConfirmAction: 'Sperre deaktivieren',
     saveError: 'Einstellungen konnten nicht gespeichert werden',
     saveSuccess: 'Einstellungen erfolgreich gespeichert',
   },
@@ -1397,7 +1336,6 @@ const de = {
     profileSubtitle: 'Diese Angaben erscheinen auf Rechnungen als Lieferant.',
     profileNote: 'Den Rest kannst du jederzeit unter Einstellungen → Unternehmensprofil ergänzen.',
     profileCountryLabel: 'Land',
-    profileRegistryLabel: 'Register für Firmennummernsuche',
     invoiceProfileTitle: 'Rechnungsangaben',
     invoiceProfileSubtitle:
       'Ergänzen Sie optionale Kontakt- und Zahlungsdaten jetzt oder überspringen Sie diesen Schritt.',
@@ -1410,17 +1348,12 @@ const de = {
       'Die App benötigt aktuelle MwSt.-Sätze, um die Steuer auf Rechnungen korrekt zu berechnen.',
     vatAutoLoadHint:
       'Nach der Auswahl eines Landes bereitet Faktoro die aktuellen MwSt.-Sätze zur Prüfung vor. Beim Fortfahren werden sie automatisch gespeichert.',
-    vatCountryLabel: 'EU-Land für den Satzabruf',
-    vatLoadButton: 'Aktuelle Sätze laden und verwenden',
-    vatManualButton: 'Sätze manuell eingeben',
     vatSkipButton: 'Überspringen, später einrichten',
     vatRetryAction: 'Erneut versuchen',
     vatImportFailedPrompt:
       'Faktoro konnte die MwSt.-Sätze gerade nicht speichern. Du kannst es erneut versuchen oder diesen Schritt überspringen und sie später einrichten.',
     vatLoadedFor: 'Sätze für {country}',
     vatLoadedOn: 'Geladen am {date}',
-    vatUseRates: 'Diese Sätze verwenden',
-    vatRatesConfigured: 'MwSt.-Sätze sind eingerichtet.',
     vatRatesConfiguredDesc: 'Du kannst sie jederzeit unter Einstellungen → MwSt. verwalten.',
     vatImportSuccess: 'MwSt.-Sätze importiert.',
     currencyTitle: 'Standardwährung',
@@ -1452,12 +1385,10 @@ const de = {
     connectEmailPlaceholder: 'email@example.com',
     connectScanQr: 'QR scannen',
     connectButton: 'Weiter',
-    connectSuccess: 'Gerät verbunden. Die Daten werden in Kürze synchronisiert.',
     connectEmailRequired: 'Bitte gib eine gültige Wiederherstellungs-E-Mail ein.',
     restoreTitle: 'Aus Backup wiederherstellen',
     restoreSubtitle: 'Wähle eine .fakt-Sicherungsdatei, die zuvor aus Faktoro exportiert wurde.',
     restorePickFile: 'Sicherungsdatei wählen',
-    restoreSelectedFile: 'Ausgewählte Datei',
     restoreCreatedAt: 'Erstellt',
     restoreEncryptedLabel: 'Passwortgeschützt',
     restoreNotEncryptedLabel: 'Ohne Passwort',
@@ -1469,7 +1400,6 @@ const de = {
     back: 'Zurück',
     next: 'Weiter',
     skip: 'Überspringen',
-    finish: 'Fertig',
   },
   reports: {
     title: 'Berichte',
@@ -1483,7 +1413,6 @@ const de = {
     trackedHours: 'Erfasst',
     invoicedRevenue: 'Fakturiert',
     unbilledEstimate: 'Unfakt. Schätzung',
-    timeByClient: 'Zeit nach Kunden',
     billableTimeByClient: 'Abrechenbare Zeit nach Kunden',
     revenueByClient: 'Umsatz nach Kunden',
     noData: 'Keine Daten für den ausgewählten Zeitraum.',

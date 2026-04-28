@@ -1,5 +1,5 @@
 import React from 'react';
-import { InteractionManager, Modal, Pressable, StyleSheet, View } from 'react-native';
+import { InteractionManager, Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { useBottomSafeAreaStyle } from '@/hooks/use-bottom-safe-area-style';
@@ -55,7 +55,11 @@ export function OptionSheetModal({
             {title}
           </ThemedText>
           {message ? <ThemedText style={styles.message}>{message}</ThemedText> : null}
-          <View style={styles.optionsList}>
+          <ScrollView
+            style={styles.optionsScroll}
+            contentContainerStyle={styles.optionsList}
+            showsVerticalScrollIndicator={options.length > 5}
+          >
             {options.map((option, index) => (
               <Pressable
                 key={option.key}
@@ -90,7 +94,7 @@ export function OptionSheetModal({
                 </ThemedText>
               </Pressable>
             ))}
-          </View>
+          </ScrollView>
           <Pressable
             style={[styles.cancelButton, { borderTopColor: palette.inputBorder }]}
             onPress={onClose}
@@ -135,6 +139,9 @@ const styles = StyleSheet.create({
   },
   optionsList: {
     paddingBottom: 4,
+  },
+  optionsScroll: {
+    flexShrink: 1,
   },
   optionButton: {
     paddingHorizontal: 16,

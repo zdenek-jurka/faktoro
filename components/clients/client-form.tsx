@@ -380,7 +380,7 @@ export function ClientForm({
             <SelectItem value="app" label={LL.clients.exportLanguageUseApp()}>
               {LL.clients.exportLanguageUseApp()}
             </SelectItem>
-            {getLocaleOptions(LL).map((localeOption) => (
+            {getLocaleOptions().map((localeOption) => (
               <SelectItem
                 key={localeOption.value}
                 value={localeOption.value}

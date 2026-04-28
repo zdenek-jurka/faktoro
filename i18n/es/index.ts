@@ -19,10 +19,7 @@ const es = {
     continueAction: 'Continuar',
     dismiss: 'Ocultar',
     swipeActionsHint: 'Consejo: desliza un elemento hacia un lado para ver acciones rápidas.',
-    discard: 'Descartar cambios',
     continueEditing: 'Continuar editando',
-    unsavedChanges: 'Cambios no guardados',
-    unsavedChangesMessage: 'Tienes cambios sin guardar. ¿Quieres descartarlos?',
   },
   tabs: {
     clients: 'Clientes',
@@ -119,8 +116,6 @@ const es = {
     companyRegistryConfigurationPrompt:
       'El registro seleccionado requiere configuración antes de la búsqueda. ¿Abrir la configuración del conector ahora?',
     companyRegistryOpenSettings: 'Abrir configuración del conector',
-    companyRegistryConfigPrompt:
-      'El registro {registry} requiere {field}. Ingrese este valor para continuar la búsqueda.',
     errorCompanyLookupFailed: 'No se pudieron cargar los datos del registro',
     errorCompanyLookupAddressUnavailable:
       'El registro no devolvió una dirección completa para importar',
@@ -159,7 +154,6 @@ const es = {
     vatRate: 'tipo de IVA',
     vatName: 'Nombre de la tasa de IVA',
     selectVatName: 'Seleccione el nombre de la tasa de IVA...',
-    noVatName: 'Sin nombre de tasa de IVA',
     noVatCodes: 'No se encontraron nombres de tasas de IVA. Añade uno en Configuración > IVA.',
     units: {
       hour: 'Hora',
@@ -181,7 +175,6 @@ const es = {
     setOverride: 'Establecer anulación',
     clearOverride: 'Borrar anulación',
     selectItem: 'Seleccionar artículo de precio (opcional)',
-    effectivePrice: 'Tasa:',
     clientOverrides: 'Anulaciones de clientes',
     noClientOverrides: 'Aún no hay anulaciones de clientes',
     addOverride: 'Agregar anulación',
@@ -192,7 +185,6 @@ const es = {
   },
   timeTracking: {
     title: 'Seguimiento del tiempo',
-    start: 'Comenzar',
     stop: 'Detener',
     pause: 'Pausa',
     resume: 'Reanudar',
@@ -201,7 +193,6 @@ const es = {
     runningOnOtherDevice: 'Ejecutándose en {device}',
     unknownDevice: 'dispositivo desconocido',
     startTimer: 'Iniciar temporizador',
-    editEntry: 'Editar entrada',
     editTimer: 'Editar entrada de tiempo',
     backWithoutChanges: 'Volver sin cambios',
     client: 'Cliente:',
@@ -212,7 +203,6 @@ const es = {
     entries: 'entradas',
     deleteEntry: 'Eliminar entrada',
     deleteMessage: '¿Estás seguro de que deseas eliminar esta entrada?',
-    errorNoClient: 'Primero agregue al menos un cliente',
     errorSelectClient: 'Por favor seleccione un cliente e ingrese la descripción de la actividad',
     errorStartTimer: 'No se pudo iniciar el cronómetro',
     errorRunningTimerAlreadyExists:
@@ -231,7 +221,6 @@ const es = {
     noDescription: '(Sin descripción)',
     priceListItem: 'Artículo de la lista de precios (opcional):',
     noPriceListLink: 'Sin vinculo con la lista de precios',
-    selectPriceItem: 'Seleccionar precio artículo...',
     swipeActionsHint: 'Consejo: desliza una entrada hacia un lado para editarla o eliminarla.',
     timeAndBilling: 'Tiempo y facturación',
     timeAndBillingHint: 'Revisar tiempo, duración y tarifa',
@@ -290,7 +279,6 @@ const es = {
     exportActionWithXml: 'Compartir',
     exportActionDescription: 'Elige cómo quieres compartir esta hoja de horas.',
     exportXmlDescription: 'Elige el formato XML o la integración que se debe usar.',
-    exportCustom: 'Exportación personalizada',
     exportErrorXml: 'No se pudo exportar el XML.',
     exportSelectIntegration: 'Seleccionar integración de exportación',
     exportBaseXmlOption: 'XML base (sin transformación)',
@@ -318,7 +306,6 @@ const es = {
     exportErrorXlsx: 'No se pudo exportar XLSX.',
     startLabel: 'Comenzar',
     durationLabel: 'Duración',
-    empty: 'Aún no hay hojas de horas.',
     createForClient: 'Nueva hoja de horas para {client}',
     createButton: 'Crear',
     periodType: 'Período',
@@ -366,9 +353,6 @@ const es = {
     draftNotesSection: 'Notas',
     draftSummarySection: 'Resumen',
     changeClientClearsItemsTitle: '¿Cambiar cliente?',
-    changeClientClearsItemsMessage:
-      'Cambiar el cliente eliminará las líneas actuales de la factura para que no sigan vinculadas al cliente anterior.',
-    changeClientClearsItemsConfirm: 'Cambiar cliente',
     changeClientReviewTitle: '¿Cambiar el cliente a {client}?',
     changeClientReviewManualItems:
       '{count} elemento(s) añadidos manualmente se conservarán tal como están.',
@@ -393,9 +377,6 @@ const es = {
     emptyTitle: 'Aún no hay facturas',
     emptyDescription: 'Crea tu primera factura y la verás aquí organizada en un solo lugar.',
     searchPlaceholder: 'Buscar facturas...',
-    newHeaderTitle: 'Nueva factura: encabezado',
-    newItemsTitle: 'Nueva factura: Artículos',
-    newFooterTitle: 'Nueva factura: pie de página',
     invoiceNumber: 'Número de factura',
     buyerModeSavedClient: 'Cliente guardado',
     buyerModeOneOff: 'Comprador puntual',
@@ -443,7 +424,6 @@ const es = {
     sellerSnapshotRefreshPendingShort: 'Actualización pendiente',
     vatCode: 'Código de IVA',
     selectVatCode: 'Seleccione el código de IVA',
-    next: 'Siguiente',
     addFromTimesheets: 'De la hoja de horas',
     addFromPriceList: 'De la lista de precios',
     selectPriceListItem: 'Seleccione un artículo de la lista de precios',
@@ -621,7 +601,6 @@ const es = {
     exportCustomXml: 'Exportación XML personalizada',
     exportBaseXmlOption: 'XML base de Faktoro',
     exportFormatSelect: 'Seleccione el formato de exportación',
-    exportFormatCurrent: 'Formato actual',
     shareInvoice: 'Compartir factura',
     shareUnavailable: 'Compartir no está disponible en este dispositivo.',
     exportError: 'No se pudo exportar el PDF de la factura.',
@@ -650,13 +629,9 @@ const es = {
       'electronic address endpoint ID and schemeID are inferred from email when available, not stored separately',
     structuredExportRequirementPaymentInstructions:
       'bank transfer export needs an IBAN or bank account',
-    structuredExportRequirementSellerPostalAddress:
-      'seller postal address is not exported in XRechnung',
     structuredExportRequirementSellerContactName: 'seller contact name is not stored separately',
     structuredExportRequirementTaxBreakdown:
       'zero or missing VAT rates use an inferred tax category without an exemption reason',
-    structuredExportRequirementTaxScheme:
-      'party tax scheme identifiers are missing required scheme metadata',
     structuredExportRequirementUnitCode:
       'line {line} unit is not mapped to a UNECE unit code and will fall back to C62',
     structuredExportPartySeller: 'Seller',
@@ -664,7 +639,6 @@ const es = {
   },
   settings: {
     title: 'Ajustes',
-    generalTitle: 'General',
     applicationSectionTitle: 'Aplicación',
     billingSectionTitle: 'Facturación',
     dataSectionTitle: 'Copia y sincronización',
@@ -672,7 +646,6 @@ const es = {
     advancedSectionTitle: 'Avanzado',
     languageTitle: 'Idioma',
     languageSubtitle: 'Idioma de la aplicación y localización de la interfaz.',
-    invoicingTitle: 'Facturación',
     onlineSyncTitle: 'Conectar y sincronizar datos entre dispositivos.',
     securityTitle: 'Seguridad',
     securitySubtitle: 'Bloqueo de aplicaciones y biometría',
@@ -771,15 +744,7 @@ const es = {
     offlineBackupStorageUnavailable: 'Backup storage is unavailable on this device.',
     vatTitle: 'TINA',
     vatSubtitle: 'Tarifas y validez',
-    modalTitle: 'Modal',
     language: 'Idioma',
-    languageOptionEnglish: 'Inglés',
-    languageOptionCzech: 'Checo',
-    languageOptionGerman: 'Alemán',
-    languageOptionFrench: 'Francés',
-    languageOptionPortuguese: 'Portugués',
-    languageOptionPolish: 'Polaco',
-    languageOptionSpanish: 'Español',
     defaultBillingInterval: 'Intervalo de facturación predeterminado',
     defaultBillingIntervalDesc:
       'Intervalo de redondeo predeterminado para nuevos clientes (minutos)',
@@ -915,19 +880,13 @@ const es = {
     companyRegistryConnectorUrlLabel: 'URL del conector',
     companyRegistryConnectorUrlHelp:
       'Utilice la URL HTTPS completa. HTTP sin cifrar solo se permite para localhost. Se admite el token de marcador de posición "companyId"; de lo contrario, se adjunta el ID de la empresa.',
-    companyRegistryConnectorHeaderKeyLabel: 'Tecla de encabezado',
-    companyRegistryConnectorHeaderValueLabel: 'valor del encabezado',
-    companyRegistryConnectorHeaderHelp:
-      'Opcional. Si se establece un campo de encabezado, establezca tanto la clave como el valor.',
     companyRegistryCustomResponseTitle: 'Estructura de respuesta esperada',
     companyRegistryCustomResponseDescription:
       'El conector debe devolver JSON con legalName y, opcionalmente, companyId, vatNumber e importAddresses[].',
     companyRegistryCustomResponseDocHint:
       'Especificación completa: docs/custom-company-registry-connector.md',
-    companyRegistrySaveAndRetry: 'Guardar y volver a intentar',
     companyRegistryRequiredField: 'El campo "{field}" es obligatorio.',
     isVatPayer: 'Pagador de IVA',
-    invoiceSettings: 'Configuración de factura',
     companyName: 'nombre de empresa',
     address: 'DIRECCIÓN',
     city: 'Ciudad',
@@ -944,7 +903,6 @@ const es = {
     bankAccount: 'Cuenta bancaria',
     iban: 'IBAN',
     swift: 'SWIFT/BIC',
-    logoUri: 'URL de la imagen del logotipo',
     invoiceLogo: 'Logotipo de factura',
     invoiceLogoHelp:
       'Elige un logotipo de imagen que se mostrará en las facturas y se sincronizará entre dispositivos. Tamaño máximo: {maxSize}.',
@@ -1022,7 +980,6 @@ const es = {
     invoiceDefaultExportFormatNone: 'Ninguno (preguntar en exportación)',
     invoiceSeriesTitle: 'Serie de numeración de facturas',
     timesheetSeriesTitle: 'Serie de numeración de hojas de tiempo',
-    invoiceSeriesPrefix: 'Prefijo de serie',
     invoiceSeriesPattern: 'Patrón de serie (por ejemplo, YY1####)',
     invoiceSeriesPatternHelp:
       'Utilice tokens AAAA, AA, MM, DD, DEV y # para el número de incremento automático (por ejemplo, AA1####).',
@@ -1032,7 +989,6 @@ const es = {
     seriesNextNumberChangeConfirmMessage:
       'Cambiar el siguiente número afecta a los documentos generados a partir de ahora y puede causar huecos o duplicados. Continúa solo si entiendes el impacto.',
     seriesNextNumberChangeConfirmContinue: 'Sí, cambiar el siguiente número',
-    invoiceSeriesPadding: 'Relleno numérico',
     invoiceSeriesPerDevice: 'Series separadas por dispositivo',
     invoiceSeriesDeviceCode: 'Código de dispositivo (opcional)',
     syncTitle: 'Sincronización de dispositivos',
@@ -1045,8 +1001,6 @@ const es = {
     syncDeviceName: 'Nombre del dispositivo',
     syncRecoveryEmail: 'Correo de recovery para emparejar dispositivos',
     syncPreparePairing: 'Iniciar emparejamiento',
-    syncRegistered: 'El dispositivo está registrado y listo para sincronizarse.',
-    syncNotRegistered: 'El dispositivo aún no está registrado.',
     syncServerUrlRequired: 'Primero completa la URL del servidor de sincronización.',
     syncRecoveryEmailRequired: 'Primero completa un correo de recovery válido.',
     syncPairingReady:
@@ -1149,7 +1103,6 @@ const es = {
     syncDeviceNameLabel: 'Nombre del dispositivo',
     syncDefaultDeviceName: 'Faktoro Device',
     syncAuthTokenLabel: 'Auth token',
-    syncRecoveryEmailLabel: 'Correo electrónico de recuperación',
     syncDeviceStatusLabel: 'Estado del dispositivo',
     syncServerStatusLabel: 'Estado del servidor',
     syncStatusActive: 'Sincronización activa',
@@ -1196,16 +1149,10 @@ const es = {
     syncAddDeviceRecoveryEmailHint:
       'Debes introducir el correo de recovery antes de escanear el QR add-device.',
     syncAddDeviceGenerate: 'Generar payload add-device',
-    syncAddDeviceScanQr: 'Escanear QR add-device',
     syncAddDeviceScanHint: 'Apunta la cámara al QR add-device de tu dispositivo registrado.',
-    syncAddDeviceApply: 'Aplicar payload add-device',
-    syncAddDevicePayloadLabel: 'Payload add-device',
     syncAddDeviceMissingConfig:
       'La URL del servidor y el ID de instancia son obligatorios para generar el payload add-device.',
-    syncAddDevicePayloadGenerated: 'Se generó el payload add-device.',
-    syncAddDevicePayloadRequired: 'El payload add-device es obligatorio.',
     syncAddDevicePayloadInvalid: 'El payload add-device no es válido.',
-    syncAddDevicePayloadApplied: 'Se aplicó el payload add-device. Continúa con el emparejamiento.',
     syncAddDeviceDifferentInstanceConfirmTitle: '¿Conectar este dispositivo a otra cuenta?',
     syncAddDeviceDifferentInstanceConfirmMessage:
       'Este QR add-device pertenece a una instancia de sincronización distinta de la que está conectada actualmente en este dispositivo. Si continúas, este dispositivo cambiará el destino del emparejamiento y deberías revisar los datos locales antes de sincronizar.',
@@ -1269,13 +1216,10 @@ const es = {
     vatCodeDeleteTitle: '¿Eliminar el nombre de la tasa de IVA?',
     vatCodeDeleteMessage:
       'Esto eliminará el nombre de la tarifa y todos los períodos de tarifas relacionados.',
-    vatCodeAddTitle: 'Nuevo nombre de tasa de IVA',
     vatCodeEditTitle: 'Editar nombre de la tasa de IVA',
     vatCodeNameRequired: 'El nombre de la tarifa es obligatorio.',
     vatCodeNameExists: 'El nombre del tipo de IVA ya existe.',
     vatCodeSaveError: 'No se pudo guardar el nombre de la tarifa.',
-    vatCodeMissingForRate: 'Primero cree un nombre de tasa de IVA.',
-    selectVatCodeForRate: 'Seleccione el nombre de la tasa para la nueva fila de tasa de IVA.',
     vatRateNameRequired: 'El nombre de la tarifa es obligatorio.',
     vatRateInvalidRate: 'El tipo de IVA debe ser un número del 0 al 100.',
     vatRateValidFromInvalid: 'La fecha de inicio de validez debe estar en formato AAAA-MM-DD.',
@@ -1356,10 +1300,6 @@ const es = {
     unlockPinRequired: 'Se requiere PIN.',
     unlockIncorrectPin: 'PIN incorrecto.',
     unlockGenericError: 'No se puede verificar el PIN.',
-    securityDisableConfirmTitle: '¿Desactivar el bloqueo de aplicaciones?',
-    securityDisableConfirmDescription:
-      'Confirme con PIN o datos biométricos para desactivar el bloqueo de la aplicación.',
-    securityDisableConfirmAction: 'Desactivar bloqueo',
     saveError: 'No se pudo guardar la configuración',
     saveSuccess: 'Configuración guardada exitosamente',
   },
@@ -1388,7 +1328,6 @@ const es = {
     profileSubtitle: 'Estos datos aparecen en las facturas como proveedor.',
     profileNote: 'Puedes completar el resto en cualquier momento en Ajustes → Perfil del negocio.',
     profileCountryLabel: 'País',
-    profileRegistryLabel: 'Registro para búsqueda por identificador de empresa',
     invoiceProfileTitle: 'Datos de facturación',
     invoiceProfileSubtitle:
       'Añade ahora los datos opcionales de contacto y pago, o salta este paso y complétalos más tarde.',
@@ -1401,17 +1340,12 @@ const es = {
       'La aplicación necesita tipos de IVA actuales para calcular el impuesto correctamente en las facturas.',
     vatAutoLoadHint:
       'Después de elegir un país, Faktoro prepara los tipos de IVA actuales para revisarlos. Se guardarán automáticamente cuando continúes.',
-    vatCountryLabel: 'País de la UE para consultar tipos',
-    vatLoadButton: 'Cargar y usar los tipos actuales',
-    vatManualButton: 'Introducir tipos manualmente',
     vatSkipButton: 'Omitir, configurar después',
     vatRetryAction: 'Intentarlo de nuevo',
     vatImportFailedPrompt:
       'Faktoro no pudo guardar los tipos de IVA en este momento. Puedes intentarlo de nuevo o omitir este paso y configurarlos más tarde.',
     vatLoadedFor: 'Tipos para {country}',
     vatLoadedOn: 'Cargado el {date}',
-    vatUseRates: 'Usar estos tipos',
-    vatRatesConfigured: 'Los tipos de IVA están configurados.',
     vatRatesConfiguredDesc: 'Puedes gestionarlos en cualquier momento en Ajustes → IVA.',
     vatImportSuccess: 'Tipos de IVA importados.',
     currencyTitle: 'Moneda predeterminada',
@@ -1443,12 +1377,10 @@ const es = {
     connectEmailPlaceholder: 'email@example.com',
     connectScanQr: 'Escanear QR',
     connectButton: 'Continuar',
-    connectSuccess: 'Dispositivo conectado. Los datos se sincronizarán en breve.',
     connectEmailRequired: 'Introduce un correo de recuperación válido.',
     restoreTitle: 'Restaurar desde copia de seguridad',
     restoreSubtitle: 'Selecciona un archivo .fakt exportado previamente desde Faktoro.',
     restorePickFile: 'Elegir archivo de copia',
-    restoreSelectedFile: 'Archivo seleccionado',
     restoreCreatedAt: 'Creado',
     restoreEncryptedLabel: 'Protegido con contraseña',
     restoreNotEncryptedLabel: 'Sin contraseña',
@@ -1460,7 +1392,6 @@ const es = {
     back: 'Atrás',
     next: 'Siguiente',
     skip: 'Omitir',
-    finish: 'Finalizar',
   },
   reports: {
     title: 'Informes',
@@ -1474,7 +1405,6 @@ const es = {
     trackedHours: 'Registrado',
     invoicedRevenue: 'Facturado',
     unbilledEstimate: 'Estim. no fact.',
-    timeByClient: 'Tiempo por cliente',
     billableTimeByClient: 'Tiempo facturable por cliente',
     revenueByClient: 'Ingresos por cliente',
     noData: 'No hay datos para el período seleccionado.',

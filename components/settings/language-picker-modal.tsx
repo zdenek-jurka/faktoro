@@ -1,17 +1,17 @@
 import React from 'react';
-import { Modal, StyleSheet, Pressable, View } from 'react-native';
+import { Modal, ScrollView, StyleSheet, Pressable, View } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { useBottomSafeAreaStyle } from '@/hooks/use-bottom-safe-area-style';
 import { usePalette } from '@/hooks/use-palette';
-import { getLocaleOptions, type LocaleLabelLocalization } from '@/i18n/locale-options';
+import { getLocaleOptions } from '@/i18n/locale-options';
 import type { Locales } from '@/i18n/i18n-types';
 
 type LanguagePickerLocalization = {
   common: {
     cancel: () => string;
   };
-  settings: LocaleLabelLocalization['settings'] & {
+  settings: {
     language: () => string;
   };
 };
@@ -28,7 +28,7 @@ export function LanguagePickerModal({ visible, LL, currentLanguage, onClose, onS
   const palette = usePalette();
   const sheetStyle = useBottomSafeAreaStyle(styles.sheet);
 
-  const options: { value: Locales; label: string }[] = getLocaleOptions(LL);
+  const options: { value: Locales; label: string }[] = getLocaleOptions();
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
@@ -51,7 +51,11 @@ export function LanguagePickerModal({ visible, LL, currentLanguage, onClose, onS
           <ThemedText type="subtitle" style={styles.title}>
             {LL.settings.language()}
           </ThemedText>
-          <View style={styles.optionsList}>
+          <ScrollView
+            style={styles.optionsScroll}
+            contentContainerStyle={styles.optionsList}
+            showsVerticalScrollIndicator={options.length > 5}
+          >
             {options.map((option, index) => (
               <Pressable
                 key={option.value}
@@ -77,7 +81,7 @@ export function LanguagePickerModal({ visible, LL, currentLanguage, onClose, onS
                 </ThemedText>
               </Pressable>
             ))}
-          </View>
+          </ScrollView>
           <Pressable
             style={[styles.cancelButton, { borderTopColor: palette.inputBorder }]}
             onPress={onClose}
@@ -108,6 +112,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderBottomWidth: 0,
     paddingTop: 14,
+    maxHeight: '72%',
   },
   title: {
     paddingHorizontal: 16,
@@ -115,6 +120,9 @@ const styles = StyleSheet.create({
   },
   optionsList: {
     paddingBottom: 4,
+  },
+  optionsScroll: {
+    flexShrink: 1,
   },
   optionButton: {
     paddingHorizontal: 16,

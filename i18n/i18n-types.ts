@@ -89,21 +89,9 @@ type RootTranslation = {
 		 */
 		swipeActionsHint: string
 		/**
-		 * D​i​s​c​a​r​d​ ​c​h​a​n​g​e​s
-		 */
-		discard: string
-		/**
 		 * C​o​n​t​i​n​u​e​ ​e​d​i​t​i​n​g
 		 */
 		continueEditing: string
-		/**
-		 * U​n​s​a​v​e​d​ ​C​h​a​n​g​e​s
-		 */
-		unsavedChanges: string
-		/**
-		 * Y​o​u​ ​h​a​v​e​ ​u​n​s​a​v​e​d​ ​c​h​a​n​g​e​s​.​ ​D​o​ ​y​o​u​ ​w​a​n​t​ ​t​o​ ​d​i​s​c​a​r​d​ ​t​h​e​m​?
-		 */
-		unsavedChangesMessage: string
 	}
 	tabs: {
 		/**
@@ -441,12 +429,6 @@ type RootTranslation = {
 		 */
 		companyRegistryOpenSettings: string
 		/**
-		 * R​e​g​i​s​t​r​y​ ​{​r​e​g​i​s​t​r​y​}​ ​r​e​q​u​i​r​e​s​ ​{​f​i​e​l​d​}​.​ ​E​n​t​e​r​ ​t​h​i​s​ ​v​a​l​u​e​ ​t​o​ ​c​o​n​t​i​n​u​e​ ​l​o​o​k​u​p​.
-		 * @param {unknown} field
-		 * @param {unknown} registry
-		 */
-		companyRegistryConfigPrompt: RequiredParams<'field' | 'registry'>
-		/**
 		 * F​a​i​l​e​d​ ​t​o​ ​l​o​a​d​ ​d​a​t​a​ ​f​r​o​m​ ​r​e​g​i​s​t​r​y
 		 */
 		errorCompanyLookupFailed: string
@@ -580,10 +562,6 @@ type RootTranslation = {
 		 */
 		selectVatName: string
 		/**
-		 * N​o​ ​V​A​T​ ​r​a​t​e​ ​n​a​m​e
-		 */
-		noVatName: string
-		/**
 		 * N​o​ ​V​A​T​ ​r​a​t​e​ ​n​a​m​e​s​ ​f​o​u​n​d​.​ ​A​d​d​ ​o​n​e​ ​i​n​ ​S​e​t​t​i​n​g​s​ ​>​ ​V​A​T​.
 		 */
 		noVatCodes: string
@@ -663,10 +641,6 @@ type RootTranslation = {
 		 */
 		selectItem: string
 		/**
-		 * R​a​t​e​:
-		 */
-		effectivePrice: string
-		/**
 		 * C​l​i​e​n​t​ ​O​v​e​r​r​i​d​e​s
 		 */
 		clientOverrides: string
@@ -702,10 +676,6 @@ type RootTranslation = {
 		 */
 		title: string
 		/**
-		 * S​t​a​r​t
-		 */
-		start: string
-		/**
 		 * S​t​o​p
 		 */
 		stop: string
@@ -738,10 +708,6 @@ type RootTranslation = {
 		 * S​t​a​r​t​ ​T​i​m​e​r
 		 */
 		startTimer: string
-		/**
-		 * E​d​i​t​ ​E​n​t​r​y
-		 */
-		editEntry: string
 		/**
 		 * E​d​i​t​ ​T​i​m​e​ ​E​n​t​r​y
 		 */
@@ -782,10 +748,6 @@ type RootTranslation = {
 		 * A​r​e​ ​y​o​u​ ​s​u​r​e​ ​y​o​u​ ​w​a​n​t​ ​t​o​ ​d​e​l​e​t​e​ ​t​h​i​s​ ​e​n​t​r​y​?
 		 */
 		deleteMessage: string
-		/**
-		 * P​l​e​a​s​e​ ​a​d​d​ ​a​t​ ​l​e​a​s​t​ ​o​n​e​ ​c​l​i​e​n​t​ ​f​i​r​s​t
-		 */
-		errorNoClient: string
 		/**
 		 * P​l​e​a​s​e​ ​s​e​l​e​c​t​ ​a​ ​c​l​i​e​n​t​ ​a​n​d​ ​e​n​t​e​r​ ​a​c​t​i​v​i​t​y​ ​d​e​s​c​r​i​p​t​i​o​n
 		 */
@@ -850,10 +812,6 @@ type RootTranslation = {
 		 * N​o​ ​p​r​i​c​e​ ​l​i​s​t​ ​l​i​n​k
 		 */
 		noPriceListLink: string
-		/**
-		 * S​e​l​e​c​t​ ​p​r​i​c​e​ ​i​t​e​m​.​.​.
-		 */
-		selectPriceItem: string
 		/**
 		 * T​i​p​:​ ​S​w​i​p​e​ ​a​n​ ​e​n​t​r​y​ ​s​i​d​e​w​a​y​s​ ​t​o​ ​e​d​i​t​ ​o​r​ ​d​e​l​e​t​e​ ​i​t​.
 		 */
@@ -1067,10 +1025,6 @@ type RootTranslation = {
 		 */
 		exportXmlDescription: string
 		/**
-		 * C​u​s​t​o​m​ ​e​x​p​o​r​t
-		 */
-		exportCustom: string
-		/**
 		 * F​a​i​l​e​d​ ​t​o​ ​e​x​p​o​r​t​ ​X​M​L​.
 		 */
 		exportErrorXml: string
@@ -1166,10 +1120,6 @@ type RootTranslation = {
 		 * D​u​r​a​t​i​o​n
 		 */
 		durationLabel: string
-		/**
-		 * N​o​ ​t​i​m​e​s​h​e​e​t​s​ ​y​e​t​.
-		 */
-		empty: string
 		/**
 		 * N​e​w​ ​t​i​m​e​s​h​e​e​t​ ​f​o​r​ ​{​c​l​i​e​n​t​}
 		 * @param {unknown} client
@@ -1345,14 +1295,6 @@ type RootTranslation = {
 		 */
 		changeClientClearsItemsTitle: string
 		/**
-		 * C​h​a​n​g​i​n​g​ ​t​h​e​ ​c​l​i​e​n​t​ ​w​i​l​l​ ​r​e​m​o​v​e​ ​t​h​e​ ​c​u​r​r​e​n​t​ ​i​n​v​o​i​c​e​ ​i​t​e​m​s​ ​s​o​ ​t​h​e​y​ ​d​o​ ​n​o​t​ ​s​t​a​y​ ​l​i​n​k​e​d​ ​t​o​ ​t​h​e​ ​p​r​e​v​i​o​u​s​ ​c​l​i​e​n​t​.
-		 */
-		changeClientClearsItemsMessage: string
-		/**
-		 * C​h​a​n​g​e​ ​c​l​i​e​n​t
-		 */
-		changeClientClearsItemsConfirm: string
-		/**
 		 * C​h​a​n​g​e​ ​c​l​i​e​n​t​ ​t​o​ ​{​c​l​i​e​n​t​}​?
 		 * @param {unknown} client
 		 */
@@ -1437,18 +1379,6 @@ type RootTranslation = {
 		 * S​e​a​r​c​h​ ​i​n​v​o​i​c​e​s​.​.​.
 		 */
 		searchPlaceholder: string
-		/**
-		 * N​e​w​ ​i​n​v​o​i​c​e​:​ ​H​e​a​d​e​r
-		 */
-		newHeaderTitle: string
-		/**
-		 * N​e​w​ ​i​n​v​o​i​c​e​:​ ​I​t​e​m​s
-		 */
-		newItemsTitle: string
-		/**
-		 * N​e​w​ ​i​n​v​o​i​c​e​:​ ​F​o​o​t​e​r
-		 */
-		newFooterTitle: string
 		/**
 		 * I​n​v​o​i​c​e​ ​n​u​m​b​e​r
 		 */
@@ -1613,10 +1543,6 @@ type RootTranslation = {
 		 * S​e​l​e​c​t​ ​V​A​T​ ​c​o​d​e
 		 */
 		selectVatCode: string
-		/**
-		 * N​e​x​t
-		 */
-		next: string
 		/**
 		 * F​r​o​m​ ​t​i​m​e​s​h​e​e​t
 		 */
@@ -2234,10 +2160,6 @@ type RootTranslation = {
 		 */
 		exportFormatSelect: string
 		/**
-		 * C​u​r​r​e​n​t​ ​f​o​r​m​a​t
-		 */
-		exportFormatCurrent: string
-		/**
 		 * S​h​a​r​e​ ​i​n​v​o​i​c​e
 		 */
 		shareInvoice: string
@@ -2340,10 +2262,6 @@ type RootTranslation = {
 		 */
 		structuredExportRequirementPaymentInstructions: string
 		/**
-		 * s​e​l​l​e​r​ ​p​o​s​t​a​l​ ​a​d​d​r​e​s​s​ ​i​s​ ​n​o​t​ ​e​x​p​o​r​t​e​d​ ​i​n​ ​X​R​e​c​h​n​u​n​g
-		 */
-		structuredExportRequirementSellerPostalAddress: string
-		/**
 		 * s​e​l​l​e​r​ ​c​o​n​t​a​c​t​ ​n​a​m​e​ ​i​s​ ​n​o​t​ ​s​t​o​r​e​d​ ​s​e​p​a​r​a​t​e​l​y
 		 */
 		structuredExportRequirementSellerContactName: string
@@ -2351,10 +2269,6 @@ type RootTranslation = {
 		 * z​e​r​o​ ​o​r​ ​m​i​s​s​i​n​g​ ​V​A​T​ ​r​a​t​e​s​ ​u​s​e​ ​a​n​ ​i​n​f​e​r​r​e​d​ ​t​a​x​ ​c​a​t​e​g​o​r​y​ ​w​i​t​h​o​u​t​ ​a​n​ ​e​x​e​m​p​t​i​o​n​ ​r​e​a​s​o​n
 		 */
 		structuredExportRequirementTaxBreakdown: string
-		/**
-		 * p​a​r​t​y​ ​t​a​x​ ​s​c​h​e​m​e​ ​i​d​e​n​t​i​f​i​e​r​s​ ​a​r​e​ ​m​i​s​s​i​n​g​ ​r​e​q​u​i​r​e​d​ ​s​c​h​e​m​e​ ​m​e​t​a​d​a​t​a
-		 */
-		structuredExportRequirementTaxScheme: string
 		/**
 		 * l​i​n​e​ ​{​l​i​n​e​}​ ​u​n​i​t​ ​i​s​ ​n​o​t​ ​m​a​p​p​e​d​ ​t​o​ ​a​ ​U​N​E​C​E​ ​u​n​i​t​ ​c​o​d​e​ ​a​n​d​ ​w​i​l​l​ ​f​a​l​l​ ​b​a​c​k​ ​t​o​ ​C​6​2
 		 * @param {unknown} line
@@ -2374,10 +2288,6 @@ type RootTranslation = {
 		 * S​e​t​t​i​n​g​s
 		 */
 		title: string
-		/**
-		 * G​e​n​e​r​a​l
-		 */
-		generalTitle: string
 		/**
 		 * A​p​p​l​i​c​a​t​i​o​n
 		 */
@@ -2478,10 +2388,6 @@ type RootTranslation = {
 		 * A​p​p​ ​l​a​n​g​u​a​g​e​ ​a​n​d​ ​i​n​t​e​r​f​a​c​e​ ​l​o​c​a​l​i​z​a​t​i​o​n​.
 		 */
 		languageSubtitle: string
-		/**
-		 * I​n​v​o​i​c​i​n​g
-		 */
-		invoicingTitle: string
 		/**
 		 * C​o​n​n​e​c​t​ ​a​n​d​ ​s​y​n​c​ ​d​a​t​a​ ​b​e​t​w​e​e​n​ ​d​e​v​i​c​e​s​.
 		 */
@@ -2733,41 +2639,9 @@ type RootTranslation = {
 		 */
 		vatSubtitle: string
 		/**
-		 * M​o​d​a​l
-		 */
-		modalTitle: string
-		/**
 		 * L​a​n​g​u​a​g​e
 		 */
 		language: string
-		/**
-		 * E​n​g​l​i​s​h
-		 */
-		languageOptionEnglish: string
-		/**
-		 * C​z​e​c​h
-		 */
-		languageOptionCzech: string
-		/**
-		 * G​e​r​m​a​n
-		 */
-		languageOptionGerman: string
-		/**
-		 * F​r​e​n​c​h
-		 */
-		languageOptionFrench: string
-		/**
-		 * P​o​r​t​u​g​u​e​s​e
-		 */
-		languageOptionPortuguese: string
-		/**
-		 * P​o​l​i​s​h
-		 */
-		languageOptionPolish: string
-		/**
-		 * S​p​a​n​i​s​h
-		 */
-		languageOptionSpanish: string
 		/**
 		 * D​e​f​a​u​l​t​ ​B​i​l​l​i​n​g​ ​I​n​t​e​r​v​a​l
 		 */
@@ -3211,18 +3085,6 @@ type RootTranslation = {
 		 */
 		companyRegistryConnectorUrlHelp: string
 		/**
-		 * H​e​a​d​e​r​ ​k​e​y
-		 */
-		companyRegistryConnectorHeaderKeyLabel: string
-		/**
-		 * H​e​a​d​e​r​ ​v​a​l​u​e
-		 */
-		companyRegistryConnectorHeaderValueLabel: string
-		/**
-		 * O​p​t​i​o​n​a​l​.​ ​I​f​ ​o​n​e​ ​h​e​a​d​e​r​ ​f​i​e​l​d​ ​i​s​ ​s​e​t​,​ ​s​e​t​ ​b​o​t​h​ ​k​e​y​ ​a​n​d​ ​v​a​l​u​e​.
-		 */
-		companyRegistryConnectorHeaderHelp: string
-		/**
 		 * E​x​p​e​c​t​e​d​ ​r​e​s​p​o​n​s​e​ ​s​t​r​u​c​t​u​r​e
 		 */
 		companyRegistryCustomResponseTitle: string
@@ -3235,10 +3097,6 @@ type RootTranslation = {
 		 */
 		companyRegistryCustomResponseDocHint: string
 		/**
-		 * S​a​v​e​ ​a​n​d​ ​r​e​t​r​y
-		 */
-		companyRegistrySaveAndRetry: string
-		/**
 		 * F​i​e​l​d​ ​"​{​f​i​e​l​d​}​"​ ​i​s​ ​r​e​q​u​i​r​e​d​.
 		 * @param {unknown} field
 		 */
@@ -3247,10 +3105,6 @@ type RootTranslation = {
 		 * V​A​T​ ​P​a​y​e​r
 		 */
 		isVatPayer: string
-		/**
-		 * I​n​v​o​i​c​e​ ​S​e​t​t​i​n​g​s
-		 */
-		invoiceSettings: string
 		/**
 		 * C​o​m​p​a​n​y​ ​N​a​m​e
 		 */
@@ -3311,10 +3165,6 @@ type RootTranslation = {
 		 * S​W​I​F​T​/​B​I​C
 		 */
 		swift: string
-		/**
-		 * L​o​g​o​ ​i​m​a​g​e​ ​U​R​L
-		 */
-		logoUri: string
 		/**
 		 * I​n​v​o​i​c​e​ ​l​o​g​o
 		 */
@@ -3566,10 +3416,6 @@ type RootTranslation = {
 		 */
 		timesheetSeriesTitle: string
 		/**
-		 * S​e​r​i​e​s​ ​p​r​e​f​i​x
-		 */
-		invoiceSeriesPrefix: string
-		/**
 		 * S​e​r​i​e​s​ ​p​a​t​t​e​r​n​ ​(​e​.​g​.​ ​Y​Y​1​#​#​#​#​)
 		 */
 		invoiceSeriesPattern: string
@@ -3597,10 +3443,6 @@ type RootTranslation = {
 		 * Y​e​s​,​ ​c​h​a​n​g​e​ ​n​e​x​t​ ​n​u​m​b​e​r
 		 */
 		seriesNextNumberChangeConfirmContinue: string
-		/**
-		 * N​u​m​b​e​r​ ​p​a​d​d​i​n​g
-		 */
-		invoiceSeriesPadding: string
 		/**
 		 * S​e​p​a​r​a​t​e​ ​s​e​r​i​e​s​ ​p​e​r​ ​d​e​v​i​c​e
 		 */
@@ -3694,14 +3536,6 @@ type RootTranslation = {
 		 * S​t​a​r​t​ ​p​a​i​r​i​n​g
 		 */
 		syncPreparePairing: string
-		/**
-		 * D​e​v​i​c​e​ ​i​s​ ​r​e​g​i​s​t​e​r​e​d​ ​a​n​d​ ​r​e​a​d​y​ ​f​o​r​ ​s​y​n​c​.
-		 */
-		syncRegistered: string
-		/**
-		 * D​e​v​i​c​e​ ​i​s​ ​n​o​t​ ​r​e​g​i​s​t​e​r​e​d​ ​y​e​t​.
-		 */
-		syncNotRegistered: string
 		/**
 		 * P​l​e​a​s​e​ ​f​i​l​l​ ​s​y​n​c​ ​s​e​r​v​e​r​ ​U​R​L​ ​f​i​r​s​t​.
 		 */
@@ -4050,10 +3884,6 @@ type RootTranslation = {
 		 */
 		syncAuthTokenLabel: string
 		/**
-		 * R​e​c​o​v​e​r​y​ ​e​m​a​i​l
-		 */
-		syncRecoveryEmailLabel: string
-		/**
 		 * D​e​v​i​c​e​ ​s​t​a​t​u​s
 		 */
 		syncDeviceStatusLabel: string
@@ -4146,41 +3976,17 @@ type RootTranslation = {
 		 */
 		syncAddDeviceGenerate: string
 		/**
-		 * S​c​a​n​ ​a​d​d​-​d​e​v​i​c​e​ ​Q​R
-		 */
-		syncAddDeviceScanQr: string
-		/**
 		 * P​o​i​n​t​ ​c​a​m​e​r​a​ ​t​o​ ​a​d​d​-​d​e​v​i​c​e​ ​Q​R​ ​f​r​o​m​ ​y​o​u​r​ ​r​e​g​i​s​t​e​r​e​d​ ​d​e​v​i​c​e​.
 		 */
 		syncAddDeviceScanHint: string
-		/**
-		 * A​p​p​l​y​ ​a​d​d​-​d​e​v​i​c​e​ ​p​a​y​l​o​a​d
-		 */
-		syncAddDeviceApply: string
-		/**
-		 * A​d​d​-​d​e​v​i​c​e​ ​p​a​y​l​o​a​d
-		 */
-		syncAddDevicePayloadLabel: string
 		/**
 		 * S​e​r​v​e​r​ ​U​R​L​ ​a​n​d​ ​i​n​s​t​a​n​c​e​ ​I​D​ ​a​r​e​ ​r​e​q​u​i​r​e​d​ ​t​o​ ​g​e​n​e​r​a​t​e​ ​a​d​d​-​d​e​v​i​c​e​ ​p​a​y​l​o​a​d​.
 		 */
 		syncAddDeviceMissingConfig: string
 		/**
-		 * A​d​d​-​d​e​v​i​c​e​ ​p​a​y​l​o​a​d​ ​w​a​s​ ​g​e​n​e​r​a​t​e​d​.
-		 */
-		syncAddDevicePayloadGenerated: string
-		/**
-		 * A​d​d​-​d​e​v​i​c​e​ ​p​a​y​l​o​a​d​ ​i​s​ ​r​e​q​u​i​r​e​d​.
-		 */
-		syncAddDevicePayloadRequired: string
-		/**
 		 * A​d​d​-​d​e​v​i​c​e​ ​p​a​y​l​o​a​d​ ​i​s​ ​i​n​v​a​l​i​d​.
 		 */
 		syncAddDevicePayloadInvalid: string
-		/**
-		 * A​d​d​-​d​e​v​i​c​e​ ​p​a​y​l​o​a​d​ ​a​p​p​l​i​e​d​.​ ​C​o​n​t​i​n​u​e​ ​w​i​t​h​ ​p​a​i​r​i​n​g​.
-		 */
-		syncAddDevicePayloadApplied: string
 		/**
 		 * C​o​n​n​e​c​t​ ​t​h​i​s​ ​d​e​v​i​c​e​ ​t​o​ ​a​ ​d​i​f​f​e​r​e​n​t​ ​a​c​c​o​u​n​t​?
 		 */
@@ -4366,10 +4172,6 @@ type RootTranslation = {
 		 */
 		vatCodeDeleteMessage: string
 		/**
-		 * N​e​w​ ​V​A​T​ ​r​a​t​e​ ​n​a​m​e
-		 */
-		vatCodeAddTitle: string
-		/**
 		 * E​d​i​t​ ​V​A​T​ ​r​a​t​e​ ​n​a​m​e
 		 */
 		vatCodeEditTitle: string
@@ -4385,14 +4187,6 @@ type RootTranslation = {
 		 * F​a​i​l​e​d​ ​t​o​ ​s​a​v​e​ ​r​a​t​e​ ​n​a​m​e​.
 		 */
 		vatCodeSaveError: string
-		/**
-		 * C​r​e​a​t​e​ ​a​ ​V​A​T​ ​r​a​t​e​ ​n​a​m​e​ ​f​i​r​s​t​.
-		 */
-		vatCodeMissingForRate: string
-		/**
-		 * S​e​l​e​c​t​ ​r​a​t​e​ ​n​a​m​e​ ​f​o​r​ ​t​h​e​ ​n​e​w​ ​V​A​T​ ​r​a​t​e​ ​r​o​w​.
-		 */
-		selectVatCodeForRate: string
 		/**
 		 * R​a​t​e​ ​n​a​m​e​ ​i​s​ ​r​e​q​u​i​r​e​d​.
 		 */
@@ -4690,18 +4484,6 @@ type RootTranslation = {
 		 */
 		unlockGenericError: string
 		/**
-		 * D​i​s​a​b​l​e​ ​a​p​p​ ​l​o​c​k​?
-		 */
-		securityDisableConfirmTitle: string
-		/**
-		 * C​o​n​f​i​r​m​ ​w​i​t​h​ ​P​I​N​ ​o​r​ ​b​i​o​m​e​t​r​i​c​s​ ​t​o​ ​d​i​s​a​b​l​e​ ​t​h​e​ ​a​p​p​ ​l​o​c​k​.
-		 */
-		securityDisableConfirmDescription: string
-		/**
-		 * D​i​s​a​b​l​e​ ​l​o​c​k
-		 */
-		securityDisableConfirmAction: string
-		/**
 		 * F​a​i​l​e​d​ ​t​o​ ​s​a​v​e​ ​s​e​t​t​i​n​g​s
 		 */
 		saveError: string
@@ -4796,10 +4578,6 @@ type RootTranslation = {
 		 */
 		profileCountryLabel: string
 		/**
-		 * R​e​g​i​s​t​r​y​ ​f​o​r​ ​c​o​m​p​a​n​y​ ​I​D​ ​l​o​o​k​u​p
-		 */
-		profileRegistryLabel: string
-		/**
 		 * I​n​v​o​i​c​e​ ​d​e​t​a​i​l​s
 		 */
 		invoiceProfileTitle: string
@@ -4832,18 +4610,6 @@ type RootTranslation = {
 		 */
 		vatAutoLoadHint: string
 		/**
-		 * E​U​ ​c​o​u​n​t​r​y​ ​f​o​r​ ​r​a​t​e​ ​l​o​o​k​u​p
-		 */
-		vatCountryLabel: string
-		/**
-		 * L​o​a​d​ ​a​n​d​ ​u​s​e​ ​c​u​r​r​e​n​t​ ​r​a​t​e​s
-		 */
-		vatLoadButton: string
-		/**
-		 * E​n​t​e​r​ ​r​a​t​e​s​ ​m​a​n​u​a​l​l​y
-		 */
-		vatManualButton: string
-		/**
 		 * S​k​i​p​,​ ​s​e​t​ ​u​p​ ​l​a​t​e​r
 		 */
 		vatSkipButton: string
@@ -4865,14 +4631,6 @@ type RootTranslation = {
 		 * @param {string} date
 		 */
 		vatLoadedOn: RequiredParams<'date'>
-		/**
-		 * U​s​e​ ​t​h​e​s​e​ ​r​a​t​e​s
-		 */
-		vatUseRates: string
-		/**
-		 * V​A​T​ ​r​a​t​e​s​ ​a​r​e​ ​c​o​n​f​i​g​u​r​e​d​.
-		 */
-		vatRatesConfigured: string
 		/**
 		 * Y​o​u​ ​c​a​n​ ​m​a​n​a​g​e​ ​t​h​e​m​ ​a​n​y​ ​t​i​m​e​ ​i​n​ ​S​e​t​t​i​n​g​s​ ​→​ ​V​A​T​.
 		 */
@@ -4982,10 +4740,6 @@ type RootTranslation = {
 		 */
 		connectButton: string
 		/**
-		 * D​e​v​i​c​e​ ​c​o​n​n​e​c​t​e​d​.​ ​D​a​t​a​ ​w​i​l​l​ ​s​y​n​c​ ​s​h​o​r​t​l​y​.
-		 */
-		connectSuccess: string
-		/**
 		 * E​n​t​e​r​ ​a​ ​v​a​l​i​d​ ​r​e​c​o​v​e​r​y​ ​e​m​a​i​l​.
 		 */
 		connectEmailRequired: string
@@ -5001,10 +4755,6 @@ type RootTranslation = {
 		 * C​h​o​o​s​e​ ​b​a​c​k​u​p​ ​f​i​l​e
 		 */
 		restorePickFile: string
-		/**
-		 * S​e​l​e​c​t​e​d​ ​f​i​l​e
-		 */
-		restoreSelectedFile: string
 		/**
 		 * C​r​e​a​t​e​d
 		 */
@@ -5049,10 +4799,6 @@ type RootTranslation = {
 		 * S​k​i​p
 		 */
 		skip: string
-		/**
-		 * F​i​n​i​s​h
-		 */
-		finish: string
 	}
 	reports: {
 		/**
@@ -5095,10 +4841,6 @@ type RootTranslation = {
 		 * U​n​b​i​l​l​e​d​ ​e​s​t​.
 		 */
 		unbilledEstimate: string
-		/**
-		 * T​i​m​e​ ​b​y​ ​c​l​i​e​n​t
-		 */
-		timeByClient: string
 		/**
 		 * B​i​l​l​a​b​l​e​ ​t​i​m​e​ ​b​y​ ​c​l​i​e​n​t
 		 */
@@ -5223,21 +4965,9 @@ export type TranslationFunctions = {
 		 */
 		swipeActionsHint: () => LocalizedString
 		/**
-		 * Discard changes
-		 */
-		discard: () => LocalizedString
-		/**
 		 * Continue editing
 		 */
 		continueEditing: () => LocalizedString
-		/**
-		 * Unsaved Changes
-		 */
-		unsavedChanges: () => LocalizedString
-		/**
-		 * You have unsaved changes. Do you want to discard them?
-		 */
-		unsavedChangesMessage: () => LocalizedString
 	}
 	tabs: {
 		/**
@@ -5575,10 +5305,6 @@ export type TranslationFunctions = {
 		 */
 		companyRegistryOpenSettings: () => LocalizedString
 		/**
-		 * Registry {registry} requires {field}. Enter this value to continue lookup.
-		 */
-		companyRegistryConfigPrompt: (arg: { field: unknown, registry: unknown }) => LocalizedString
-		/**
 		 * Failed to load data from registry
 		 */
 		errorCompanyLookupFailed: () => LocalizedString
@@ -5709,10 +5435,6 @@ export type TranslationFunctions = {
 		 */
 		selectVatName: () => LocalizedString
 		/**
-		 * No VAT rate name
-		 */
-		noVatName: () => LocalizedString
-		/**
 		 * No VAT rate names found. Add one in Settings > VAT.
 		 */
 		noVatCodes: () => LocalizedString
@@ -5791,10 +5513,6 @@ export type TranslationFunctions = {
 		 */
 		selectItem: () => LocalizedString
 		/**
-		 * Rate:
-		 */
-		effectivePrice: () => LocalizedString
-		/**
 		 * Client Overrides
 		 */
 		clientOverrides: () => LocalizedString
@@ -5829,10 +5547,6 @@ export type TranslationFunctions = {
 		 */
 		title: () => LocalizedString
 		/**
-		 * Start
-		 */
-		start: () => LocalizedString
-		/**
 		 * Stop
 		 */
 		stop: () => LocalizedString
@@ -5864,10 +5578,6 @@ export type TranslationFunctions = {
 		 * Start Timer
 		 */
 		startTimer: () => LocalizedString
-		/**
-		 * Edit Entry
-		 */
-		editEntry: () => LocalizedString
 		/**
 		 * Edit Time Entry
 		 */
@@ -5908,10 +5618,6 @@ export type TranslationFunctions = {
 		 * Are you sure you want to delete this entry?
 		 */
 		deleteMessage: () => LocalizedString
-		/**
-		 * Please add at least one client first
-		 */
-		errorNoClient: () => LocalizedString
 		/**
 		 * Please select a client and enter activity description
 		 */
@@ -5976,10 +5682,6 @@ export type TranslationFunctions = {
 		 * No price list link
 		 */
 		noPriceListLink: () => LocalizedString
-		/**
-		 * Select price item...
-		 */
-		selectPriceItem: () => LocalizedString
 		/**
 		 * Tip: Swipe an entry sideways to edit or delete it.
 		 */
@@ -6187,10 +5889,6 @@ export type TranslationFunctions = {
 		 */
 		exportXmlDescription: () => LocalizedString
 		/**
-		 * Custom export
-		 */
-		exportCustom: () => LocalizedString
-		/**
 		 * Failed to export XML.
 		 */
 		exportErrorXml: () => LocalizedString
@@ -6282,10 +5980,6 @@ export type TranslationFunctions = {
 		 * Duration
 		 */
 		durationLabel: () => LocalizedString
-		/**
-		 * No timesheets yet.
-		 */
-		empty: () => LocalizedString
 		/**
 		 * New timesheet for {client}
 		 */
@@ -6457,14 +6151,6 @@ export type TranslationFunctions = {
 		 */
 		changeClientClearsItemsTitle: () => LocalizedString
 		/**
-		 * Changing the client will remove the current invoice items so they do not stay linked to the previous client.
-		 */
-		changeClientClearsItemsMessage: () => LocalizedString
-		/**
-		 * Change client
-		 */
-		changeClientClearsItemsConfirm: () => LocalizedString
-		/**
 		 * Change client to {client}?
 		 */
 		changeClientReviewTitle: (arg: { client: unknown }) => LocalizedString
@@ -6536,18 +6222,6 @@ export type TranslationFunctions = {
 		 * Search invoices...
 		 */
 		searchPlaceholder: () => LocalizedString
-		/**
-		 * New invoice: Header
-		 */
-		newHeaderTitle: () => LocalizedString
-		/**
-		 * New invoice: Items
-		 */
-		newItemsTitle: () => LocalizedString
-		/**
-		 * New invoice: Footer
-		 */
-		newFooterTitle: () => LocalizedString
 		/**
 		 * Invoice number
 		 */
@@ -6712,10 +6386,6 @@ export type TranslationFunctions = {
 		 * Select VAT code
 		 */
 		selectVatCode: () => LocalizedString
-		/**
-		 * Next
-		 */
-		next: () => LocalizedString
 		/**
 		 * From timesheet
 		 */
@@ -7313,10 +6983,6 @@ export type TranslationFunctions = {
 		 */
 		exportFormatSelect: () => LocalizedString
 		/**
-		 * Current format
-		 */
-		exportFormatCurrent: () => LocalizedString
-		/**
 		 * Share invoice
 		 */
 		shareInvoice: () => LocalizedString
@@ -7405,10 +7071,6 @@ export type TranslationFunctions = {
 		 */
 		structuredExportRequirementPaymentInstructions: () => LocalizedString
 		/**
-		 * seller postal address is not exported in XRechnung
-		 */
-		structuredExportRequirementSellerPostalAddress: () => LocalizedString
-		/**
 		 * seller contact name is not stored separately
 		 */
 		structuredExportRequirementSellerContactName: () => LocalizedString
@@ -7416,10 +7078,6 @@ export type TranslationFunctions = {
 		 * zero or missing VAT rates use an inferred tax category without an exemption reason
 		 */
 		structuredExportRequirementTaxBreakdown: () => LocalizedString
-		/**
-		 * party tax scheme identifiers are missing required scheme metadata
-		 */
-		structuredExportRequirementTaxScheme: () => LocalizedString
 		/**
 		 * line {line} unit is not mapped to a UNECE unit code and will fall back to C62
 		 */
@@ -7438,10 +7096,6 @@ export type TranslationFunctions = {
 		 * Settings
 		 */
 		title: () => LocalizedString
-		/**
-		 * General
-		 */
-		generalTitle: () => LocalizedString
 		/**
 		 * Application
 		 */
@@ -7542,10 +7196,6 @@ export type TranslationFunctions = {
 		 * App language and interface localization.
 		 */
 		languageSubtitle: () => LocalizedString
-		/**
-		 * Invoicing
-		 */
-		invoicingTitle: () => LocalizedString
 		/**
 		 * Connect and sync data between devices.
 		 */
@@ -7795,41 +7445,9 @@ export type TranslationFunctions = {
 		 */
 		vatSubtitle: () => LocalizedString
 		/**
-		 * Modal
-		 */
-		modalTitle: () => LocalizedString
-		/**
 		 * Language
 		 */
 		language: () => LocalizedString
-		/**
-		 * English
-		 */
-		languageOptionEnglish: () => LocalizedString
-		/**
-		 * Czech
-		 */
-		languageOptionCzech: () => LocalizedString
-		/**
-		 * German
-		 */
-		languageOptionGerman: () => LocalizedString
-		/**
-		 * French
-		 */
-		languageOptionFrench: () => LocalizedString
-		/**
-		 * Portuguese
-		 */
-		languageOptionPortuguese: () => LocalizedString
-		/**
-		 * Polish
-		 */
-		languageOptionPolish: () => LocalizedString
-		/**
-		 * Spanish
-		 */
-		languageOptionSpanish: () => LocalizedString
 		/**
 		 * Default Billing Interval
 		 */
@@ -8271,18 +7889,6 @@ export type TranslationFunctions = {
 		 */
 		companyRegistryConnectorUrlHelp: () => LocalizedString
 		/**
-		 * Header key
-		 */
-		companyRegistryConnectorHeaderKeyLabel: () => LocalizedString
-		/**
-		 * Header value
-		 */
-		companyRegistryConnectorHeaderValueLabel: () => LocalizedString
-		/**
-		 * Optional. If one header field is set, set both key and value.
-		 */
-		companyRegistryConnectorHeaderHelp: () => LocalizedString
-		/**
 		 * Expected response structure
 		 */
 		companyRegistryCustomResponseTitle: () => LocalizedString
@@ -8295,10 +7901,6 @@ export type TranslationFunctions = {
 		 */
 		companyRegistryCustomResponseDocHint: () => LocalizedString
 		/**
-		 * Save and retry
-		 */
-		companyRegistrySaveAndRetry: () => LocalizedString
-		/**
 		 * Field "{field}" is required.
 		 */
 		companyRegistryRequiredField: (arg: { field: unknown }) => LocalizedString
@@ -8306,10 +7908,6 @@ export type TranslationFunctions = {
 		 * VAT Payer
 		 */
 		isVatPayer: () => LocalizedString
-		/**
-		 * Invoice Settings
-		 */
-		invoiceSettings: () => LocalizedString
 		/**
 		 * Company Name
 		 */
@@ -8370,10 +7968,6 @@ export type TranslationFunctions = {
 		 * SWIFT/BIC
 		 */
 		swift: () => LocalizedString
-		/**
-		 * Logo image URL
-		 */
-		logoUri: () => LocalizedString
 		/**
 		 * Invoice logo
 		 */
@@ -8621,10 +8215,6 @@ export type TranslationFunctions = {
 		 */
 		timesheetSeriesTitle: () => LocalizedString
 		/**
-		 * Series prefix
-		 */
-		invoiceSeriesPrefix: () => LocalizedString
-		/**
 		 * Series pattern (e.g. YY1####)
 		 */
 		invoiceSeriesPattern: () => LocalizedString
@@ -8652,10 +8242,6 @@ export type TranslationFunctions = {
 		 * Yes, change next number
 		 */
 		seriesNextNumberChangeConfirmContinue: () => LocalizedString
-		/**
-		 * Number padding
-		 */
-		invoiceSeriesPadding: () => LocalizedString
 		/**
 		 * Separate series per device
 		 */
@@ -8748,14 +8334,6 @@ export type TranslationFunctions = {
 		 * Start pairing
 		 */
 		syncPreparePairing: () => LocalizedString
-		/**
-		 * Device is registered and ready for sync.
-		 */
-		syncRegistered: () => LocalizedString
-		/**
-		 * Device is not registered yet.
-		 */
-		syncNotRegistered: () => LocalizedString
 		/**
 		 * Please fill sync server URL first.
 		 */
@@ -9101,10 +8679,6 @@ export type TranslationFunctions = {
 		 */
 		syncAuthTokenLabel: () => LocalizedString
 		/**
-		 * Recovery email
-		 */
-		syncRecoveryEmailLabel: () => LocalizedString
-		/**
 		 * Device status
 		 */
 		syncDeviceStatusLabel: () => LocalizedString
@@ -9197,41 +8771,17 @@ export type TranslationFunctions = {
 		 */
 		syncAddDeviceGenerate: () => LocalizedString
 		/**
-		 * Scan add-device QR
-		 */
-		syncAddDeviceScanQr: () => LocalizedString
-		/**
 		 * Point camera to add-device QR from your registered device.
 		 */
 		syncAddDeviceScanHint: () => LocalizedString
-		/**
-		 * Apply add-device payload
-		 */
-		syncAddDeviceApply: () => LocalizedString
-		/**
-		 * Add-device payload
-		 */
-		syncAddDevicePayloadLabel: () => LocalizedString
 		/**
 		 * Server URL and instance ID are required to generate add-device payload.
 		 */
 		syncAddDeviceMissingConfig: () => LocalizedString
 		/**
-		 * Add-device payload was generated.
-		 */
-		syncAddDevicePayloadGenerated: () => LocalizedString
-		/**
-		 * Add-device payload is required.
-		 */
-		syncAddDevicePayloadRequired: () => LocalizedString
-		/**
 		 * Add-device payload is invalid.
 		 */
 		syncAddDevicePayloadInvalid: () => LocalizedString
-		/**
-		 * Add-device payload applied. Continue with pairing.
-		 */
-		syncAddDevicePayloadApplied: () => LocalizedString
 		/**
 		 * Connect this device to a different account?
 		 */
@@ -9417,10 +8967,6 @@ export type TranslationFunctions = {
 		 */
 		vatCodeDeleteMessage: () => LocalizedString
 		/**
-		 * New VAT rate name
-		 */
-		vatCodeAddTitle: () => LocalizedString
-		/**
 		 * Edit VAT rate name
 		 */
 		vatCodeEditTitle: () => LocalizedString
@@ -9436,14 +8982,6 @@ export type TranslationFunctions = {
 		 * Failed to save rate name.
 		 */
 		vatCodeSaveError: () => LocalizedString
-		/**
-		 * Create a VAT rate name first.
-		 */
-		vatCodeMissingForRate: () => LocalizedString
-		/**
-		 * Select rate name for the new VAT rate row.
-		 */
-		selectVatCodeForRate: () => LocalizedString
 		/**
 		 * Rate name is required.
 		 */
@@ -9737,18 +9275,6 @@ export type TranslationFunctions = {
 		 */
 		unlockGenericError: () => LocalizedString
 		/**
-		 * Disable app lock?
-		 */
-		securityDisableConfirmTitle: () => LocalizedString
-		/**
-		 * Confirm with PIN or biometrics to disable the app lock.
-		 */
-		securityDisableConfirmDescription: () => LocalizedString
-		/**
-		 * Disable lock
-		 */
-		securityDisableConfirmAction: () => LocalizedString
-		/**
 		 * Failed to save settings
 		 */
 		saveError: () => LocalizedString
@@ -9843,10 +9369,6 @@ export type TranslationFunctions = {
 		 */
 		profileCountryLabel: () => LocalizedString
 		/**
-		 * Registry for company ID lookup
-		 */
-		profileRegistryLabel: () => LocalizedString
-		/**
 		 * Invoice details
 		 */
 		invoiceProfileTitle: () => LocalizedString
@@ -9879,18 +9401,6 @@ export type TranslationFunctions = {
 		 */
 		vatAutoLoadHint: () => LocalizedString
 		/**
-		 * EU country for rate lookup
-		 */
-		vatCountryLabel: () => LocalizedString
-		/**
-		 * Load and use current rates
-		 */
-		vatLoadButton: () => LocalizedString
-		/**
-		 * Enter rates manually
-		 */
-		vatManualButton: () => LocalizedString
-		/**
 		 * Skip, set up later
 		 */
 		vatSkipButton: () => LocalizedString
@@ -9910,14 +9420,6 @@ export type TranslationFunctions = {
 		 * Loaded on {date}
 		 */
 		vatLoadedOn: (arg: { date: string }) => LocalizedString
-		/**
-		 * Use these rates
-		 */
-		vatUseRates: () => LocalizedString
-		/**
-		 * VAT rates are configured.
-		 */
-		vatRatesConfigured: () => LocalizedString
 		/**
 		 * You can manage them any time in Settings → VAT.
 		 */
@@ -10027,10 +9529,6 @@ export type TranslationFunctions = {
 		 */
 		connectButton: () => LocalizedString
 		/**
-		 * Device connected. Data will sync shortly.
-		 */
-		connectSuccess: () => LocalizedString
-		/**
 		 * Enter a valid recovery email.
 		 */
 		connectEmailRequired: () => LocalizedString
@@ -10046,10 +9544,6 @@ export type TranslationFunctions = {
 		 * Choose backup file
 		 */
 		restorePickFile: () => LocalizedString
-		/**
-		 * Selected file
-		 */
-		restoreSelectedFile: () => LocalizedString
 		/**
 		 * Created
 		 */
@@ -10094,10 +9588,6 @@ export type TranslationFunctions = {
 		 * Skip
 		 */
 		skip: () => LocalizedString
-		/**
-		 * Finish
-		 */
-		finish: () => LocalizedString
 	}
 	reports: {
 		/**
@@ -10140,10 +9630,6 @@ export type TranslationFunctions = {
 		 * Unbilled est.
 		 */
 		unbilledEstimate: () => LocalizedString
-		/**
-		 * Time by client
-		 */
-		timeByClient: () => LocalizedString
 		/**
 		 * Billable time by client
 		 */

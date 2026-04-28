@@ -5,7 +5,7 @@ import { usePalette } from '@/hooks/use-palette';
 import { useI18nContext } from '@/i18n/i18n-react';
 import { useRouter } from 'expo-router';
 import React from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 type ChoiceItem = {
@@ -47,7 +47,11 @@ export default function OnboardingStartScreen() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: palette.background }]}>
-      <View style={styles.content}>
+      <ScrollView
+        style={styles.flex}
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
         <View style={styles.header}>
           <Pressable style={styles.backButton} onPress={() => router.back()}>
             <IconSymbol name="chevron.left" size={20} color={palette.tint} />
@@ -117,7 +121,7 @@ export default function OnboardingStartScreen() {
             </Pressable>
           ))}
         </View>
-      </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -126,9 +130,13 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  content: {
+  flex: {
     flex: 1,
+  },
+  content: {
+    flexGrow: 1,
     paddingHorizontal: 24,
+    paddingBottom: 24,
   },
   header: {
     paddingTop: 16,

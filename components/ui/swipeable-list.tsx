@@ -34,6 +34,8 @@ interface SwipeableListProps<T> {
   itemBackgroundColor?: string;
   /** Show add button in header */
   showAddButton?: boolean;
+  /** Optional action rendered on the right side of the section header. */
+  headerAction?: ReactNode;
   /** Persisted key for a dismissible swipe-actions hint. */
   swipeHintKey?: string;
   /** Optional custom text for the dismissible swipe-actions hint. */
@@ -53,6 +55,7 @@ export function SwipeableList<T>({
   emptyState,
   itemBackgroundColor,
   showAddButton = true,
+  headerAction,
   swipeHintKey,
   swipeHintText,
 }: SwipeableListProps<T>) {
@@ -76,12 +79,17 @@ export function SwipeableList<T>({
             </ThemedView>
           )}
         </View>
-        {showAddButton && onAdd && (
-          <IconButton
-            iconName="plus.circle.fill"
-            onPress={onAdd}
-            accessibilityLabel={`${title} add`}
-          />
+        {(headerAction || (showAddButton && onAdd)) && (
+          <View style={styles.headerActions}>
+            {headerAction}
+            {showAddButton && onAdd && (
+              <IconButton
+                iconName="plus.circle.fill"
+                onPress={onAdd}
+                accessibilityLabel={`${title} add`}
+              />
+            )}
+          </View>
         )}
       </View>
 
@@ -154,8 +162,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: Spacing.sm,
     flex: 1,
+    minWidth: 0,
   },
   title: {
+    flexShrink: 1,
     fontSize: FontSizes.lg,
   },
   countBadge: {
@@ -168,6 +178,12 @@ const styles = StyleSheet.create({
   countText: {
     fontSize: 13,
     fontWeight: '600',
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexShrink: 0,
+    gap: Spacing.sm,
   },
   swipeHint: {
     marginBottom: Spacing.md,

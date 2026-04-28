@@ -19,10 +19,7 @@ const pt = {
     continueAction: 'Continuar',
     dismiss: 'Ocultar',
     swipeActionsHint: 'Dica: deslize um item para o lado para ver ações rápidas.',
-    discard: 'Descartar alterações',
     continueEditing: 'Continuar editando',
-    unsavedChanges: 'Alterações não salvas',
-    unsavedChangesMessage: 'Você tem alterações não salvas. Deseja descartá-las?',
   },
   tabs: {
     clients: 'Clientes',
@@ -117,8 +114,6 @@ const pt = {
     companyRegistryConfigurationPrompt:
       'O registro selecionado requer configuração antes da pesquisa. Abrir as configurações do conector agora?',
     companyRegistryOpenSettings: 'Abrir configurações do conector',
-    companyRegistryConfigPrompt:
-      'O registro {registry} requer {field}. Insira este valor para continuar a pesquisa.',
     errorCompanyLookupFailed: 'Falha ao carregar dados do registro',
     errorCompanyLookupAddressUnavailable:
       'O registro não retornou um endereço completo para importação',
@@ -157,7 +152,6 @@ const pt = {
     vatRate: 'Taxa de IVA',
     vatName: 'Nome da taxa de IVA',
     selectVatName: 'Selecione o nome da taxa de IVA...',
-    noVatName: 'Sem nome de taxa de IVA',
     noVatCodes: 'Nenhum nome de taxa de IVA encontrado. Adicione um em Configurações > IVA.',
     units: {
       hour: 'Hora',
@@ -179,7 +173,6 @@ const pt = {
     setOverride: 'Definir substituição',
     clearOverride: 'Limpar substituição',
     selectItem: 'Selecione o item de preço (opcional)',
-    effectivePrice: 'Avaliar:',
     clientOverrides: 'Substituições de cliente',
     noClientOverrides: 'Nenhuma modificação de cliente ainda',
     addOverride: 'Adicionar substituição',
@@ -190,7 +183,6 @@ const pt = {
   },
   timeTracking: {
     title: 'Controle de tempo',
-    start: 'Começar',
     stop: 'Parar',
     pause: 'Pausa',
     resume: 'Retomar',
@@ -199,7 +191,6 @@ const pt = {
     runningOnOtherDevice: 'Em execução em {device}',
     unknownDevice: 'dispositivo desconhecido',
     startTimer: 'Iniciar temporizador',
-    editEntry: 'Editar entrada',
     editTimer: 'Editar entrada de tempo',
     backWithoutChanges: 'Voltar sem alterações',
     client: 'Cliente:',
@@ -210,7 +201,6 @@ const pt = {
     entries: 'entradas',
     deleteEntry: 'Excluir entrada',
     deleteMessage: 'Tem certeza de que deseja excluir esta entrada?',
-    errorNoClient: 'Adicione pelo menos um cliente primeiro',
     errorSelectClient: 'Selecione um cliente e insira a descrição da atividade',
     errorStartTimer: 'Falha ao iniciar o cronômetro',
     errorRunningTimerAlreadyExists:
@@ -229,7 +219,6 @@ const pt = {
     noDescription: '(Sem descrição)',
     priceListItem: 'Item da lista de preços (opcional):',
     noPriceListLink: 'Sem ligacao a lista de precos',
-    selectPriceItem: 'Selecione o item de preço...',
     swipeActionsHint: 'Dica: deslize uma entrada para o lado para editar ou excluir.',
     timeAndBilling: 'Tempo e faturação',
     timeAndBillingHint: 'Rever tempo, duração e taxa',
@@ -288,7 +277,6 @@ const pt = {
     exportActionWithXml: 'Compartilhar',
     exportActionDescription: 'Escolha como pretende compartilhar esta folha de horas.',
     exportXmlDescription: 'Escolha o formato XML ou a integração a utilizar.',
-    exportCustom: 'Exportação personalizada',
     exportErrorXml: 'Falha ao exportar XML.',
     exportSelectIntegration: 'Selecionar integração de exportação',
     exportBaseXmlOption: 'XML base (sem transformação)',
@@ -316,7 +304,6 @@ const pt = {
     exportErrorXlsx: 'Falha ao exportar XLSX.',
     startLabel: 'Começar',
     durationLabel: 'Duração',
-    empty: 'Ainda não há planilhas de horas.',
     createForClient: 'Nova planilha de horas para {client}',
     createButton: 'Criar',
     periodType: 'Período',
@@ -364,9 +351,6 @@ const pt = {
     draftNotesSection: 'Notas',
     draftSummarySection: 'Resumo',
     changeClientClearsItemsTitle: 'Alterar cliente?',
-    changeClientClearsItemsMessage:
-      'Alterar o cliente removerá os itens atuais da fatura para que eles não permaneçam vinculados ao cliente anterior.',
-    changeClientClearsItemsConfirm: 'Alterar cliente',
     changeClientReviewTitle: 'Alterar o cliente para {client}?',
     changeClientReviewManualItems:
       '{count} item(ns) adicionados manualmente serão mantidos como estão.',
@@ -391,9 +375,6 @@ const pt = {
     emptyTitle: 'Ainda não há faturas',
     emptyDescription: 'Crie sua primeira fatura e você a verá aqui organizada em um só lugar.',
     searchPlaceholder: 'Pesquisar faturas...',
-    newHeaderTitle: 'Nova fatura: Cabeçalho',
-    newItemsTitle: 'Nova fatura: Itens',
-    newFooterTitle: 'Nova fatura: Rodapé',
     invoiceNumber: 'Número da fatura',
     buyerModeSavedClient: 'Cliente guardado',
     buyerModeOneOff: 'Comprador avulso',
@@ -441,7 +422,6 @@ const pt = {
     sellerSnapshotRefreshPendingShort: 'Atualização pronta',
     vatCode: 'Código de IVA',
     selectVatCode: 'Selecione o código IVA',
-    next: 'Seguinte',
     addFromTimesheets: 'Do quadro de horários',
     addFromPriceList: 'Da lista de preços',
     selectPriceListItem: 'Selecione um item da lista de preços',
@@ -619,7 +599,6 @@ const pt = {
     exportCustomXml: 'Exportação XML personalizada',
     exportBaseXmlOption: 'XML base do Faktoro',
     exportFormatSelect: 'Selecione o formato de exportação',
-    exportFormatCurrent: 'Formato atual',
     shareInvoice: 'Compartilhar fatura',
     shareUnavailable: 'O compartilhamento não está disponível neste dispositivo.',
     exportError: 'Falha ao exportar o PDF da fatura.',
@@ -648,13 +627,9 @@ const pt = {
       'electronic address endpoint ID and schemeID are inferred from email when available, not stored separately',
     structuredExportRequirementPaymentInstructions:
       'bank transfer export needs an IBAN or bank account',
-    structuredExportRequirementSellerPostalAddress:
-      'seller postal address is not exported in XRechnung',
     structuredExportRequirementSellerContactName: 'seller contact name is not stored separately',
     structuredExportRequirementTaxBreakdown:
       'zero or missing VAT rates use an inferred tax category without an exemption reason',
-    structuredExportRequirementTaxScheme:
-      'party tax scheme identifiers are missing required scheme metadata',
     structuredExportRequirementUnitCode:
       'line {line} unit is not mapped to a UNECE unit code and will fall back to C62',
     structuredExportPartySeller: 'Seller',
@@ -662,7 +637,6 @@ const pt = {
   },
   settings: {
     title: 'Configurações',
-    generalTitle: 'Em geral',
     applicationSectionTitle: 'Aplicação',
     billingSectionTitle: 'Faturação',
     dataSectionTitle: 'Backup e sincronização',
@@ -670,7 +644,6 @@ const pt = {
     advancedSectionTitle: 'Avançado',
     languageTitle: 'Idioma',
     languageSubtitle: 'Idioma da aplicação e localização da interface.',
-    invoicingTitle: 'Faturamento',
     onlineSyncTitle: 'Conectar e sincronizar dados entre dispositivos.',
     securityTitle: 'Segurança',
     securitySubtitle: 'Bloqueio de aplicativos e biometria',
@@ -768,15 +741,7 @@ const pt = {
     offlineBackupStorageUnavailable: 'Backup storage is unavailable on this device.',
     vatTitle: 'CUBA',
     vatSubtitle: 'Taxas e validade',
-    modalTitle: 'Modal',
     language: 'Linguagem',
-    languageOptionEnglish: 'Inglês',
-    languageOptionCzech: 'Checo',
-    languageOptionGerman: 'Alemão',
-    languageOptionFrench: 'Francês',
-    languageOptionPortuguese: 'Português',
-    languageOptionPolish: 'Polonês',
-    languageOptionSpanish: 'Espanhol',
     defaultBillingInterval: 'Intervalo de cobrança padrão',
     defaultBillingIntervalDesc: 'Intervalo de arredondamento padrão para novos clientes (minutos)',
     timerLimitsTitle: 'Limites de segurança do temporizador',
@@ -912,19 +877,13 @@ const pt = {
     companyRegistryConnectorUrlLabel: 'URL do conector',
     companyRegistryConnectorUrlHelp:
       'Use URL HTTPS completo. HTTP sem encriptação só é permitido para localhost. O token de espaço reservado "companyId" é suportado; caso contrário, o ID da empresa será anexado.',
-    companyRegistryConnectorHeaderKeyLabel: 'Chave de cabeçalho',
-    companyRegistryConnectorHeaderValueLabel: 'Valor do cabeçalho',
-    companyRegistryConnectorHeaderHelp:
-      'Opcional. Se um campo de cabeçalho for definido, defina a chave e o valor.',
     companyRegistryCustomResponseTitle: 'Estrutura de resposta esperada',
     companyRegistryCustomResponseDescription:
       'O conector deve retornar JSON com legalName e opcionalmente companyId, vatNumber e importAddresses[].',
     companyRegistryCustomResponseDocHint:
       'Especificação completa: docs/custom-company-registry-connector.md',
-    companyRegistrySaveAndRetry: 'Salve e tente novamente',
     companyRegistryRequiredField: 'O campo "{field}" é obrigatório.',
     isVatPayer: 'Contribuinte do IVA',
-    invoiceSettings: 'Configurações de fatura',
     companyName: 'nome da empresa',
     address: 'Endereço',
     city: 'Cidade',
@@ -941,7 +900,6 @@ const pt = {
     bankAccount: 'Conta bancária',
     iban: 'IBAN',
     swift: 'SWIFT/BIC',
-    logoUri: 'URL da imagem do logotipo',
     invoiceLogo: 'Logótipo da fatura',
     invoiceLogoHelp:
       'Escolha um logótipo em imagem para mostrar nas faturas e sincronizar entre dispositivos. Tamanho máximo: {maxSize}.',
@@ -1019,7 +977,6 @@ const pt = {
     invoiceDefaultExportFormatNone: 'Nenhum (pergunte na exportação)',
     invoiceSeriesTitle: 'Série de numeração de faturas',
     timesheetSeriesTitle: 'Série de numeração de folhas de horas',
-    invoiceSeriesPrefix: 'Prefixo da série',
     invoiceSeriesPattern: 'Padrão de série (por exemplo, YY1####)',
     invoiceSeriesPatternHelp:
       'Use tokens AAAA, AA, MM, DD, DEV e # para número de incremento automático (por exemplo, AA1####).',
@@ -1029,7 +986,6 @@ const pt = {
     seriesNextNumberChangeConfirmMessage:
       'Alterar o próximo número afeta os novos documentos gerados e pode criar lacunas ou duplicados. Continue apenas se entender o impacto.',
     seriesNextNumberChangeConfirmContinue: 'Sim, alterar próximo número',
-    invoiceSeriesPadding: 'Preenchimento numérico',
     invoiceSeriesPerDevice: 'Séries separadas por dispositivo',
     invoiceSeriesDeviceCode: 'Código do dispositivo (opcional)',
     syncTitle: 'Sincronização de dispositivos',
@@ -1042,8 +998,6 @@ const pt = {
     syncDeviceName: 'Nome do dispositivo',
     syncRecoveryEmail: 'E-mail de recovery para pareamento de dispositivos',
     syncPreparePairing: 'Iniciar pareamento',
-    syncRegistered: 'O dispositivo está registrado e pronto para sincronização.',
-    syncNotRegistered: 'O dispositivo ainda não está registrado.',
     syncServerUrlRequired: 'Preencha primeiro a URL do servidor de sincronização.',
     syncRecoveryEmailRequired: 'Preencha primeiro um e-mail de recovery válido.',
     syncPairingReady:
@@ -1146,7 +1100,6 @@ const pt = {
     syncDeviceNameLabel: 'Nome do dispositivo',
     syncDefaultDeviceName: 'Faktoro Device',
     syncAuthTokenLabel: 'Auth token',
-    syncRecoveryEmailLabel: 'E-mail de recuperação',
     syncDeviceStatusLabel: 'Status do dispositivo',
     syncServerStatusLabel: 'Status do servidor',
     syncStatusActive: 'Sincronização ativa',
@@ -1193,16 +1146,10 @@ const pt = {
     syncAddDeviceRecoveryEmailHint:
       'É preciso preencher o e-mail de recovery antes de escanear o QR add-device.',
     syncAddDeviceGenerate: 'Gerar payload add-device',
-    syncAddDeviceScanQr: 'Escanear QR add-device',
     syncAddDeviceScanHint: 'Aponte a câmera para o QR add-device do seu dispositivo registrado.',
-    syncAddDeviceApply: 'Aplicar payload add-device',
-    syncAddDevicePayloadLabel: 'Payload add-device',
     syncAddDeviceMissingConfig:
       'A URL do servidor e o ID da instância são obrigatórios para gerar o payload add-device.',
-    syncAddDevicePayloadGenerated: 'O payload add-device foi gerado.',
-    syncAddDevicePayloadRequired: 'O payload add-device é obrigatório.',
     syncAddDevicePayloadInvalid: 'O payload add-device é inválido.',
-    syncAddDevicePayloadApplied: 'O payload add-device foi aplicado. Continue com o pareamento.',
     syncAddDeviceDifferentInstanceConfirmTitle: 'Conectar este dispositivo a outra conta?',
     syncAddDeviceDifferentInstanceConfirmMessage:
       'Este QR add-device pertence a uma instância de sincronização diferente da que está conectada atualmente neste dispositivo. Se você continuar, este dispositivo mudará o destino do pareamento e vale revisar os dados locais antes de sincronizar.',
@@ -1264,13 +1211,10 @@ const pt = {
     vatRateDeleteMessage: 'Esta taxa de IVA não pode ser recuperada.',
     vatCodeDeleteTitle: 'Excluir o nome da taxa de IVA?',
     vatCodeDeleteMessage: 'Isso excluirá o nome da taxa e todos os períodos de taxas relacionados.',
-    vatCodeAddTitle: 'Novo nome da taxa de IVA',
     vatCodeEditTitle: 'Editar nome da taxa de IVA',
     vatCodeNameRequired: 'O nome da taxa é obrigatório.',
     vatCodeNameExists: 'O nome da taxa de IVA já existe.',
     vatCodeSaveError: 'Falha ao salvar o nome da taxa.',
-    vatCodeMissingForRate: 'Crie primeiro um nome de taxa de IVA.',
-    selectVatCodeForRate: 'Selecione o nome da taxa para a nova linha da taxa de IVA.',
     vatRateNameRequired: 'O nome da taxa é obrigatório.',
     vatRateInvalidRate: 'A taxa de IVA deve ser um número de 0 a 100.',
     vatRateValidFromInvalid: 'A data válida desde deve estar no formato AAAA-MM-DD.',
@@ -1350,10 +1294,6 @@ const pt = {
     unlockPinRequired: 'O PIN é obrigatório.',
     unlockIncorrectPin: 'PIN incorreto.',
     unlockGenericError: 'Não foi possível verificar o PIN.',
-    securityDisableConfirmTitle: 'Desativar o bloqueio de aplicativos?',
-    securityDisableConfirmDescription:
-      'Confirme com PIN ou biometria para desativar o bloqueio do aplicativo.',
-    securityDisableConfirmAction: 'Desativar bloqueio',
     saveError: 'Falha ao salvar as configurações',
     saveSuccess: 'Configurações salvas com sucesso',
   },
@@ -1383,7 +1323,6 @@ const pt = {
     profileNote:
       'Você pode completar o restante a qualquer momento em Configurações → Perfil da empresa.',
     profileCountryLabel: 'País',
-    profileRegistryLabel: 'Registro para busca por identificador da empresa',
     invoiceProfileTitle: 'Dados de faturação',
     invoiceProfileSubtitle:
       'Adicione agora os dados opcionais de contacto e pagamento, ou ignore este passo e preencha-os mais tarde.',
@@ -1396,17 +1335,12 @@ const pt = {
       'O aplicativo precisa das taxas de IVA atuais para calcular o imposto corretamente nas faturas.',
     vatAutoLoadHint:
       'Depois de escolher um país, o Faktoro prepara as taxas de IVA atuais para revisão. Elas serão guardadas automaticamente quando continuar.',
-    vatCountryLabel: 'País da UE para consulta de taxas',
-    vatLoadButton: 'Carregar e usar as taxas atuais',
-    vatManualButton: 'Inserir taxas manualmente',
     vatSkipButton: 'Pular, configurar depois',
     vatRetryAction: 'Tentar novamente',
     vatImportFailedPrompt:
       'O Faktoro não conseguiu guardar as taxas de IVA agora. Pode tentar novamente ou ignorar esta etapa e configurá-las mais tarde.',
     vatLoadedFor: 'Taxas para {country}',
     vatLoadedOn: 'Carregado em {date}',
-    vatUseRates: 'Usar essas taxas',
-    vatRatesConfigured: 'As taxas de IVA estão configuradas.',
     vatRatesConfiguredDesc: 'Você pode gerenciá-las a qualquer momento em Configurações → IVA.',
     vatImportSuccess: 'Taxas de IVA importadas.',
     currencyTitle: 'Moeda padrão',
@@ -1438,12 +1372,10 @@ const pt = {
     connectEmailPlaceholder: 'email@example.com',
     connectScanQr: 'Escanear QR',
     connectButton: 'Continuar',
-    connectSuccess: 'Dispositivo conectado. Os dados serão sincronizados em breve.',
     connectEmailRequired: 'Digite um e-mail de recuperação válido.',
     restoreTitle: 'Restaurar de backup',
     restoreSubtitle: 'Selecione um arquivo de backup .fakt exportado anteriormente do Faktoro.',
     restorePickFile: 'Escolher arquivo de backup',
-    restoreSelectedFile: 'Arquivo selecionado',
     restoreCreatedAt: 'Criado em',
     restoreEncryptedLabel: 'Protegido por senha',
     restoreNotEncryptedLabel: 'Sem senha',
@@ -1455,7 +1387,6 @@ const pt = {
     back: 'Voltar',
     next: 'Próximo',
     skip: 'Pular',
-    finish: 'Concluir',
   },
   reports: {
     title: 'Relatórios',
@@ -1469,7 +1400,6 @@ const pt = {
     trackedHours: 'Registrado',
     invoicedRevenue: 'Faturado',
     unbilledEstimate: 'Estim. não fat.',
-    timeByClient: 'Tempo por cliente',
     billableTimeByClient: 'Tempo faturável por cliente',
     revenueByClient: 'Receita por cliente',
     noData: 'Sem dados para o período selecionado.',

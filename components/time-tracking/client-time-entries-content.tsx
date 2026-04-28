@@ -10,6 +10,7 @@ import { IconButton } from '@/components/ui/icon-button';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { SwipeableList } from '@/components/ui/swipeable-list';
 import database from '@/db';
+import { useBottomSafeAreaStyle } from '@/hooks/use-bottom-safe-area-style';
 import { usePalette } from '@/hooks/use-palette';
 import { useDefaultInvoiceCurrency } from '@/hooks/use-default-invoice-currency';
 import { useI18nContext } from '@/i18n/i18n-react';
@@ -36,7 +37,7 @@ import { getDisplayedTimeEntryDuration } from '@/utils/time-entry-duration-utils
 import { Q } from '@nozbe/watermelondb';
 import { Stack, useRouter } from 'expo-router';
 import React, { useEffect, useMemo, useState } from 'react';
-import { Alert, StyleSheet, Pressable, Text, View } from 'react-native';
+import { Alert, ScrollView, StyleSheet, Pressable, Text, View } from 'react-native';
 
 type Props = {
   clientId: string;
@@ -54,6 +55,7 @@ export function ClientTimeEntriesContent({
   const { LL, locale } = useI18nContext();
   const intlLocale = normalizeIntlLocale(locale, 'en');
   const defaultInvoiceCurrency = useDefaultInvoiceCurrency();
+  const entriesContentStyle = useBottomSafeAreaStyle(styles.entriesScrollContent);
 
   const [client, setClient] = useState<ClientModel | null>(null);
   const [entries, setEntries] = useState<TimeEntryModel[]>([]);
@@ -255,6 +257,28 @@ export function ClientTimeEntriesContent({
     return details.join(' · ');
   })();
 
+  const timesheetSummary = useMemo(() => {
+    return entries.reduce(
+      (summary, entry) => {
+        if (entry.isRunning) return summary;
+
+        const duration = getDisplayedTimeEntryDuration(entry, nowMs);
+        const billableDuration = hasEffectiveBillingInterval(
+          client ?? undefined,
+          defaultBillingInterval,
+        )
+          ? roundTimeByInterval(duration, client ?? undefined, defaultBillingInterval)
+          : duration;
+
+        return {
+          actualSeconds: summary.actualSeconds + duration,
+          billableSeconds: summary.billableSeconds + billableDuration,
+        };
+      },
+      { actualSeconds: 0, billableSeconds: 0 },
+    );
+  }, [client, defaultBillingInterval, entries, nowMs]);
+
   const handleDeleteEntry = (entry: TimeEntryModel) => {
     Alert.alert(LL.timeTracking.deleteEntry(), LL.timeTracking.deleteMessage(), [
       { text: LL.common.cancel(), style: 'cancel' },
@@ -395,182 +419,225 @@ export function ClientTimeEntriesContent({
         }}
       />
 
-      <View style={styles.timerActionSection}>
-        {localRunningEntry ? (
-          <PauseStopTimerControl
-            entry={localRunningEntry}
-            client={client}
-            defaultBillingInterval={defaultBillingInterval}
-            title={client.name}
-            detail={localTimerDetail}
-            onPauseResume={handlePauseResumeAction}
-            onStop={handleStopAction}
-            maxWidth={380}
-          />
-        ) : hasRunningEntryElsewhere ? (
-          <View
-            style={[
-              styles.timerStatusPanel,
-              {
-                backgroundColor: palette.cardBackground,
-                borderColor: palette.border,
-              },
-            ]}
-          >
-            <IconSymbol name="lock.fill" size={18} color={palette.textSecondary} />
-            <ThemedText
-              style={[styles.timerStatusText, { color: palette.textSecondary }]}
-              numberOfLines={2}
+      <View style={styles.content}>
+        <View style={styles.timerActionSection}>
+          {localRunningEntry ? (
+            <PauseStopTimerControl
+              entry={localRunningEntry}
+              client={client}
+              defaultBillingInterval={defaultBillingInterval}
+              title={client.name}
+              detail={localTimerDetail}
+              onPauseResume={handlePauseResumeAction}
+              onStop={handleStopAction}
+              maxWidth={380}
+            />
+          ) : hasRunningEntryElsewhere ? (
+            <View
+              style={[
+                styles.timerStatusPanel,
+                {
+                  backgroundColor: palette.cardBackground,
+                  borderColor: palette.border,
+                },
+              ]}
             >
-              {LL.timeTracking.errorRunningTimerAlreadyExists()}
+              <IconSymbol name="lock.fill" size={18} color={palette.textSecondary} />
+              <ThemedText
+                style={[styles.timerStatusText, { color: palette.textSecondary }]}
+                numberOfLines={2}
+              >
+                {LL.timeTracking.errorRunningTimerAlreadyExists()}
+              </ThemedText>
+            </View>
+          ) : (
+            <Pressable
+              style={({ pressed }) => [
+                styles.startActionButton,
+                { backgroundColor: palette.tint },
+                pressed && styles.actionPressed,
+              ]}
+              onPress={() => setShowStartModal(true)}
+              accessibilityRole="button"
+              accessibilityLabel={LL.timeTracking.startTimer()}
+            >
+              <IconSymbol name="play.fill" size={20} color={palette.onTint} />
+              <ThemedText style={[styles.startActionButtonText, { color: palette.onTint }]}>
+                {LL.timeTracking.startTimer()}
+              </ThemedText>
+            </Pressable>
+          )}
+
+          {remoteRunningEntry ? (
+            <RemoteRunningTimerStatus
+              label={LL.timeTracking.runningOnOtherDevice({
+                device:
+                  remoteRunningEntry.runningDeviceName ||
+                  remoteRunningEntry.runningDeviceId ||
+                  LL.timeTracking.unknownDevice(),
+              })}
+              duration={formatTime(getDisplayedTimeEntryDuration(remoteRunningEntry, nowMs))}
+            />
+          ) : null}
+        </View>
+
+        <View
+          style={[
+            styles.summaryPanel,
+            { backgroundColor: palette.cardBackground, borderColor: palette.border },
+          ]}
+        >
+          <View style={styles.summaryItem}>
+            <ThemedText
+              style={[styles.summaryLabel, { color: palette.textSecondary }]}
+              numberOfLines={1}
+            >
+              {LL.timeTracking.actualTime()}
+            </ThemedText>
+            <ThemedText style={styles.summaryValue} numberOfLines={1}>
+              {formatTime(timesheetSummary.actualSeconds)}
             </ThemedText>
           </View>
-        ) : (
-          <Pressable
-            style={({ pressed }) => [
-              styles.startActionButton,
-              { backgroundColor: palette.tint },
-              pressed && styles.actionPressed,
-            ]}
-            onPress={() => setShowStartModal(true)}
-            accessibilityRole="button"
-            accessibilityLabel={LL.timeTracking.startTimer()}
-          >
-            <IconSymbol name="play.fill" size={20} color={palette.onTint} />
-            <ThemedText style={[styles.startActionButtonText, { color: palette.onTint }]}>
-              {LL.timeTracking.startTimer()}
+          <View style={[styles.summaryDivider, { backgroundColor: palette.border }]} />
+          <View style={[styles.summaryItem, styles.summaryItemRight]}>
+            <ThemedText
+              style={[styles.summaryLabel, { color: palette.textSecondary }]}
+              numberOfLines={1}
+            >
+              {LL.timeTracking.billableTime()}
             </ThemedText>
-          </Pressable>
-        )}
+            <ThemedText
+              style={[styles.summaryValue, { color: palette.timeHighlight }]}
+              numberOfLines={1}
+            >
+              {formatTime(timesheetSummary.billableSeconds)}
+            </ThemedText>
+          </View>
+        </View>
 
-        {remoteRunningEntry ? (
-          <RemoteRunningTimerStatus
-            label={LL.timeTracking.runningOnOtherDevice({
-              device:
-                remoteRunningEntry.runningDeviceName ||
-                remoteRunningEntry.runningDeviceId ||
-                LL.timeTracking.unknownDevice(),
-            })}
-            duration={formatTime(getDisplayedTimeEntryDuration(remoteRunningEntry, nowMs))}
-          />
-        ) : null}
-      </View>
-
-      <View style={styles.toolbar}>
-        <Pressable
-          style={({ pressed }) => [
-            styles.timesheetActionButton,
-            {
-              backgroundColor: palette.cardBackground,
-              borderColor: palette.border,
-              opacity: pressed ? 0.72 : 1,
-            },
-          ]}
-          onPress={() => setShowTimesheetModal(true)}
-          accessibilityRole="button"
-          accessibilityLabel={LL.timesheets.createToolbarAction()}
+        <ScrollView
+          style={styles.entriesScroll}
+          contentContainerStyle={entriesContentStyle}
+          keyboardShouldPersistTaps="handled"
+          contentInsetAdjustmentBehavior="automatic"
         >
-          <IconSymbol name="doc.badge.plus" size={16} color={palette.tint} />
-          <ThemedText style={[styles.timesheetActionText, { color: palette.tint }]}>
-            {LL.timesheets.createToolbarAction()}
-          </ThemedText>
-        </Pressable>
-      </View>
-
-      <SwipeableList
-        iconName="clock"
-        title={LL.timeTracking.entries()}
-        items={entries}
-        onDelete={handleDeleteEntry}
-        onEdit={handleEditEntry}
-        keyExtractor={(item) => item.id}
-        emptyText={LL.timeTracking.noEntries()}
-        itemBackgroundColor={palette.cardBackground}
-        swipeHintKey="time-tracking.entries"
-        swipeHintText={LL.timeTracking.swipeActionsHint()}
-        emptyState={
-          <ActionEmptyState
-            iconName="clock.fill"
-            title={LL.common.nothingHereYetTitle()}
-            description={LL.timeTracking.noEntries()}
-            actionLabel={canStartTimer ? LL.timeTracking.startTimer() : undefined}
-            onActionPress={canStartTimer ? () => setShowStartModal(true) : undefined}
-          />
-        }
-        showAddButton={false}
-        renderItem={(item) => {
-          const duration = getDisplayedTimeEntryDuration(item, nowMs);
-          const billableDuration =
-            !item.isRunning && hasEffectiveBillingInterval(client, defaultBillingInterval)
-              ? roundTimeByInterval(duration, client, defaultBillingInterval)
-              : duration;
-          const selectedPriceListItem = item.priceListItemId
-            ? priceListById.get(item.priceListItemId)
-            : undefined;
-
-          return (
-            <View style={styles.itemContent}>
-              <View style={styles.itemMain}>
-                <View style={styles.itemTitleRow}>
-                  <ThemedText
-                    style={[styles.itemTitle, item.isRunning && styles.mutedTitle]}
-                    numberOfLines={1}
-                  >
-                    {item.description || LL.timeTracking.noDescription()}
-                  </ThemedText>
-                  {item.isRunning && (
-                    <View
-                      style={[
-                        styles.statusBadge,
-                        {
-                          backgroundColor: item.isPaused
-                            ? palette.timerPause
-                            : palette.timeHighlight,
-                        },
-                      ]}
-                    >
-                      <ThemedText style={[styles.statusText, { color: palette.onHighlight }]}>
-                        {item.isPaused ? LL.timeTracking.paused() : LL.timeTracking.running()}
-                      </ThemedText>
-                    </View>
-                  )}
-                </View>
-                {!!selectedPriceListItem && (
-                  <ThemedText style={[styles.metaText, { color: palette.textSecondary }]}>
-                    {selectedPriceListItem.name}
-                    {item.rate !== undefined
-                      ? ` · ${formatPrice(
-                          item.rate,
-                          normalizeCurrencyCode(
-                            item.rateCurrency,
-                            selectedPriceListItem.defaultPriceCurrency || defaultInvoiceCurrency,
-                          ),
-                          intlLocale,
-                        )}`
-                      : ''}
-                    {` / ${getUnitLabel(selectedPriceListItem.unit)}`}
-                  </ThemedText>
-                )}
-                <ThemedText style={[styles.metaText, { color: palette.textSecondary }]}>
-                  {new Date(item.startTime).toLocaleDateString(intlLocale)}
+          <SwipeableList
+            iconName="clock"
+            title={LL.timeTracking.entries()}
+            items={entries}
+            onDelete={handleDeleteEntry}
+            onEdit={handleEditEntry}
+            keyExtractor={(item) => item.id}
+            emptyText={LL.timeTracking.noEntries()}
+            itemBackgroundColor={palette.cardBackground}
+            headerAction={
+              <Pressable
+                style={({ pressed }) => [
+                  styles.timesheetActionButton,
+                  {
+                    backgroundColor: palette.cardBackground,
+                    borderColor: palette.border,
+                    opacity: pressed ? 0.72 : 1,
+                  },
+                ]}
+                onPress={() => setShowTimesheetModal(true)}
+                accessibilityRole="button"
+                accessibilityLabel={LL.timesheets.createToolbarAction()}
+              >
+                <IconSymbol name="doc.badge.plus" size={15} color={palette.tint} />
+                <ThemedText style={[styles.timesheetActionText, { color: palette.tint }]}>
+                  {LL.timesheets.createToolbarAction()}
                 </ThemedText>
-              </View>
-              <View style={styles.durationWrap}>
-                {!item.isRunning && billableDuration !== duration ? (
-                  <>
-                    <ThemedText style={[styles.durationText, { color: palette.timeHighlight }]}>
-                      {formatTime(billableDuration)}
+              </Pressable>
+            }
+            swipeHintKey="time-tracking.entries"
+            swipeHintText={LL.timeTracking.swipeActionsHint()}
+            emptyState={
+              <ActionEmptyState
+                iconName="clock.fill"
+                title={LL.common.nothingHereYetTitle()}
+                description={LL.timeTracking.noEntries()}
+                actionLabel={canStartTimer ? LL.timeTracking.startTimer() : undefined}
+                onActionPress={canStartTimer ? () => setShowStartModal(true) : undefined}
+              />
+            }
+            showAddButton={false}
+            renderItem={(item) => {
+              const duration = getDisplayedTimeEntryDuration(item, nowMs);
+              const billableDuration =
+                !item.isRunning && hasEffectiveBillingInterval(client, defaultBillingInterval)
+                  ? roundTimeByInterval(duration, client, defaultBillingInterval)
+                  : duration;
+              const selectedPriceListItem = item.priceListItemId
+                ? priceListById.get(item.priceListItemId)
+                : undefined;
+
+              return (
+                <View style={styles.itemContent}>
+                  <View style={styles.itemMain}>
+                    <View style={styles.itemTitleRow}>
+                      <ThemedText
+                        style={[styles.itemTitle, item.isRunning && styles.mutedTitle]}
+                        numberOfLines={1}
+                      >
+                        {item.description || LL.timeTracking.noDescription()}
+                      </ThemedText>
+                      {item.isRunning && (
+                        <View
+                          style={[
+                            styles.statusBadge,
+                            {
+                              backgroundColor: item.isPaused
+                                ? palette.timerPause
+                                : palette.timeHighlight,
+                            },
+                          ]}
+                        >
+                          <ThemedText style={[styles.statusText, { color: palette.onHighlight }]}>
+                            {item.isPaused ? LL.timeTracking.paused() : LL.timeTracking.running()}
+                          </ThemedText>
+                        </View>
+                      )}
+                    </View>
+                    {!!selectedPriceListItem && (
+                      <ThemedText style={[styles.metaText, { color: palette.textSecondary }]}>
+                        {selectedPriceListItem.name}
+                        {item.rate !== undefined
+                          ? ` · ${formatPrice(
+                              item.rate,
+                              normalizeCurrencyCode(
+                                item.rateCurrency,
+                                selectedPriceListItem.defaultPriceCurrency ||
+                                  defaultInvoiceCurrency,
+                              ),
+                              intlLocale,
+                            )}`
+                          : ''}
+                        {` / ${getUnitLabel(selectedPriceListItem.unit)}`}
+                      </ThemedText>
+                    )}
+                    <ThemedText style={[styles.metaText, { color: palette.textSecondary }]}>
+                      {new Date(item.startTime).toLocaleDateString(intlLocale)}
                     </ThemedText>
-                    <ThemedText style={styles.metaText}>{formatTime(duration)}</ThemedText>
-                  </>
-                ) : (
-                  <ThemedText style={styles.durationText}>{formatTime(duration)}</ThemedText>
-                )}
-              </View>
-            </View>
-          );
-        }}
-      />
+                  </View>
+                  <View style={styles.durationWrap}>
+                    {!item.isRunning && billableDuration !== duration ? (
+                      <>
+                        <ThemedText style={[styles.durationText, { color: palette.timeHighlight }]}>
+                          {formatTime(billableDuration)}
+                        </ThemedText>
+                        <ThemedText style={styles.metaText}>{formatTime(duration)}</ThemedText>
+                      </>
+                    ) : (
+                      <ThemedText style={styles.durationText}>{formatTime(duration)}</ThemedText>
+                    )}
+                  </View>
+                </View>
+              );
+            }}
+          />
+        </ScrollView>
+      </View>
 
       <CreateTimesheetModal
         visible={showTimesheetModal}
@@ -592,23 +659,59 @@ export function ClientTimeEntriesContent({
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, paddingHorizontal: 16, paddingTop: 16 },
-  toolbar: { flexDirection: 'row', gap: 8, marginBottom: 12 },
+  container: { flex: 1 },
+  content: { flex: 1, paddingHorizontal: 16, paddingTop: 16 },
+  entriesScroll: { flex: 1 },
+  entriesScrollContent: { paddingBottom: 24 },
   timesheetActionButton: {
-    flex: 1,
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 11,
+    minHeight: 34,
+    maxWidth: 190,
+    borderRadius: 10,
+    paddingHorizontal: 11,
+    paddingVertical: 7,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 7,
+    gap: 6,
     borderWidth: 1,
   },
-  timesheetActionText: { fontSize: 14, fontWeight: '600' },
+  timesheetActionText: { minWidth: 0, flexShrink: 1, fontSize: 13, fontWeight: '700' },
   headerBackButton: { flexDirection: 'row', alignItems: 'center', gap: 3, maxWidth: 160 },
   headerBackLabel: { fontSize: 17 },
   timerActionSection: { marginTop: 12, marginBottom: 10, gap: 8 },
+  summaryPanel: {
+    flexDirection: 'row',
+    alignItems: 'stretch',
+    borderRadius: 12,
+    borderWidth: 1,
+    marginBottom: 18,
+    overflow: 'hidden',
+  },
+  summaryItem: {
+    flex: 1,
+    minWidth: 0,
+    paddingHorizontal: 10,
+    paddingVertical: 10,
+    gap: 2,
+  },
+  summaryItemRight: {
+    alignItems: 'flex-end',
+  },
+  summaryLabel: {
+    flexShrink: 1,
+    minWidth: 0,
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  summaryValue: {
+    flexShrink: 0,
+    fontSize: 15,
+    fontWeight: '700',
+    fontVariant: ['tabular-nums'],
+  },
+  summaryDivider: {
+    width: StyleSheet.hairlineWidth,
+  },
   startActionButton: {
     width: '100%',
     minHeight: 56,
