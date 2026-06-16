@@ -4,6 +4,12 @@ import { getSwitchColors } from '@/constants/theme';
 import { useBottomSafeAreaStyle } from '@/hooks/use-bottom-safe-area-style';
 import { usePalette } from '@/hooks/use-palette';
 import { useI18nContext } from '@/i18n/i18n-react';
+import { getDeviceSyncSettings } from '@/repositories/device-sync-settings-repository';
+import {
+  resolveDocumentSeriesCounter,
+  setDocumentSeriesCounterNextNumber,
+  setLocalSeriesDeviceCode,
+} from '@/repositories/document-numbering-repository';
 import { getSettings, updateSettings } from '@/repositories/settings-repository';
 import { parsePositiveIntegerInput } from '@/utils/number-input';
 import { showConfirm } from '@/utils/platform-alert';
@@ -101,19 +107,37 @@ export default function SettingsNumberingScreen() {
   useEffect(() => {
     const loadSettings = async () => {
       const settings = await getSettings();
+      const deviceSettings = await getDeviceSyncSettings(settings);
+      const invoiceCounter = await resolveDocumentSeriesCounter({
+        kind: 'invoice',
+        perDevice: settings.invoiceSeriesPerDevice,
+        sharedDeviceCode: settings.invoiceSeriesDeviceCode,
+        syncDeviceName: deviceSettings.syncDeviceName,
+        syncDeviceId: deviceSettings.syncDeviceId,
+        sharedNextNumber: settings.invoiceSeriesNextNumber,
+      });
+      const timesheetCounter = await resolveDocumentSeriesCounter({
+        kind: 'timesheet',
+        perDevice: settings.timesheetSeriesPerDevice,
+        sharedDeviceCode: settings.timesheetSeriesDeviceCode,
+        syncDeviceName: deviceSettings.syncDeviceName,
+        syncDeviceId: deviceSettings.syncDeviceId,
+        sharedNextNumber: settings.timesheetSeriesNextNumber,
+      });
+
       setInvoiceSeriesPattern(settings.invoiceSeriesPattern || 'YY####');
-      const savedInvoiceNextNumber = settings.invoiceSeriesNextNumber || 1;
+      const savedInvoiceNextNumber = invoiceCounter.nextNumber;
       setInvoiceSeriesNextNumber(String(savedInvoiceNextNumber));
       setInitialInvoiceSeriesNextNumber(savedInvoiceNextNumber);
       setInvoiceSeriesPerDevice(!!settings.invoiceSeriesPerDevice);
-      setInvoiceSeriesDeviceCode(settings.invoiceSeriesDeviceCode || '');
+      setInvoiceSeriesDeviceCode(invoiceCounter.deviceCode);
 
       setTimesheetSeriesPattern(settings.timesheetSeriesPattern || 'TS-YY-####');
-      const savedTimesheetNextNumber = settings.timesheetSeriesNextNumber || 1;
+      const savedTimesheetNextNumber = timesheetCounter.nextNumber;
       setTimesheetSeriesNextNumber(String(savedTimesheetNextNumber));
       setInitialTimesheetSeriesNextNumber(savedTimesheetNextNumber);
       setTimesheetSeriesPerDevice(!!settings.timesheetSeriesPerDevice);
-      setTimesheetSeriesDeviceCode(settings.timesheetSeriesDeviceCode || '');
+      setTimesheetSeriesDeviceCode(timesheetCounter.deviceCode);
     };
 
     void loadSettings();
@@ -159,20 +183,59 @@ export default function SettingsNumberingScreen() {
         }
       }
 
+      const settings = await getSettings();
+      const deviceSettings = await getDeviceSyncSettings(settings);
+
       await updateSettings({
         invoiceSeriesPrefix: null,
         invoiceSeriesPattern: invoiceSeriesPattern.trim() || null,
-        invoiceSeriesNextNumber: normalizedInvoiceSeriesNextNumber,
+        invoiceSeriesNextNumber: invoiceSeriesPerDevice
+          ? undefined
+          : normalizedInvoiceSeriesNextNumber,
         invoiceSeriesPadding,
         invoiceSeriesPerDevice,
-        invoiceSeriesDeviceCode: invoiceSeriesDeviceCode.trim() || null,
+        invoiceSeriesDeviceCode: null,
         timesheetSeriesPrefix: null,
         timesheetSeriesPattern: timesheetSeriesPattern.trim() || null,
-        timesheetSeriesNextNumber: normalizedTimesheetSeriesNextNumber,
+        timesheetSeriesNextNumber: timesheetSeriesPerDevice
+          ? undefined
+          : normalizedTimesheetSeriesNextNumber,
         timesheetSeriesPadding,
         timesheetSeriesPerDevice,
-        timesheetSeriesDeviceCode: timesheetSeriesDeviceCode.trim() || null,
+        timesheetSeriesDeviceCode: null,
       });
+
+      await Promise.all([
+        setLocalSeriesDeviceCode('invoice', invoiceSeriesDeviceCode),
+        setLocalSeriesDeviceCode('timesheet', timesheetSeriesDeviceCode),
+      ]);
+
+      if (invoiceSeriesPerDevice) {
+        const invoiceCounter = await resolveDocumentSeriesCounter({
+          kind: 'invoice',
+          perDevice: true,
+          sharedDeviceCode: null,
+          syncDeviceName: deviceSettings.syncDeviceName,
+          syncDeviceId: deviceSettings.syncDeviceId,
+          sharedNextNumber: settings.invoiceSeriesNextNumber,
+        });
+        await setDocumentSeriesCounterNextNumber(invoiceCounter, normalizedInvoiceSeriesNextNumber);
+      }
+
+      if (timesheetSeriesPerDevice) {
+        const timesheetCounter = await resolveDocumentSeriesCounter({
+          kind: 'timesheet',
+          perDevice: true,
+          sharedDeviceCode: null,
+          syncDeviceName: deviceSettings.syncDeviceName,
+          syncDeviceId: deviceSettings.syncDeviceId,
+          sharedNextNumber: settings.timesheetSeriesNextNumber,
+        });
+        await setDocumentSeriesCounterNextNumber(
+          timesheetCounter,
+          normalizedTimesheetSeriesNextNumber,
+        );
+      }
 
       setInvoiceSeriesNextNumber(String(normalizedInvoiceSeriesNextNumber));
       setInitialInvoiceSeriesNextNumber(normalizedInvoiceSeriesNextNumber);

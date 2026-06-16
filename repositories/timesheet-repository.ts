@@ -8,6 +8,11 @@ import {
   TimesheetModel,
 } from '@/model';
 import { getDeviceSyncSettings } from '@/repositories/device-sync-settings-repository';
+import {
+  resolveDocumentSeriesCounter,
+  setDocumentSeriesCounterNextNumberInCurrentWrite,
+  type DocumentSeriesCounter,
+} from '@/repositories/document-numbering-repository';
 import { getSettings } from '@/repositories/settings-repository';
 import { buildSeriesIdentifier } from '@/utils/series-utils';
 import { roundTimeByInterval } from '@/utils/time-utils';
@@ -49,6 +54,7 @@ function buildTimesheetNumberFromSettings(
     syncDeviceId?: string;
   },
   nextNumberOverride?: number,
+  deviceCodeOverride?: string,
 ): string {
   return buildSeriesIdentifier({
     pattern: settings?.timesheetSeriesPattern,
@@ -57,15 +63,11 @@ function buildTimesheetNumberFromSettings(
     nextNumber: nextNumberOverride ?? settings?.timesheetSeriesNextNumber,
     padding: settings?.timesheetSeriesPadding,
     perDevice: settings?.timesheetSeriesPerDevice,
-    deviceCode: settings?.timesheetSeriesDeviceCode,
+    deviceCode: deviceCodeOverride ?? settings?.timesheetSeriesDeviceCode,
     syncDeviceName: deviceSettings?.syncDeviceName,
     syncDeviceId: deviceSettings?.syncDeviceId,
     fallbackPrefix: 'TS',
   });
-}
-
-function getCurrentTimesheetSeriesNextNumber(settings?: AppSettingsModel): number {
-  return Math.max(1, Math.floor(settings?.timesheetSeriesNextNumber || 1));
 }
 
 async function resolveNextAvailableTimesheetNumber(
@@ -75,17 +77,34 @@ async function resolveNextAvailableTimesheetNumber(
     syncDeviceName?: string;
     syncDeviceId?: string;
   },
-): Promise<{ timesheetNumber: string; nextNumberUsed: number }> {
-  let nextNumber = getCurrentTimesheetSeriesNextNumber(settings);
+): Promise<{
+  timesheetNumber: string;
+  nextNumberUsed: number;
+  seriesCounter: DocumentSeriesCounter;
+}> {
+  const seriesCounter = await resolveDocumentSeriesCounter({
+    kind: 'timesheet',
+    perDevice: settings?.timesheetSeriesPerDevice,
+    sharedDeviceCode: settings?.timesheetSeriesDeviceCode,
+    syncDeviceName: deviceSettings?.syncDeviceName,
+    syncDeviceId: deviceSettings?.syncDeviceId,
+    sharedNextNumber: settings?.timesheetSeriesNextNumber,
+  });
+  let nextNumber = seriesCounter.nextNumber;
 
   for (let attempt = 0; attempt < 500; attempt += 1) {
-    const candidate = buildTimesheetNumberFromSettings(settings, deviceSettings, nextNumber);
+    const candidate = buildTimesheetNumberFromSettings(
+      settings,
+      deviceSettings,
+      nextNumber,
+      seriesCounter.deviceCode,
+    );
     const existing = await timesheetCollection
       .query(Q.where('timesheet_number', candidate), Q.take(1))
       .fetch();
 
     if (existing.length === 0) {
-      return { timesheetNumber: candidate, nextNumberUsed: nextNumber };
+      return { timesheetNumber: candidate, nextNumberUsed: nextNumber, seriesCounter };
     }
 
     nextNumber += 1;
@@ -163,11 +182,8 @@ export async function createTimesheetFromPeriod(
       return { timesheet: null, entriesCount: 0 };
     }
 
-    const { timesheetNumber, nextNumberUsed } = await resolveNextAvailableTimesheetNumber(
-      timesheetCollection,
-      settings,
-      deviceSettings,
-    );
+    const { timesheetNumber, nextNumberUsed, seriesCounter } =
+      await resolveNextAvailableTimesheetNumber(timesheetCollection, settings, deviceSettings);
 
     const resolvedPeriodFrom =
       input.periodType === 'all'
@@ -199,8 +215,13 @@ export async function createTimesheetFromPeriod(
     }
 
     await settings.update((currentSettings: AppSettingsModel) => {
-      currentSettings.timesheetSeriesNextNumber = nextNumberUsed + 1;
+      if (!seriesCounter.perDevice) {
+        currentSettings.timesheetSeriesNextNumber = nextNumberUsed + 1;
+      }
     });
+    if (seriesCounter.perDevice) {
+      await setDocumentSeriesCounterNextNumberInCurrentWrite(seriesCounter, nextNumberUsed + 1);
+    }
 
     return { timesheet, entriesCount: entries.length };
   });

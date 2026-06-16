@@ -1,5 +1,5 @@
 // Database schema for Faktoro app
-// Generated from WatermelonDB schema version 52
+// Generated from WatermelonDB schema version 57
 // Syntax: DBML (Database Markup Language) - https://www.dbml.org/docs/
 
 Project faktoro {
@@ -36,6 +36,8 @@ Table app_settings {
   invoice_iban string [null]
   invoice_swift string [null]
   invoice_logo_uri string [null]
+  invoice_logo_base64 string [null, note: 'Embedded invoice logo image payload used when a file URI is not portable']
+  invoice_logo_mime_type string [null, note: 'MIME type for the embedded invoice logo payload']
   default_invoice_currency string [null, note: 'Default currency code used when creating new invoices (e.g. CZK, EUR)']
   default_invoice_vat_code_id string [null, note: 'Default VAT code used for new invoice items and new price list items']
   default_invoice_payment_method string [null, note: 'Default payment method for new invoices']
@@ -47,13 +49,13 @@ Table app_settings {
   invoice_series_next_number number [null]
   invoice_series_padding number [null]
   invoice_series_per_device boolean [null]
-  invoice_series_device_code string [null]
+  invoice_series_device_code string [null, note: 'Legacy/shared fallback; current per-device code is stored locally in config_storage document_numbering.invoice.device_code']
   timesheet_series_prefix string [null]
   timesheet_series_pattern string [null]
   timesheet_series_next_number number [null]
   timesheet_series_padding number [null]
   timesheet_series_per_device boolean [null]
-  timesheet_series_device_code string [null]
+  timesheet_series_device_code string [null, note: 'Legacy/shared fallback; current per-device code is stored locally in config_storage document_numbering.timesheet.device_code']
 
   app_lock_enabled boolean [null, note: 'Whether app-level lock is enabled']
   app_lock_biometric_enabled boolean [null, note: 'Whether biometric unlock is enabled when available']
@@ -77,7 +79,7 @@ Table config_storage {
     config_key [name: 'idx_config_storage_config_key']
   }
 
-  Note: 'General-purpose device-local key/value storage; also stores sync identity under device_sync.* keys'
+  Note: 'General-purpose device-local key/value storage; stores sync identity under device_sync.* and per-device numbering state under document_numbering.* keys'
 }
 
 Table currency_setting {
@@ -200,6 +202,8 @@ Table time_entry {
   total_paused_duration number [null, note: 'Total paused duration in seconds']
   running_device_id string [null, note: 'Device ID where the timer is currently running']
   running_device_name string [null, note: 'Device name where the timer is currently running']
+  source_device_id string [null, note: 'Device ID that originally created or imported this time entry']
+  source_device_name string [null, note: 'Device name that originally created or imported this time entry']
   timesheet_id string [null, ref: > timesheet.id, note: 'Optional reference to exported timesheet']
   timesheet_duration number [null, note: 'Frozen rounded duration in seconds captured when the timesheet was generated']
 
@@ -219,6 +223,7 @@ Table time_entry {
     is_running [name: 'idx_time_entry_is_running']
     is_paused [name: 'idx_time_entry_is_paused']
     running_device_id [name: 'idx_time_entry_running_device_id']
+    source_device_id [name: 'idx_time_entry_source_device_id']
     timesheet_id [name: 'idx_time_entry_timesheet_id']
     price_list_item_id [name: 'idx_time_entry_price_list_item_id']
   }
@@ -230,7 +235,7 @@ Table time_entry {
 Table timesheet {
   id string [pk, note: 'WatermelonDB auto-generated ID']
   client_id string [not null, ref: > client.id, note: 'Client owner of this timesheet']
-  period_type string [not null, note: 'Selected period kind: all/custom/this_month/last_month/this_week/last_week/last_7_days']
+  period_type string [not null, note: 'Selected period kind: all/custom/this_month/last_month/this_quarter/last_quarter/this_year/last_year/this_week/last_week/last_7_days']
   period_from number [not null, note: 'Unix timestamp in milliseconds - inclusive period start']
   period_to number [not null, note: 'Unix timestamp in milliseconds - inclusive period end']
   timesheet_number string [null, note: 'Generated timesheet identifier from numbering series']
@@ -290,8 +295,8 @@ Table invoice {
 Table invoice_item {
   id string [pk, note: 'WatermelonDB auto-generated ID']
   invoice_id string [not null, ref: > invoice.id, note: 'Parent invoice']
-  source_kind string [not null, note: 'timesheet | price_list | manual']
-  source_id string [null, note: 'Optional source record id (timesheet or price list item)']
+  source_kind string [not null, note: 'Source discriminator: timesheet | price_list | manual']
+  source_id string [null, note: 'Polymorphic source id: timesheet.id when source_kind=timesheet, price_list_item.id when source_kind=price_list, null for manual']
   description string [not null, note: 'Line item label shown on invoice']
   quantity number [not null, note: 'Quantity value']
   unit string [null, note: 'Optional quantity unit']
@@ -308,7 +313,7 @@ Table invoice_item {
     vat_code_id [name: 'idx_invoice_item_vat_code_id']
   }
 
-  Note: 'Invoice lines, optionally linked to timesheet or price list sources'
+  Note: 'Invoice lines, optionally linked to timesheet or price list sources through source_kind/source_id'
 }
 
 // Price list items - services and products with default pricing
@@ -399,6 +404,16 @@ Table sync_conflict {
   }
 
   Note: 'Stores sync conflicts for explicit user resolution in the app UI'
+}
+
+// Conceptual polymorphic invoice item sources.
+// The application resolves these through invoice_item.source_kind and invoice_item.source_id.
+Ref invoice_item_timesheet_source {
+  invoice_item.source_id > timesheet.id
+}
+
+Ref invoice_item_price_list_source {
+  invoice_item.source_id > price_list_item.id
 }
 
 // Enums

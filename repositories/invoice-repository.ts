@@ -12,6 +12,11 @@ import {
 } from '@/model';
 import { getPreferredInvoiceAddress } from '@/repositories/address-repository';
 import { getDeviceSyncSettings } from '@/repositories/device-sync-settings-repository';
+import {
+  resolveDocumentSeriesCounter,
+  setDocumentSeriesCounterNextNumberInCurrentWrite,
+  type DocumentSeriesCounter,
+} from '@/repositories/document-numbering-repository';
 import { getSettings } from '@/repositories/settings-repository';
 import type { BuyerSnapshot, SellerSnapshot } from '@/templates/invoice/xml';
 import { DEFAULT_CURRENCY_CODE, normalizeCurrencyCode } from '@/utils/currency-utils';
@@ -95,6 +100,7 @@ function buildInvoiceNumberFromSettings(
     syncDeviceId?: string;
   },
   nextNumberOverride?: number,
+  deviceCodeOverride?: string,
 ): string {
   return buildSeriesIdentifier({
     pattern: settings?.invoiceSeriesPattern,
@@ -103,7 +109,7 @@ function buildInvoiceNumberFromSettings(
     nextNumber: nextNumberOverride ?? settings?.invoiceSeriesNextNumber,
     padding: settings?.invoiceSeriesPadding,
     perDevice: settings?.invoiceSeriesPerDevice,
-    deviceCode: settings?.invoiceSeriesDeviceCode,
+    deviceCode: deviceCodeOverride ?? settings?.invoiceSeriesDeviceCode,
     syncDeviceName: deviceSettings?.syncDeviceName,
     syncDeviceId: deviceSettings?.syncDeviceId,
     fallbackPrefix: 'INV',
@@ -115,10 +121,6 @@ function toLocalDayStart(value = Date.now()): number {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
 }
 
-function getCurrentInvoiceSeriesNextNumber(settings?: AppSettingsModel): number {
-  return Math.max(1, Math.floor(settings?.invoiceSeriesNextNumber || 1));
-}
-
 async function resolveNextAvailableInvoiceNumber(
   invoiceCollection: ReturnType<typeof database.get<InvoiceModel>>,
   settings?: AppSettingsModel,
@@ -127,12 +129,29 @@ async function resolveNextAvailableInvoiceNumber(
     syncDeviceId?: string;
   },
   disallowedNumbers: string[] = [],
-): Promise<{ invoiceNumber: string; nextNumberUsed: number }> {
+): Promise<{
+  invoiceNumber: string;
+  nextNumberUsed: number;
+  seriesCounter: DocumentSeriesCounter;
+}> {
   const blockedNumbers = new Set(disallowedNumbers.filter(Boolean));
-  let nextNumber = getCurrentInvoiceSeriesNextNumber(settings);
+  const seriesCounter = await resolveDocumentSeriesCounter({
+    kind: 'invoice',
+    perDevice: settings?.invoiceSeriesPerDevice,
+    sharedDeviceCode: settings?.invoiceSeriesDeviceCode,
+    syncDeviceName: deviceSettings?.syncDeviceName,
+    syncDeviceId: deviceSettings?.syncDeviceId,
+    sharedNextNumber: settings?.invoiceSeriesNextNumber,
+  });
+  let nextNumber = seriesCounter.nextNumber;
 
   for (let attempt = 0; attempt < 500; attempt += 1) {
-    const candidate = buildInvoiceNumberFromSettings(settings, deviceSettings, nextNumber);
+    const candidate = buildInvoiceNumberFromSettings(
+      settings,
+      deviceSettings,
+      nextNumber,
+      seriesCounter.deviceCode,
+    );
     if (blockedNumbers.has(candidate)) {
       nextNumber += 1;
       continue;
@@ -142,7 +161,7 @@ async function resolveNextAvailableInvoiceNumber(
       .query(Q.where('invoice_number', candidate), Q.take(1))
       .fetch();
     if (existing.length === 0) {
-      return { invoiceNumber: candidate, nextNumberUsed: nextNumber };
+      return { invoiceNumber: candidate, nextNumberUsed: nextNumber, seriesCounter };
     }
 
     nextNumber += 1;
@@ -352,6 +371,14 @@ export async function createInvoice(input: CreateInvoiceInput): Promise<InvoiceM
   const invoiceItemCollection = database.get<InvoiceItemModel>(InvoiceItemModel.table);
   const settings = await getSettings();
   const deviceSettings = await getDeviceSyncSettings(settings);
+  const manualSeriesCounter = await resolveDocumentSeriesCounter({
+    kind: 'invoice',
+    perDevice: settings?.invoiceSeriesPerDevice,
+    sharedDeviceCode: settings?.invoiceSeriesDeviceCode,
+    syncDeviceName: deviceSettings?.syncDeviceName,
+    syncDeviceId: deviceSettings?.syncDeviceId,
+    sharedNextNumber: settings?.invoiceSeriesNextNumber,
+  });
 
   return database.write(async () => {
     const resolved = await resolveInvoiceWriteData(input, settings);
@@ -385,13 +412,28 @@ export async function createInvoice(input: CreateInvoiceInput): Promise<InvoiceM
     if (settings) {
       await settings.update((s: AppSettingsModel) => {
         if (autoInvoiceNumber) {
-          s.invoiceSeriesNextNumber = autoInvoiceNumber.nextNumberUsed + 1;
+          if (!autoInvoiceNumber.seriesCounter.perDevice) {
+            s.invoiceSeriesNextNumber = autoInvoiceNumber.nextNumberUsed + 1;
+          }
           return;
         }
 
         const current = Math.max(1, Math.floor(s.invoiceSeriesNextNumber || 1));
-        s.invoiceSeriesNextNumber = current + 1;
+        if (!manualSeriesCounter.perDevice) {
+          s.invoiceSeriesNextNumber = current + 1;
+        }
       });
+      if (autoInvoiceNumber?.seriesCounter.perDevice) {
+        await setDocumentSeriesCounterNextNumberInCurrentWrite(
+          autoInvoiceNumber.seriesCounter,
+          autoInvoiceNumber.nextNumberUsed + 1,
+        );
+      } else if (manualSeriesCounter.perDevice) {
+        await setDocumentSeriesCounterNextNumberInCurrentWrite(
+          manualSeriesCounter,
+          manualSeriesCounter.nextNumber + 1,
+        );
+      }
     }
 
     return invoice;
@@ -521,10 +563,13 @@ export async function cancelInvoice(input: CancelInvoiceInput): Promise<InvoiceM
     const issuedAt = toLocalDayStart();
     const taxableAt = isInvoiceVatPayer(invoice) ? issuedAt : undefined;
     const dueAt = issuedAt;
-    const { invoiceNumber: nextInvoiceNumber, nextNumberUsed } =
-      await resolveNextAvailableInvoiceNumber(invoiceCollection, settings, deviceSettings, [
-        invoice.invoiceNumber,
-      ]);
+    const {
+      invoiceNumber: nextInvoiceNumber,
+      nextNumberUsed,
+      seriesCounter,
+    } = await resolveNextAvailableInvoiceNumber(invoiceCollection, settings, deviceSettings, [
+      invoice.invoiceNumber,
+    ]);
 
     const cancellationInvoice = await invoiceCollection.create((item: InvoiceModel) => {
       item.clientId = invoice.clientId;
@@ -572,8 +617,13 @@ export async function cancelInvoice(input: CancelInvoiceInput): Promise<InvoiceM
 
     if (settings) {
       await settings.update((s: AppSettingsModel) => {
-        s.invoiceSeriesNextNumber = nextNumberUsed + 1;
+        if (!seriesCounter.perDevice) {
+          s.invoiceSeriesNextNumber = nextNumberUsed + 1;
+        }
       });
+      if (seriesCounter.perDevice) {
+        await setDocumentSeriesCounterNextNumberInCurrentWrite(seriesCounter, nextNumberUsed + 1);
+      }
     }
 
     return cancellationInvoice;

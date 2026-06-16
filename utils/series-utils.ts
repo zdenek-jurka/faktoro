@@ -11,12 +11,30 @@ type SeriesConfig = {
   fallbackPrefix: string;
 };
 
+type SeriesDeviceConfig = Pick<
+  SeriesConfig,
+  'perDevice' | 'deviceCode' | 'syncDeviceName' | 'syncDeviceId'
+>;
+
 export function sanitizeSeriesPart(value: string): string {
   return value
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
     .replace(/[^a-zA-Z0-9-_]+/g, '')
     .toUpperCase();
+}
+
+export function resolveSeriesDeviceToken(config: SeriesDeviceConfig): string {
+  if (!config.perDevice) {
+    return '';
+  }
+
+  const source =
+    config.deviceCode?.trim() ||
+    config.syncDeviceName?.trim() ||
+    config.syncDeviceId?.slice(-4) ||
+    'DEV';
+  return sanitizeSeriesPart(source) || 'DEV';
 }
 
 export function getSeriesPaddingFromPattern({
@@ -48,15 +66,7 @@ export function buildSeriesIdentifier(config: SeriesConfig): string {
   const mm = String(now.getMonth() + 1).padStart(2, '0');
   const dd = String(now.getDate()).padStart(2, '0');
 
-  let deviceToken = '';
-  if (config.perDevice) {
-    const source =
-      config.deviceCode?.trim() ||
-      config.syncDeviceName?.trim() ||
-      config.syncDeviceId?.slice(-4) ||
-      'DEV';
-    deviceToken = sanitizeSeriesPart(source) || 'DEV';
-  }
+  const deviceToken = resolveSeriesDeviceToken(config);
 
   const pattern = config.pattern?.trim() || config.fallbackPattern?.trim();
   if (pattern) {
