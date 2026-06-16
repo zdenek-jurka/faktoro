@@ -146,7 +146,9 @@ function getPaymentMeansCode(paymentMethod?: string): string {
 export function buildIsdocXml({ invoice, items, buyer, seller }: InvoiceXmlBuildInput): string {
   const localCurrencyCode = normalizeCurrency(invoice.currency);
   const invoiceUuid = deterministicUuid(invoice.id || invoice.invoiceNumber);
-  const invoiceNote = compactText(invoice.footerNote || invoice.headerNote);
+  const invoiceNote = compactText(
+    [invoice.reverseChargeNote, invoice.footerNote || invoice.headerNote].filter(Boolean).join(' '),
+  );
   const buyerReference = compactText(invoice.buyerReference);
   const vatApplicable = items.some((item) => Number(item.vatRate ?? 0) > 0) || !!seller.vatNumber;
   const anonymousCustomerParty = compactDigits(buyer.companyId).length === 0;
@@ -170,7 +172,7 @@ export function buildIsdocXml({ invoice, items, buyer, seller }: InvoiceXmlBuild
       const unitPriceTaxInclusive = roundCurrency(item.unitPrice * (1 + rate / 100));
       const unitCode = compactText(item.unit || 'unit');
 
-      const taxKey = `${rate}`;
+      const taxKey = `${item.vatCategory || ''}:${rate}`;
       const currentGroup = taxGroups.get(taxKey) || {
         rate,
         taxableAmount: 0,

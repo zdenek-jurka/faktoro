@@ -1,5 +1,5 @@
 // Database schema for Faktoro app
-// Generated from WatermelonDB schema version 58
+// Generated from WatermelonDB schema version 59
 // Syntax: DBML (Database Markup Language) - https://www.dbml.org/docs/
 
 Project faktoro {
@@ -264,6 +264,11 @@ Table invoice {
   due_at number [null, note: 'Due date (Unix ms)']
   currency string [not null, note: 'Currency code (e.g. CZK, EUR)']
   payment_method string [null, note: 'Optional payment method (e.g. transfer, cash)']
+  vat_treatment string [null, note: 'Invoice VAT treatment: domestic, eu_reverse_charge_service, non_eu_outside_scope_service, exempt, or no_vat']
+  place_of_supply_country_code string [null, note: 'ISO 3166-1 alpha-2 country code used for VAT place-of-supply decision']
+  reverse_charge_reason string [null, note: 'Machine-readable reverse charge reason key, e.g. eu_b2b_service']
+  reverse_charge_note string [null, note: 'Legal note rendered on invoice when reverse charge applies, e.g. "Daň odvede zákazník."']
+  buyer_vat_validation_json string [null, note: 'Snapshot of buyer VAT validation status/source at issue time']
   status string [not null, note: 'Invoice state (issued, voided_before_delivery, canceled_by_correction)']
   header_note string [null, note: 'Optional note at document header']
   footer_note string [null, note: 'Optional note/footer text']
@@ -304,6 +309,8 @@ Table invoice_item {
   total_price number [not null, note: 'Line total']
   vat_code_id string [null, ref: > vat_code.id, note: 'Optional reference to VAT code used for this line']
   vat_rate number [null, note: 'Optional VAT rate percent']
+  vat_category string [null, note: 'Semantic VAT category: standard, zero, reverse_charge, exempt, outside_scope']
+  vat_exemption_reason string [null, note: 'Reason text for reverse charge, exempt, or outside-scope VAT categories']
   created_at number [not null, note: 'Unix timestamp in milliseconds']
   updated_at number [not null, note: 'Unix timestamp in milliseconds']
 

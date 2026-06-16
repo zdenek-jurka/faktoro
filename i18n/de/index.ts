@@ -409,6 +409,20 @@ const de = {
     paymentMethodCash: 'Kasse',
     paymentMethodCard: 'Karte',
     paymentMethodCardNfc: 'Karte (NFC)',
+    vatTreatment: 'MwSt.-Behandlung',
+    vatTreatmentAutomatic: 'Automatisch',
+    vatTreatmentDomestic: 'Inländische MwSt.',
+    vatTreatmentReverseCharge: 'Reverse Charge',
+    vatTreatmentNonEuOutsideScope: 'Außerhalb der tschechischen MwSt.',
+    vatTreatmentExempt: 'MwSt.-befreit',
+    vatTreatmentNoVat: 'Keine MwSt.',
+    vatTreatmentResolved: 'Ermittelt als {treatment}.',
+    vatTreatmentReverseChargeHint:
+      'Reverse Charge wird verwendet. Die MwSt. wird nicht berechnet und die Rechnung weist aus, dass der Kunde die MwSt. schuldet.',
+    reverseChargeVatNumberRequiredWarning:
+      'Reverse Charge erfordert die USt-IdNr. des Käufers. Bitte vor dem Speichern ausfüllen.',
+    errorReverseChargeVatNumberRequired:
+      'Die USt-IdNr. des Käufers ist für Reverse Charge erforderlich.',
     paymentQrAction: 'Zahlungs-QR anzeigen',
     paymentQrTitle: 'Zahlungs-QR',
     paymentQrClose: 'Schließen',
@@ -576,6 +590,7 @@ const de = {
     exportWithoutVat: 'Ohne MwSt.',
     exportVatAmount: 'MwSt.-Betrag',
     exportWithVat: 'Mit MwSt.',
+    exportReverseChargeShort: 'RC',
     exportReference: 'Referenz',
     exportAccount: 'Konto',
     exportIban: 'IBAN',

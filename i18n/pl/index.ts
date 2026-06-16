@@ -397,6 +397,20 @@ const pl = {
     paymentMethodCash: 'Gotówka',
     paymentMethodCard: 'Karta',
     paymentMethodCardNfc: 'Karta (NFC)',
+    vatTreatment: 'Tryb VAT',
+    vatTreatmentAutomatic: 'Automatycznie',
+    vatTreatmentDomestic: 'Krajowy VAT',
+    vatTreatmentReverseCharge: 'Odwrotne obciążenie',
+    vatTreatmentNonEuOutsideScope: 'Poza czeskim VAT',
+    vatTreatmentExempt: 'Zwolnione z VAT',
+    vatTreatmentNoVat: 'Bez VAT',
+    vatTreatmentResolved: 'Ustalono jako {treatment}.',
+    vatTreatmentReverseChargeHint:
+      'Zostanie użyte odwrotne obciążenie. VAT nie zostanie doliczony, a faktura wskaże, że VAT rozlicza klient.',
+    reverseChargeVatNumberRequiredWarning:
+      'Odwrotne obciążenie wymaga numeru VAT nabywcy. Uzupełnij go przed zapisem.',
+    errorReverseChargeVatNumberRequired:
+      'Numer VAT nabywcy jest wymagany dla odwrotnego obciążenia.',
     paymentQrAction: 'Pokaż QR płatności',
     paymentQrTitle: 'QR płatności',
     paymentQrClose: 'Zamknij',
@@ -563,6 +577,7 @@ const pl = {
     exportWithoutVat: 'Bez VAT',
     exportVatAmount: 'Kwota VAT',
     exportWithVat: 'Z VAT',
+    exportReverseChargeShort: 'RC',
     exportReference: 'Odniesienie',
     exportAccount: 'Konto',
     exportIban: 'IBAN',

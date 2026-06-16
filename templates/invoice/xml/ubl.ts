@@ -19,7 +19,9 @@ type UblPartyRole = 'buyer' | 'seller';
 
 type TaxGroup = {
   categoryCode: string;
+  vatCategory?: string | null;
   rate: number;
+  exemptionReason?: string;
   taxableAmount: number;
   taxAmount: number;
 };
@@ -142,13 +144,29 @@ ${getPostalAddressXml(party)}${getPartyTaxSchemeXml(party)}${getPartyLegalEntity
   )}${getContactXml(party)}    </cac:Party>`;
 }
 
-function getTaxCategoryCode(rate: number): string {
+function getTaxCategoryCode(rate: number, vatCategory?: string | null): string {
+  if (vatCategory === 'reverse_charge') return 'AE';
+  if (vatCategory === 'exempt') return 'E';
+  if (vatCategory === 'outside_scope') return 'O';
   return rate > 0 ? 'S' : 'Z';
 }
 
-function getTaxCategoryXml(rate: number): string {
-  return `<cbc:ID>${escapeXml(getTaxCategoryCode(rate))}</cbc:ID>
-          <cbc:Percent>${escapeXml(formatPercent(rate))}</cbc:Percent>
+function getTaxCategoryXml(
+  rate: number,
+  vatCategory?: string | null,
+  exemptionReason?: string | null,
+): string {
+  const categoryCode = getTaxCategoryCode(rate, vatCategory);
+  const reason = compactText(
+    exemptionReason || (categoryCode === 'AE' ? 'Reverse charge' : undefined),
+  );
+
+  return `<cbc:ID>${escapeXml(categoryCode)}</cbc:ID>
+          <cbc:Percent>${escapeXml(formatPercent(rate))}</cbc:Percent>${
+            reason
+              ? `\n          <cbc:TaxExemptionReason>${escapeXml(reason)}</cbc:TaxExemptionReason>`
+              : ''
+          }
           <cac:TaxScheme><cbc:ID>VAT</cbc:ID></cac:TaxScheme>`;
 }
 
@@ -157,11 +175,14 @@ function getTaxGroups(items: InvoiceXmlBuildInput['items']): TaxGroup[] {
 
   for (const item of items) {
     const rate = Number(item.vatRate ?? 0);
-    const categoryCode = getTaxCategoryCode(rate);
-    const key = `${categoryCode}:${rate}`;
+    const categoryCode = getTaxCategoryCode(rate, item.vatCategory);
+    const exemptionReason = item.vatExemptionReason;
+    const key = `${categoryCode}:${rate}:${exemptionReason || ''}`;
     const current = groups.get(key) || {
       categoryCode,
+      vatCategory: item.vatCategory,
       rate,
+      exemptionReason,
       taxableAmount: 0,
       taxAmount: 0,
     };
@@ -184,7 +205,7 @@ function getTaxTotalXml(taxGroups: TaxGroup[], currency: string): string {
       )}</cbc:TaxableAmount>
       <cbc:TaxAmount currencyID="${escapeXml(currency)}">${escapeXml(formatAmount(group.taxAmount))}</cbc:TaxAmount>
       <cac:TaxCategory>
-        ${getTaxCategoryXml(group.rate)}
+        ${getTaxCategoryXml(group.rate, group.vatCategory, group.exemptionReason)}
       </cac:TaxCategory>
     </cac:TaxSubtotal>`,
     )
@@ -238,7 +259,7 @@ function getInvoiceLinesXml(items: InvoiceXmlBuildInput['items'], currency: stri
     <cac:Item>
       <cbc:Name>${escapeXml(description)}</cbc:Name>
       <cac:ClassifiedTaxCategory>
-        ${getTaxCategoryXml(rate)}
+        ${getTaxCategoryXml(rate, item.vatCategory, item.vatExemptionReason)}
       </cac:ClassifiedTaxCategory>
     </cac:Item>
     <cac:Price>
@@ -257,7 +278,9 @@ export function buildUblInvoiceXml(
   const issueDate = isoDateFromMs(invoice.issuedAt);
   const dueDate = isoDateFromMs(invoice.dueAt);
   const taxPointDate = isoDateFromMs(invoice.taxableAt);
-  const note = compactText(invoice.footerNote || invoice.headerNote);
+  const note = compactText(
+    [invoice.reverseChargeNote, invoice.footerNote || invoice.headerNote].filter(Boolean).join(' '),
+  );
   const buyerReference = compactText(invoice.buyerReference);
   const taxGroups = getTaxGroups(items);
   const taxAmount = taxGroups.reduce((sum, group) => roundCurrency(sum + group.taxAmount), 0);

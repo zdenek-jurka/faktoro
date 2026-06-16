@@ -30,6 +30,12 @@ import {
 } from '@/repositories/time-entry-repository';
 import { getVatCodes, getVatRates } from '@/repositories/vat-rate-repository';
 import { hasMatchingCurrency, normalizeCurrencyCode } from '@/utils/currency-utils';
+import {
+  getVatCategoryForTreatment,
+  getVatExemptionReason,
+  normalizeInvoiceVatTreatment,
+  type InvoiceVatTreatment,
+} from '@/utils/invoice-vat-treatment';
 import { parseISODate } from '@/utils/iso-date';
 import { parsePositiveDecimalInput } from '@/utils/number-input';
 import { isIos } from '@/utils/platform';
@@ -60,6 +66,8 @@ type HeaderDraft = {
   dueDate: string;
   currency: string;
   paymentMethod: string;
+  vatTreatment?: string;
+  resolvedVatTreatment?: string;
 };
 
 type FooterDraft = {
@@ -444,6 +452,51 @@ export default function InvoiceNewItemScreen() {
     );
   }
 
+  const requestedVatTreatment = normalizeInvoiceVatTreatment(headerDraft.vatTreatment);
+  const resolvedHeaderVatTreatment = normalizeInvoiceVatTreatment(headerDraft.resolvedVatTreatment);
+  const invoiceVatTreatment: InvoiceVatTreatment =
+    resolvedHeaderVatTreatment || requestedVatTreatment || (isVatPayer ? 'domestic' : 'no_vat');
+  const shouldUseDomesticVatCodes =
+    isVatPayer &&
+    invoiceVatTreatment !== 'eu_reverse_charge_service' &&
+    invoiceVatTreatment !== 'non_eu_outside_scope_service' &&
+    invoiceVatTreatment !== 'exempt' &&
+    invoiceVatTreatment !== 'no_vat';
+
+  const applyDraftVatTreatment = (
+    item: DraftInvoiceItemInput,
+    vatCodeId?: string,
+    vatRate?: number,
+  ): DraftInvoiceItemInput => {
+    if (!isVatPayer) {
+      return {
+        ...item,
+        vatCodeId: undefined,
+        vatRate: undefined,
+        vatCategory: undefined,
+        vatExemptionReason: undefined,
+      };
+    }
+
+    if (!shouldUseDomesticVatCodes) {
+      return {
+        ...item,
+        vatCodeId: undefined,
+        vatRate: 0,
+        vatCategory: getVatCategoryForTreatment(invoiceVatTreatment, 0),
+        vatExemptionReason: getVatExemptionReason(invoiceVatTreatment),
+      };
+    }
+
+    return {
+      ...item,
+      vatCodeId,
+      vatRate,
+      vatCategory: getVatCategoryForTreatment('domestic', vatRate),
+      vatExemptionReason: undefined,
+    };
+  };
+
   const returnToItems = () => {
     router.replace({
       pathname: '/invoices/new',
@@ -550,7 +603,7 @@ export default function InvoiceNewItemScreen() {
           Alert.alert(LL.common.error(), LL.invoices.errorInvalidUnitPrice());
           return;
         }
-        if (isVatPayer) {
+        if (shouldUseDomesticVatCodes) {
           const vatCodeId = missingEntryVatCodeById[missingEntry.id];
           if (!vatCodeId) {
             Alert.alert(LL.common.error(), LL.invoices.errorVatCodeRequired());
@@ -636,26 +689,32 @@ export default function InvoiceNewItemScreen() {
       const quantity = Number(getEntryQuantityByUnit(durationSeconds, unit).toFixed(3));
       const unitPrice = Number(convertHourlyRateByUnit(hourlyRate, unit).toFixed(2));
 
-      const vatCodeId = linkedItem?.vatCodeId || missingEntryVatCodeById[entry.id] || undefined;
+      const vatCodeId = shouldUseDomesticVatCodes
+        ? linkedItem?.vatCodeId || missingEntryVatCodeById[entry.id] || undefined
+        : undefined;
       let vatRate: number | undefined;
-      if (isVatPayer && vatCodeId) {
+      if (shouldUseDomesticVatCodes && vatCodeId) {
         const ratesForCode = vatRates.filter((rate) => rate.vatCodeId === vatCodeId);
         const resolvedVatRate = resolveVatRateForDate(ratesForCode, taxableAt);
         if (resolvedVatRate != null) vatRate = resolvedVatRate;
       }
 
-      draftItems.push({
-        sourceKind: 'timesheet',
-        sourceId: sheet.id,
-        sourceEntryId: entry.id,
-        description: entry.description?.trim() || `${LL.timesheets.title()}: ${sheet.label}`,
-        quantity,
-        unit,
-        unitPrice,
-        totalPrice: Number(totalPrice.toFixed(2)),
-        vatCodeId,
-        vatRate,
-      });
+      draftItems.push(
+        applyDraftVatTreatment(
+          {
+            sourceKind: 'timesheet',
+            sourceId: sheet.id,
+            sourceEntryId: entry.id,
+            description: entry.description?.trim() || `${LL.timesheets.title()}: ${sheet.label}`,
+            quantity,
+            unit,
+            unitPrice,
+            totalPrice: Number(totalPrice.toFixed(2)),
+          },
+          vatCodeId,
+          vatRate,
+        ),
+      );
     }
 
     if (draftItems.length === 0) {
@@ -706,7 +765,7 @@ export default function InvoiceNewItemScreen() {
     }
 
     let vatRate: number | undefined;
-    if (isVatPayer && item.vatCodeId) {
+    if (shouldUseDomesticVatCodes && item.vatCodeId) {
       const ratesForCode = vatRates.filter((rate) => rate.vatCodeId === item.vatCodeId);
       const resolvedVatRate = resolveVatRateForDate(ratesForCode, effectiveTaxableAt);
       if (resolvedVatRate == null) {
@@ -717,17 +776,19 @@ export default function InvoiceNewItemScreen() {
     }
 
     goBackWithItems([
-      {
-        sourceKind: 'price_list',
-        sourceId: item.id,
-        description: item.name,
-        quantity,
-        unit: item.unit,
-        unitPrice: effectivePrice.price,
-        totalPrice: quantity * effectivePrice.price,
-        vatCodeId: item.vatCodeId,
+      applyDraftVatTreatment(
+        {
+          sourceKind: 'price_list',
+          sourceId: item.id,
+          description: item.name,
+          quantity,
+          unit: item.unit,
+          unitPrice: effectivePrice.price,
+          totalPrice: quantity * effectivePrice.price,
+        },
+        item.vatCodeId,
         vatRate,
-      },
+      ),
     ]);
   };
 
@@ -751,7 +812,7 @@ export default function InvoiceNewItemScreen() {
     }
 
     let vatRate: number | undefined;
-    if (isVatPayer) {
+    if (shouldUseDomesticVatCodes) {
       if (!manualVatCodeId) {
         Alert.alert(LL.common.error(), LL.invoices.errorVatCodeRequired());
         return;
@@ -766,16 +827,18 @@ export default function InvoiceNewItemScreen() {
     }
 
     goBackWithItems([
-      {
-        sourceKind: 'manual',
-        description,
-        quantity,
-        unit: manualUnit.trim() || undefined,
-        unitPrice,
-        totalPrice: quantity * unitPrice,
-        vatCodeId: manualVatCodeId || undefined,
+      applyDraftVatTreatment(
+        {
+          sourceKind: 'manual',
+          description,
+          quantity,
+          unit: manualUnit.trim() || undefined,
+          unitPrice,
+          totalPrice: quantity * unitPrice,
+        },
+        manualVatCodeId || undefined,
         vatRate,
-      },
+      ),
     ]);
   };
 
@@ -952,7 +1015,7 @@ export default function InvoiceNewItemScreen() {
                                 placeholderTextColor={placeholder(palette)}
                                 keyboardType="decimal-pad"
                               />
-                              {isVatPayer && (
+                              {shouldUseDomesticVatCodes && (
                                 <>
                                   <ThemedText style={styles.label}>
                                     {LL.invoices.vatCode()}
@@ -1001,7 +1064,7 @@ export default function InvoiceNewItemScreen() {
                         </View>
                       );
                     })}
-                    {isVatPayer && vatCodes.length === 0 && (
+                    {shouldUseDomesticVatCodes && vatCodes.length === 0 && (
                       <ThemedText style={styles.vatHelperText}>
                         {LL.priceList.noVatCodes()}
                       </ThemedText>
@@ -1103,7 +1166,7 @@ export default function InvoiceNewItemScreen() {
                 keyboardType="decimal-pad"
               />
 
-              {isVatPayer && (
+              {shouldUseDomesticVatCodes && (
                 <>
                   <ThemedText style={styles.label}>{LL.invoices.vatCode()}</ThemedText>
                   <Select value={manualVatCodeId} onValueChange={setManualVatCodeId}>

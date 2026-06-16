@@ -407,6 +407,20 @@ const fr = {
     paymentMethodCash: 'Espèces',
     paymentMethodCard: 'Carte',
     paymentMethodCardNfc: 'Carte (NFC)',
+    vatTreatment: 'Traitement TVA',
+    vatTreatmentAutomatic: 'Automatique',
+    vatTreatmentDomestic: 'TVA nationale',
+    vatTreatmentReverseCharge: 'Autoliquidation',
+    vatTreatmentNonEuOutsideScope: 'Hors champ de la TVA tchèque',
+    vatTreatmentExempt: 'Exonéré de TVA',
+    vatTreatmentNoVat: 'Sans TVA',
+    vatTreatmentResolved: 'Résolu comme {treatment}.',
+    vatTreatmentReverseChargeHint:
+      'L’autoliquidation sera utilisée. La TVA n’est pas ajoutée et la facture indiquera que le client déclare la TVA.',
+    reverseChargeVatNumberRequiredWarning:
+      'L’autoliquidation exige le numéro de TVA du client. Renseignez-le avant d’enregistrer.',
+    errorReverseChargeVatNumberRequired:
+      'Le numéro de TVA du client est obligatoire pour l’autoliquidation.',
     paymentQrAction: 'Afficher le QR de paiement',
     paymentQrTitle: 'QR de paiement',
     paymentQrClose: 'Fermer',
@@ -574,6 +588,7 @@ const fr = {
     exportWithoutVat: 'Hors TVA',
     exportVatAmount: 'Montant TVA',
     exportWithVat: 'TTC',
+    exportReverseChargeShort: 'RC',
     exportReference: 'Référence',
     exportAccount: 'Compte',
     exportIban: 'IBAN',

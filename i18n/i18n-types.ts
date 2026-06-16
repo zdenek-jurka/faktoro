@@ -1472,6 +1472,51 @@ type RootTranslation = {
 		 */
 		paymentMethodCardNfc: string
 		/**
+		 * V​A​T​ ​t​r​e​a​t​m​e​n​t
+		 */
+		vatTreatment: string
+		/**
+		 * A​u​t​o​m​a​t​i​c
+		 */
+		vatTreatmentAutomatic: string
+		/**
+		 * D​o​m​e​s​t​i​c​ ​V​A​T
+		 */
+		vatTreatmentDomestic: string
+		/**
+		 * R​e​v​e​r​s​e​ ​c​h​a​r​g​e
+		 */
+		vatTreatmentReverseCharge: string
+		/**
+		 * O​u​t​s​i​d​e​ ​C​z​e​c​h​ ​V​A​T​ ​s​c​o​p​e
+		 */
+		vatTreatmentNonEuOutsideScope: string
+		/**
+		 * V​A​T​ ​e​x​e​m​p​t
+		 */
+		vatTreatmentExempt: string
+		/**
+		 * N​o​ ​V​A​T
+		 */
+		vatTreatmentNoVat: string
+		/**
+		 * R​e​s​o​l​v​e​d​ ​a​s​ ​{​t​r​e​a​t​m​e​n​t​}​.
+		 * @param {string} treatment
+		 */
+		vatTreatmentResolved: RequiredParams<'treatment'>
+		/**
+		 * R​e​v​e​r​s​e​ ​c​h​a​r​g​e​ ​w​i​l​l​ ​b​e​ ​u​s​e​d​.​ ​V​A​T​ ​i​s​ ​n​o​t​ ​a​d​d​e​d​ ​a​n​d​ ​t​h​e​ ​i​n​v​o​i​c​e​ ​w​i​l​l​ ​s​t​a​t​e​ ​t​h​a​t​ ​t​h​e​ ​c​u​s​t​o​m​e​r​ ​a​c​c​o​u​n​t​s​ ​f​o​r​ ​V​A​T​.
+		 */
+		vatTreatmentReverseChargeHint: string
+		/**
+		 * R​e​v​e​r​s​e​ ​c​h​a​r​g​e​ ​r​e​q​u​i​r​e​s​ ​t​h​e​ ​b​u​y​e​r​ ​V​A​T​ ​n​u​m​b​e​r​.​ ​F​i​l​l​ ​i​t​ ​i​n​ ​b​e​f​o​r​e​ ​s​a​v​i​n​g​.
+		 */
+		reverseChargeVatNumberRequiredWarning: string
+		/**
+		 * B​u​y​e​r​ ​V​A​T​ ​n​u​m​b​e​r​ ​i​s​ ​r​e​q​u​i​r​e​d​ ​f​o​r​ ​r​e​v​e​r​s​e​ ​c​h​a​r​g​e​.
+		 */
+		errorReverseChargeVatNumberRequired: string
+		/**
 		 * S​h​o​w​ ​p​a​y​m​e​n​t​ ​Q​R
 		 */
 		paymentQrAction: string
@@ -2041,6 +2086,10 @@ type RootTranslation = {
 		 * W​i​t​h​ ​V​A​T
 		 */
 		exportWithVat: string
+		/**
+		 * R​C
+		 */
+		exportReverseChargeShort: string
 		/**
 		 * R​e​f​e​r​e​n​c​e
 		 */
@@ -6354,6 +6403,50 @@ export type TranslationFunctions = {
 		 */
 		paymentMethodCardNfc: () => LocalizedString
 		/**
+		 * VAT treatment
+		 */
+		vatTreatment: () => LocalizedString
+		/**
+		 * Automatic
+		 */
+		vatTreatmentAutomatic: () => LocalizedString
+		/**
+		 * Domestic VAT
+		 */
+		vatTreatmentDomestic: () => LocalizedString
+		/**
+		 * Reverse charge
+		 */
+		vatTreatmentReverseCharge: () => LocalizedString
+		/**
+		 * Outside Czech VAT scope
+		 */
+		vatTreatmentNonEuOutsideScope: () => LocalizedString
+		/**
+		 * VAT exempt
+		 */
+		vatTreatmentExempt: () => LocalizedString
+		/**
+		 * No VAT
+		 */
+		vatTreatmentNoVat: () => LocalizedString
+		/**
+		 * Resolved as {treatment}.
+		 */
+		vatTreatmentResolved: (arg: { treatment: string }) => LocalizedString
+		/**
+		 * Reverse charge will be used. VAT is not added and the invoice will state that the customer accounts for VAT.
+		 */
+		vatTreatmentReverseChargeHint: () => LocalizedString
+		/**
+		 * Reverse charge requires the buyer VAT number. Fill it in before saving.
+		 */
+		reverseChargeVatNumberRequiredWarning: () => LocalizedString
+		/**
+		 * Buyer VAT number is required for reverse charge.
+		 */
+		errorReverseChargeVatNumberRequired: () => LocalizedString
+		/**
 		 * Show payment QR
 		 */
 		paymentQrAction: () => LocalizedString
@@ -6909,6 +7002,10 @@ export type TranslationFunctions = {
 		 * With VAT
 		 */
 		exportWithVat: () => LocalizedString
+		/**
+		 * RC
+		 */
+		exportReverseChargeShort: () => LocalizedString
 		/**
 		 * Reference
 		 */

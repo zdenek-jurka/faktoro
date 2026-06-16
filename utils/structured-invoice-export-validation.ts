@@ -171,8 +171,17 @@ export function getStructuredInvoiceExportIssues(
   addPartyIssues(issues, 'buyer', buyer, buyerFixTarget, format);
 
   const hasVatLines = items.some((item) => Number(item.vatRate ?? 0) > 0);
-  if (hasVatLines && !hasText(seller.vatNumber)) {
+  const hasReverseChargeLines = items.some((item) => item.vatCategory === 'reverse_charge');
+  if ((hasVatLines || hasReverseChargeLines) && !hasText(seller.vatNumber)) {
     issues.push({ kind: 'missingField', scope: 'seller', field: 'vatNumber', fixTarget: 'seller' });
+  }
+  if (hasReverseChargeLines && !hasText(buyer.vatNumber)) {
+    issues.push({
+      kind: 'missingField',
+      scope: 'buyer',
+      field: 'vatNumber',
+      fixTarget: buyerFixTarget,
+    });
   }
 
   items.forEach((item, index) => {
@@ -233,7 +242,9 @@ export function getStructuredInvoiceExportIssues(
   });
 
   if (format === 'peppol' || format === 'xrechnung') {
-    const hasZeroOrMissingVatCategory = items.some((item) => Number(item.vatRate ?? 0) <= 0);
+    const hasUnsupportedZeroVatCategory = items.some(
+      (item) => Number(item.vatRate ?? 0) <= 0 && item.vatCategory !== 'reverse_charge',
+    );
 
     if (!hasText(invoice.buyerReference)) {
       issues.push({
@@ -255,7 +266,7 @@ export function getStructuredInvoiceExportIssues(
           : undefined,
     });
 
-    if (hasZeroOrMissingVatCategory) {
+    if (hasUnsupportedZeroVatCategory) {
       issues.push({
         kind: 'unsupportedRequirement',
         format,

@@ -1196,5 +1196,43 @@ export default schemaMigrations({
         `),
       ],
     },
+    {
+      toVersion: 59,
+      steps: [
+        addColumns({
+          table: 'invoice',
+          columns: [
+            { name: 'vat_treatment', type: 'string', isOptional: true },
+            { name: 'place_of_supply_country_code', type: 'string', isOptional: true },
+            { name: 'reverse_charge_reason', type: 'string', isOptional: true },
+            { name: 'reverse_charge_note', type: 'string', isOptional: true },
+            { name: 'buyer_vat_validation_json', type: 'string', isOptional: true },
+          ],
+        }),
+        addColumns({
+          table: 'invoice_item',
+          columns: [
+            { name: 'vat_category', type: 'string', isOptional: true },
+            { name: 'vat_exemption_reason', type: 'string', isOptional: true },
+          ],
+        }),
+        unsafeExecuteSql(`
+          update "invoice"
+          set "vat_treatment" = case
+              when "taxable_at" is not null then 'domestic'
+              else 'no_vat'
+            end
+          where "vat_treatment" is null;
+
+          update "invoice_item"
+          set "vat_category" = case
+              when "vat_rate" is null then null
+              when "vat_rate" = 0 then 'zero'
+              else 'standard'
+            end
+          where "vat_category" is null;
+        `),
+      ],
+    },
   ],
 });

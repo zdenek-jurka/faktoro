@@ -31,6 +31,10 @@ export function buildDefaultInvoicePdfHtml(input: BuildDefaultInvoicePdfHtmlInpu
       const vatRate = item.vatRate ?? 0;
       const lineVat = item.totalPrice * (vatRate / 100);
       const lineGross = item.totalPrice + lineVat;
+      const vatLabel =
+        item.vatCategory === 'reverse_charge'
+          ? input.labels.reverseCharge
+          : `${escapeHtml(vatRate)}%`;
       const quantityWithUnit = item.unit
         ? `${escapeHtml(item.quantity)} ${escapeHtml(item.unit)}`
         : escapeHtml(item.quantity);
@@ -57,7 +61,7 @@ export function buildDefaultInvoicePdfHtml(input: BuildDefaultInvoicePdfHtmlInpu
             <div class="item-secondary">${unitPriceLine}</div>
           </td>
           <td style="text-align:right">${quantityWithUnit}</td>
-          <td style="text-align:right">${escapeHtml(vatRate)}%</td>
+          <td style="text-align:right">${vatLabel}</td>
           <td style="text-align:right">${formatMoney(item.totalPrice)}</td>
           <td style="text-align:right">${formatMoney(lineVat)}</td>
           <td style="text-align:right">${formatMoney(lineGross)}</td>
@@ -68,6 +72,9 @@ export function buildDefaultInvoicePdfHtml(input: BuildDefaultInvoicePdfHtmlInpu
 
   const vatSummary = new Map<number, { base: number; vat: number; total: number }>();
   for (const item of input.items) {
+    if (item.vatCategory === 'reverse_charge') {
+      continue;
+    }
     const rate = item.vatRate ?? 0;
     const base = item.totalPrice;
     const vat = base * (rate / 100);
@@ -91,6 +98,20 @@ export function buildDefaultInvoicePdfHtml(input: BuildDefaultInvoicePdfHtmlInpu
       `,
     )
     .join('');
+  const reverseChargeBase = input.items
+    .filter((item) => item.vatCategory === 'reverse_charge')
+    .reduce((sum, item) => sum + item.totalPrice, 0);
+  const reverseChargeSummaryHtml =
+    reverseChargeBase !== 0
+      ? `
+        <tr>
+          <td style="text-align:right">${escapeHtml(input.labels.reverseCharge)}</td>
+          <td style="text-align:right">${formatMoney(reverseChargeBase)}</td>
+          <td style="text-align:right">${formatMoney(0)}</td>
+          <td style="text-align:right">${formatMoney(reverseChargeBase)}</td>
+        </tr>
+      `
+      : '';
 
   const variableSymbol =
     input.variableSymbol || input.invoiceNumber.replace(/\D/g, '').slice(0, 10) || '-';
@@ -142,8 +163,10 @@ export function buildDefaultInvoicePdfHtml(input: BuildDefaultInvoicePdfHtmlInpu
               <tbody>
                 ${
                   vatSummaryHtml ||
+                  reverseChargeSummaryHtml ||
                   `<tr><td style="text-align:right">0%</td><td style="text-align:right">${formatMoney(input.subtotal)}</td><td style="text-align:right">${formatMoney(0)}</td><td style="text-align:right">${formatMoney(input.total)}</td></tr>`
                 }
+                ${vatSummaryHtml ? reverseChargeSummaryHtml : ''}
                 <tr>
                   <td colspan="3" style="text-align:right">${escapeHtml(input.labels.total)}</td>
                   <td style="text-align:right">${formatMoney(input.total)}</td>

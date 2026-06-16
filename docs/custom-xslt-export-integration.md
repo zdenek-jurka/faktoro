@@ -168,6 +168,10 @@ Common optional invoice fields include:
 - `TaxableSupplyDate`
 - `DueDate`
 - `PaymentMethod`
+- `VatTreatment`
+- `PlaceOfSupplyCountryCode`
+- `ReverseChargeReason`
+- `ReverseChargeNote`
 - `CorrectedInvoiceId`
 - `CorrectionKind`
 - `CancellationReason`
@@ -218,6 +222,8 @@ Each invoice item contains:
 - `TotalPrice`
 - `VatCodeId`
 - `VatRate`
+- `VatCategory`
+- `VatExemptionReason`
 
 ### Minimal Invoice XSLT Example
 

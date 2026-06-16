@@ -404,6 +404,20 @@ const es = {
     paymentMethodCash: 'Efectivo',
     paymentMethodCard: 'Tarjeta',
     paymentMethodCardNfc: 'Tarjeta (NFC)',
+    vatTreatment: 'Tratamiento de IVA',
+    vatTreatmentAutomatic: 'Automático',
+    vatTreatmentDomestic: 'IVA nacional',
+    vatTreatmentReverseCharge: 'Inversión del sujeto pasivo',
+    vatTreatmentNonEuOutsideScope: 'Fuera del IVA checo',
+    vatTreatmentExempt: 'Exento de IVA',
+    vatTreatmentNoVat: 'Sin IVA',
+    vatTreatmentResolved: 'Resuelto como {treatment}.',
+    vatTreatmentReverseChargeHint:
+      'Se usará inversión del sujeto pasivo. No se añade IVA y la factura indicará que el cliente declara el IVA.',
+    reverseChargeVatNumberRequiredWarning:
+      'La inversión del sujeto pasivo requiere el NIF-IVA del comprador. Complétalo antes de guardar.',
+    errorReverseChargeVatNumberRequired:
+      'El NIF-IVA del comprador es obligatorio para la inversión del sujeto pasivo.',
     paymentQrAction: 'Mostrar QR de pago',
     paymentQrTitle: 'QR de pago',
     paymentQrClose: 'Cerrar',
@@ -570,6 +584,7 @@ const es = {
     exportWithoutVat: 'Sin IVA',
     exportVatAmount: 'Importe IVA',
     exportWithVat: 'Con IVA',
+    exportReverseChargeShort: 'RC',
     exportReference: 'Referencia',
     exportAccount: 'Cuenta',
     exportIban: 'IBAN',

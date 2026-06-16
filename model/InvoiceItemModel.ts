@@ -20,6 +20,8 @@ export default class InvoiceItemModel extends Model {
   @field('total_price') totalPrice: number;
   @field('vat_code_id') vatCodeId?: string;
   @field('vat_rate') vatRate?: number;
+  @text('vat_category') vatCategory?: string;
+  @text('vat_exemption_reason') vatExemptionReason?: string;
   @readonly @date('created_at') createdAt: Date;
   @readonly @date('updated_at') updatedAt: Date;
 

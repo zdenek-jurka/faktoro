@@ -613,6 +613,14 @@ function SyncMaintenanceScreenContent() {
         return LL.settings.currenciesTitle();
       case 'invoice.payment_method':
         return LL.invoices.paymentMethod();
+      case 'invoice.vat_treatment':
+        return LL.invoices.vatTreatment();
+      case 'invoice.reverse_charge_note':
+        return LL.invoices.vatTreatmentReverseCharge();
+      case 'invoice_item.vat_category':
+        return LL.invoices.vatTreatment();
+      case 'invoice_item.vat_exemption_reason':
+        return LL.invoices.vatTreatmentReverseCharge();
       default:
         return humanizeFieldName(fieldName);
     }

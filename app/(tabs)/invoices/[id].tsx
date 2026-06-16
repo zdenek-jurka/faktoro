@@ -84,6 +84,7 @@ import { buildPdfLogoHtml } from '@/utils/pdf-logo';
 import { printHtmlToPdfCacheFile } from '@/utils/pdf-export-file';
 import { formatPrice } from '@/utils/price-utils';
 import { isIos } from '@/utils/platform';
+import type { InvoiceItemVatCategory, InvoiceVatTreatment } from '@/utils/invoice-vat-treatment';
 import { Q } from '@nozbe/watermelondb';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useEffectEvent, useMemo, useState } from 'react';
@@ -135,6 +136,7 @@ type HeaderDraft = {
   dueDate: string;
   currency: string;
   paymentMethod: string;
+  vatTreatment?: InvoiceVatTreatment;
 };
 
 type FooterDraft = {
@@ -319,6 +321,23 @@ function getPaymentMethodLabel(
   return LL.invoices.paymentMethodBankTransfer();
 }
 
+function getVatTreatmentLabel(LL: ReturnType<typeof useI18nContext>['LL'], value?: string): string {
+  switch (value) {
+    case 'domestic':
+      return LL.invoices.vatTreatmentDomestic();
+    case 'eu_reverse_charge_service':
+      return LL.invoices.vatTreatmentReverseCharge();
+    case 'non_eu_outside_scope_service':
+      return LL.invoices.vatTreatmentNonEuOutsideScope();
+    case 'exempt':
+      return LL.invoices.vatTreatmentExempt();
+    case 'no_vat':
+      return LL.invoices.vatTreatmentNoVat();
+    default:
+      return '';
+  }
+}
+
 function getPaymentQrTypeLabel(LL: TranslationFunctions, qrType: PaymentQrType): string {
   if (qrType === 'spayd') return LL.settings.invoiceQrTypeSpayd();
   if (qrType === 'epc') return LL.settings.invoiceQrTypeEpc();
@@ -456,6 +475,8 @@ export default function InvoiceDetailScreen() {
         'total_price',
         'vat_code_id',
         'vat_rate',
+        'vat_category',
+        'vat_exemption_reason',
         'created_at',
       ])
       .subscribe(setItems);
@@ -646,6 +667,7 @@ export default function InvoiceDetailScreen() {
       dueDate: invoice.dueAt ? toLocalISODate(invoice.dueAt) : toLocalISODate(invoice.issuedAt),
       currency: normalizeCurrencyCode(invoice.currency),
       paymentMethod: invoice.paymentMethod || 'bank_transfer',
+      vatTreatment: invoice.vatTreatment as InvoiceVatTreatment | undefined,
     };
     const footerDraft: FooterDraft = {
       headerNote: invoice.headerNote || '',
@@ -661,6 +683,8 @@ export default function InvoiceDetailScreen() {
       totalPrice: item.totalPrice,
       vatCodeId: item.vatCodeId,
       vatRate: item.vatRate,
+      vatCategory: item.vatCategory as InvoiceItemVatCategory | undefined,
+      vatExemptionReason: item.vatExemptionReason,
     }));
 
     router.push({
@@ -778,6 +802,8 @@ export default function InvoiceDetailScreen() {
             totalPrice: item.totalPrice,
             vatCodeId: item.vatCodeId,
             vatRate: item.vatRate,
+            vatCategory: item.vatCategory as InvoiceItemVatCategory | undefined,
+            vatExemptionReason: item.vatExemptionReason,
           },
         ];
       }
@@ -797,6 +823,8 @@ export default function InvoiceDetailScreen() {
           totalPrice: item.totalPrice,
           vatCodeId: item.vatCodeId,
           vatRate: item.vatRate,
+          vatCategory: item.vatCategory as InvoiceItemVatCategory | undefined,
+          vatExemptionReason: item.vatExemptionReason,
         },
       ];
     });
@@ -822,6 +850,7 @@ export default function InvoiceDetailScreen() {
       dueDate,
       currency: normalizeCurrencyCode(invoice.currency),
       paymentMethod: invoice.paymentMethod || 'bank_transfer',
+      vatTreatment: invoice.vatTreatment as InvoiceVatTreatment | undefined,
     };
     const footerDraft: FooterDraft = {
       headerNote: invoice.headerNote || '',
@@ -982,7 +1011,11 @@ export default function InvoiceDetailScreen() {
                   : null,
               ]
             : [];
-    const effectiveFooterNote = [invoice.footerNote, ...cancellationNoteLines]
+    const effectiveFooterNote = [
+      invoice.reverseChargeNote,
+      invoice.footerNote,
+      ...cancellationNoteLines,
+    ]
       .filter(Boolean)
       .join('\n');
     const watermarkText =
@@ -1037,6 +1070,7 @@ export default function InvoiceDetailScreen() {
         withoutVat: LLExport.invoices.exportWithoutVat(),
         vatAmount: LLExport.invoices.exportVatAmount(),
         withVat: LLExport.invoices.exportWithVat(),
+        reverseCharge: LLExport.invoices.exportReverseChargeShort(),
         lineTotal: LLExport.invoices.lineTotal(),
         total: LLExport.invoices.total(),
       },
@@ -1047,6 +1081,8 @@ export default function InvoiceDetailScreen() {
         unitPrice: item.unitPrice,
         totalPrice: item.totalPrice,
         vatRate: item.vatRate,
+        vatCategory: item.vatCategory as InvoiceItemVatCategory | undefined,
+        vatExemptionReason: item.vatExemptionReason,
       })),
       seller: {
         name: seller.companyName,
@@ -1611,6 +1647,7 @@ export default function InvoiceDetailScreen() {
         onPress: () => openExportFormatMenu(),
       };
   const statusLabel = invoice ? getInvoiceStatusLabel(invoice, LL) : null;
+  const vatTreatmentLabel = invoice ? getVatTreatmentLabel(LL, invoice.vatTreatment) : '';
   const relatedInvoiceLabel = relatedInvoice
     ? invoice?.correctionKind === 'cancellation'
       ? LL.invoices.correctsInvoiceLabel({
@@ -1884,6 +1921,18 @@ export default function InvoiceDetailScreen() {
                         </ThemedText>
                         <ThemedText style={styles.summaryDetailValue} numberOfLines={2}>
                           {invoice.cancellationReason}
+                        </ThemedText>
+                      </View>
+                    ) : null}
+                    {vatTreatmentLabel ? (
+                      <View style={[styles.summaryDetailItem, styles.summaryDetailWide]}>
+                        <ThemedText style={styles.summaryDetailLabel} numberOfLines={1}>
+                          {LL.invoices.vatTreatment()}
+                        </ThemedText>
+                        <ThemedText style={styles.summaryDetailValue} numberOfLines={2}>
+                          {invoice.reverseChargeNote
+                            ? `${vatTreatmentLabel} - ${invoice.reverseChargeNote}`
+                            : vatTreatmentLabel}
                         </ThemedText>
                       </View>
                     ) : null}

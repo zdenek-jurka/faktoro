@@ -23,6 +23,13 @@ import { DEFAULT_CURRENCY_CODE, normalizeCurrencyCode } from '@/utils/currency-u
 import { buildSellerSnapshotFromSettings } from '@/utils/invoice-seller-snapshot';
 import { normalizeBuyerSnapshot } from '@/utils/invoice-buyer';
 import { isInvoiceVatPayer, type InvoiceCancellationMode } from '@/utils/invoice-status';
+import {
+  getVatCategoryForTreatment,
+  getVatExemptionReason,
+  resolveInvoiceVatTreatment,
+  type InvoiceItemVatCategory,
+  type InvoiceVatTreatment,
+} from '@/utils/invoice-vat-treatment';
 import { calculateLineItemTotals } from '@/utils/money';
 import { buildSeriesIdentifier } from '@/utils/series-utils';
 import { resolveVatRateForDate } from '@/utils/vat-rate-utils';
@@ -39,6 +46,8 @@ export type DraftInvoiceItemInput = {
   totalPrice: number;
   vatCodeId?: string;
   vatRate?: number;
+  vatCategory?: InvoiceItemVatCategory;
+  vatExemptionReason?: string;
 };
 
 export type CreateInvoiceInput = {
@@ -51,6 +60,7 @@ export type CreateInvoiceInput = {
   dueAt?: number;
   currency: string;
   paymentMethod?: string;
+  vatTreatment?: InvoiceVatTreatment;
   headerNote?: string;
   footerNote?: string;
   items: DraftInvoiceItemInput[];
@@ -87,6 +97,11 @@ type ResolvedInvoiceWriteData = {
   normalizedBuyerReference?: string;
   normalizedHeaderNote?: string;
   normalizedFooterNote?: string;
+  vatTreatment: InvoiceVatTreatment;
+  placeOfSupplyCountryCode?: string;
+  reverseChargeReason?: string;
+  reverseChargeNote?: string;
+  buyerVatValidationJson?: string;
 };
 
 function normalizeVatName(value?: string): string {
@@ -234,6 +249,15 @@ async function resolveInvoiceWriteData(
         country: buyerAddress?.country,
       }
     : normalizeBuyerSnapshot(input.buyerSnapshot);
+  const vatTreatmentResolution = resolveInvoiceVatTreatment({
+    sellerIsVatPayer: isVatPayer,
+    seller: sellerSnapshot,
+    buyer: buyerSnapshot,
+    buyerIsBusiness: client
+      ? !!client.isCompany || !!client.isVatPayer
+      : !!buyerSnapshot.companyId?.trim() || !!buyerSnapshot.vatNumber?.trim(),
+    requestedTreatment: input.vatTreatment,
+  });
 
   const taxableAt = input.taxableAt || input.issuedAt;
   const priceListItemIds = Array.from(
@@ -313,13 +337,30 @@ async function resolveInvoiceWriteData(
     };
   });
 
-  const normalizedItems = isVatPayer
-    ? resolvedItems
-    : resolvedItems.map((item) => ({
+  const normalizedItems = resolvedItems.map((item) => {
+    if (!isVatPayer) {
+      return {
         ...item,
         vatCodeId: undefined,
         vatRate: undefined,
-      }));
+        vatCategory: undefined,
+        vatExemptionReason: undefined,
+      };
+    }
+
+    const shouldClearDomesticVat =
+      vatTreatmentResolution.treatment === 'eu_reverse_charge_service' ||
+      vatTreatmentResolution.treatment === 'non_eu_outside_scope_service' ||
+      vatTreatmentResolution.treatment === 'exempt';
+    const vatRate = shouldClearDomesticVat ? 0 : item.vatRate;
+    return {
+      ...item,
+      vatCodeId: shouldClearDomesticVat ? undefined : item.vatCodeId,
+      vatRate,
+      vatCategory: getVatCategoryForTreatment(vatTreatmentResolution.treatment, vatRate),
+      vatExemptionReason: getVatExemptionReason(vatTreatmentResolution.treatment),
+    };
+  });
 
   return {
     buyerSnapshot,
@@ -337,6 +378,11 @@ async function resolveInvoiceWriteData(
     normalizedBuyerReference: input.buyerReference?.trim() || undefined,
     normalizedHeaderNote: input.headerNote?.trim() || undefined,
     normalizedFooterNote: input.footerNote?.trim() || undefined,
+    vatTreatment: vatTreatmentResolution.treatment,
+    placeOfSupplyCountryCode: vatTreatmentResolution.placeOfSupplyCountryCode,
+    reverseChargeReason: vatTreatmentResolution.reverseChargeReason,
+    reverseChargeNote: vatTreatmentResolution.reverseChargeNote,
+    buyerVatValidationJson: JSON.stringify(vatTreatmentResolution.buyerVatValidation),
   };
 }
 
@@ -362,6 +408,8 @@ async function replaceInvoiceItems(
       item.totalPrice = sourceItem.totalPrice;
       item.vatCodeId = sourceItem.vatCodeId;
       item.vatRate = sourceItem.vatRate;
+      item.vatCategory = sourceItem.vatCategory;
+      item.vatExemptionReason = sourceItem.vatExemptionReason;
     });
   }
 }
@@ -398,6 +446,11 @@ export async function createInvoice(input: CreateInvoiceInput): Promise<InvoiceM
       item.dueAt = input.dueAt;
       item.currency = resolved.normalizedCurrency;
       item.paymentMethod = resolved.normalizedPaymentMethod;
+      item.vatTreatment = resolved.vatTreatment;
+      item.placeOfSupplyCountryCode = resolved.placeOfSupplyCountryCode;
+      item.reverseChargeReason = resolved.reverseChargeReason;
+      item.reverseChargeNote = resolved.reverseChargeNote;
+      item.buyerVatValidationJson = resolved.buyerVatValidationJson;
       item.status = 'issued';
       item.headerNote = resolved.normalizedHeaderNote;
       item.footerNote = resolved.normalizedFooterNote;
@@ -462,6 +515,11 @@ export async function updateIssuedInvoice(input: UpdateIssuedInvoiceInput): Prom
       item.dueAt = input.dueAt;
       item.currency = resolved.normalizedCurrency;
       item.paymentMethod = resolved.normalizedPaymentMethod;
+      item.vatTreatment = resolved.vatTreatment;
+      item.placeOfSupplyCountryCode = resolved.placeOfSupplyCountryCode;
+      item.reverseChargeReason = resolved.reverseChargeReason;
+      item.reverseChargeNote = resolved.reverseChargeNote;
+      item.buyerVatValidationJson = resolved.buyerVatValidationJson;
       item.status = 'issued';
       item.headerNote = resolved.normalizedHeaderNote;
       item.footerNote = resolved.normalizedFooterNote;
@@ -580,6 +638,11 @@ export async function cancelInvoice(input: CancelInvoiceInput): Promise<InvoiceM
       item.dueAt = dueAt;
       item.currency = invoice.currency;
       item.paymentMethod = invoice.paymentMethod;
+      item.vatTreatment = invoice.vatTreatment;
+      item.placeOfSupplyCountryCode = invoice.placeOfSupplyCountryCode;
+      item.reverseChargeReason = invoice.reverseChargeReason;
+      item.reverseChargeNote = invoice.reverseChargeNote;
+      item.buyerVatValidationJson = invoice.buyerVatValidationJson;
       item.status = 'issued';
       item.headerNote = invoice.headerNote;
       item.footerNote = invoice.footerNote;
@@ -606,6 +669,8 @@ export async function cancelInvoice(input: CancelInvoiceInput): Promise<InvoiceM
         totalPrice: -Math.abs(sourceItem.totalPrice),
         vatCodeId: sourceItem.vatCodeId,
         vatRate: sourceItem.vatRate,
+        vatCategory: sourceItem.vatCategory as InvoiceItemVatCategory | undefined,
+        vatExemptionReason: sourceItem.vatExemptionReason,
       })),
       invoiceItemCollection,
     );

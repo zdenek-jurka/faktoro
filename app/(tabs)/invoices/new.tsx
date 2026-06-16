@@ -38,6 +38,7 @@ import {
   getCompanyRegistryService,
   normalizeCompanyRegistryKey,
 } from '@/repositories/company-registry';
+import { getPreferredInvoiceAddress } from '@/repositories/address-repository';
 import { getEffectivePriceDetails } from '@/repositories/client-price-override-repository';
 import {
   DraftInvoiceItemInput,
@@ -72,6 +73,12 @@ import {
   parseSellerSnapshotJson,
   type SellerSnapshotSettingsSource,
 } from '@/utils/invoice-seller-snapshot';
+import {
+  getVatCategoryForTreatment,
+  getVatExemptionReason,
+  resolveInvoiceVatTreatment,
+  type InvoiceVatTreatment,
+} from '@/utils/invoice-vat-treatment';
 import {
   DEFAULT_INVOICE_DUE_DAYS,
   DEFAULT_INVOICE_PAYMENT_METHOD,
@@ -113,6 +120,8 @@ type HeaderDraft = {
   dueDate: string;
   currency: string;
   paymentMethod: string;
+  vatTreatment?: InvoiceVatTreatmentSelection;
+  resolvedVatTreatment?: InvoiceVatTreatment;
 };
 
 type FooterDraft = {
@@ -125,6 +134,7 @@ type DraftListItem = DraftInvoiceItemInput & {
 };
 
 type BuyerDraftField = keyof InvoiceBuyerDraft;
+type InvoiceVatTreatmentSelection = 'auto' | InvoiceVatTreatment;
 
 type ClientChangeReview = {
   manualCount: number;
@@ -161,6 +171,27 @@ function getPaymentMethodLabel(LL: ReturnType<typeof useI18nContext>['LL'], valu
     case 'bank_transfer':
     default:
       return LL.invoices.paymentMethodBankTransfer();
+  }
+}
+
+function getVatTreatmentLabel(
+  LL: ReturnType<typeof useI18nContext>['LL'],
+  value: InvoiceVatTreatmentSelection,
+): string {
+  switch (value) {
+    case 'domestic':
+      return LL.invoices.vatTreatmentDomestic();
+    case 'eu_reverse_charge_service':
+      return LL.invoices.vatTreatmentReverseCharge();
+    case 'non_eu_outside_scope_service':
+      return LL.invoices.vatTreatmentNonEuOutsideScope();
+    case 'exempt':
+      return LL.invoices.vatTreatmentExempt();
+    case 'no_vat':
+      return LL.invoices.vatTreatmentNoVat();
+    case 'auto':
+    default:
+      return LL.invoices.vatTreatmentAutomatic();
   }
 }
 
@@ -246,6 +277,11 @@ export default function InvoiceDraftScreen() {
   const [headerNote, setHeaderNote] = useState('');
   const [footerNote, setFooterNote] = useState('');
   const [isVatPayer, setIsVatPayer] = useState(false);
+  const [vatTreatmentSelection, setVatTreatmentSelection] =
+    useState<InvoiceVatTreatmentSelection>('auto');
+  const [selectedClientInvoiceCountry, setSelectedClientInvoiceCountry] = useState<
+    string | undefined
+  >(undefined);
   const [vatRates, setVatRates] = useState<VatRateModel[]>([]);
   const [canUseTimesheets, setCanUseTimesheets] = useState(false);
   const [canUsePriceList, setCanUsePriceList] = useState(false);
@@ -315,6 +351,7 @@ export default function InvoiceDraftScreen() {
     setDueDate(restoredHeaderDraft.dueDate || todayISODate());
     setCurrency(normalizeCurrencyCode(restoredHeaderDraft.currency));
     setPaymentMethod(normalizeInvoicePaymentMethod(restoredHeaderDraft.paymentMethod));
+    setVatTreatmentSelection(restoredHeaderDraft.vatTreatment || 'auto');
     dueDateTouchedRef.current = !!restoredHeaderDraft.dueDate;
     paymentMethodTouchedRef.current = !!restoredHeaderDraft.paymentMethod;
   }, [isEditingInvoice, restoredHeaderDraft]);
@@ -445,6 +482,31 @@ export default function InvoiceDraftScreen() {
   );
   const selectedClientName = selectedClient?.name?.trim();
   const hasClients = clients.length > 0;
+
+  useEffect(() => {
+    let isMounted = true;
+    if (!effectiveClientId) {
+      setSelectedClientInvoiceCountry(undefined);
+      return () => {
+        isMounted = false;
+      };
+    }
+
+    const loadClientCountry = async () => {
+      try {
+        const address = await getPreferredInvoiceAddress(effectiveClientId);
+        if (isMounted) setSelectedClientInvoiceCountry(address?.country?.trim() || undefined);
+      } catch {
+        if (isMounted) setSelectedClientInvoiceCountry(undefined);
+      }
+    };
+
+    void loadClientCountry();
+    return () => {
+      isMounted = false;
+    };
+  }, [effectiveClientId]);
+
   const currentSellerSnapshot = useMemo(
     () =>
       sellerSnapshotSettings
@@ -462,6 +524,48 @@ export default function InvoiceDraftScreen() {
   );
   const shouldShowSellerSnapshotRefresh =
     isEditingInvoice && (refreshSellerSnapshot || hasSellerSnapshotChanges);
+  const buyerSnapshotForVatTreatment = useMemo<BuyerSnapshot>(
+    () =>
+      buyerMode === 'one_off'
+        ? normalizedBuyerSnapshot
+        : {
+            name: selectedClient?.name,
+            companyId: selectedClient?.companyId,
+            vatNumber: selectedClient?.vatNumber,
+            country: selectedClientInvoiceCountry,
+          },
+    [
+      buyerMode,
+      normalizedBuyerSnapshot,
+      selectedClient?.companyId,
+      selectedClient?.name,
+      selectedClient?.vatNumber,
+      selectedClientInvoiceCountry,
+    ],
+  );
+  const resolvedVatTreatment = useMemo(
+    () =>
+      resolveInvoiceVatTreatment({
+        sellerIsVatPayer: isVatPayer,
+        seller: currentSellerSnapshot || {},
+        buyer: buyerSnapshotForVatTreatment,
+        buyerIsBusiness: selectedClient
+          ? !!selectedClient.isCompany || !!selectedClient.isVatPayer
+          : !!buyerSnapshotForVatTreatment.companyId?.trim() ||
+            !!buyerSnapshotForVatTreatment.vatNumber?.trim(),
+        requestedTreatment: vatTreatmentSelection === 'auto' ? undefined : vatTreatmentSelection,
+      }),
+    [
+      buyerSnapshotForVatTreatment,
+      currentSellerSnapshot,
+      isVatPayer,
+      selectedClient,
+      vatTreatmentSelection,
+    ],
+  );
+  const showReverseChargeMissingVatNumberWarning =
+    resolvedVatTreatment.treatment === 'eu_reverse_charge_service' &&
+    !buyerSnapshotForVatTreatment.vatNumber?.trim();
 
   useEffect(() => {
     if (!paymentMethodTouchedRef.current) {
@@ -497,6 +601,8 @@ export default function InvoiceDraftScreen() {
       dueDate: dueDate.trim(),
       currency: normalizeCurrencyCode(currency),
       paymentMethod: normalizeInvoicePaymentMethod(paymentMethod),
+      vatTreatment: vatTreatmentSelection,
+      resolvedVatTreatment: resolvedVatTreatment.treatment,
     }),
     [
       buyerMode,
@@ -510,7 +616,9 @@ export default function InvoiceDraftScreen() {
       normalizedBuyerSnapshot,
       issuedDate,
       paymentMethod,
+      resolvedVatTreatment.treatment,
       taxableDate,
+      vatTreatmentSelection,
     ],
   );
 
@@ -540,19 +648,47 @@ export default function InvoiceDraftScreen() {
 
     return resolved;
   }, [effectiveTaxableAt, items, vatRates]);
+  const effectiveDraftItems = useMemo(
+    () =>
+      items.map((item) => {
+        if (!isVatPayer) {
+          return {
+            ...item,
+            vatCodeId: undefined,
+            vatRate: undefined,
+            vatCategory: undefined,
+            vatExemptionReason: undefined,
+          };
+        }
+
+        const treatment = resolvedVatTreatment.treatment;
+        const shouldClearDomesticVat =
+          treatment === 'eu_reverse_charge_service' ||
+          treatment === 'non_eu_outside_scope_service' ||
+          treatment === 'exempt';
+        const vatRate = shouldClearDomesticVat
+          ? 0
+          : (item.vatRate ??
+            (item.vatCodeId ? resolvedDraftVatRateByCodeId.get(item.vatCodeId) : undefined));
+
+        return {
+          ...item,
+          vatCodeId: shouldClearDomesticVat ? undefined : item.vatCodeId,
+          vatRate,
+          vatCategory: getVatCategoryForTreatment(treatment, vatRate),
+          vatExemptionReason: getVatExemptionReason(treatment),
+        };
+      }),
+    [isVatPayer, items, resolvedDraftVatRateByCodeId, resolvedVatTreatment.treatment],
+  );
 
   const totals = useMemo(
     () =>
       calculateLineItemTotals(
-        items.map(({ localId: _localId, ...item }) => ({
-          ...(item as DraftInvoiceItemInput),
-          vatRate:
-            item.vatRate ??
-            (item.vatCodeId ? resolvedDraftVatRateByCodeId.get(item.vatCodeId) : undefined),
-        })),
+        effectiveDraftItems.map(({ localId: _localId, ...item }) => item as DraftInvoiceItemInput),
         isVatPayer,
       ),
-    [isVatPayer, items, resolvedDraftVatRateByCodeId],
+    [effectiveDraftItems, isVatPayer],
   );
   const dateValidation = useMemo(
     () =>
@@ -1169,11 +1305,22 @@ export default function InvoiceDraftScreen() {
       dueAt: parseOptionalISODate(headerDraft.dueDate),
       currency: headerDraft.currency,
       paymentMethod: headerDraft.paymentMethod,
+      vatTreatment: vatTreatmentSelection === 'auto' ? undefined : vatTreatmentSelection,
       headerNote: headerNote.trim() || undefined,
       footerNote: footerNote.trim() || undefined,
-      items: items.map(({ localId: _localId, ...item }) => item as DraftInvoiceItemInput),
+      items: effectiveDraftItems.map(
+        ({ localId: _localId, ...item }) => item as DraftInvoiceItemInput,
+      ),
     }),
-    [buyerMode, footerNote, headerDraft, headerNote, items, normalizedBuyerSnapshot],
+    [
+      buyerMode,
+      effectiveDraftItems,
+      footerNote,
+      headerDraft,
+      headerNote,
+      normalizedBuyerSnapshot,
+      vatTreatmentSelection,
+    ],
   );
 
   const createInvoiceWithConflictResolution =
@@ -1226,6 +1373,10 @@ export default function InvoiceDraftScreen() {
     }
     if (dateValidation.taxableDateRequired) {
       Alert.alert(LL.common.error(), LL.invoices.errorTaxableDateRequired());
+      return;
+    }
+    if (showReverseChargeMissingVatNumberWarning) {
+      Alert.alert(LL.common.error(), LL.invoices.errorReverseChargeVatNumberRequired());
       return;
     }
     if (items.length === 0) {
@@ -1595,6 +1746,66 @@ export default function InvoiceDraftScreen() {
                   >
                     <ThemedText style={[styles.warningText, { color: palette.textSecondary }]}>
                       {LL.invoices.issuedDateVatWindowWarning()}
+                    </ThemedText>
+                  </View>
+                ) : null}
+              </>
+            )}
+
+            {isVatPayer && (
+              <>
+                <ThemedText style={styles.label}>{LL.invoices.vatTreatment()}</ThemedText>
+                <Select
+                  value={vatTreatmentSelection}
+                  onValueChange={(value) =>
+                    setVatTreatmentSelection(value as InvoiceVatTreatmentSelection)
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder={getVatTreatmentLabel(LL, vatTreatmentSelection)} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectLabel>{LL.invoices.vatTreatment()}</SelectLabel>
+                      {(
+                        [
+                          'auto',
+                          'domestic',
+                          'eu_reverse_charge_service',
+                          'non_eu_outside_scope_service',
+                          'exempt',
+                        ] satisfies InvoiceVatTreatmentSelection[]
+                      ).map((option) => (
+                        <SelectItem
+                          key={option}
+                          value={option}
+                          label={getVatTreatmentLabel(LL, option)}
+                        >
+                          {getVatTreatmentLabel(LL, option)}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+                <ThemedText style={styles.vatHelperText}>
+                  {resolvedVatTreatment.treatment === 'eu_reverse_charge_service'
+                    ? LL.invoices.vatTreatmentReverseChargeHint()
+                    : LL.invoices.vatTreatmentResolved({
+                        treatment: getVatTreatmentLabel(LL, resolvedVatTreatment.treatment),
+                      })}
+                </ThemedText>
+                {showReverseChargeMissingVatNumberWarning ? (
+                  <View
+                    style={[
+                      styles.warningCard,
+                      {
+                        borderColor: palette.destructive,
+                        backgroundColor: palette.cardBackground,
+                      },
+                    ]}
+                  >
+                    <ThemedText style={[styles.warningText, { color: palette.textSecondary }]}>
+                      {LL.invoices.reverseChargeVatNumberRequiredWarning()}
                     </ThemedText>
                   </View>
                 ) : null}
@@ -2011,6 +2222,12 @@ const styles = StyleSheet.create({
   warningText: {
     fontSize: 13,
     lineHeight: 18,
+  },
+  vatHelperText: {
+    fontSize: 12,
+    opacity: 0.7,
+    marginTop: 6,
+    marginBottom: 10,
   },
   input: {
     borderWidth: 1,

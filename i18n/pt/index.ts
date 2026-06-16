@@ -402,6 +402,20 @@ const pt = {
     paymentMethodCash: 'Dinheiro',
     paymentMethodCard: 'Cartão',
     paymentMethodCardNfc: 'Cartão (NFC)',
+    vatTreatment: 'Tratamento de IVA',
+    vatTreatmentAutomatic: 'Automático',
+    vatTreatmentDomestic: 'IVA nacional',
+    vatTreatmentReverseCharge: 'Reverse charge',
+    vatTreatmentNonEuOutsideScope: 'Fora do IVA checo',
+    vatTreatmentExempt: 'Isento de IVA',
+    vatTreatmentNoVat: 'Sem IVA',
+    vatTreatmentResolved: 'Resolvido como {treatment}.',
+    vatTreatmentReverseChargeHint:
+      'Será usado reverse charge. O IVA não será adicionado e a fatura indicará que o cliente declara o IVA.',
+    reverseChargeVatNumberRequiredWarning:
+      'Reverse charge exige o número de IVA do comprador. Preencha-o antes de guardar.',
+    errorReverseChargeVatNumberRequired:
+      'O número de IVA do comprador é obrigatório para reverse charge.',
     paymentQrAction: 'Mostrar QR de pagamento',
     paymentQrTitle: 'QR de pagamento',
     paymentQrClose: 'Fechar',
@@ -568,6 +582,7 @@ const pt = {
     exportWithoutVat: 'Sem IVA',
     exportVatAmount: 'Valor do IVA',
     exportWithVat: 'Com IVA',
+    exportReverseChargeShort: 'RC',
     exportReference: 'Referência',
     exportAccount: 'Conta',
     exportIban: 'IBAN',

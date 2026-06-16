@@ -17,6 +17,10 @@
       <xs:element name="DueDate"            type="xs:date"   minOccurs="0"/>
       <xs:element name="Currency"           type="xs:string"/>
       <xs:element name="PaymentMethod"      type="xs:string" minOccurs="0"/>
+      <xs:element name="VatTreatment"       type="tns:VatTreatmentValue" minOccurs="0"/>
+      <xs:element name="PlaceOfSupplyCountryCode" type="xs:string" minOccurs="0"/>
+      <xs:element name="ReverseChargeReason" type="xs:string" minOccurs="0"/>
+      <xs:element name="ReverseChargeNote"  type="xs:string" minOccurs="0"/>
       <xs:element name="Status"             type="xs:string" minOccurs="0"/>
       <xs:element name="DocumentType"       type="tns:DocumentTypeValue"/>
       <xs:element name="CorrectedInvoiceId" type="xs:string" minOccurs="0"/>
@@ -83,6 +87,26 @@
     </xs:restriction>
   </xs:simpleType>
 
+  <xs:simpleType name="VatTreatmentValue">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="domestic"/>
+      <xs:enumeration value="eu_reverse_charge_service"/>
+      <xs:enumeration value="non_eu_outside_scope_service"/>
+      <xs:enumeration value="exempt"/>
+      <xs:enumeration value="no_vat"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="VatCategoryValue">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="standard"/>
+      <xs:enumeration value="zero"/>
+      <xs:enumeration value="reverse_charge"/>
+      <xs:enumeration value="exempt"/>
+      <xs:enumeration value="outside_scope"/>
+    </xs:restriction>
+  </xs:simpleType>
+
   <xs:complexType name="ItemsType">
     <xs:sequence>
       <xs:element name="Item" type="tns:ItemType" minOccurs="0" maxOccurs="unbounded"/>
@@ -101,6 +125,8 @@
       <xs:element name="TotalPrice"  type="xs:decimal"/>
       <xs:element name="VatCodeId"   type="xs:string" minOccurs="0"/>
       <xs:element name="VatRate"     type="xs:decimal" minOccurs="0"/>
+      <xs:element name="VatCategory" type="tns:VatCategoryValue" minOccurs="0"/>
+      <xs:element name="VatExemptionReason" type="xs:string" minOccurs="0"/>
     </xs:sequence>
   </xs:complexType>
 

@@ -131,6 +131,8 @@ function getSampleXml(documentType: ExportIntegrationDocumentType): string {
   <DueDate>2026-04-05</DueDate>
   <Currency>EUR</Currency>
   <PaymentMethod>bank</PaymentMethod>
+  <VatTreatment>domestic</VatTreatment>
+  <PlaceOfSupplyCountryCode>CZ</PlaceOfSupplyCountryCode>
   <Status>issued</Status>
   <DocumentType>tax_document</DocumentType>
   <HeaderNote>Thank you for your business.</HeaderNote>
@@ -163,6 +165,8 @@ function getSampleXml(documentType: ExportIntegrationDocumentType): string {
       <Quantity>1.0000</Quantity>
       <UnitPrice>100.00</UnitPrice>
       <TotalPrice>100.00</TotalPrice>
+      <VatRate>21.00</VatRate>
+      <VatCategory>standard</VatCategory>
     </Item>
   </Items>
 </Invoice>`;

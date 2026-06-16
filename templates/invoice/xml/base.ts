@@ -38,6 +38,22 @@ export function buildBaseInvoiceXml(input: InvoiceXmlBuildInput): string {
   );
   const dueDateXml = buildOptionalElement('  ', 'DueDate', isoDateFromMs(invoice.dueAt));
   const paymentMethodXml = buildOptionalElement('  ', 'PaymentMethod', invoice.paymentMethod);
+  const vatTreatmentXml = buildOptionalElement('  ', 'VatTreatment', invoice.vatTreatment);
+  const placeOfSupplyCountryCodeXml = buildOptionalElement(
+    '  ',
+    'PlaceOfSupplyCountryCode',
+    invoice.placeOfSupplyCountryCode,
+  );
+  const reverseChargeReasonXml = buildOptionalElement(
+    '  ',
+    'ReverseChargeReason',
+    invoice.reverseChargeReason,
+  );
+  const reverseChargeNoteXml = buildOptionalElement(
+    '  ',
+    'ReverseChargeNote',
+    invoice.reverseChargeNote,
+  );
   const correctedInvoiceIdXml = buildOptionalElement(
     '  ',
     'CorrectedInvoiceId',
@@ -90,6 +106,8 @@ export function buildBaseInvoiceXml(input: InvoiceXmlBuildInput): string {
       <TotalPrice>${escapeXml(formatDecimal(item.totalPrice))}</TotalPrice>
       <VatCodeId>${escapeXml(item.vatCodeId)}</VatCodeId>
       <VatRate>${escapeXml(item.vatRate != null ? formatDecimal(item.vatRate, 2) : '')}</VatRate>
+      <VatCategory>${escapeXml(item.vatCategory)}</VatCategory>
+      <VatExemptionReason>${escapeXml(item.vatExemptionReason)}</VatExemptionReason>
     </Item>`,
     )
     .join('\n');
@@ -101,7 +119,7 @@ export function buildBaseInvoiceXml(input: InvoiceXmlBuildInput): string {
 ${buyerReferenceXml}  <ClientId>${escapeXml(invoice.clientId)}</ClientId>
   <IssueDate>${escapeXml(isoDateFromMs(invoice.issuedAt))}</IssueDate>
 ${taxableSupplyDateXml}${dueDateXml}  <Currency>${escapeXml(invoice.currency)}</Currency>
-${paymentMethodXml}  <Status>${escapeXml(invoice.status)}</Status>
+${paymentMethodXml}${vatTreatmentXml}${placeOfSupplyCountryCodeXml}${reverseChargeReasonXml}${reverseChargeNoteXml}  <Status>${escapeXml(invoice.status)}</Status>
   <DocumentType>${escapeXml(documentType)}</DocumentType>
 ${correctedInvoiceIdXml}${correctionKindXml}${cancellationReasonXml}${headerNoteXml}${footerNoteXml}  <Seller>
     <Name>${escapeXml(seller.companyName)}</Name>

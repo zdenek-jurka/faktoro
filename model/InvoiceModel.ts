@@ -20,6 +20,11 @@ export default class InvoiceModel extends Model {
   @field('due_at') dueAt?: number;
   @text('currency') currency: string;
   @text('payment_method') paymentMethod?: string;
+  @text('vat_treatment') vatTreatment?: string;
+  @text('place_of_supply_country_code') placeOfSupplyCountryCode?: string;
+  @text('reverse_charge_reason') reverseChargeReason?: string;
+  @text('reverse_charge_note') reverseChargeNote?: string;
+  @text('buyer_vat_validation_json') buyerVatValidationJson?: string;
   @text('status') status: string;
   @text('header_note') headerNote?: string;
   @text('footer_note') footerNote?: string;

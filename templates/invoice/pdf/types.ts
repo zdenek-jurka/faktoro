@@ -26,6 +26,7 @@ export type InvoicePdfTemplateLabels = {
   withoutVat: string;
   vatAmount: string;
   withVat: string;
+  reverseCharge: string;
   lineTotal: string;
   total: string;
 };
@@ -37,6 +38,8 @@ export type InvoicePdfTemplateItem = {
   unitPrice: number;
   totalPrice: number;
   vatRate?: number;
+  vatCategory?: string;
+  vatExemptionReason?: string;
 };
 
 export type InvoicePdfTemplateParty = {

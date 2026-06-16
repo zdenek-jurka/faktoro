@@ -7,7 +7,7 @@ export enum AddressType {
 }
 
 export default appSchema({
-  version: 58,
+  version: 59,
   tables: [
     tableSchema({
       name: 'app_settings',
@@ -256,6 +256,11 @@ export default appSchema({
         { name: 'due_at', type: 'number', isOptional: true },
         { name: 'currency', type: 'string' },
         { name: 'payment_method', type: 'string', isOptional: true },
+        { name: 'vat_treatment', type: 'string', isOptional: true },
+        { name: 'place_of_supply_country_code', type: 'string', isOptional: true },
+        { name: 'reverse_charge_reason', type: 'string', isOptional: true },
+        { name: 'reverse_charge_note', type: 'string', isOptional: true },
+        { name: 'buyer_vat_validation_json', type: 'string', isOptional: true },
         { name: 'status', type: 'string', isIndexed: true },
         { name: 'header_note', type: 'string', isOptional: true },
         { name: 'footer_note', type: 'string', isOptional: true },
@@ -284,6 +289,8 @@ export default appSchema({
         { name: 'total_price', type: 'number' },
         { name: 'vat_code_id', type: 'string', isOptional: true, isIndexed: true },
         { name: 'vat_rate', type: 'number', isOptional: true },
+        { name: 'vat_category', type: 'string', isOptional: true },
+        { name: 'vat_exemption_reason', type: 'string', isOptional: true },
         { name: 'created_at', type: 'number' },
         { name: 'updated_at', type: 'number' },
       ],
