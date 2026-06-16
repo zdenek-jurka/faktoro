@@ -1120,5 +1120,81 @@ export default schemaMigrations({
         `),
       ],
     },
+    {
+      toVersion: 58,
+      steps: [
+        unsafeExecuteSql(`
+          update "app_settings"
+          set "invoice_series_pattern" =
+            replace(
+              replace(
+                replace(
+                  replace(
+                    replace(
+                      replace(
+                        replace(
+                          replace(
+                            replace(
+                              replace("invoice_series_pattern",
+                                'YYYY', char(1) || 'A' || char(2)
+                              ),
+                              'DEV', char(1) || 'B' || char(2)
+                            ),
+                            'YY', char(1) || 'C' || char(2)
+                          ),
+                          'MM', char(1) || 'D' || char(2)
+                        ),
+                        'DD', char(1) || 'E' || char(2)
+                      ),
+                      char(1) || 'A' || char(2), '{YYYY}'
+                    ),
+                    char(1) || 'B' || char(2), '{DEV}'
+                  ),
+                  char(1) || 'C' || char(2), '{YY}'
+                ),
+                char(1) || 'D' || char(2), '{MM}'
+              ),
+              char(1) || 'E' || char(2), '{DD}'
+            )
+          where "invoice_series_pattern" is not null
+            and "invoice_series_pattern" not like '%{%';
+
+          update "app_settings"
+          set "timesheet_series_pattern" =
+            replace(
+              replace(
+                replace(
+                  replace(
+                    replace(
+                      replace(
+                        replace(
+                          replace(
+                            replace(
+                              replace("timesheet_series_pattern",
+                                'YYYY', char(1) || 'A' || char(2)
+                              ),
+                              'DEV', char(1) || 'B' || char(2)
+                            ),
+                            'YY', char(1) || 'C' || char(2)
+                          ),
+                          'MM', char(1) || 'D' || char(2)
+                        ),
+                        'DD', char(1) || 'E' || char(2)
+                      ),
+                      char(1) || 'A' || char(2), '{YYYY}'
+                    ),
+                    char(1) || 'B' || char(2), '{DEV}'
+                  ),
+                  char(1) || 'C' || char(2), '{YY}'
+                ),
+                char(1) || 'D' || char(2), '{MM}'
+              ),
+              char(1) || 'E' || char(2), '{DD}'
+            )
+          where "timesheet_series_pattern" is not null
+            and "timesheet_series_pattern" not like '%{%';
+        `),
+      ],
+    },
   ],
 });

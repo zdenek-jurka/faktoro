@@ -16,6 +16,9 @@ type SeriesDeviceConfig = Pick<
   'perDevice' | 'deviceCode' | 'syncDeviceName' | 'syncDeviceId'
 >;
 
+type SeriesDeviceTokenUsageConfig = Pick<SeriesConfig, 'pattern' | 'fallbackPattern' | 'perDevice'>;
+type SeriesDeviceTokenPatternConfig = Pick<SeriesConfig, 'pattern' | 'fallbackPattern'>;
+
 export function sanitizeSeriesPart(value: string): string {
   return value
     .normalize('NFD')
@@ -35,6 +38,15 @@ export function resolveSeriesDeviceToken(config: SeriesDeviceConfig): string {
     config.syncDeviceId?.slice(-4) ||
     'DEV';
   return sanitizeSeriesPart(source) || 'DEV';
+}
+
+export function hasSeriesDeviceToken(config: SeriesDeviceTokenPatternConfig): boolean {
+  const pattern = config.pattern?.trim() || config.fallbackPattern?.trim() || '';
+  return pattern.includes('{DEV}');
+}
+
+export function usesSeriesDeviceToken(config: SeriesDeviceTokenUsageConfig): boolean {
+  return !!config.perDevice && hasSeriesDeviceToken(config);
 }
 
 export function getSeriesPaddingFromPattern({
@@ -71,9 +83,9 @@ export function buildSeriesIdentifier(config: SeriesConfig): string {
   const pattern = config.pattern?.trim() || config.fallbackPattern?.trim();
   if (pattern) {
     let result = pattern;
-    result = result.replaceAll('YYYY', yyyy).replaceAll('YY', yy);
-    result = result.replaceAll('MM', mm).replaceAll('DD', dd);
-    result = result.replaceAll('DEV', config.perDevice ? deviceToken : '');
+    result = result.replaceAll('{YYYY}', yyyy).replaceAll('{YY}', yy);
+    result = result.replaceAll('{MM}', mm).replaceAll('{DD}', dd);
+    result = result.replaceAll('{DEV}', config.perDevice ? deviceToken : '');
 
     const hashMatch = result.match(/#+/);
     if (hashMatch) {

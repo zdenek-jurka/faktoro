@@ -3432,13 +3432,16 @@ type RootTranslation = {
 		 */
 		timesheetSeriesTitle: string
 		/**
-		 * S​e​r​i​e​s​ ​p​a​t​t​e​r​n​ ​(​e​.​g​.​ ​Y​Y​1​#​#​#​#​)
+		 * S​e​r​i​e​s​ ​p​a​t​t​e​r​n​ ​(​e​.​g​.​ ​{​e​x​a​m​p​l​e​}​)
+		 * @param {string} example
 		 */
-		invoiceSeriesPattern: string
+		invoiceSeriesPattern: RequiredParams<'example'>
 		/**
-		 * U​s​e​ ​t​o​k​e​n​s​ ​Y​Y​Y​Y​,​ ​Y​Y​,​ ​M​M​,​ ​D​D​,​ ​D​E​V​ ​a​n​d​ ​#​ ​f​o​r​ ​a​u​t​o​i​n​c​r​e​m​e​n​t​ ​n​u​m​b​e​r​ ​(​e​.​g​.​ ​Y​Y​1​#​#​#​#​)​.
+		 * U​s​e​ ​t​o​k​e​n​s​ ​{​t​o​k​e​n​s​}​ ​a​n​d​ ​#​ ​f​o​r​ ​a​u​t​o​i​n​c​r​e​m​e​n​t​ ​n​u​m​b​e​r​ ​(​e​.​g​.​ ​{​e​x​a​m​p​l​e​}​)​.​ ​T​o​k​e​n​s​ ​a​r​e​ ​o​n​l​y​ ​m​a​t​e​r​i​a​l​i​z​e​d​ ​w​h​e​n​ ​w​r​a​p​p​e​d​ ​i​n​ ​c​u​r​l​y​ ​b​r​a​c​k​e​t​s​.
+		 * @param {string} example
+		 * @param {string} tokens
 		 */
-		invoiceSeriesPatternHelp: string
+		invoiceSeriesPatternHelp: RequiredParams<'example' | 'tokens'>
 		/**
 		 * P​r​e​v​i​e​w
 		 */
@@ -3464,9 +3467,29 @@ type RootTranslation = {
 		 */
 		invoiceSeriesPerDevice: string
 		/**
-		 * D​e​v​i​c​e​ ​c​o​d​e​ ​(​o​p​t​i​o​n​a​l​)
+		 * D​e​v​i​c​e​ ​c​o​d​e
 		 */
 		invoiceSeriesDeviceCode: string
+		/**
+		 * E​n​t​e​r​ ​a​ ​d​e​v​i​c​e​ ​c​o​d​e​ ​w​h​e​n​ ​t​h​e​ ​p​a​t​t​e​r​n​ ​c​o​n​t​a​i​n​s​ ​t​h​e​ ​{​d​e​v​i​c​e​T​o​k​e​n​}​ ​t​o​k​e​n​.
+		 * @param {string} deviceToken
+		 */
+		seriesDeviceCodeRequired: RequiredParams<'deviceToken'>
+		/**
+		 * W​i​t​h​ ​o​n​l​i​n​e​ ​s​y​n​c​,​ ​i​t​ ​i​s​ ​s​t​r​o​n​g​l​y​ ​r​e​c​o​m​m​e​n​d​e​d​ ​t​o​ ​e​n​a​b​l​e​ ​a​ ​s​e​p​a​r​a​t​e​ ​i​n​v​o​i​c​e​ ​s​e​r​i​e​s​ ​p​e​r​ ​d​e​v​i​c​e​ ​a​n​d​ ​i​n​c​l​u​d​e​ ​t​h​e​ ​{​d​e​v​i​c​e​T​o​k​e​n​}​ ​t​o​k​e​n​ ​i​n​ ​t​h​e​ ​i​n​v​o​i​c​e​ ​p​a​t​t​e​r​n​ ​(​f​o​r​ ​e​x​a​m​p​l​e​ ​{​e​x​a​m​p​l​e​}​)​.​ ​T​h​i​s​ ​g​r​e​a​t​l​y​ ​r​e​d​u​c​e​s​ ​t​h​e​ ​r​i​s​k​ ​o​f​ ​i​n​v​o​i​c​e​ ​n​u​m​b​e​r​ ​c​o​l​l​i​s​i​o​n​s​ ​w​h​e​n​ ​m​u​l​t​i​p​l​e​ ​d​e​v​i​c​e​s​ ​i​s​s​u​e​ ​i​n​v​o​i​c​e​s​ ​o​f​f​l​i​n​e​.
+		 * @param {string} deviceToken
+		 * @param {string} example
+		 */
+		invoiceSeriesDeviceTokenWarning: RequiredParams<'deviceToken' | 'example'>
+		/**
+		 * O​p​e​n​ ​n​u​m​b​e​r​i​n​g​ ​s​e​t​t​i​n​g​s
+		 */
+		invoiceSeriesDeviceTokenCta: string
+		/**
+		 * S​e​p​a​r​a​t​e​ ​s​e​r​i​e​s​ ​p​e​r​ ​d​e​v​i​c​e​ ​i​s​ ​e​n​a​b​l​e​d​,​ ​b​u​t​ ​t​h​e​ ​p​a​t​t​e​r​n​ ​d​o​e​s​ ​n​o​t​ ​i​n​c​l​u​d​e​ ​t​h​e​ ​{​d​e​v​i​c​e​T​o​k​e​n​}​ ​t​o​k​e​n​.​ ​T​h​e​ ​d​o​c​u​m​e​n​t​ ​n​u​m​b​e​r​ ​w​i​l​l​ ​n​o​t​ ​i​d​e​n​t​i​f​y​ ​t​h​e​ ​d​e​v​i​c​e​ ​a​n​d​ ​c​a​n​ ​c​o​l​l​i​d​e​ ​w​i​t​h​ ​a​n​o​t​h​e​r​ ​d​e​v​i​c​e​.
+		 * @param {string} deviceToken
+		 */
+		seriesPerDeviceMissingTokenWarning: RequiredParams<'deviceToken'>
 		/**
 		 * D​e​v​i​c​e​ ​s​y​n​c
 		 */
@@ -8247,13 +8270,13 @@ export type TranslationFunctions = {
 		 */
 		timesheetSeriesTitle: () => LocalizedString
 		/**
-		 * Series pattern (e.g. YY1####)
+		 * Series pattern (e.g. {example})
 		 */
-		invoiceSeriesPattern: () => LocalizedString
+		invoiceSeriesPattern: (arg: { example: string }) => LocalizedString
 		/**
-		 * Use tokens YYYY, YY, MM, DD, DEV and # for autoincrement number (e.g. YY1####).
+		 * Use tokens {tokens} and # for autoincrement number (e.g. {example}). Tokens are only materialized when wrapped in curly brackets.
 		 */
-		invoiceSeriesPatternHelp: () => LocalizedString
+		invoiceSeriesPatternHelp: (arg: { example: string, tokens: string }) => LocalizedString
 		/**
 		 * Preview
 		 */
@@ -8279,9 +8302,25 @@ export type TranslationFunctions = {
 		 */
 		invoiceSeriesPerDevice: () => LocalizedString
 		/**
-		 * Device code (optional)
+		 * Device code
 		 */
 		invoiceSeriesDeviceCode: () => LocalizedString
+		/**
+		 * Enter a device code when the pattern contains the {deviceToken} token.
+		 */
+		seriesDeviceCodeRequired: (arg: { deviceToken: string }) => LocalizedString
+		/**
+		 * With online sync, it is strongly recommended to enable a separate invoice series per device and include the {deviceToken} token in the invoice pattern (for example {example}). This greatly reduces the risk of invoice number collisions when multiple devices issue invoices offline.
+		 */
+		invoiceSeriesDeviceTokenWarning: (arg: { deviceToken: string, example: string }) => LocalizedString
+		/**
+		 * Open numbering settings
+		 */
+		invoiceSeriesDeviceTokenCta: () => LocalizedString
+		/**
+		 * Separate series per device is enabled, but the pattern does not include the {deviceToken} token. The document number will not identify the device and can collide with another device.
+		 */
+		seriesPerDeviceMissingTokenWarning: (arg: { deviceToken: string }) => LocalizedString
 		/**
 		 * Device sync
 		 */

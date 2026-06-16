@@ -1,10 +1,16 @@
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { getSwitchColors } from '@/constants/theme';
+import { IconSymbol } from '@/components/ui/icon-symbol';
+import { isSyncEnabled } from '@/constants/features';
+import { getSwitchColors, withOpacity } from '@/constants/theme';
 import { useBottomSafeAreaStyle } from '@/hooks/use-bottom-safe-area-style';
 import { usePalette } from '@/hooks/use-palette';
 import { useI18nContext } from '@/i18n/i18n-react';
-import { getDeviceSyncSettings } from '@/repositories/device-sync-settings-repository';
+import {
+  getDeviceSyncSettings,
+  observeDeviceSyncSettings,
+  type DeviceSyncSettings,
+} from '@/repositories/device-sync-settings-repository';
 import {
   resolveDocumentSeriesCounter,
   setDocumentSeriesCounterNextNumber,
@@ -14,7 +20,11 @@ import { getSettings, updateSettings } from '@/repositories/settings-repository'
 import { parsePositiveIntegerInput } from '@/utils/number-input';
 import { showConfirm } from '@/utils/platform-alert';
 import { isIos } from '@/utils/platform';
-import { buildSeriesIdentifier, getSeriesPaddingFromPattern } from '@/utils/series-utils';
+import {
+  buildSeriesIdentifier,
+  getSeriesPaddingFromPattern,
+  hasSeriesDeviceToken,
+} from '@/utils/series-utils';
 import { useHeaderHeight } from '@react-navigation/elements';
 import { Stack } from 'expo-router';
 import React, { useEffect, useState } from 'react';
@@ -28,6 +38,13 @@ import {
   TextInput,
   View,
 } from 'react-native';
+
+const INVOICE_SERIES_FALLBACK_PATTERN = '{YY}####';
+const TIMESHEET_SERIES_FALLBACK_PATTERN = 'TS-{YY}-####';
+const SERIES_PATTERN_EXAMPLE = '{YY}1####';
+const SERIES_DEVICE_PATTERN_EXAMPLE = '{YY}{DEV}####';
+const SERIES_DEVICE_TOKEN = '{DEV}';
+const SERIES_TOKEN_LIST = '{YYYY}, {YY}, {MM}, {DD}, {DEV}';
 
 function buildSeriesPreview({
   pattern,
@@ -74,23 +91,35 @@ export default function SettingsNumberingScreen() {
   const [initialTimesheetSeriesNextNumber, setInitialTimesheetSeriesNextNumber] = useState(1);
   const [timesheetSeriesPerDevice, setTimesheetSeriesPerDevice] = useState(false);
   const [timesheetSeriesDeviceCode, setTimesheetSeriesDeviceCode] = useState('');
+  const [deviceSyncSettings, setDeviceSyncSettings] = useState<DeviceSyncSettings | null>(null);
 
   const invoiceSeriesPadding = getSeriesPaddingFromPattern({
     pattern: invoiceSeriesPattern,
-    fallbackPattern: 'YY####',
+    fallbackPattern: INVOICE_SERIES_FALLBACK_PATTERN,
   });
   const timesheetSeriesPadding = getSeriesPaddingFromPattern({
     pattern: timesheetSeriesPattern,
-    fallbackPattern: 'TS-YY-####',
+    fallbackPattern: TIMESHEET_SERIES_FALLBACK_PATTERN,
   });
+  const invoiceSeriesHasDeviceToken = hasSeriesDeviceToken({
+    pattern: invoiceSeriesPattern,
+    fallbackPattern: INVOICE_SERIES_FALLBACK_PATTERN,
+  });
+  const timesheetSeriesHasDeviceToken = hasSeriesDeviceToken({
+    pattern: timesheetSeriesPattern,
+    fallbackPattern: TIMESHEET_SERIES_FALLBACK_PATTERN,
+  });
+  const resolvedInvoiceSeriesPerDevice = invoiceSeriesPerDevice || invoiceSeriesHasDeviceToken;
+  const resolvedTimesheetSeriesPerDevice =
+    timesheetSeriesPerDevice || timesheetSeriesHasDeviceToken;
 
   const invoicePreviewNumber = buildSeriesPreview({
     pattern: invoiceSeriesPattern,
     nextNumber: invoiceSeriesNextNumber,
     padding: String(invoiceSeriesPadding),
-    perDevice: invoiceSeriesPerDevice,
+    perDevice: resolvedInvoiceSeriesPerDevice,
     deviceCode: invoiceSeriesDeviceCode,
-    fallbackPattern: 'YY####',
+    fallbackPattern: INVOICE_SERIES_FALLBACK_PATTERN,
     fallbackPrefix: 'INV',
   });
 
@@ -98,11 +127,21 @@ export default function SettingsNumberingScreen() {
     pattern: timesheetSeriesPattern,
     nextNumber: timesheetSeriesNextNumber,
     padding: String(timesheetSeriesPadding),
-    perDevice: timesheetSeriesPerDevice,
+    perDevice: resolvedTimesheetSeriesPerDevice,
     deviceCode: timesheetSeriesDeviceCode,
-    fallbackPattern: 'TS-YY-####',
+    fallbackPattern: TIMESHEET_SERIES_FALLBACK_PATTERN,
     fallbackPrefix: 'TS',
   });
+  const invoiceSeriesUsesDeviceToken =
+    resolvedInvoiceSeriesPerDevice && invoiceSeriesHasDeviceToken;
+  const timesheetSeriesUsesDeviceToken =
+    resolvedTimesheetSeriesPerDevice && timesheetSeriesHasDeviceToken;
+  const showInvoicePerDeviceMissingTokenWarning =
+    resolvedInvoiceSeriesPerDevice && !invoiceSeriesUsesDeviceToken;
+  const showTimesheetPerDeviceMissingTokenWarning =
+    resolvedTimesheetSeriesPerDevice && !timesheetSeriesUsesDeviceToken;
+  const showInvoiceDeviceTokenWarning =
+    isSyncEnabled && !!deviceSyncSettings?.syncFeatureEnabled && !resolvedInvoiceSeriesPerDevice;
 
   useEffect(() => {
     const loadSettings = async () => {
@@ -125,14 +164,16 @@ export default function SettingsNumberingScreen() {
         sharedNextNumber: settings.timesheetSeriesNextNumber,
       });
 
-      setInvoiceSeriesPattern(settings.invoiceSeriesPattern || 'YY####');
+      setInvoiceSeriesPattern(settings.invoiceSeriesPattern || INVOICE_SERIES_FALLBACK_PATTERN);
       const savedInvoiceNextNumber = invoiceCounter.nextNumber;
       setInvoiceSeriesNextNumber(String(savedInvoiceNextNumber));
       setInitialInvoiceSeriesNextNumber(savedInvoiceNextNumber);
       setInvoiceSeriesPerDevice(!!settings.invoiceSeriesPerDevice);
       setInvoiceSeriesDeviceCode(invoiceCounter.deviceCode);
 
-      setTimesheetSeriesPattern(settings.timesheetSeriesPattern || 'TS-YY-####');
+      setTimesheetSeriesPattern(
+        settings.timesheetSeriesPattern || TIMESHEET_SERIES_FALLBACK_PATTERN,
+      );
       const savedTimesheetNextNumber = timesheetCounter.nextNumber;
       setTimesheetSeriesNextNumber(String(savedTimesheetNextNumber));
       setInitialTimesheetSeriesNextNumber(savedTimesheetNextNumber);
@@ -142,6 +183,20 @@ export default function SettingsNumberingScreen() {
 
     void loadSettings();
   }, []);
+
+  useEffect(() => observeDeviceSyncSettings(setDeviceSyncSettings), []);
+
+  useEffect(() => {
+    if (invoiceSeriesHasDeviceToken && !invoiceSeriesPerDevice) {
+      setInvoiceSeriesPerDevice(true);
+    }
+  }, [invoiceSeriesHasDeviceToken, invoiceSeriesPerDevice]);
+
+  useEffect(() => {
+    if (timesheetSeriesHasDeviceToken && !timesheetSeriesPerDevice) {
+      setTimesheetSeriesPerDevice(true);
+    }
+  }, [timesheetSeriesHasDeviceToken, timesheetSeriesPerDevice]);
 
   const handleSave = async () => {
     try {
@@ -154,6 +209,22 @@ export default function SettingsNumberingScreen() {
         !Number.isFinite(normalizedTimesheetSeriesNextNumber)
       ) {
         Alert.alert(LL.common.error(), LL.settings.saveError());
+        return;
+      }
+
+      if (invoiceSeriesHasDeviceToken && !invoiceSeriesDeviceCode.trim()) {
+        Alert.alert(
+          LL.common.error(),
+          LL.settings.seriesDeviceCodeRequired({ deviceToken: SERIES_DEVICE_TOKEN }),
+        );
+        return;
+      }
+
+      if (timesheetSeriesHasDeviceToken && !timesheetSeriesDeviceCode.trim()) {
+        Alert.alert(
+          LL.common.error(),
+          LL.settings.seriesDeviceCodeRequired({ deviceToken: SERIES_DEVICE_TOKEN }),
+        );
         return;
       }
 
@@ -189,19 +260,19 @@ export default function SettingsNumberingScreen() {
       await updateSettings({
         invoiceSeriesPrefix: null,
         invoiceSeriesPattern: invoiceSeriesPattern.trim() || null,
-        invoiceSeriesNextNumber: invoiceSeriesPerDevice
+        invoiceSeriesNextNumber: resolvedInvoiceSeriesPerDevice
           ? undefined
           : normalizedInvoiceSeriesNextNumber,
         invoiceSeriesPadding,
-        invoiceSeriesPerDevice,
+        invoiceSeriesPerDevice: resolvedInvoiceSeriesPerDevice,
         invoiceSeriesDeviceCode: null,
         timesheetSeriesPrefix: null,
         timesheetSeriesPattern: timesheetSeriesPattern.trim() || null,
-        timesheetSeriesNextNumber: timesheetSeriesPerDevice
+        timesheetSeriesNextNumber: resolvedTimesheetSeriesPerDevice
           ? undefined
           : normalizedTimesheetSeriesNextNumber,
         timesheetSeriesPadding,
-        timesheetSeriesPerDevice,
+        timesheetSeriesPerDevice: resolvedTimesheetSeriesPerDevice,
         timesheetSeriesDeviceCode: null,
       });
 
@@ -210,7 +281,7 @@ export default function SettingsNumberingScreen() {
         setLocalSeriesDeviceCode('timesheet', timesheetSeriesDeviceCode),
       ]);
 
-      if (invoiceSeriesPerDevice) {
+      if (resolvedInvoiceSeriesPerDevice) {
         const invoiceCounter = await resolveDocumentSeriesCounter({
           kind: 'invoice',
           perDevice: true,
@@ -222,7 +293,7 @@ export default function SettingsNumberingScreen() {
         await setDocumentSeriesCounterNextNumber(invoiceCounter, normalizedInvoiceSeriesNextNumber);
       }
 
-      if (timesheetSeriesPerDevice) {
+      if (resolvedTimesheetSeriesPerDevice) {
         const timesheetCounter = await resolveDocumentSeriesCounter({
           kind: 'timesheet',
           perDevice: true,
@@ -241,6 +312,8 @@ export default function SettingsNumberingScreen() {
       setInitialInvoiceSeriesNextNumber(normalizedInvoiceSeriesNextNumber);
       setTimesheetSeriesNextNumber(String(normalizedTimesheetSeriesNextNumber));
       setInitialTimesheetSeriesNextNumber(normalizedTimesheetSeriesNextNumber);
+      setInvoiceSeriesPerDevice(resolvedInvoiceSeriesPerDevice);
+      setTimesheetSeriesPerDevice(resolvedTimesheetSeriesPerDevice);
 
       Alert.alert(LL.common.success(), LL.settings.saveSuccess());
     } catch (error) {
@@ -273,14 +346,17 @@ export default function SettingsNumberingScreen() {
             </ThemedText>
             <TextInput
               style={[styles.input, stylesField(palette)]}
-              placeholder={LL.settings.invoiceSeriesPattern()}
+              placeholder={LL.settings.invoiceSeriesPattern({ example: SERIES_PATTERN_EXAMPLE })}
               placeholderTextColor={placeholder(palette)}
               value={invoiceSeriesPattern}
               onChangeText={setInvoiceSeriesPattern}
               autoCapitalize="characters"
             />
             <ThemedText style={styles.hintText}>
-              {LL.settings.invoiceSeriesPatternHelp()}
+              {LL.settings.invoiceSeriesPatternHelp({
+                tokens: SERIES_TOKEN_LIST,
+                example: SERIES_PATTERN_EXAMPLE,
+              })}
             </ThemedText>
             <ThemedView style={[styles.previewBox, sectionCard(palette)]}>
               <ThemedText style={styles.previewLabel}>
@@ -303,12 +379,12 @@ export default function SettingsNumberingScreen() {
                 {LL.settings.invoiceSeriesPerDevice()}
               </ThemedText>
               <Switch
-                value={invoiceSeriesPerDevice}
+                value={resolvedInvoiceSeriesPerDevice}
                 onValueChange={setInvoiceSeriesPerDevice}
                 {...getSwitchColors(palette)}
               />
             </View>
-            {invoiceSeriesPerDevice && (
+            {resolvedInvoiceSeriesPerDevice && (
               <TextInput
                 style={[styles.input, stylesField(palette)]}
                 placeholder={LL.settings.invoiceSeriesDeviceCode()}
@@ -318,20 +394,68 @@ export default function SettingsNumberingScreen() {
                 autoCapitalize="characters"
               />
             )}
+            {showInvoicePerDeviceMissingTokenWarning && (
+              <View
+                style={[
+                  styles.warningBox,
+                  {
+                    borderColor: withOpacity(palette.timerPause, 0.85),
+                    backgroundColor: withOpacity(palette.timerPause, 0.12),
+                  },
+                ]}
+              >
+                <IconSymbol
+                  name="exclamationmark.triangle.fill"
+                  size={18}
+                  color={palette.timerPause}
+                />
+                <ThemedText style={[styles.warningText, { color: palette.text }]}>
+                  {LL.settings.seriesPerDeviceMissingTokenWarning({
+                    deviceToken: SERIES_DEVICE_TOKEN,
+                  })}
+                </ThemedText>
+              </View>
+            )}
+            {!showInvoicePerDeviceMissingTokenWarning && showInvoiceDeviceTokenWarning && (
+              <View
+                style={[
+                  styles.warningBox,
+                  {
+                    borderColor: withOpacity(palette.timerPause, 0.85),
+                    backgroundColor: withOpacity(palette.timerPause, 0.12),
+                  },
+                ]}
+              >
+                <IconSymbol
+                  name="exclamationmark.triangle.fill"
+                  size={18}
+                  color={palette.timerPause}
+                />
+                <ThemedText style={[styles.warningText, { color: palette.text }]}>
+                  {LL.settings.invoiceSeriesDeviceTokenWarning({
+                    deviceToken: SERIES_DEVICE_TOKEN,
+                    example: SERIES_DEVICE_PATTERN_EXAMPLE,
+                  })}
+                </ThemedText>
+              </View>
+            )}
 
             <ThemedText type="subtitle" style={styles.seriesSectionTitle}>
               {LL.settings.timesheetSeriesTitle()}
             </ThemedText>
             <TextInput
               style={[styles.input, stylesField(palette)]}
-              placeholder={LL.settings.invoiceSeriesPattern()}
+              placeholder={LL.settings.invoiceSeriesPattern({ example: SERIES_PATTERN_EXAMPLE })}
               placeholderTextColor={placeholder(palette)}
               value={timesheetSeriesPattern}
               onChangeText={setTimesheetSeriesPattern}
               autoCapitalize="characters"
             />
             <ThemedText style={styles.hintText}>
-              {LL.settings.invoiceSeriesPatternHelp()}
+              {LL.settings.invoiceSeriesPatternHelp({
+                tokens: SERIES_TOKEN_LIST,
+                example: SERIES_PATTERN_EXAMPLE,
+              })}
             </ThemedText>
             <ThemedView style={[styles.previewBox, sectionCard(palette)]}>
               <ThemedText style={styles.previewLabel}>
@@ -354,12 +478,12 @@ export default function SettingsNumberingScreen() {
                 {LL.settings.invoiceSeriesPerDevice()}
               </ThemedText>
               <Switch
-                value={timesheetSeriesPerDevice}
+                value={resolvedTimesheetSeriesPerDevice}
                 onValueChange={setTimesheetSeriesPerDevice}
                 {...getSwitchColors(palette)}
               />
             </View>
-            {timesheetSeriesPerDevice && (
+            {resolvedTimesheetSeriesPerDevice && (
               <TextInput
                 style={[styles.input, stylesField(palette)]}
                 placeholder={LL.settings.invoiceSeriesDeviceCode()}
@@ -368,6 +492,28 @@ export default function SettingsNumberingScreen() {
                 onChangeText={setTimesheetSeriesDeviceCode}
                 autoCapitalize="characters"
               />
+            )}
+            {showTimesheetPerDeviceMissingTokenWarning && (
+              <View
+                style={[
+                  styles.warningBox,
+                  {
+                    borderColor: withOpacity(palette.timerPause, 0.85),
+                    backgroundColor: withOpacity(palette.timerPause, 0.12),
+                  },
+                ]}
+              >
+                <IconSymbol
+                  name="exclamationmark.triangle.fill"
+                  size={18}
+                  color={palette.timerPause}
+                />
+                <ThemedText style={[styles.warningText, { color: palette.text }]}>
+                  {LL.settings.seriesPerDeviceMissingTokenWarning({
+                    deviceToken: SERIES_DEVICE_TOKEN,
+                  })}
+                </ThemedText>
+              </View>
             )}
           </ThemedView>
 
@@ -446,6 +592,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 16,
     marginBottom: 12,
+  },
+  warningBox: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 10,
+    borderLeftWidth: 3,
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 14,
+  },
+  warningText: {
+    flex: 1,
+    fontSize: 13,
+    lineHeight: 18,
   },
   saveButton: {
     paddingVertical: 16,

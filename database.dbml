@@ -1,5 +1,5 @@
 // Database schema for Faktoro app
-// Generated from WatermelonDB schema version 57
+// Generated from WatermelonDB schema version 58
 // Syntax: DBML (Database Markup Language) - https://www.dbml.org/docs/
 
 Project faktoro {
@@ -45,13 +45,13 @@ Table app_settings {
   invoice_qr_type string [null, note: 'Invoice payment QR type: none/spayd/epc/swiss']
   invoice_default_export_format string [null, note: 'Default invoice XML export format: none/isdoc/peppol/xrechnung']
   invoice_series_prefix string [null]
-  invoice_series_pattern string [null]
+  invoice_series_pattern string [null, note: 'Numbering mask; materialized date/device tokens use curly braces, e.g. {YY}{DEV}####']
   invoice_series_next_number number [null]
   invoice_series_padding number [null]
   invoice_series_per_device boolean [null]
   invoice_series_device_code string [null, note: 'Legacy/shared fallback; current per-device code is stored locally in config_storage document_numbering.invoice.device_code']
   timesheet_series_prefix string [null]
-  timesheet_series_pattern string [null]
+  timesheet_series_pattern string [null, note: 'Numbering mask; materialized date/device tokens use curly braces, e.g. TS-{YY}-####']
   timesheet_series_next_number number [null]
   timesheet_series_padding number [null]
   timesheet_series_per_device boolean [null]

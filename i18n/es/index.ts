@@ -985,9 +985,9 @@ const es = {
     invoiceDefaultExportFormatNone: 'Ninguno (preguntar en exportación)',
     invoiceSeriesTitle: 'Serie de numeración de facturas',
     timesheetSeriesTitle: 'Serie de numeración de hojas de tiempo',
-    invoiceSeriesPattern: 'Patrón de serie (por ejemplo, YY1####)',
+    invoiceSeriesPattern: 'Patrón de serie (por ejemplo, {example})',
     invoiceSeriesPatternHelp:
-      'Utilice tokens AAAA, AA, MM, DD, DEV y # para el número de incremento automático (por ejemplo, AA1####).',
+      'Utilice los tokens {tokens} y # para el número de incremento automático (por ejemplo, {example}). Los tokens solo se materializan cuando están entre llaves.',
     invoiceSeriesPreviewLabel: 'Avance',
     invoiceSeriesNextNumber: 'siguiente numero',
     seriesNextNumberChangeConfirmTitle: '¿Cambiar el siguiente número de la serie?',
@@ -995,7 +995,14 @@ const es = {
       'Cambiar el siguiente número afecta a los documentos generados a partir de ahora y puede causar huecos o duplicados. Continúa solo si entiendes el impacto.',
     seriesNextNumberChangeConfirmContinue: 'Sí, cambiar el siguiente número',
     invoiceSeriesPerDevice: 'Series separadas por dispositivo',
-    invoiceSeriesDeviceCode: 'Código de dispositivo (opcional)',
+    invoiceSeriesDeviceCode: 'Código de dispositivo',
+    seriesDeviceCodeRequired:
+      'Introduce un código de dispositivo cuando el patrón contenga el token {deviceToken}.',
+    invoiceSeriesDeviceTokenWarning:
+      'Con la sincronización en línea, se recomienda encarecidamente activar una serie de facturas separada por dispositivo e incluir el token {deviceToken} en el patrón de factura (por ejemplo {example}). Esto reduce mucho el riesgo de colisiones de números cuando varios dispositivos emiten facturas sin conexión.',
+    invoiceSeriesDeviceTokenCta: 'Abrir numeración',
+    seriesPerDeviceMissingTokenWarning:
+      'La serie separada por dispositivo está activada, pero el patrón no incluye el token {deviceToken}. El número del documento no identificará el dispositivo y puede colisionar con otro dispositivo.',
     syncTitle: 'Sincronización de dispositivos',
     syncDescription:
       'Conecta este dispositivo al servidor de sincronización de Faktoro que se ejecuta en Docker.',

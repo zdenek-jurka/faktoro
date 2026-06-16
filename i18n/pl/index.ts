@@ -970,9 +970,9 @@ const pl = {
     invoiceDefaultExportFormatNone: 'Brak (zapytaj przy eksporcie)',
     invoiceSeriesTitle: 'Seria numeracji faktur',
     timesheetSeriesTitle: 'Seria numeracji kart czasu',
-    invoiceSeriesPattern: 'Wzór serii (np. YY1####)',
+    invoiceSeriesPattern: 'Wzór serii (np. {example})',
     invoiceSeriesPatternHelp:
-      'Użyj tokenów YYYY, YY, MM, DD, DEV i # dla numeru automatycznego zwiększania (np. YY1####).',
+      'Użyj tokenów {tokens} i # dla numeru automatycznego zwiększania (np. {example}). Tokeny są materializowane tylko wtedy, gdy są zapisane w nawiasach klamrowych.',
     invoiceSeriesPreviewLabel: 'Zapowiedź',
     invoiceSeriesNextNumber: 'Następny numer',
     seriesNextNumberChangeConfirmTitle: 'Zmienić następny numer serii?',
@@ -980,7 +980,13 @@ const pl = {
       'Zmiana następnego numeru wpłynie na nowo generowane dokumenty i może spowodować luki lub duplikaty. Kontynuuj tylko, jeśli rozumiesz skutki tej zmiany.',
     seriesNextNumberChangeConfirmContinue: 'Tak, zmień następny numer',
     invoiceSeriesPerDevice: 'Oddzielne serie dla każdego urządzenia',
-    invoiceSeriesDeviceCode: 'Kod urządzenia (opcjonalnie)',
+    invoiceSeriesDeviceCode: 'Kod urządzenia',
+    seriesDeviceCodeRequired: 'Wpisz kod urządzenia, gdy wzór zawiera token {deviceToken}.',
+    invoiceSeriesDeviceTokenWarning:
+      'Przy synchronizacji online zdecydowanie zaleca się włączenie oddzielnej serii faktur dla każdego urządzenia i użycie tokenu {deviceToken} we wzorze faktury (np. {example}). Znacznie zmniejsza to ryzyko kolizji numerów, gdy kilka urządzeń wystawia faktury offline.',
+    invoiceSeriesDeviceTokenCta: 'Otwórz numerację',
+    seriesPerDeviceMissingTokenWarning:
+      'Oddzielna seria dla każdego urządzenia jest włączona, ale wzór nie zawiera tokenu {deviceToken}. Numer dokumentu nie będzie identyfikować urządzenia i może kolidować z innym urządzeniem.',
     syncTitle: 'Synchronizacja urządzeń',
     syncDescription:
       'Połącz to urządzenie z serwerem synchronizacji Faktoro uruchomionym w Dockerze.',

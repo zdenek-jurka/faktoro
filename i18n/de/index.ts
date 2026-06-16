@@ -995,9 +995,9 @@ const de = {
     invoiceDefaultExportFormatNone: 'Keine (bei Export erfragen)',
     invoiceSeriesTitle: 'Rechnungsnummerierungsserie',
     timesheetSeriesTitle: 'Stundenzettel-Nummernserie',
-    invoiceSeriesPattern: 'Serienmuster (z. B. YY1####)',
+    invoiceSeriesPattern: 'Serienmuster (z. B. {example})',
     invoiceSeriesPatternHelp:
-      'Verwenden Sie die Token YYYY, YY, MM, DD, DEV und # für die automatische Inkrementierung der Nummer (z. B. YY1####).',
+      'Verwenden Sie die Token {tokens} und # für die automatische Inkrementierung der Nummer (z. B. {example}). Token werden nur materialisiert, wenn sie in geschweiften Klammern stehen.',
     invoiceSeriesPreviewLabel: 'Vorschau',
     invoiceSeriesNextNumber: 'Nächste Nummer',
     seriesNextNumberChangeConfirmTitle: 'Nächste Nummer der Reihe ändern?',
@@ -1005,7 +1005,14 @@ const de = {
       'Das Ändern der nächsten Nummer beeinflusst neu erzeugte Dokumente und kann Lücken oder Duplikate verursachen. Nur fortfahren, wenn Sie die Auswirkung verstehen.',
     seriesNextNumberChangeConfirmContinue: 'Ja, nächste Nummer ändern',
     invoiceSeriesPerDevice: 'Separate Serie pro Gerät',
-    invoiceSeriesDeviceCode: 'Gerätecode (optional)',
+    invoiceSeriesDeviceCode: 'Gerätecode',
+    seriesDeviceCodeRequired:
+      'Geben Sie einen Gerätecode ein, wenn das Muster das Token {deviceToken} enthält.',
+    invoiceSeriesDeviceTokenWarning:
+      'Bei Online-Synchronisierung wird dringend empfohlen, eine separate Rechnungsserie pro Gerät zu aktivieren und das Token {deviceToken} in der Rechnungsmaske zu verwenden (z. B. {example}). Dadurch sinkt das Risiko kollidierender Rechnungsnummern deutlich, wenn mehrere Geräte offline Rechnungen ausstellen.',
+    invoiceSeriesDeviceTokenCta: 'Nummerierung öffnen',
+    seriesPerDeviceMissingTokenWarning:
+      'Die separate Serie pro Gerät ist aktiviert, aber das Muster enthält nicht das Token {deviceToken}. Die Belegnummer unterscheidet das Gerät nicht und kann mit einem anderen Gerät kollidieren.',
     syncTitle: 'Gerätesynchronisierung',
     syncDescription: 'Dieses Gerät mit dem Faktoro-Sync-Server in Docker verbinden.',
     syncDescriptionConnected: 'Dieses Gerät ist mit dem Sync-Server unter {serverUrl} verbunden.',

@@ -7,7 +7,7 @@ export enum AddressType {
 }
 
 export default appSchema({
-  version: 57,
+  version: 58,
   tables: [
     tableSchema({
       name: 'app_settings',

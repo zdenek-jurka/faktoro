@@ -104,7 +104,7 @@ function buildInvoiceNumberFromSettings(
 ): string {
   return buildSeriesIdentifier({
     pattern: settings?.invoiceSeriesPattern,
-    fallbackPattern: 'YY####',
+    fallbackPattern: '{YY}####',
     prefix: settings?.invoiceSeriesPrefix,
     nextNumber: nextNumberOverride ?? settings?.invoiceSeriesNextNumber,
     padding: settings?.invoiceSeriesPadding,

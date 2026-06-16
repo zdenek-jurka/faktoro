@@ -58,7 +58,7 @@ function buildTimesheetNumberFromSettings(
 ): string {
   return buildSeriesIdentifier({
     pattern: settings?.timesheetSeriesPattern,
-    fallbackPattern: 'TS-YY-####',
+    fallbackPattern: 'TS-{YY}-####',
     prefix: settings?.timesheetSeriesPrefix,
     nextNumber: nextNumberOverride ?? settings?.timesheetSeriesNextNumber,
     padding: settings?.timesheetSeriesPadding,

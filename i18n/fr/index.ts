@@ -991,9 +991,9 @@ const fr = {
     invoiceDefaultExportFormatNone: "Aucun (à demander à l'export)",
     invoiceSeriesTitle: 'Série de numérotation des factures',
     timesheetSeriesTitle: 'Série de numérotation des feuilles de temps',
-    invoiceSeriesPattern: 'Modèle de série (par exemple YY1####)',
+    invoiceSeriesPattern: 'Modèle de série (par exemple {example})',
     invoiceSeriesPatternHelp:
-      "Utilisez les jetons YYYY, YY, MM, DD, DEV et # pour le numéro d'auto-incrémentation (par exemple YY1####).",
+      "Utilisez les jetons {tokens} et # pour le numéro d'auto-incrémentation (par exemple {example}). Les jetons ne sont matérialisés que lorsqu’ils sont entourés d’accolades.",
     invoiceSeriesPreviewLabel: 'Aperçu',
     invoiceSeriesNextNumber: 'Numéro suivant',
     seriesNextNumberChangeConfirmTitle: 'Modifier le prochain numéro de série ?',
@@ -1001,7 +1001,14 @@ const fr = {
       'La modification du prochain numéro affecte les nouveaux documents générés et peut créer des trous ou des doublons. Continuez uniquement si vous comprenez l’impact.',
     seriesNextNumberChangeConfirmContinue: 'Oui, modifier le prochain numéro',
     invoiceSeriesPerDevice: 'Série séparée par appareil',
-    invoiceSeriesDeviceCode: "Code de l'appareil (facultatif)",
+    invoiceSeriesDeviceCode: "Code de l'appareil",
+    seriesDeviceCodeRequired:
+      'Saisissez un code d’appareil lorsque le modèle contient le jeton {deviceToken}.',
+    invoiceSeriesDeviceTokenWarning:
+      'Avec la synchronisation en ligne, il est fortement recommandé d’activer une série de factures séparée par appareil et d’inclure le jeton {deviceToken} dans le modèle de facture (par exemple {example}). Cela réduit fortement le risque de collision de numéros lorsque plusieurs appareils émettent des factures hors ligne.',
+    invoiceSeriesDeviceTokenCta: 'Ouvrir la numérotation',
+    seriesPerDeviceMissingTokenWarning:
+      'La série séparée par appareil est activée, mais le modèle ne contient pas le jeton {deviceToken}. Le numéro de document n’identifiera pas l’appareil et peut entrer en collision avec un autre appareil.',
     syncTitle: 'Synchronisation des appareils',
     syncDescription:
       'Connecter cet appareil au serveur de synchronisation Faktoro exécuté dans Docker.',

@@ -956,9 +956,9 @@ const en = {
     invoiceDefaultExportFormatNone: 'None (ask on export)',
     invoiceSeriesTitle: 'Invoice numbering series',
     timesheetSeriesTitle: 'Timesheet numbering series',
-    invoiceSeriesPattern: 'Series pattern (e.g. YY1####)',
+    invoiceSeriesPattern: 'Series pattern (e.g. {example:string})',
     invoiceSeriesPatternHelp:
-      'Use tokens YYYY, YY, MM, DD, DEV and # for autoincrement number (e.g. YY1####).',
+      'Use tokens {tokens:string} and # for autoincrement number (e.g. {example:string}). Tokens are only materialized when wrapped in curly brackets.',
     invoiceSeriesPreviewLabel: 'Preview',
     invoiceSeriesNextNumber: 'Next number',
     seriesNextNumberChangeConfirmTitle: 'Change the next series number?',
@@ -966,7 +966,14 @@ const en = {
       'Changing the next number affects newly generated documents and can create gaps or duplicates. Continue only if you understand the impact.',
     seriesNextNumberChangeConfirmContinue: 'Yes, change next number',
     invoiceSeriesPerDevice: 'Separate series per device',
-    invoiceSeriesDeviceCode: 'Device code (optional)',
+    invoiceSeriesDeviceCode: 'Device code',
+    seriesDeviceCodeRequired:
+      'Enter a device code when the pattern contains the {deviceToken:string} token.',
+    invoiceSeriesDeviceTokenWarning:
+      'With online sync, it is strongly recommended to enable a separate invoice series per device and include the {deviceToken:string} token in the invoice pattern (for example {example:string}). This greatly reduces the risk of invoice number collisions when multiple devices issue invoices offline.',
+    invoiceSeriesDeviceTokenCta: 'Open numbering settings',
+    seriesPerDeviceMissingTokenWarning:
+      'Separate series per device is enabled, but the pattern does not include the {deviceToken:string} token. The document number will not identify the device and can collide with another device.',
     syncTitle: 'Device sync',
     syncDescription: 'Connect this device to Faktoro sync server running in Docker.',
     syncDescriptionConnected: 'This device is connected to sync server at {serverUrl:string}.',

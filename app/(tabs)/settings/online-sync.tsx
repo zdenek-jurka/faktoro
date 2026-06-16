@@ -2,7 +2,7 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { isSyncEnabled } from '@/constants/features';
-import { FontSizes, getSwitchColors, Spacing } from '@/constants/theme';
+import { FontSizes, getSwitchColors, Spacing, withOpacity } from '@/constants/theme';
 import { useBottomSafeAreaStyle } from '@/hooks/use-bottom-safe-area-style';
 import { usePalette } from '@/hooks/use-palette';
 import { usePendingSyncConflictCount } from '@/hooks/use-pending-sync-conflict-count';
@@ -12,7 +12,9 @@ import {
   updateDeviceSyncSettings,
   type DeviceSyncSettings,
 } from '@/repositories/device-sync-settings-repository';
+import { observeSettings } from '@/repositories/settings-repository';
 import { isIos } from '@/utils/platform';
+import { usesSeriesDeviceToken } from '@/utils/series-utils';
 import { useHeaderHeight } from '@react-navigation/elements';
 import { Redirect, Stack, useRouter } from 'expo-router';
 import React, { useEffect, useMemo, useState } from 'react';
@@ -25,6 +27,10 @@ import {
   Switch,
   View,
 } from 'react-native';
+
+const INVOICE_SERIES_FALLBACK_PATTERN = '{YY}####';
+const SERIES_DEVICE_PATTERN_EXAMPLE = '{YY}{DEV}####';
+const SERIES_DEVICE_TOKEN = '{DEV}';
 
 export default function SettingsOnlineSyncScreen() {
   const [deviceSyncSettings, setDeviceSyncSettings] = useState<DeviceSyncSettings | null>(null);
@@ -60,6 +66,7 @@ function SettingsOnlineSyncScreenContent({
       : undefined;
 
   const [isServerReachable, setIsServerReachable] = useState(false);
+  const [usesInvoiceDeviceToken, setUsesInvoiceDeviceToken] = useState(true);
   const syncIsRegistered = deviceSyncSettings?.syncIsRegistered || false;
   const syncAutoEnabled = deviceSyncSettings?.syncAutoEnabled ?? true;
   const syncServerUrl = deviceSyncSettings?.syncServerUrl || '';
@@ -67,6 +74,24 @@ function SettingsOnlineSyncScreenContent({
   const normalizedSyncServerUrl = useMemo(
     () => syncServerUrl.trim().replace(/\/+$/, ''),
     [syncServerUrl],
+  );
+
+  useEffect(
+    () =>
+      observeSettings(
+        (settings) => {
+          if (!settings) return;
+          setUsesInvoiceDeviceToken(
+            usesSeriesDeviceToken({
+              pattern: settings.invoiceSeriesPattern,
+              fallbackPattern: INVOICE_SERIES_FALLBACK_PATTERN,
+              perDevice: settings.invoiceSeriesPerDevice,
+            }),
+          );
+        },
+        ['invoice_series_pattern', 'invoice_series_per_device'],
+      ),
+    [],
   );
 
   useEffect(() => {
@@ -180,6 +205,46 @@ function SettingsOnlineSyncScreenContent({
               </ThemedText>
             </View>
           </View>
+
+          {!usesInvoiceDeviceToken && (
+            <View
+              style={[
+                styles.numberingWarning,
+                {
+                  backgroundColor: withOpacity(palette.timerPause, 0.12),
+                  borderColor: withOpacity(palette.timerPause, 0.85),
+                },
+              ]}
+            >
+              <IconSymbol
+                name="exclamationmark.triangle.fill"
+                size={20}
+                color={palette.timerPause}
+              />
+              <View style={styles.numberingWarningContent}>
+                <ThemedText style={[styles.numberingWarningText, { color: palette.text }]}>
+                  {LL.settings.invoiceSeriesDeviceTokenWarning({
+                    deviceToken: SERIES_DEVICE_TOKEN,
+                    example: SERIES_DEVICE_PATTERN_EXAMPLE,
+                  })}
+                </ThemedText>
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.numberingWarningCta,
+                    { backgroundColor: palette.timerPause },
+                    pressed && styles.pressed,
+                  ]}
+                  onPress={() => router.push('/settings/numbering')}
+                  accessibilityRole="button"
+                >
+                  <ThemedText style={[styles.numberingWarningCtaText, { color: palette.onTint }]}>
+                    {LL.settings.invoiceSeriesDeviceTokenCta()}
+                  </ThemedText>
+                  <IconSymbol name="chevron.right" size={14} color={palette.onTint} />
+                </Pressable>
+              </View>
+            </View>
+          )}
 
           {/* Status section */}
           <ThemedText style={[styles.sectionHeader, { color: palette.textSecondary }]}>
@@ -389,6 +454,38 @@ const styles = StyleSheet.create({
   sourceCodeNote: { paddingHorizontal: 2, paddingTop: Spacing.sm },
   sourceCodeText: { fontSize: FontSizes.xs, lineHeight: 17 },
   sourceCodeLink: { fontSize: FontSizes.xs },
+
+  numberingWarning: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: Spacing.sm,
+    padding: Spacing.md,
+    borderRadius: 12,
+    borderLeftWidth: 3,
+    marginBottom: Spacing.sm,
+  },
+  numberingWarningText: {
+    flex: 1,
+    fontSize: FontSizes.sm,
+    lineHeight: 19,
+  },
+  numberingWarningContent: {
+    flex: 1,
+    gap: Spacing.sm,
+  },
+  numberingWarningCta: {
+    alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  numberingWarningCtaText: {
+    fontSize: FontSizes.sm,
+    fontWeight: '600',
+  },
 
   navRow: {
     flexDirection: 'row',

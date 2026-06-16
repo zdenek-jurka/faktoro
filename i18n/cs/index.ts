@@ -964,9 +964,9 @@ const cs = {
     invoiceDefaultExportFormatNone: 'Žádný (zeptat se při exportu)',
     invoiceSeriesTitle: 'Číselná řada faktur',
     timesheetSeriesTitle: 'Číselná řada timesheetů',
-    invoiceSeriesPattern: 'Maska řady (např. YY1####)',
+    invoiceSeriesPattern: 'Maska řady (např. {example})',
     invoiceSeriesPatternHelp:
-      'Použij tokeny YYYY, YY, MM, DD, DEV a # pro autoinkrement čísla (např. YY1####).',
+      'Použij tokeny {tokens} a # pro autoinkrement čísla (např. {example}). Tokeny se materializují jen ve složených závorkách.',
     invoiceSeriesPreviewLabel: 'Náhled',
     invoiceSeriesNextNumber: 'Další číslo',
     seriesNextNumberChangeConfirmTitle: 'Změnit další číslo řady?',
@@ -974,7 +974,13 @@ const cs = {
       'Změna dalšího čísla ovlivní nově generované doklady a může způsobit mezery nebo duplicity. Pokračujte jen pokud víte, proč tuto změnu děláte.',
     seriesNextNumberChangeConfirmContinue: 'Ano, změnit další číslo',
     invoiceSeriesPerDevice: 'Samostatná řada pro zařízení',
-    invoiceSeriesDeviceCode: 'Kód zařízení (volitelně)',
+    invoiceSeriesDeviceCode: 'Kód zařízení',
+    seriesDeviceCodeRequired: 'Vyplňte kód zařízení, pokud maska obsahuje token {deviceToken}.',
+    invoiceSeriesDeviceTokenWarning:
+      'U online synchronizace je silně doporučeno zapnout samostatnou řadu pro zařízení a použít token {deviceToken} v masce faktur (např. {example}). Při offline vystavení faktur na více zařízeních tím výrazně snížíte riziko kolize čísel.',
+    invoiceSeriesDeviceTokenCta: 'Nastavit číslování',
+    seriesPerDeviceMissingTokenWarning:
+      'Samostatná řada pro zařízení je zapnutá, ale maska neobsahuje token {deviceToken}. Číslo dokladu nebude rozlišovat zařízení a může kolidovat s jiným zařízením.',
     syncTitle: 'Synchronizace zařízení',
     syncDescription: 'Připojte toto zařízení k Faktoro sync serveru běžícímu v Dockeru.',
     syncDescriptionConnected: 'Toto zařízení je připojeno k sync serveru na adrese {serverUrl}.',
